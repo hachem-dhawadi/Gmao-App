@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Companies\ApproveCompanyController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
+use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
+use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as SuperadminCompanyMemberController;
+use App\Http\Controllers\Api\V1\Superadmin\UserController as SuperadminUserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -30,6 +33,24 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/{member}', [MemberController::class, 'destroy'])->middleware('permission:members.delete');
     });
 
-    Route::middleware('auth:sanctum')
-        ->post('/superadmin/companies/{company}/approve', ApproveCompanyController::class);
+    Route::middleware(['auth:sanctum', 'superadmin'])->prefix('superadmin')->group(function (): void {
+        Route::get('/users', [SuperadminUserController::class, 'index']);
+        Route::post('/users', [SuperadminUserController::class, 'store']);
+        Route::get('/users/{user}', [SuperadminUserController::class, 'show']);
+        Route::patch('/users/{user}', [SuperadminUserController::class, 'update']);
+        Route::delete('/users/{user}', [SuperadminUserController::class, 'destroy']);
+
+        Route::get('/companies', [SuperadminCompanyController::class, 'index']);
+        Route::post('/companies', [SuperadminCompanyController::class, 'store']);
+        Route::get('/companies/{company}', [SuperadminCompanyController::class, 'show']);
+        Route::patch('/companies/{company}', [SuperadminCompanyController::class, 'update']);
+        Route::delete('/companies/{company}', [SuperadminCompanyController::class, 'destroy']);
+        Route::post('/companies/{company}/approve', ApproveCompanyController::class);
+
+        Route::get('/companies/{company}/members', [SuperadminCompanyMemberController::class, 'index']);
+        Route::post('/companies/{company}/members', [SuperadminCompanyMemberController::class, 'store']);
+        Route::get('/companies/{company}/members/{member}', [SuperadminCompanyMemberController::class, 'show']);
+        Route::patch('/companies/{company}/members/{member}', [SuperadminCompanyMemberController::class, 'update']);
+        Route::delete('/companies/{company}/members/{member}', [SuperadminCompanyMemberController::class, 'destroy']);
+    });
 });

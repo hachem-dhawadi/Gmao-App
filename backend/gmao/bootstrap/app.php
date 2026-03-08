@@ -1,10 +1,11 @@
 <?php
 
+use App\Http\Middleware\EnsureCompanyContext;
+use App\Http\Middleware\EnsureMemberHasPermission;
+use App\Http\Middleware\EnsureSuperadmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\EnsureCompanyContext;
-use App\Http\Middleware\EnsureMemberHasPermission;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'company.context' => EnsureCompanyContext::class,
             'permission' => EnsureMemberHasPermission::class,
+            'superadmin' => EnsureSuperadmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
