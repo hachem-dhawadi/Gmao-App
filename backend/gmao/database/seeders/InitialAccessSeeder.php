@@ -4,9 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Company;
 use App\Models\Member;
-use App\Models\Permission;
-use App\Models\Role;
 use App\Models\User;
+use App\Services\RBAC\CompanyRbacSetupService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -17,6 +16,21 @@ class InitialAccessSeeder extends Seeder
      */
     public function run(): void
     {
+        $rbacSetupService = app(CompanyRbacSetupService::class);
+
+        User::query()->updateOrCreate(
+            ['email' => 'superadmin@gmao.test'],
+            [
+                'name' => 'Platform Superadmin',
+                'password' => Hash::make('SuperAdmin123!'),
+                'phone' => '+21699999999',
+                'locale' => 'fr',
+                'two_factor_enabled' => false,
+                'is_active' => true,
+                'is_superadmin' => true,
+            ]
+        );
+
         $company = Company::query()->firstOrCreate(
             ['name' => 'Demo Company'],
             [
@@ -28,15 +42,18 @@ class InitialAccessSeeder extends Seeder
             ]
         );
 
+        $roles = $rbacSetupService->bootstrapForCompany($company);
+
         $adminUser = User::query()->updateOrCreate(
             ['email' => 'admin@gmao.test'],
             [
-                'name' => 'GMAO Admin',
+                'name' => 'Company Owner',
                 'password' => Hash::make('Admin123!'),
                 'phone' => '+21611111111',
                 'locale' => 'fr',
                 'two_factor_enabled' => false,
                 'is_active' => true,
+                'is_superadmin' => false,
             ]
         );
 
@@ -47,116 +64,38 @@ class InitialAccessSeeder extends Seeder
             ],
             [
                 'employee_code' => 'ADM-001',
-                'job_title' => 'Administrator',
+                'job_title' => 'Owner',
                 'status' => 'active',
             ]
         );
 
-        $adminRole = Role::query()->firstOrCreate(
+        $adminMember->roles()->syncWithoutDetaching([$roles['admin']->id]);
+
+        $hrUser = User::query()->updateOrCreate(
+            ['email' => 'hr@gmao.test'],
             [
-                'company_id' => $company->id,
-                'code' => 'admin',
-            ],
-            [
-                'label' => 'Administrator',
-                'sort_order' => 1,
-                'is_system' => true,
+                'name' => 'HR Manager',
+                'password' => Hash::make('Hr123456!'),
+                'phone' => '+21622222222',
+                'locale' => 'fr',
+                'two_factor_enabled' => false,
+                'is_active' => true,
+                'is_superadmin' => false,
             ]
         );
 
-        $managerRole = Role::query()->firstOrCreate(
+        $hrMember = Member::query()->firstOrCreate(
             [
                 'company_id' => $company->id,
-                'code' => 'manager',
+                'user_id' => $hrUser->id,
             ],
             [
-                'label' => 'Manager',
-                'sort_order' => 2,
-                'is_system' => true,
+                'employee_code' => 'HR-001',
+                'job_title' => 'HR',
+                'status' => 'active',
             ]
         );
 
-        $technicianRole = Role::query()->firstOrCreate(
-            [
-                'company_id' => $company->id,
-                'code' => 'technician',
-            ],
-            [
-                'label' => 'Technician',
-                'sort_order' => 3,
-                'is_system' => true,
-            ]
-        );
-
-        $permissionMap = [
-            'companies.read' => 'Read companies',
-            'members.read' => 'Read members',
-            'members.write' => 'Manage members',
-            'roles.read' => 'Read roles',
-            'roles.write' => 'Manage roles',
-            'assets.read' => 'Read assets',
-            'assets.write' => 'Manage assets',
-            'work_orders.read' => 'Read work orders',
-            'work_orders.write' => 'Manage work orders',
-            'inventory.read' => 'Read inventory',
-            'inventory.write' => 'Manage inventory',
-            'purchasing.read' => 'Read purchasing',
-            'purchasing.write' => 'Manage purchasing',
-            'files.read' => 'Read files',
-            'files.write' => 'Manage files',
-            'chat.read' => 'Read chat',
-            'chat.write' => 'Manage chat',
-            'notifications.read' => 'Read notifications',
-        ];
-
-        $permissionIds = collect($permissionMap)
-            ->map(function (string $label, string $code): int {
-                return Permission::query()->firstOrCreate(
-                    ['code' => $code],
-                    ['label' => $label]
-                )->id;
-            })
-            ->values();
-
-        $adminRole->permissions()->sync($permissionIds->all());
-
-        $managerRole->permissions()->sync(
-            Permission::query()
-                ->whereIn('code', [
-                    'companies.read',
-                    'members.read',
-                    'roles.read',
-                    'assets.read',
-                    'assets.write',
-                    'work_orders.read',
-                    'work_orders.write',
-                    'inventory.read',
-                    'inventory.write',
-                    'purchasing.read',
-                    'notifications.read',
-                ])
-                ->pluck('id')
-                ->all()
-        );
-
-        $technicianRole->permissions()->sync(
-            Permission::query()
-                ->whereIn('code', [
-                    'assets.read',
-                    'work_orders.read',
-                    'work_orders.write',
-                    'inventory.read',
-                    'files.read',
-                    'files.write',
-                    'chat.read',
-                    'chat.write',
-                    'notifications.read',
-                ])
-                ->pluck('id')
-                ->all()
-        );
-
-        $adminMember->roles()->syncWithoutDetaching([$adminRole->id]);
+        $hrMember->roles()->syncWithoutDetaching([$roles['hr']->id]);
     }
 }
-

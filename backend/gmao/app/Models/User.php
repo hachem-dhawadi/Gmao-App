@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -27,6 +26,7 @@ class User extends Authenticatable
         'locale',
         'two_factor_enabled',
         'is_active',
+        'is_superadmin',
         'last_login_at',
         'password',
     ];
@@ -53,6 +53,7 @@ class User extends Authenticatable
             'last_login_at' => 'datetime',
             'two_factor_enabled' => 'boolean',
             'is_active' => 'boolean',
+            'is_superadmin' => 'boolean',
             'password' => 'hashed',
         ];
     }

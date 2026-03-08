@@ -25,9 +25,9 @@ class AuthUserResource extends JsonResource
             'avatar_path' => $this->avatar_path,
             'locale' => $this->locale,
             'is_active' => (bool) $this->is_active,
+            'is_superadmin' => (bool) $this->is_superadmin,
             'last_login_at' => $this->last_login_at,
             'created_at' => $this->created_at,
         ];
     }
 }
-

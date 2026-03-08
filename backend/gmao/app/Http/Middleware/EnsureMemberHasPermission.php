@@ -22,6 +22,10 @@ class EnsureMemberHasPermission
             ], 401);
         }
 
+        if ($user->is_superadmin) {
+            return $next($request);
+        }
+
         if (! $member) {
             return new JsonResponse([
                 'success' => false,

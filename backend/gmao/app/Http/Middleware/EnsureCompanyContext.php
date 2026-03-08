@@ -43,10 +43,17 @@ class EnsureCompanyContext
             ], 403);
         }
 
+        if ($member->status !== 'active') {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Your membership is not active in this company.',
+            ], 403);
+        }
+
         if (! $member->company || ! $member->company->is_active) {
             return new JsonResponse([
                 'success' => false,
-                'message' => 'The selected company is inactive or unavailable.',
+                'message' => 'Company pending approval.',
             ], 403);
         }
 
