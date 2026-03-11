@@ -3,9 +3,10 @@ import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
 import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
-import { REDIRECT_URL_KEY } from '@/constants/app.constant'
+import { CURRENT_COMPANY_ID_KEY, REDIRECT_URL_KEY } from '@/constants/app.constant'
 import { useNavigate } from 'react-router-dom'
 import type {
+    BackendAuthUser,
     SignInCredential,
     SignUpCredential,
     AuthResult,
@@ -25,14 +26,28 @@ export type IsolatedNavigatorRef = {
 const IsolatedNavigator = ({ ref }: { ref: Ref<IsolatedNavigatorRef> }) => {
     const navigate = useNavigate()
 
-    useImperativeHandle(ref, () => {
-        return {
-            navigate,
-        }
-    }, [navigate])
+    useImperativeHandle(
+        ref,
+        () => {
+            return {
+                navigate,
+            }
+        },
+        [navigate],
+    )
 
     return <></>
 }
+
+const mapBackendUser = (backendUser: BackendAuthUser): User => ({
+    userId: String(backendUser.id),
+    avatar: backendUser.avatar_path,
+    userName: backendUser.name,
+    email: backendUser.email,
+    phone: backendUser.phone,
+    isSuperadmin: backendUser.is_superadmin,
+    authority: backendUser.is_superadmin ? ['superadmin'] : ['user'],
+})
 
 function AuthProvider({ children }: AuthProviderProps) {
     const signedIn = useSessionUser((state) => state.session.signedIn)
@@ -47,14 +62,22 @@ function AuthProvider({ children }: AuthProviderProps) {
 
     const navigatorRef = useRef<IsolatedNavigatorRef>(null)
 
-    const redirect = () => {
+    const redirect = (signedInUser?: User) => {
         const search = window.location.search
         const params = new URLSearchParams(search)
         const redirectUrl = params.get(REDIRECT_URL_KEY)
 
-        navigatorRef.current?.navigate(
-            redirectUrl ? redirectUrl : appConfig.authenticatedEntryPath,
-        )
+        if (redirectUrl) {
+            navigatorRef.current?.navigate(redirectUrl)
+            return
+        }
+
+        if (signedInUser?.isSuperadmin) {
+            navigatorRef.current?.navigate('/superadmin/dashboard')
+            return
+        }
+
+        navigatorRef.current?.navigate(appConfig.authenticatedEntryPath)
     }
 
     const handleSignIn = (tokens: Token, user?: User) => {
@@ -68,6 +91,7 @@ function AuthProvider({ children }: AuthProviderProps) {
 
     const handleSignOut = () => {
         setToken('')
+        localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
         setUser({})
         setSessionSignedIn(false)
     }
@@ -75,23 +99,43 @@ function AuthProvider({ children }: AuthProviderProps) {
     const signIn = async (values: SignInCredential): AuthResult => {
         try {
             const resp = await apiSignIn(values)
-            if (resp) {
-                handleSignIn({ accessToken: resp.token }, resp.user)
-                redirect()
+
+            if (!resp.success || !resp.data) {
                 return {
-                    status: 'success',
-                    message: '',
+                    status: 'failed',
+                    message: resp.message || 'Unable to sign in',
                 }
             }
-            return {
-                status: 'failed',
-                message: 'Unable to sign in',
+
+            const mappedUser = mapBackendUser(resp.data.user)
+
+            handleSignIn({ accessToken: resp.data.token }, mappedUser)
+
+            if (mappedUser.isSuperadmin) {
+                localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+            } else if (resp.data.default_company_id) {
+                localStorage.setItem(
+                    CURRENT_COMPANY_ID_KEY,
+                    String(resp.data.default_company_id),
+                )
+            } else {
+                localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
             }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-        } catch (errors: any) {
+
+            redirect(mappedUser)
+
+            return {
+                status: 'success',
+                message: resp.message,
+            }
+        } catch (errors: unknown) {
+            const message =
+                (errors as { response?: { data?: { message?: string } } })
+                    ?.response?.data?.message || String(errors)
+
             return {
                 status: 'failed',
-                message: errors?.response?.data?.message || errors.toString(),
+                message,
             }
         }
     }
@@ -99,23 +143,32 @@ function AuthProvider({ children }: AuthProviderProps) {
     const signUp = async (values: SignUpCredential): AuthResult => {
         try {
             const resp = await apiSignUp(values)
-            if (resp) {
-                handleSignIn({ accessToken: resp.token }, resp.user)
-                redirect()
+
+            if (!resp.success || !resp.data) {
                 return {
-                    status: 'success',
-                    message: '',
+                    status: 'failed',
+                    message: resp.message || 'Unable to register company',
                 }
             }
+
+            const mappedUser = mapBackendUser(resp.data.user)
+
+            handleSignIn({ accessToken: resp.data.token }, mappedUser)
+            localStorage.setItem(CURRENT_COMPANY_ID_KEY, String(resp.data.company.id))
+            redirect(mappedUser)
+
             return {
-                status: 'failed',
-                message: 'Unable to sign up',
+                status: 'success',
+                message: resp.message,
             }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-        } catch (errors: any) {
+        } catch (errors: unknown) {
+            const message =
+                (errors as { response?: { data?: { message?: string } } })
+                    ?.response?.data?.message || String(errors)
+
             return {
                 status: 'failed',
-                message: errors?.response?.data?.message || errors.toString(),
+                message,
             }
         }
     }
@@ -128,12 +181,13 @@ function AuthProvider({ children }: AuthProviderProps) {
             navigatorRef.current?.navigate(appConfig.unAuthenticatedEntryPath)
         }
     }
+
     const oAuthSignIn = (
         callback: (payload: OauthSignInCallbackPayload) => void,
     ) => {
         callback({
             onSignIn: handleSignIn,
-            redirect,
+            redirect: () => redirect(user),
         })
     }
 

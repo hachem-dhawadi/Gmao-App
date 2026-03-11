@@ -40,6 +40,41 @@ class LoginController extends Controller
         $deviceName = $validated['device_name'] ?? 'api-client';
         $token = $user->createToken($deviceName)->plainTextToken;
 
+        $memberships = $user->members()
+            ->with([
+                'company:id,name,legal_name,is_active',
+                'roles:id,code,label',
+            ])
+            ->get()
+            ->map(function ($member): array {
+                return [
+                    'member_id' => $member->id,
+                    'company_id' => $member->company_id,
+                    'company' => $member->company ? [
+                        'id' => $member->company->id,
+                        'name' => $member->company->name,
+                        'legal_name' => $member->company->legal_name,
+                        'is_active' => (bool) $member->company->is_active,
+                    ] : null,
+                    'status' => $member->status,
+                    'roles' => $member->roles->map(fn ($role): array => [
+                        'id' => $role->id,
+                        'code' => $role->code,
+                        'label' => $role->label,
+                    ])->values()->all(),
+                ];
+            })
+            ->values();
+
+        $defaultMembership = $memberships
+            ->first(fn (array $membership): bool => $membership['status'] === 'active'
+                && ((bool) data_get($membership, 'company.is_active') === true))
+            ?? $memberships->first();
+
+        $defaultCompanyId = $user->is_superadmin
+            ? null
+            : data_get($defaultMembership, 'company_id');
+
         return response()->json([
             'success' => true,
             'message' => 'Login successful.',
@@ -47,6 +82,8 @@ class LoginController extends Controller
                 'user' => AuthUserResource::make($user)->resolve(),
                 'token' => $token,
                 'token_type' => 'Bearer',
+                'default_company_id' => $defaultCompanyId,
+                'memberships' => $memberships,
             ],
         ]);
     }

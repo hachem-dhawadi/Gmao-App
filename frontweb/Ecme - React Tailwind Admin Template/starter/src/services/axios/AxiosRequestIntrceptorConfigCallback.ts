@@ -4,28 +4,37 @@ import {
     REQUEST_HEADER_AUTH_KEY,
     TOKEN_NAME_IN_STORAGE,
 } from '@/constants/api.constant'
+import { CURRENT_COMPANY_ID_KEY } from '@/constants/app.constant'
+import cookiesStorage from '@/utils/cookiesStorage'
 import type { InternalAxiosRequestConfig } from 'axios'
+
+const getAccessToken = (): string => {
+    const storage = appConfig.accessTokenPersistStrategy
+
+    if (storage === 'localStorage') {
+        return localStorage.getItem(TOKEN_NAME_IN_STORAGE) || ''
+    }
+
+    if (storage === 'sessionStorage') {
+        return sessionStorage.getItem(TOKEN_NAME_IN_STORAGE) || ''
+    }
+
+    return (cookiesStorage.getItem(TOKEN_NAME_IN_STORAGE) as string | null) || ''
+}
 
 const AxiosRequestIntrceptorConfigCallback = (
     config: InternalAxiosRequestConfig,
 ) => {
-    const storage = appConfig.accessTokenPersistStrategy
+    const accessToken = getAccessToken()
 
-    if (storage === 'localStorage' || storage === 'sessionStorage') {
-        let accessToken = ''
+    if (accessToken) {
+        config.headers[REQUEST_HEADER_AUTH_KEY] = `${TOKEN_TYPE}${accessToken}`
+    }
 
-        if (storage === 'localStorage') {
-            accessToken = localStorage.getItem(TOKEN_NAME_IN_STORAGE) || ''
-        }
+    const companyId = localStorage.getItem(CURRENT_COMPANY_ID_KEY) || ''
 
-        if (storage === 'sessionStorage') {
-            accessToken = sessionStorage.getItem(TOKEN_NAME_IN_STORAGE) || ''
-        }
-
-        if (accessToken) {
-            config.headers[REQUEST_HEADER_AUTH_KEY] =
-                `${TOKEN_TYPE}${accessToken}`
-        }
+    if (/^\d+$/.test(companyId)) {
+        config.headers['X-Company-Id'] = companyId
     }
 
     return config

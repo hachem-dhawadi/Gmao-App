@@ -19,7 +19,13 @@ type AuthAction = {
     setUser: (payload: User) => void
 }
 
-const getPersistStorage = () => {
+type StateStorage = {
+    getItem: (name: string) => string | null | Promise<string | null>
+    setItem: (name: string, value: string) => void | Promise<void>
+    removeItem: (name: string) => void | Promise<void>
+}
+
+const getPersistStorage = (): StateStorage => {
     if (appConfig.accessTokenPersistStrategy === 'localStorage') {
         return localStorage
     }
@@ -40,6 +46,8 @@ const initialState: AuthState = {
         userName: '',
         email: '',
         authority: [],
+        isSuperadmin: false,
+        phone: null,
     },
 }
 
@@ -70,7 +78,12 @@ export const useToken = () => {
     const storage = getPersistStorage()
 
     const setToken = (token: string) => {
-        storage.setItem(TOKEN_NAME_IN_STORAGE, token)
+        if (token) {
+            storage.setItem(TOKEN_NAME_IN_STORAGE, token)
+            return
+        }
+
+        storage.removeItem(TOKEN_NAME_IN_STORAGE)
     }
 
     return {

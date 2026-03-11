@@ -29,9 +29,9 @@ export const SignUpBase = ({
                 />
             </div>
             <div className="mb-8">
-                <h3 className="mb-1">Sign Up</h3>
+                <h3 className="mb-1">Register company</h3>
                 <p className="font-semibold heading-text">
-                    And lets get started with your free trial
+                    Create the owner account and submit company proof files for approval.
                 </p>
             </div>
             {message && (

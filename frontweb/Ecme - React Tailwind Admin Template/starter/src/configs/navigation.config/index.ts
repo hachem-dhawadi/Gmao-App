@@ -3,6 +3,7 @@ import {
     NAV_ITEM_TYPE_ITEM,
     NAV_ITEM_TYPE_COLLAPSE,
 } from '@/constants/navigation.constant'
+import { SUPERADMIN } from '@/constants/roles.constant'
 
 import type { NavigationTree } from '@/@types/navigation'
 
@@ -15,6 +16,16 @@ const navigationConfig: NavigationTree[] = [
         icon: 'home',
         type: NAV_ITEM_TYPE_ITEM,
         authority: [],
+        subMenu: [],
+    },
+    {
+        key: 'superadmin.dashboard',
+        path: '/superadmin/dashboard',
+        title: 'Superadmin',
+        translateKey: 'nav.superadmin.dashboard',
+        icon: 'singleMenu',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [SUPERADMIN],
         subMenu: [],
     },
     /** Example purpose only, please remove */

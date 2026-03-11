@@ -12,7 +12,7 @@ type Auth = {
     user: User
     signIn: (values: SignInCredential) => AuthResult
     signUp: (values: SignUpCredential) => AuthResult
-    signOut: () => void
+    signOut: () => void | Promise<void>
     oAuthSignIn: (
         callback: (payload: OauthSignInCallbackPayload) => void,
     ) => void

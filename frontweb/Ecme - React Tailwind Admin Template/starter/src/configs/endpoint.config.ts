@@ -1,11 +1,10 @@
-export const apiPrefix = '/api'
-
 const endpointConfig = {
-    signIn: '/sign-in',
-    signOut: '/sign-out',
-    signUp: '/sign-up',
-    forgotPassword: '/forgot-password',
-    resetPassword: '/reset-password',
+    signIn: '/auth/login',
+    signOut: '/auth/logout',
+    signUp: '/auth/register-company',
+    forgotPassword: '/auth/forgot-password',
+    resetPassword: '/auth/reset-password',
+    me: '/auth/me',
 }
 
 export default endpointConfig

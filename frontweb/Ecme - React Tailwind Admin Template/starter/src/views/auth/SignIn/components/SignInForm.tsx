@@ -26,7 +26,8 @@ type SignInFormSchema = {
 const validationSchema: ZodType<SignInFormSchema> = z.object({
     email: z
         .string({ required_error: 'Please enter your email' })
-        .min(1, { message: 'Please enter your email' }),
+        .min(1, { message: 'Please enter your email' })
+        .email('Please enter a valid email'),
     password: z
         .string({ required_error: 'Please enter your password' })
         .min(1, { message: 'Please enter your password' }),
@@ -43,8 +44,8 @@ const SignInForm = (props: SignInFormProps) => {
         control,
     } = useForm<SignInFormSchema>({
         defaultValues: {
-            email: 'admin-01@ecme.com',
-            password: '123Qwe',
+            email: '',
+            password: '',
         },
         resolver: zodResolver(validationSchema),
     })
@@ -57,7 +58,10 @@ const SignInForm = (props: SignInFormProps) => {
         if (!disableSubmit) {
             setSubmitting(true)
 
-            const result = await signIn({ email, password })
+            const result = await signIn({
+                email,
+                password,
+            })
 
             if (result?.status === 'failed') {
                 setMessage?.(result.message)
