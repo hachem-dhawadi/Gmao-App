@@ -8,12 +8,22 @@ import { SUPERADMIN } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
 const navigationConfig: NavigationTree[] = [
-    {
+        {
         key: 'home',
         path: '/home',
         title: 'Home',
         translateKey: 'nav.home',
         icon: 'home',
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [],
+        subMenu: [],
+    },
+    {
+        key: 'userlist',
+        path: '/userlist',
+        title: 'User List',
+        translateKey: 'nav.userlist',
+        icon: 'userList',
         type: NAV_ITEM_TYPE_ITEM,
         authority: [],
         subMenu: [],

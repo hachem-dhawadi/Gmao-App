@@ -1,6 +1,10 @@
 import Header from '@/components/template/Header'
+import SidePanel from '@/components/template/SidePanel'
 import UserProfileDropdown from '@/components//template/UserProfileDropdown'
+import LanguageSelector from '@/components/template/LanguageSelector'
+import Notification from '@/components/template/Notification'
 import HeaderLogo from '@/components/template/HeaderLogo'
+import Search from '@/components/template/Search'
 import MobileNav from '@/components/template/MobileNav'
 import HorizontalNav from '@/components/template/HorizontalNav'
 import LayoutBase from '@/components//template/LayoutBase'
@@ -99,7 +103,7 @@ const ContentOverlay = ({ children }: CommonProps) => {
                                 ? 'shadow-sm dark:shadow-2xl'
                                 : 'bg-transparent dark',
                         )}
-                        wrapperClass="px-4 md:px-0"
+                        wrapperClass="px-0"
                         headerStart={
                             <>
                                 {smaller.lg && <MobileNav />}
@@ -111,6 +115,10 @@ const ContentOverlay = ({ children }: CommonProps) => {
                         headerMiddle={<>{larger.lg && <HorizontalNav />}</>}
                         headerEnd={
                             <>
+                                <Search />
+                                <LanguageSelector />
+                                <Notification />
+                                <SidePanel />
                                 <UserProfileDropdown hoverable={false} />
                             </>
                         }

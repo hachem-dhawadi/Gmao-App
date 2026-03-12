@@ -31,6 +31,18 @@ export const protectedRoutes: Routes = [
         component: lazy(() => import('@/views/SuperadminDashboard')),
         authority: [SUPERADMIN],
     },
+    {
+        key: 'concepts.account.settings',
+        path: '/concepts/account/settings',
+        component: lazy(() => import('@/views/concepts/accounts/Settings')),
+        authority: [],
+        meta: {
+            header: {
+                title: 'Settings',
+            },
+            pageContainerType: 'contained',
+        },
+    },
     /** Example purpose only, please remove */
     {
         key: 'singleMenuItem',
@@ -70,6 +82,12 @@ export const protectedRoutes: Routes = [
         component: lazy(
             () => import('@/views/demo/GroupCollapseMenuItemView2'),
         ),
+        authority: [],
+    },
+    {
+        key: 'userlist',
+        path: '/userlist',
+        component: lazy(() => import('@/views/user/Userlist')),
         authority: [],
     },
     ...othersRoute,
