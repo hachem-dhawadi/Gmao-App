@@ -3,10 +3,12 @@ import endpointConfig from '@/configs/endpoint.config'
 import type {
     SignInCredential,
     SignUpCredential,
+    CreateCompanyRequest,
     ForgotPassword,
     ResetPassword,
     SignInResponse,
     SignUpResponse,
+    CreateCompanyResponse,
     MeResponse,
 } from '@/@types/auth'
 
@@ -23,26 +25,33 @@ export async function apiSignIn(data: SignInCredential) {
 }
 
 export async function apiSignUp(data: SignUpCredential) {
-    const formData = new FormData()
-
-    formData.append('owner_name', data.ownerName)
-    formData.append('owner_email', data.ownerEmail)
-    formData.append('owner_phone', data.ownerPhone)
-    formData.append('owner_password', data.ownerPassword)
-    formData.append('owner_password_confirmation', data.ownerPasswordConfirmation)
-    formData.append('company_name', data.companyName)
-    formData.append('company_timezone', data.companyTimezone)
-
-    data.proofFiles.forEach((file) => {
-        formData.append('proof_files[]', file)
-    })
-
-    return ApiService.fetchDataWithAxios<SignUpResponse, FormData>({
+    return ApiService.fetchDataWithAxios<SignUpResponse>({
         url: endpointConfig.signUp,
         method: 'post',
-        data: formData,
-        headers: {
-            'Content-Type': 'multipart/form-data',
+        data: {
+            name: data.name,
+            email: data.email,
+            password: data.password,
+            password_confirmation: data.passwordConfirmation,
+        },
+    })
+}
+
+export async function apiCreateCompany(data: CreateCompanyRequest) {
+    return ApiService.fetchDataWithAxios<CreateCompanyResponse>({
+        url: endpointConfig.createCompany,
+        method: 'post',
+        data: {
+            name: data.name,
+            legal_name: data.legalName,
+            phone: data.phone,
+            email: data.email,
+            address_line1: data.addressLine1,
+            address_line2: data.addressLine2,
+            city: data.city,
+            postal_code: data.postalCode,
+            country: data.country,
+            timezone: data.timezone,
         },
     })
 }

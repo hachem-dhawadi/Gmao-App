@@ -29,9 +29,10 @@ export const SignUpBase = ({
                 />
             </div>
             <div className="mb-8">
-                <h3 className="mb-1">Register company</h3>
+                <h3 className="mb-1">Create owner account</h3>
                 <p className="font-semibold heading-text">
-                    Create the owner account and submit company proof files for approval.
+                    Register with your personal credentials. You will create your
+                    company after login.
                 </p>
             </div>
             {message && (

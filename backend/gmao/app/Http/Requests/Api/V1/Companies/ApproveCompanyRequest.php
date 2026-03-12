@@ -23,6 +23,7 @@ class ApproveCompanyRequest extends FormRequest
     {
         return [
             'verify_proofs' => ['nullable', 'boolean'],
+            'action' => ['nullable', 'string', 'in:approve,reject'],
         ];
     }
 }

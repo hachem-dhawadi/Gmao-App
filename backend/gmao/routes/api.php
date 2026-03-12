@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Auth\LoginController;
-use App\Http\Controllers\Api\V1\Auth\RegisterCompanyController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Companies\ApproveCompanyController;
+use App\Http\Controllers\Api\V1\Companies\OwnerCompanyController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
@@ -16,13 +16,16 @@ Route::prefix('v1')->group(function (): void {
 
     Route::prefix('auth')->group(function (): void {
         Route::post('/register', RegisterController::class);
-        Route::post('/register-company', RegisterCompanyController::class);
         Route::post('/login', LoginController::class);
 
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/logout', [LoginController::class, 'logout']);
-            Route::get('/me', [LoginController::class, 'me'])->middleware('company.context');
+            Route::get('/me', [LoginController::class, 'me']);
         });
+    });
+
+    Route::middleware('auth:sanctum')->prefix('companies')->group(function (): void {
+        Route::post('/', [OwnerCompanyController::class, 'store']);
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('members')->group(function (): void {
@@ -54,3 +57,4 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/companies/{company}/members/{member}', [SuperadminCompanyMemberController::class, 'destroy']);
     });
 });
+

@@ -5,14 +5,23 @@ export type SignInCredential = {
 }
 
 export type SignUpCredential = {
-    ownerName: string
-    ownerEmail: string
-    ownerPhone: string
-    ownerPassword: string
-    ownerPasswordConfirmation: string
-    companyName: string
-    companyTimezone: string
-    proofFiles: File[]
+    name: string
+    email: string
+    password: string
+    passwordConfirmation: string
+}
+
+export type CreateCompanyRequest = {
+    name: string
+    legalName: string
+    phone: string
+    email?: string
+    addressLine1?: string
+    addressLine2?: string
+    city?: string
+    postalCode?: string
+    country?: string
+    timezone?: string
 }
 
 export type ForgotPassword = {
@@ -36,13 +45,6 @@ export type BackendAuthUser = {
     created_at: string
 }
 
-export type BackendCompanySummary = {
-    id: number
-    name: string
-    legal_name: string | null
-    is_active: boolean
-}
-
 export type BackendMembership = {
     member_id: number
     company_id: number
@@ -51,6 +53,7 @@ export type BackendMembership = {
         name: string
         legal_name: string | null
         is_active: boolean
+        approval_status: 'pending' | 'approved' | 'rejected'
     } | null
     status: string
     roles: Array<{
@@ -66,19 +69,26 @@ export type ApiEnvelope<T> = {
     data: T
 }
 
-export type SignInResponse = ApiEnvelope<{
+export type AuthPayload = {
     user: BackendAuthUser
     token: string
     token_type: string
     default_company_id: number | null
     memberships: BackendMembership[]
-}>
+}
 
-export type SignUpResponse = ApiEnvelope<{
-    user: BackendAuthUser
-    company: BackendCompanySummary
-    token: string
-    token_type: string
+export type SignInResponse = ApiEnvelope<AuthPayload>
+
+export type SignUpResponse = ApiEnvelope<AuthPayload>
+
+export type CreateCompanyResponse = ApiEnvelope<{
+    company: {
+        id: number
+        name: string
+        legal_name: string | null
+        is_active: boolean
+        approval_status: 'pending' | 'approved' | 'rejected'
+    }
 }>
 
 export type MeResponse = ApiEnvelope<{
@@ -89,6 +99,7 @@ export type MeResponse = ApiEnvelope<{
         legal_name: string | null
         timezone: string
         is_active: boolean
+        approval_status: 'pending' | 'approved' | 'rejected'
     } | null
     current_member: {
         id: number

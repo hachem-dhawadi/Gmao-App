@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Resources\Api\V1\Auth\AuthUserResource;
+use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ class LoginController extends Controller
 
         $memberships = $user->members()
             ->with([
-                'company:id,name,legal_name,is_active',
+                'company:id,name,legal_name,is_active,approval_status',
                 'roles:id,code,label',
             ])
             ->get()
@@ -55,6 +56,7 @@ class LoginController extends Controller
                         'name' => $member->company->name,
                         'legal_name' => $member->company->legal_name,
                         'is_active' => (bool) $member->company->is_active,
+                        'approval_status' => $member->company->approval_status,
                     ] : null,
                     'status' => $member->status,
                     'roles' => $member->roles->map(fn ($role): array => [
@@ -106,8 +108,22 @@ class LoginController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        $currentCompany = $request->attributes->get('currentCompany');
-        $currentMember = $request->attributes->get('currentMember');
+
+        $currentCompany = null;
+        $currentMember = null;
+
+        $companyId = $request->header('X-Company-Id');
+
+        if (is_string($companyId) && ctype_digit($companyId)) {
+            $member = Member::query()
+                ->with('company')
+                ->where('user_id', $user->id)
+                ->where('company_id', (int) $companyId)
+                ->first();
+
+            $currentMember = $member;
+            $currentCompany = $member?->company;
+        }
 
         return response()->json([
             'success' => true,
@@ -120,6 +136,7 @@ class LoginController extends Controller
                     'legal_name' => $currentCompany->legal_name,
                     'timezone' => $currentCompany->timezone,
                     'is_active' => (bool) $currentCompany->is_active,
+                    'approval_status' => $currentCompany->approval_status,
                 ] : null,
                 'current_member' => $currentMember ? [
                     'id' => $currentMember->id,

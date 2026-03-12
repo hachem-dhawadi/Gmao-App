@@ -51,6 +51,15 @@ class EnsureCompanyContext
         }
 
         if (! $member->company || ! $member->company->is_active) {
+            $approvalStatus = $member->company?->approval_status;
+
+            if ($approvalStatus === 'rejected') {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Company was rejected by superadmin.',
+                ], 403);
+            }
+
             return new JsonResponse([
                 'success' => false,
                 'message' => 'Company pending approval.',

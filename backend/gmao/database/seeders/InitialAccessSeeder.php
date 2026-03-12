@@ -39,8 +39,16 @@ class InitialAccessSeeder extends Seeder
                 'email' => 'contact@demo-company.test',
                 'timezone' => 'Africa/Tunis',
                 'is_active' => true,
+                'approval_status' => 'approved',
             ]
         );
+
+        if (! $company->is_active || $company->approval_status !== 'approved') {
+            $company->forceFill([
+                'is_active' => true,
+                'approval_status' => 'approved',
+            ])->save();
+        }
 
         $roles = $rbacSetupService->bootstrapForCompany($company);
 

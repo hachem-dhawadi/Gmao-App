@@ -35,6 +35,7 @@ class CompanyController extends Controller
     public function store(StoreSuperadminCompanyRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $isActive = (bool) ($validated['is_active'] ?? false);
 
         $company = Company::query()->create([
             'name' => $validated['name'],
@@ -48,7 +49,8 @@ class CompanyController extends Controller
             'country' => $validated['country'] ?? null,
             'settings_json' => $validated['settings_json'] ?? null,
             'timezone' => $validated['timezone'],
-            'is_active' => $validated['is_active'] ?? false,
+            'is_active' => $isActive,
+            'approval_status' => $isActive ? 'approved' : 'pending',
         ]);
 
         $company->loadCount('members');
@@ -91,6 +93,10 @@ class CompanyController extends Controller
             if (array_key_exists($field, $validated)) {
                 $payload[$field] = $validated[$field];
             }
+        }
+
+        if (array_key_exists('is_active', $payload)) {
+            $payload['approval_status'] = (bool) $payload['is_active'] ? 'approved' : 'pending';
         }
 
         if ($payload !== []) {
@@ -164,6 +170,7 @@ class CompanyController extends Controller
             'country' => $company->country,
             'timezone' => $company->timezone,
             'is_active' => (bool) $company->is_active,
+            'approval_status' => $company->approval_status,
             'members_count' => $company->members_count,
             'created_at' => $company->created_at,
             'updated_at' => $company->updated_at,

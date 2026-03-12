@@ -14,6 +14,18 @@ export const protectedRoutes: Routes = [
         authority: [],
     },
     {
+        key: 'onboarding.companySetup',
+        path: '/company-setup',
+        component: lazy(() => import('@/views/onboarding/CompanySetup')),
+        authority: [],
+    },
+    {
+        key: 'onboarding.companyPending',
+        path: '/company-pending',
+        component: lazy(() => import('@/views/onboarding/CompanyPending')),
+        authority: [],
+    },
+    {
         key: 'superadmin.dashboard',
         path: '/superadmin/dashboard',
         component: lazy(() => import('@/views/SuperadminDashboard')),

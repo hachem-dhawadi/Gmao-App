@@ -17,12 +17,36 @@ class ApproveCompanyController extends Controller
         if (! $user || ! $user->is_superadmin) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only superadmin can approve companies.',
+                'message' => 'Only superadmin can approve/reject companies.',
             ], 403);
+        }
+
+        $action = $request->string('action')->toString();
+
+        if ($action === 'reject') {
+            $company->forceFill([
+                'is_active' => false,
+                'approval_status' => 'rejected',
+            ])->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Company rejected successfully.',
+                'data' => [
+                    'company' => [
+                        'id' => $company->id,
+                        'name' => $company->name,
+                        'legal_name' => $company->legal_name,
+                        'is_active' => (bool) $company->is_active,
+                        'approval_status' => $company->approval_status,
+                    ],
+                ],
+            ]);
         }
 
         $company->forceFill([
             'is_active' => true,
+            'approval_status' => 'approved',
         ])->save();
 
         if ($request->boolean('verify_proofs', true)) {
@@ -47,6 +71,7 @@ class ApproveCompanyController extends Controller
                     'name' => $company->name,
                     'legal_name' => $company->legal_name,
                     'is_active' => (bool) $company->is_active,
+                    'approval_status' => $company->approval_status,
                 ],
             ],
         ]);

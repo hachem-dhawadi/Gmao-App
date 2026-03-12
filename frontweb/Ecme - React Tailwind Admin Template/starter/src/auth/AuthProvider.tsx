@@ -6,6 +6,7 @@ import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
 import { CURRENT_COMPANY_ID_KEY, REDIRECT_URL_KEY } from '@/constants/app.constant'
 import { useNavigate } from 'react-router-dom'
 import type {
+    AuthPayload,
     BackendAuthUser,
     SignInCredential,
     SignUpCredential,
@@ -49,6 +50,32 @@ const mapBackendUser = (backendUser: BackendAuthUser): User => ({
     authority: backendUser.is_superadmin ? ['superadmin'] : ['user'],
 })
 
+const resolvePostAuthPath = (user: User, payload?: AuthPayload): string => {
+    if (user.isSuperadmin) {
+        return '/superadmin/dashboard'
+    }
+
+    if (!payload || payload.memberships.length === 0) {
+        return '/company-setup'
+    }
+
+    const selectedMembership = payload.memberships.find(
+        (membership) => membership.company_id === payload.default_company_id,
+    )
+
+    const selectedCompany = selectedMembership?.company
+
+    if (!selectedCompany) {
+        return '/company-setup'
+    }
+
+    if (selectedCompany.is_active && selectedCompany.approval_status === 'approved') {
+        return appConfig.authenticatedEntryPath
+    }
+
+    return '/company-pending'
+}
+
 function AuthProvider({ children }: AuthProviderProps) {
     const signedIn = useSessionUser((state) => state.session.signedIn)
     const user = useSessionUser((state) => state.user)
@@ -62,7 +89,7 @@ function AuthProvider({ children }: AuthProviderProps) {
 
     const navigatorRef = useRef<IsolatedNavigatorRef>(null)
 
-    const redirect = (signedInUser?: User) => {
+    const redirect = (signedInUser?: User, payload?: AuthPayload) => {
         const search = window.location.search
         const params = new URLSearchParams(search)
         const redirectUrl = params.get(REDIRECT_URL_KEY)
@@ -72,12 +99,7 @@ function AuthProvider({ children }: AuthProviderProps) {
             return
         }
 
-        if (signedInUser?.isSuperadmin) {
-            navigatorRef.current?.navigate('/superadmin/dashboard')
-            return
-        }
-
-        navigatorRef.current?.navigate(appConfig.authenticatedEntryPath)
+        navigatorRef.current?.navigate(resolvePostAuthPath(signedInUser || {}, payload))
     }
 
     const handleSignIn = (tokens: Token, user?: User) => {
@@ -122,7 +144,7 @@ function AuthProvider({ children }: AuthProviderProps) {
                 localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
             }
 
-            redirect(mappedUser)
+            redirect(mappedUser, resp.data)
 
             return {
                 status: 'success',
@@ -147,15 +169,15 @@ function AuthProvider({ children }: AuthProviderProps) {
             if (!resp.success || !resp.data) {
                 return {
                     status: 'failed',
-                    message: resp.message || 'Unable to register company',
+                    message: resp.message || 'Unable to create owner account',
                 }
             }
 
             const mappedUser = mapBackendUser(resp.data.user)
 
             handleSignIn({ accessToken: resp.data.token }, mappedUser)
-            localStorage.setItem(CURRENT_COMPANY_ID_KEY, String(resp.data.company.id))
-            redirect(mappedUser)
+            localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+            redirect(mappedUser, resp.data)
 
             return {
                 status: 'success',
