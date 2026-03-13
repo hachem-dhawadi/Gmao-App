@@ -34,6 +34,8 @@ class StoreSuperadminCompanyRequest extends FormRequest
             'timezone' => ['required', 'string', 'max:100'],
             'settings_json' => ['nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
+            'approval_status' => ['sometimes', 'string', 'in:pending,approved,rejected'],
+            'logo' => ['sometimes', 'nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ];
     }
 }

@@ -21,7 +21,7 @@ const CompanyPending = () => {
             const company = resp.data?.current_company
 
             if (!company) {
-                navigate('/company-setup')
+                navigate('/concepts/account/settings?view=company')
                 return
             }
 

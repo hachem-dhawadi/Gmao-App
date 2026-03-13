@@ -34,6 +34,9 @@ class UpdateSuperadminCompanyRequest extends FormRequest
             'timezone' => ['sometimes', 'string', 'max:100'],
             'settings_json' => ['sometimes', 'nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
+            'approval_status' => ['sometimes', 'string', 'in:pending,approved,rejected'],
+            'logo' => ['sometimes', 'nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ];
     }
 }
+

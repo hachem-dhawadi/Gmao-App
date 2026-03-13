@@ -10,6 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 
 class CompanyController extends Controller
 {
@@ -37,6 +38,10 @@ class CompanyController extends Controller
         $validated = $request->validated();
         $isActive = (bool) ($validated['is_active'] ?? false);
 
+        $logoPath = $request->hasFile('logo')
+            ? $request->file('logo')->store('company-logos', 'public')
+            : null;
+
         $company = Company::query()->create([
             'name' => $validated['name'],
             'legal_name' => $validated['legal_name'] ?? null,
@@ -47,10 +52,11 @@ class CompanyController extends Controller
             'city' => $validated['city'] ?? null,
             'postal_code' => $validated['postal_code'] ?? null,
             'country' => $validated['country'] ?? null,
+            'logo_path' => $logoPath,
             'settings_json' => $validated['settings_json'] ?? null,
             'timezone' => $validated['timezone'],
             'is_active' => $isActive,
-            'approval_status' => $isActive ? 'approved' : 'pending',
+            'approval_status' => $validated['approval_status'] ?? ($isActive ? 'approved' : 'pending'),
         ]);
 
         $company->loadCount('members');
@@ -81,7 +87,7 @@ class CompanyController extends Controller
     {
         $validated = $request->validated();
 
-        if ($validated === []) {
+        if ($validated === [] && ! $request->hasFile('logo')) {
             return response()->json([
                 'success' => false,
                 'message' => 'No fields provided for update.',
@@ -89,14 +95,20 @@ class CompanyController extends Controller
         }
 
         $payload = [];
-        foreach (['name', 'legal_name', 'phone', 'email', 'address_line1', 'address_line2', 'city', 'postal_code', 'country', 'settings_json', 'timezone', 'is_active'] as $field) {
+        foreach (['name', 'legal_name', 'phone', 'email', 'address_line1', 'address_line2', 'city', 'postal_code', 'country', 'settings_json', 'timezone', 'is_active', 'approval_status'] as $field) {
             if (array_key_exists($field, $validated)) {
                 $payload[$field] = $validated[$field];
             }
         }
 
-        if (array_key_exists('is_active', $payload)) {
-            $payload['approval_status'] = (bool) $payload['is_active'] ? 'approved' : 'pending';
+        if ($request->hasFile('logo')) {
+            $newLogoPath = $request->file('logo')->store('company-logos', 'public');
+
+            if ($company->logo_path) {
+                Storage::disk('public')->delete($company->logo_path);
+            }
+
+            $payload['logo_path'] = $newLogoPath;
         }
 
         if ($payload !== []) {
@@ -168,6 +180,8 @@ class CompanyController extends Controller
             'city' => $company->city,
             'postal_code' => $company->postal_code,
             'country' => $company->country,
+            'logo_path' => $company->logo_path,
+            'logo_url' => $this->resolveLogoUrl($company->logo_path),
             'timezone' => $company->timezone,
             'is_active' => (bool) $company->is_active,
             'approval_status' => $company->approval_status,
@@ -175,5 +189,14 @@ class CompanyController extends Controller
             'created_at' => $company->created_at,
             'updated_at' => $company->updated_at,
         ];
+    }
+
+    private function resolveLogoUrl(?string $logoPath): ?string
+    {
+        if (! $logoPath) {
+            return null;
+        }
+
+        return url(Storage::disk('public')->url($logoPath));
     }
 }

@@ -1,5 +1,6 @@
 export type View =
     | 'profile'
+    | 'company'
     | 'security'
     | 'notification'
     | 'billing'

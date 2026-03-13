@@ -3,7 +3,11 @@ import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
 import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
-import { CURRENT_COMPANY_ID_KEY, REDIRECT_URL_KEY } from '@/constants/app.constant'
+import {
+    CURRENT_COMPANY_ID_KEY,
+    OWNER_COMPANY_TAB_KEY,
+    REDIRECT_URL_KEY,
+} from '@/constants/app.constant'
 import { useNavigate } from 'react-router-dom'
 import type {
     AuthPayload,
@@ -40,15 +44,40 @@ const IsolatedNavigator = ({ ref }: { ref: Ref<IsolatedNavigatorRef> }) => {
     return <></>
 }
 
-const mapBackendUser = (backendUser: BackendAuthUser): User => ({
-    userId: String(backendUser.id),
-    avatar: backendUser.avatar_path,
-    userName: backendUser.name,
-    email: backendUser.email,
-    phone: backendUser.phone,
-    isSuperadmin: backendUser.is_superadmin,
-    authority: backendUser.is_superadmin ? ['superadmin'] : ['user'],
-})
+const getSelectedMembership = (payload?: AuthPayload) => {
+    if (!payload || payload.memberships.length === 0) {
+        return undefined
+    }
+
+    return (
+        payload.memberships.find(
+            (membership) => membership.company_id === payload.default_company_id,
+        ) || payload.memberships[0]
+    )
+}
+
+const mapBackendUser = (
+    backendUser: BackendAuthUser,
+    payload?: AuthPayload,
+): User => {
+    const roleCodes = backendUser.is_superadmin
+        ? []
+        : (getSelectedMembership(payload)?.roles || []).map((role) => role.code)
+
+    const authority = backendUser.is_superadmin
+        ? ['superadmin']
+        : Array.from(new Set(['user', ...roleCodes]))
+
+    return {
+        userId: String(backendUser.id),
+        avatar: backendUser.avatar_path,
+        userName: backendUser.name,
+        email: backendUser.email,
+        phone: backendUser.phone,
+        isSuperadmin: backendUser.is_superadmin,
+        authority,
+    }
+}
 
 const resolvePostAuthPath = (user: User, payload?: AuthPayload): string => {
     if (user.isSuperadmin) {
@@ -56,21 +85,22 @@ const resolvePostAuthPath = (user: User, payload?: AuthPayload): string => {
     }
 
     if (!payload || payload.memberships.length === 0) {
-        return '/company-setup'
+        return '/concepts/account/settings?view=company'
     }
 
-    const selectedMembership = payload.memberships.find(
-        (membership) => membership.company_id === payload.default_company_id,
-    )
-
+    const selectedMembership = getSelectedMembership(payload)
     const selectedCompany = selectedMembership?.company
 
     if (!selectedCompany) {
-        return '/company-setup'
+        return '/concepts/account/settings?view=company'
     }
 
     if (selectedCompany.is_active && selectedCompany.approval_status === 'approved') {
         return appConfig.authenticatedEntryPath
+    }
+
+    if (user.authority?.includes('admin')) {
+        return '/concepts/account/settings?view=company'
     }
 
     return '/company-pending'
@@ -114,6 +144,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     const handleSignOut = () => {
         setToken('')
         localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+        localStorage.removeItem(OWNER_COMPANY_TAB_KEY)
         setUser({})
         setSessionSignedIn(false)
     }
@@ -129,19 +160,25 @@ function AuthProvider({ children }: AuthProviderProps) {
                 }
             }
 
-            const mappedUser = mapBackendUser(resp.data.user)
+            const mappedUser = mapBackendUser(resp.data.user, resp.data)
 
             handleSignIn({ accessToken: resp.data.token }, mappedUser)
 
             if (mappedUser.isSuperadmin) {
                 localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+                localStorage.removeItem(OWNER_COMPANY_TAB_KEY)
             } else if (resp.data.default_company_id) {
                 localStorage.setItem(
                     CURRENT_COMPANY_ID_KEY,
                     String(resp.data.default_company_id),
                 )
+
+                if (mappedUser.authority?.includes('admin')) {
+                    localStorage.setItem(OWNER_COMPANY_TAB_KEY, '1')
+                }
             } else {
                 localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+                localStorage.setItem(OWNER_COMPANY_TAB_KEY, '1')
             }
 
             redirect(mappedUser, resp.data)
@@ -173,10 +210,11 @@ function AuthProvider({ children }: AuthProviderProps) {
                 }
             }
 
-            const mappedUser = mapBackendUser(resp.data.user)
+            const mappedUser = mapBackendUser(resp.data.user, resp.data)
 
             handleSignIn({ accessToken: resp.data.token }, mappedUser)
             localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+            localStorage.setItem(OWNER_COMPANY_TAB_KEY, '1')
             redirect(mappedUser, resp.data)
 
             return {

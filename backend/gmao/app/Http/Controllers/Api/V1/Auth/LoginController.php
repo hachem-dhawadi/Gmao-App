@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
 use App\Http\Resources\Api\V1\Auth\AuthUserResource;
+use App\Models\File;
 use App\Models\Member;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class LoginController extends Controller
 {
@@ -115,15 +117,21 @@ class LoginController extends Controller
         $companyId = $request->header('X-Company-Id');
 
         if (is_string($companyId) && ctype_digit($companyId)) {
-            $member = Member::query()
+            $currentMember = Member::query()
                 ->with('company')
                 ->where('user_id', $user->id)
                 ->where('company_id', (int) $companyId)
                 ->first();
-
-            $currentMember = $member;
-            $currentCompany = $member?->company;
         }
+
+        if (! $currentMember && ! $user->is_superadmin) {
+            $currentMember = Member::query()
+                ->with('company')
+                ->where('user_id', $user->id)
+                ->first();
+        }
+
+        $currentCompany = $currentMember?->company;
 
         return response()->json([
             'success' => true,
@@ -134,9 +142,19 @@ class LoginController extends Controller
                     'id' => $currentCompany->id,
                     'name' => $currentCompany->name,
                     'legal_name' => $currentCompany->legal_name,
+                    'phone' => $currentCompany->phone,
+                    'email' => $currentCompany->email,
+                    'address_line1' => $currentCompany->address_line1,
+                    'address_line2' => $currentCompany->address_line2,
+                    'city' => $currentCompany->city,
+                    'postal_code' => $currentCompany->postal_code,
+                    'country' => $currentCompany->country,
+                    'logo_path' => $currentCompany->logo_path,
+                    'logo_url' => $currentCompany->logo_path ? Storage::disk('public')->url($currentCompany->logo_path) : null,
                     'timezone' => $currentCompany->timezone,
                     'is_active' => (bool) $currentCompany->is_active,
                     'approval_status' => $currentCompany->approval_status,
+                    'proof_files' => $this->transformCompanyProofFiles($currentCompany->id),
                 ] : null,
                 'current_member' => $currentMember ? [
                     'id' => $currentMember->id,
@@ -149,5 +167,26 @@ class LoginController extends Controller
                 ] : null,
             ],
         ]);
+    }
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function transformCompanyProofFiles(int $companyId): array
+    {
+        return File::query()
+            ->where('company_id', $companyId)
+            ->where('category', 'company_proof')
+            ->orderByDesc('id')
+            ->get(['id', 'original_name', 'mime_type', 'size_bytes', 'is_verified', 'created_at'])
+            ->map(static fn (File $file): array => [
+                'id' => $file->id,
+                'original_name' => $file->original_name,
+                'mime_type' => $file->mime_type,
+                'size_bytes' => $file->size_bytes,
+                'is_verified' => (bool) $file->is_verified,
+                'created_at' => $file->created_at,
+            ])
+            ->values()
+            ->all();
     }
 }

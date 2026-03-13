@@ -6,6 +6,7 @@ import useResponsive from '@/utils/hooks/useResponsive'
 import { useSettingsStore } from './store/settingsStore'
 
 const Profile = lazy(() => import('./components/SettingsProfile'))
+const Company = lazy(() => import('./components/SettingsCompany'))
 const Security = lazy(() => import('./components/SettingsSecurity'))
 const Notification = lazy(() => import('./components/SettingsNotification'))
 const Billing = lazy(() => import('./components/SettingsBilling'))
@@ -32,6 +33,7 @@ const Settings = () => {
                     )}
                     <Suspense fallback={<></>}>
                         {currentView === 'profile' && <Profile />}
+                        {currentView === 'company' && <Company />}
                         {currentView === 'security' && <Security />}
                         {currentView === 'notification' && <Notification />}
                         {currentView === 'billing' && <Billing />}

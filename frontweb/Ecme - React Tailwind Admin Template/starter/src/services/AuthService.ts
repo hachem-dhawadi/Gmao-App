@@ -4,11 +4,13 @@ import type {
     SignInCredential,
     SignUpCredential,
     CreateCompanyRequest,
+    UpdateCompanyRequest,
     ForgotPassword,
     ResetPassword,
     SignInResponse,
     SignUpResponse,
     CreateCompanyResponse,
+    UpdateCompanyResponse,
     MeResponse,
 } from '@/@types/auth'
 
@@ -37,21 +39,62 @@ export async function apiSignUp(data: SignUpCredential) {
     })
 }
 
+const buildCompanyFormData = (
+    data: CreateCompanyRequest | UpdateCompanyRequest,
+): FormData => {
+    const formData = new FormData()
+
+    formData.append('name', data.name)
+    formData.append('legal_name', data.legalName)
+    formData.append('phone', data.phone)
+    formData.append('email', data.email)
+    formData.append('address_line1', data.addressLine1)
+    formData.append('city', data.city)
+    formData.append('postal_code', data.postalCode)
+    formData.append('country', data.country)
+
+    if (data.addressLine2) {
+        formData.append('address_line2', data.addressLine2)
+    }
+
+    if (data.timezone) {
+        formData.append('timezone', data.timezone)
+    }
+
+    if (data.logo) {
+        formData.append('logo', data.logo)
+    }
+
+    if ('proofFiles' in data && Array.isArray(data.proofFiles)) {
+        data.proofFiles.forEach((file) => {
+            formData.append('proof_files[]', file)
+        })
+    }
+
+    return formData
+}
+
 export async function apiCreateCompany(data: CreateCompanyRequest) {
     return ApiService.fetchDataWithAxios<CreateCompanyResponse>({
         url: endpointConfig.createCompany,
         method: 'post',
-        data: {
-            name: data.name,
-            legal_name: data.legalName,
-            phone: data.phone,
-            email: data.email,
-            address_line1: data.addressLine1,
-            address_line2: data.addressLine2,
-            city: data.city,
-            postal_code: data.postalCode,
-            country: data.country,
-            timezone: data.timezone,
+        data: buildCompanyFormData(data),
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    })
+}
+
+export async function apiUpdateCurrentCompany(data: UpdateCompanyRequest) {
+    const formData = buildCompanyFormData(data)
+    formData.append('_method', 'PATCH')
+
+    return ApiService.fetchDataWithAxios<UpdateCompanyResponse>({
+        url: endpointConfig.updateCurrentCompany,
+        method: 'post',
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data',
         },
     })
 }
@@ -85,3 +128,5 @@ export async function apiResetPassword<T>(data: ResetPassword) {
         data,
     })
 }
+
+

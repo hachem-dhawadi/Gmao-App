@@ -1,36 +1,105 @@
+import { useEffect, useMemo } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Menu from '@/components/ui/Menu'
 import ScrollBar from '@/components/ui/ScrollBar'
+import { useSessionUser } from '@/store/authStore'
+import { CURRENT_COMPANY_ID_KEY, OWNER_COMPANY_TAB_KEY } from '@/constants/app.constant'
 import { useSettingsStore } from '../store/settingsStore'
 import useQuery from '@/utils/hooks/useQuery'
 import {
     TbUserSquare,
+    TbBuilding,
     TbLock,
     TbBell,
     TbFileDollar,
     TbRefreshDot,
 } from 'react-icons/tb'
 import type { View } from '../types'
-import type { ReactNode } from 'react'
 
 const { MenuItem } = Menu
 
-const menuList: { label: string; value: View; icon: ReactNode }[] = [
-    { label: 'Profile', value: 'profile', icon: <TbUserSquare /> },
-    { label: 'Security', value: 'security', icon: <TbLock /> },
-    { label: 'Notification', value: 'notification', icon: <TbBell /> },
-    { label: 'Billing', value: 'billing', icon: <TbFileDollar /> },
-    { label: 'Integration', value: 'integration', icon: <TbRefreshDot /> },
-]
-
 export const SettingsMenu = ({ onChange }: { onChange?: () => void }) => {
     const query = useQuery()
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const authority = useSessionUser((state) => state.user.authority || [])
+    const isSuperadmin = useSessionUser(
+        (state) => Boolean(state.user.isSuperadmin),
+    )
+
+    const companyId = localStorage.getItem(CURRENT_COMPANY_ID_KEY)
+    const ownerCompanyAccess = localStorage.getItem(OWNER_COMPANY_TAB_KEY) === '1'
+
+    const showCompanyTab =
+        !isSuperadmin &&
+        (authority.includes('admin') || !companyId || ownerCompanyAccess)
+
+    const menuList = useMemo(
+        () => [
+            { label: 'Profile', value: 'profile' as View, icon: <TbUserSquare /> },
+            ...(showCompanyTab
+                ? [
+                      {
+                          label: 'Company',
+                          value: 'company' as View,
+                          icon: <TbBuilding />,
+                      },
+                  ]
+                : []),
+            { label: 'Security', value: 'security' as View, icon: <TbLock /> },
+            {
+                label: 'Notification',
+                value: 'notification' as View,
+                icon: <TbBell />,
+            },
+            { label: 'Billing', value: 'billing' as View, icon: <TbFileDollar /> },
+            {
+                label: 'Integration',
+                value: 'integration' as View,
+                icon: <TbRefreshDot />,
+            },
+        ],
+        [showCompanyTab],
+    )
+
+    const availableViews = useMemo(
+        () => menuList.map((menu) => menu.value),
+        [menuList],
+    )
 
     const { currentView, setCurrentView } = useSettingsStore()
 
-    const currentPath = query.get('category') || query.get('label') || 'inbox'
+    useEffect(() => {
+        const view = query.get('view') as View | null
+
+        if (view && availableViews.includes(view)) {
+            if (currentView !== view) {
+                setCurrentView(view)
+            }
+            return
+        }
+
+        if (!availableViews.includes(currentView)) {
+            setCurrentView(menuList[0].value)
+        }
+    }, [query, availableViews, currentView, setCurrentView, menuList])
+
+    const updateQueryView = (value: View) => {
+        const params = new URLSearchParams(location.search)
+        params.set('view', value)
+        navigate(
+            {
+                pathname: location.pathname,
+                search: params.toString(),
+            },
+            { replace: true },
+        )
+    }
 
     const handleSelect = (value: View) => {
         setCurrentView(value)
+        updateQueryView(value)
         onChange?.()
     }
 
@@ -47,7 +116,7 @@ export const SettingsMenu = ({ onChange }: { onChange?: () => void }) => {
                                     ? 'bg-gray-100 dark:bg-gray-700'
                                     : ''
                             }`}
-                            isActive={currentPath === menu.value}
+                            isActive={currentView === menu.value}
                             onSelect={() => handleSelect(menu.value)}
                         >
                             <span className="text-2xl ltr:mr-2 rtl:ml-2">

@@ -26,6 +26,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware('auth:sanctum')->prefix('companies')->group(function (): void {
         Route::post('/', [OwnerCompanyController::class, 'store']);
+        Route::patch('/current', [OwnerCompanyController::class, 'update']);
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('members')->group(function (): void {
@@ -57,4 +58,3 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/companies/{company}/members/{member}', [SuperadminCompanyMemberController::class, 'destroy']);
     });
 });
-

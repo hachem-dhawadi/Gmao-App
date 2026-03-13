@@ -15,13 +15,30 @@ export type CreateCompanyRequest = {
     name: string
     legalName: string
     phone: string
-    email?: string
-    addressLine1?: string
+    email: string
+    addressLine1: string
     addressLine2?: string
-    city?: string
-    postalCode?: string
-    country?: string
+    city: string
+    postalCode: string
+    country: string
     timezone?: string
+    logo: File
+    proofFiles: File[]
+}
+
+export type UpdateCompanyRequest = {
+    name: string
+    legalName: string
+    phone: string
+    email: string
+    addressLine1: string
+    addressLine2?: string
+    city: string
+    postalCode: string
+    country: string
+    timezone?: string
+    logo?: File
+    proofFiles?: File[]
 }
 
 export type ForgotPassword = {
@@ -43,6 +60,34 @@ export type BackendAuthUser = {
     is_superadmin: boolean
     last_login_at: string | null
     created_at: string
+}
+
+export type CompanyProofFile = {
+    id: number
+    original_name: string
+    mime_type: string | null
+    size_bytes: number | null
+    is_verified: boolean
+    created_at: string
+}
+
+export type CompanyPayload = {
+    id: number
+    name: string
+    legal_name: string | null
+    phone: string | null
+    email: string | null
+    address_line1: string | null
+    address_line2: string | null
+    city: string | null
+    postal_code: string | null
+    country: string | null
+    logo_path: string | null
+    logo_url?: string | null
+    timezone: string
+    is_active: boolean
+    approval_status: 'pending' | 'approved' | 'rejected'
+    proof_files: CompanyProofFile[]
 }
 
 export type BackendMembership = {
@@ -82,25 +127,16 @@ export type SignInResponse = ApiEnvelope<AuthPayload>
 export type SignUpResponse = ApiEnvelope<AuthPayload>
 
 export type CreateCompanyResponse = ApiEnvelope<{
-    company: {
-        id: number
-        name: string
-        legal_name: string | null
-        is_active: boolean
-        approval_status: 'pending' | 'approved' | 'rejected'
-    }
+    company: CompanyPayload
+}>
+
+export type UpdateCompanyResponse = ApiEnvelope<{
+    company: CompanyPayload
 }>
 
 export type MeResponse = ApiEnvelope<{
     user: BackendAuthUser
-    current_company: {
-        id: number
-        name: string
-        legal_name: string | null
-        timezone: string
-        is_active: boolean
-        approval_status: 'pending' | 'approved' | 'rejected'
-    } | null
+    current_company: CompanyPayload | null
     current_member: {
         id: number
         company_id: number
@@ -138,3 +174,6 @@ export type OauthSignInCallbackPayload = {
     onSignIn: (tokens: Token, user?: User) => void
     redirect: () => void
 }
+
+
+
