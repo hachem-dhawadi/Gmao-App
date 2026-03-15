@@ -10,18 +10,20 @@ import type { Customer } from '../types'
 import type { TableQueries } from '@/@types/common'
 
 function toCustomer(company: SuperadminCompany): Customer {
+    const companyName = company.name || company.legal_name || '-'
+
     return {
         id: String(company.id),
-        name: company.legal_name || company.name || '-',
-        firstName: company.name,
-        lastName: '',
+        name: companyName,
+        firstName: company.name || '',
+        lastName: company.legal_name || '',
         email: company.email || '-',
         img: resolveCompanyLogoUrl(company),
         role: 'Company',
         lastOnline: Date.now(),
-        status: (company.approval_status || '').toLowerCase(),
+        status: (company.approval_status || '').toLowerCase() || 'pending',
         personalInfo: {
-            location: company.city || '-',
+            location: company.country || '-',
             title: '',
             birthday: '',
             phoneNumber: company.phone || '-',
@@ -29,7 +31,7 @@ function toCustomer(company: SuperadminCompany): Customer {
             address: company.address_line1 || '',
             postcode: company.postal_code || '',
             city: company.city || '-',
-            country: company.country || '',
+            country: company.country || '-',
             facebook: '',
             twitter: '',
             pinterest: '',
@@ -65,9 +67,48 @@ export default function useCustomerList() {
         },
     )
 
-    const customerList = (data?.data?.companies || []).map(toCustomer)
+    const mappedCustomerList = (data?.data?.companies || []).map(toCustomer)
 
-    const customerListTotal = data?.data?.pagination?.total || 0
+    const queryText = String(tableData.query || '')
+        .trim()
+        .toLowerCase()
+    const modalNameText = String(filterData.companyName || '')
+        .trim()
+        .toLowerCase()
+    const selectedStatuses = (filterData.companyStatus || []).map((status) =>
+        status.toLowerCase(),
+    )
+
+    const customerList = mappedCustomerList.filter((customer) => {
+        const searchable = [
+            customer.name,
+            customer.firstName,
+            customer.lastName,
+            customer.email,
+            customer.personalInfo.phoneNumber,
+            customer.personalInfo.country,
+        ]
+            .join(' ')
+            .toLowerCase()
+
+        const queryMatches = !queryText || searchable.includes(queryText)
+        const nameMatches =
+            !modalNameText || customer.name.toLowerCase().includes(modalNameText)
+        const statusMatches =
+            selectedStatuses.length === 0 ||
+            selectedStatuses.includes((customer.status || '').toLowerCase())
+
+        return queryMatches && nameMatches && statusMatches
+    })
+
+    const usingClientFilter =
+        queryText.length > 0 ||
+        modalNameText.length > 0 ||
+        selectedStatuses.length > 0
+
+    const customerListTotal = usingClientFilter
+        ? customerList.length
+        : (data?.data?.pagination?.total || 0)
 
     return {
         customerList,
@@ -84,3 +125,5 @@ export default function useCustomerList() {
         setFilterData,
     }
 }
+
+

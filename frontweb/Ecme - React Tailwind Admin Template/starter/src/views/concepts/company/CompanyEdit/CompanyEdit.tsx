@@ -39,15 +39,73 @@ function normalizeApprovalStatus(status?: string | null): ApprovalStatus {
     return 'pending'
 }
 
+function splitPhone(phone?: string | null): {
+    dialCode: string
+    phoneNumber: string
+} {
+    const defaultDialCode = '+216'
+    const rawPhone = (phone || '').trim()
+
+    if (!rawPhone) {
+        return {
+            dialCode: defaultDialCode,
+            phoneNumber: '',
+        }
+    }
+
+    const spaceFormatMatch = rawPhone.match(/^(\+\d{1,4})\s+(.+)$/)
+    if (spaceFormatMatch) {
+        return {
+            dialCode: spaceFormatMatch[1],
+            phoneNumber: spaceFormatMatch[2].replace(/[^\d]/g, ''),
+        }
+    }
+
+    return {
+        dialCode: defaultDialCode,
+        phoneNumber: rawPhone.replace(/[^\d]/g, ''),
+    }
+}
+
+function buildPhone(dialCode: string, phoneNumber: string): string {
+    const dialDigits = (dialCode || '').replace(/[^\d]/g, '')
+    const formattedDial = dialDigits ? `+${dialDigits}` : ''
+    const rawPhone = (phoneNumber || '').trim()
+
+    if (!rawPhone) {
+        return ''
+    }
+
+    const phoneDigits = rawPhone.replace(/[^\d]/g, '')
+    if (!phoneDigits) {
+        return ''
+    }
+
+    if (formattedDial) {
+        const localDigits = phoneDigits.startsWith(dialDigits)
+            ? phoneDigits.slice(dialDigits.length)
+            : phoneDigits
+        return `${formattedDial}${localDigits ? ` ${localDigits}` : ''}`
+    }
+
+    if (rawPhone.startsWith('+')) {
+        return `+${phoneDigits}`
+    }
+
+    return phoneDigits
+}
+
 function mapCompanyToForm(company: SuperadminCompany): CustomerFormSchema {
+    const parsedPhone = splitPhone(company.phone)
+
     return {
         firstName: company.name || '',
         lastName: company.legal_name || '',
         email: company.email || '',
         img: resolveCompanyLogoUrl(company),
         logoFile: null,
-        phoneNumber: company.phone || '',
-        dialCode: '+216',
+        phoneNumber: parsedPhone.phoneNumber,
+        dialCode: parsedPhone.dialCode,
         country: company.country || '',
         address: company.address_line1 || '',
         city: company.city || '',
@@ -99,7 +157,7 @@ const CompanyEdit = () => {
                 name: values.firstName,
                 legal_name: values.lastName || null,
                 email: values.email || null,
-                phone: values.phoneNumber || null,
+                phone: buildPhone(values.dialCode, values.phoneNumber) || null,
                 country: values.country || null,
                 address_line1: values.address || null,
                 city: values.city || null,
@@ -253,3 +311,5 @@ const CompanyEdit = () => {
 }
 
 export default CompanyEdit
+
+

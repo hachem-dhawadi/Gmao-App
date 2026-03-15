@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Checkbox from '@/components/ui/Checkbox'
@@ -9,30 +9,25 @@ import { TbFilter } from 'react-icons/tb'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import cloneDeep from 'lodash/cloneDeep'
 import type { ZodType } from 'zod'
 
+const statusList = ['pending', 'approved', 'rejected'] as const
+
 type FormSchema = {
-    purchasedProducts: string
-    purchaseChannel: Array<string>
+    companyName: string
+    companyStatus: Array<(typeof statusList)[number]>
 }
 
-const channelList = [
-    'Retail Stores',
-    'Online Retailers',
-    'Resellers',
-    'Mobile Apps',
-    'Direct Sales',
-]
-
 const validationSchema: ZodType<FormSchema> = z.object({
-    purchasedProducts: z.string(),
-    purchaseChannel: z.array(z.string()),
+    companyName: z.string(),
+    companyStatus: z.array(z.enum(statusList)),
 })
 
 const CustomerListTableFilter = () => {
     const [dialogIsOpen, setIsOpen] = useState(false)
 
-    const { filterData, setFilterData } = useCustomerList()
+    const { filterData, setFilterData, tableData, setTableData } = useCustomerList()
 
     const openDialog = () => {
         setIsOpen(true)
@@ -47,14 +42,38 @@ const CustomerListTableFilter = () => {
         resolver: zodResolver(validationSchema),
     })
 
+    useEffect(() => {
+        reset(filterData)
+    }, [filterData, reset])
+
     const onSubmit = (values: FormSchema) => {
-        setFilterData(values)
+        const normalizedValues: FormSchema = {
+            companyName: values.companyName.trim(),
+            companyStatus: values.companyStatus,
+        }
+
+        setFilterData(normalizedValues)
+        const newTableData = cloneDeep(tableData)
+        newTableData.pageIndex = 1
+        setTableData(newTableData)
         setIsOpen(false)
+    }
+
+    const onReset = () => {
+        const resetValues: FormSchema = {
+            companyName: '',
+            companyStatus: [],
+        }
+        reset(resetValues)
+        setFilterData(resetValues)
+        const newTableData = cloneDeep(tableData)
+        newTableData.pageIndex = 1
+        setTableData(newTableData)
     }
 
     return (
         <>
-            <Button icon={<TbFilter />} onClick={() => openDialog()}>
+            <Button icon={<TbFilter />} onClick={openDialog}>
                 Filter
             </Button>
             <Dialog
@@ -62,40 +81,49 @@ const CustomerListTableFilter = () => {
                 onClose={onDialogClose}
                 onRequestClose={onDialogClose}
             >
-                <h4 className="mb-4">Filter</h4>
+                <h4 className="mb-4">Filter Companies</h4>
                 <Form onSubmit={handleSubmit(onSubmit)}>
-                    <FormItem label="Products">
+                    <FormItem label="Company">
                         <Controller
-                            name="purchasedProducts"
+                            name="companyName"
                             control={control}
                             render={({ field }) => (
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="Search by purchased product"
+                                    placeholder="Search by company name"
                                     {...field}
                                 />
                             )}
                         />
                     </FormItem>
-                    <FormItem label="Purchase Channel">
+                    <FormItem label="Company Status">
                         <Controller
-                            name="purchaseChannel"
+                            name="companyStatus"
                             control={control}
                             render={({ field }) => (
                                 <Checkbox.Group
                                     vertical
                                     className="flex mt-4"
-                                    {...field}
+                                    value={field.value}
+                                    onChange={(value) =>
+                                        field.onChange(
+                                            value as Array<
+                                                (typeof statusList)[number]
+                                            >,
+                                        )
+                                    }
                                 >
-                                    {channelList.map((source, index) => (
+                                    {statusList.map((status) => (
                                         <Checkbox
-                                            key={source + index}
+                                            key={status}
                                             name={field.name}
-                                            value={source}
+                                            value={status}
                                             className="justify-between flex-row-reverse heading-text"
                                         >
-                                            {source}
+                                            <span className="capitalize">
+                                                {status}
+                                            </span>
                                         </Checkbox>
                                     ))}
                                 </Checkbox.Group>
@@ -103,7 +131,7 @@ const CustomerListTableFilter = () => {
                         />
                     </FormItem>
                     <div className="flex justify-end items-center gap-2 mt-4">
-                        <Button type="button" onClick={() => reset()}>
+                        <Button type="button" onClick={onReset}>
                             Reset
                         </Button>
                         <Button type="submit" variant="solid">

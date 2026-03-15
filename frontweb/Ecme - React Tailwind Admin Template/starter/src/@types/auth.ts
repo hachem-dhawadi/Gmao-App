@@ -60,6 +60,7 @@ export type BackendAuthUser = {
     is_superadmin: boolean
     last_login_at: string | null
     created_at: string
+    updated_at?: string | null
 }
 
 export type CompanyProofFile = {
@@ -69,6 +70,7 @@ export type CompanyProofFile = {
     size_bytes: number | null
     is_verified: boolean
     created_at: string
+    updated_at?: string | null
 }
 
 export type CompanyPayload = {
@@ -174,6 +176,7 @@ export type OauthSignInCallbackPayload = {
     onSignIn: (tokens: Token, user?: User) => void
     redirect: () => void
 }
+
 
 
 

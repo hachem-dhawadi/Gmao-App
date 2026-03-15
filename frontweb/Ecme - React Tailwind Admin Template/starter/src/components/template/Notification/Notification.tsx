@@ -47,26 +47,58 @@ const _Notification = ({ className }: { className?: string }) => {
 
     const navigate = useNavigate()
 
+    const notificationApiEnabled =
+        import.meta.env.VITE_ENABLE_NOTIFICATIONS === 'true'
+
     const getNotificationCount = async () => {
-        const resp = await apiGetNotificationCount()
-        if (resp.count > 0) {
-            setNoResult(false)
-            setUnreadNotification(true)
-        } else {
+        if (!notificationApiEnabled) {
             setNoResult(true)
+            setUnreadNotification(false)
+            return
+        }
+
+        try {
+            const resp = await apiGetNotificationCount()
+            if ((resp?.count || 0) > 0) {
+                setNoResult(false)
+                setUnreadNotification(true)
+            } else {
+                setNoResult(true)
+                setUnreadNotification(false)
+            }
+        } catch {
+            setNoResult(true)
+            setUnreadNotification(false)
         }
     }
 
     useEffect(() => {
-        getNotificationCount()
+        void getNotificationCount()
     }, [])
 
     const onNotificationOpen = async () => {
-        if (notificationList.length === 0) {
-            setLoading(true)
+        if (notificationList.length > 0) {
+            return
+        }
+
+        if (!notificationApiEnabled) {
+            setNoResult(true)
+            return
+        }
+
+        setLoading(true)
+
+        try {
             const resp = await apiGetNotificationList()
+            setNotificationList(resp || [])
+            if (!resp || resp.length === 0) {
+                setNoResult(true)
+            }
+        } catch {
+            setNoResult(true)
+            setNotificationList([])
+        } finally {
             setLoading(false)
-            setNotificationList(resp)
         }
     }
 

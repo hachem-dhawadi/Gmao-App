@@ -119,8 +119,8 @@ const CustomerListTable = () => {
                 accessorKey: 'email',
             },
             {
-                header: 'City',
-                accessorKey: 'personalInfo.city',
+                header: 'Country',
+                accessorKey: 'personalInfo.country',
             },
             {
                 header: 'Status',

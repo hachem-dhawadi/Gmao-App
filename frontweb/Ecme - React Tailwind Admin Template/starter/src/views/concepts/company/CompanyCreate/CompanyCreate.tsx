@@ -5,10 +5,41 @@ import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import CustomerForm from '../CustomerForm'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
-import sleep from '@/utils/sleep'
 import { TbTrash } from 'react-icons/tb'
+import { mutate as globalMutate } from 'swr'
 import { useNavigate } from 'react-router-dom'
+import {
+    apiCreateCompany,
+    type SuperadminCompanyResponse,
+} from '@/services/CompaniesService'
 import type { CustomerFormSchema } from '../CustomerForm'
+
+type ApiError = {
+    response?: {
+        data?: {
+            message?: string
+            errors?: Record<string, string[]>
+        }
+    }
+}
+
+const DEFAULT_COMPANY_LOGO_PATH = '/img/others/upload.png'
+
+const loadDefaultCompanyLogoFile = async (): Promise<File | null> => {
+    try {
+        const response = await fetch(DEFAULT_COMPANY_LOGO_PATH)
+        if (!response.ok) {
+            return null
+        }
+
+        const blob = await response.blob()
+        return new File([blob], 'company-default.png', {
+            type: blob.type || 'image/png',
+        })
+    } catch {
+        return null
+    }
+}
 
 const CompanyCreate = () => {
     const navigate = useNavigate()
@@ -17,15 +48,94 @@ const CompanyCreate = () => {
         useState(false)
     const [isSubmiting, setIsSubmiting] = useState(false)
 
+    const buildPhone = (dialCode: string, phoneNumber: string): string => {
+        const dialDigits = (dialCode || '').replace(/[^\d]/g, '')
+        const formattedDial = dialDigits ? `+${dialDigits}` : ''
+        const rawPhone = (phoneNumber || '').trim()
+
+        if (!rawPhone) {
+            return ''
+        }
+
+        const phoneDigits = rawPhone.replace(/[^\d]/g, '')
+        if (!phoneDigits) {
+            return ''
+        }
+
+        if (formattedDial) {
+            const localDigits = phoneDigits.startsWith(dialDigits)
+                ? phoneDigits.slice(dialDigits.length)
+                : phoneDigits
+            return `${formattedDial}${localDigits ? ` ${localDigits}` : ''}`
+        }
+
+        if (rawPhone.startsWith('+')) {
+            return `+${phoneDigits}`
+        }
+
+        return phoneDigits
+    }
+
     const handleFormSubmit = async (values: CustomerFormSchema) => {
-        console.log('Submitted values', values)
         setIsSubmiting(true)
-        await sleep(800)
-        setIsSubmiting(false)
-        toast.push(<Notification type="success">Company created!</Notification>, {
-            placement: 'top-center',
-        })
-        navigate('/concepts/company/company-list')
+
+        try {
+            const logoFile =
+                values.logoFile || (await loadDefaultCompanyLogoFile())
+
+            const response = await apiCreateCompany<SuperadminCompanyResponse>({
+                name: values.firstName,
+                legal_name: values.lastName || null,
+                email: values.email || null,
+                phone: buildPhone(values.dialCode, values.phoneNumber),
+                country: values.country || null,
+                address_line1: values.address || null,
+                city: values.city || null,
+                postal_code: values.postcode || null,
+                timezone: 'Africa/Tunis',
+                logo: logoFile,
+            })
+
+            await globalMutate((key) => {
+                return (
+                    Array.isArray(key) &&
+                    typeof key[0] === 'string' &&
+                    key[0] === '/superadmin/companies'
+                )
+            })
+
+            toast.push(
+                <Notification type="success">Company created!</Notification>,
+                {
+                    placement: 'top-center',
+                },
+            )
+
+            const createdId = response?.data?.company?.id
+            if (createdId) {
+                navigate(`/concepts/company/company-details/${createdId}`)
+                return
+            }
+
+            navigate('/concepts/company/company-list')
+        } catch (error) {
+            const apiError = error as ApiError
+            const validationErrors = apiError.response?.data?.errors
+            const firstValidationError = validationErrors
+                ? Object.values(validationErrors)[0]?.[0]
+                : undefined
+
+            const message =
+                firstValidationError ||
+                apiError.response?.data?.message ||
+                'Failed to create company.'
+
+            toast.push(<Notification type="danger">{message}</Notification>, {
+                placement: 'top-center',
+            })
+        } finally {
+            setIsSubmiting(false)
+        }
     }
 
     const handleConfirmDiscard = () => {
@@ -55,7 +165,7 @@ const CompanyCreate = () => {
                     img: '',
                     logoFile: null,
                     phoneNumber: '',
-                    dialCode: '',
+                    dialCode: '+216',
                     country: '',
                     address: '',
                     city: '',
@@ -111,6 +221,5 @@ const CompanyCreate = () => {
 }
 
 export default CompanyCreate
-
 
 

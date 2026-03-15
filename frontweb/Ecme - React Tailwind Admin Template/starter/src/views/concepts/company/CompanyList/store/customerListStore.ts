@@ -12,15 +12,9 @@ export const initialTableData: TableQueries = {
     },
 }
 
-export const initialFilterData = {
-    purchasedProducts: '',
-    purchaseChannel: [
-        'Retail Stores',
-        'Online Retailers',
-        'Resellers',
-        'Mobile Apps',
-        'Direct Sales',
-    ],
+export const initialFilterData: Filter = {
+    companyName: '',
+    companyStatus: [],
 }
 
 export type CustomersListState = {
@@ -52,19 +46,21 @@ export const useCustomerListStore = create<
         set((state) => {
             const prevData = state.selectedCustomer
             if (checked) {
-                return { selectedCustomer: [...prevData, ...[row]] }
-            } else {
-                if (
-                    prevData.some((prevCustomer) => row.id === prevCustomer.id)
-                ) {
-                    return {
-                        selectedCustomer: prevData.filter(
-                            (prevCustomer) => prevCustomer.id !== row.id,
-                        ),
-                    }
+                if (prevData.some((prevCustomer) => row.id === prevCustomer.id)) {
+                    return { selectedCustomer: prevData }
                 }
-                return { selectedCustomer: prevData }
+                return { selectedCustomer: [...prevData, row] }
             }
+
+            if (prevData.some((prevCustomer) => row.id === prevCustomer.id)) {
+                return {
+                    selectedCustomer: prevData.filter(
+                        (prevCustomer) => prevCustomer.id !== row.id,
+                    ),
+                }
+            }
+
+            return { selectedCustomer: prevData }
         }),
     setSelectAllCustomer: (row) => set(() => ({ selectedCustomer: row })),
 }))

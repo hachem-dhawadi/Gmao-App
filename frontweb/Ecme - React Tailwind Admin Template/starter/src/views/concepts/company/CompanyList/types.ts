@@ -45,8 +45,8 @@ export type GetCustomersListResponse = {
 }
 
 export type Filter = {
-    purchasedProducts: string
-    purchaseChannel: Array<string>
+    companyName: string
+    companyStatus: Array<'pending' | 'approved' | 'rejected'>
 }
 
 export type Customer = {

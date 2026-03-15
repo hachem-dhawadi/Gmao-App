@@ -170,6 +170,64 @@ export async function apiGetCompany<
     })
 }
 
+
+export type SuperadminCreateCompanyRequest = {
+    name: string
+    legal_name?: string | null
+    phone?: string | null
+    email?: string | null
+    address_line1?: string | null
+    address_line2?: string | null
+    city?: string | null
+    postal_code?: string | null
+    country?: string | null
+    timezone?: string
+    settings_json?: string | null
+    logo?: File | null
+}
+
+function buildCompanyCreateFormData(data: SuperadminCreateCompanyRequest): FormData {
+    const formData = new FormData()
+
+    formData.append('name', data.name)
+
+    const appendNullable = (key: string, value: string | null | undefined) => {
+        if (value !== undefined) {
+            formData.append(key, value ?? '')
+        }
+    }
+
+    appendNullable('legal_name', data.legal_name)
+    appendNullable('phone', data.phone)
+    appendNullable('email', data.email)
+    appendNullable('address_line1', data.address_line1)
+    appendNullable('address_line2', data.address_line2)
+    appendNullable('city', data.city)
+    appendNullable('postal_code', data.postal_code)
+    appendNullable('country', data.country)
+    appendNullable('timezone', data.timezone)
+    appendNullable('settings_json', data.settings_json)
+
+    if (data.logo instanceof File) {
+        formData.append('logo', data.logo)
+    }
+
+    return formData
+}
+
+export async function apiCreateCompany<
+    T = SuperadminCompanyResponse,
+    U extends SuperadminCreateCompanyRequest = SuperadminCreateCompanyRequest,
+>(data: U) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: '/superadmin/companies',
+        method: 'post',
+        data: buildCompanyCreateFormData(data),
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    })
+}
 export async function apiUpdateCompany<
     T = SuperadminCompanyResponse,
     U extends SuperadminUpdateCompanyRequest = SuperadminUpdateCompanyRequest,
@@ -200,4 +258,86 @@ export async function apiDeleteCompany<T = { success: boolean; message: string }
         method: 'delete',
     })
 }
+
+
+export type SuperadminCompanyMember = {
+    id: number
+    company_id: number
+    user_id: number
+    department_id: number | null
+    employee_code: string | null
+    job_title: string | null
+    status: string
+    user: {
+        id: number
+        name: string
+        email: string
+        phone: string | null
+    } | null
+    roles: Array<{
+        id: number
+        code: string
+        label: string
+    }>
+}
+
+export type SuperadminCompanyMembersResponse = {
+    success: boolean
+    message: string
+    data: {
+        members: SuperadminCompanyMember[]
+        pagination: {
+            current_page: number
+            per_page: number
+            total: number
+            last_page: number
+        }
+    }
+}
+
+export async function apiGetCompanyMembers<
+    T = SuperadminCompanyMembersResponse,
+    U extends Record<string, unknown> = Record<string, unknown>,
+>(companyId: string | number, params?: U) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/superadmin/companies/${companyId}/members`,
+        method: 'get',
+        params,
+    })
+}
+
+export type SuperadminUser = {
+    id: number
+    name: string
+    email: string
+    phone: string | null
+    avatar_path: string | null
+    locale: string | null
+    is_active: boolean
+    is_superadmin: boolean
+    last_login_at: string | null
+    created_at: string | null
+    members_count: number
+    deleted_at: string | null
+}
+
+export type SuperadminUserResponse = {
+    success: boolean
+    message: string
+    data: {
+        user: SuperadminUser
+    }
+}
+
+export async function apiGetSuperadminUser<
+    T = SuperadminUserResponse,
+    U extends Record<string, unknown> = Record<string, unknown>,
+>(userId: string | number, params?: U) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/superadmin/users/${userId}`,
+        method: 'get',
+        params,
+    })
+}
+
 

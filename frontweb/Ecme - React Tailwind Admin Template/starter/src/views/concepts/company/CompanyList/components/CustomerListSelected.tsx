@@ -9,18 +9,14 @@ import toast from '@/components/ui/toast'
 import RichTextEditor from '@/components/shared/RichTextEditor'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import useCustomerList from '../hooks/useCustomerList'
+import { apiDeleteCompany } from '@/services/CompaniesService'
 import { TbChecks } from 'react-icons/tb'
 
 const CustomerListSelected = () => {
-    const {
-        selectedCustomer,
-        customerList,
-        mutate,
-        customerListTotal,
-        setSelectAllCustomer,
-    } = useCustomerList()
+    const { selectedCustomer, mutate, setSelectAllCustomer } = useCustomerList()
 
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false)
+    const [deleteLoading, setDeleteLoading] = useState(false)
     const [sendMessageDialogOpen, setSendMessageDialogOpen] = useState(false)
     const [sendMessageLoading, setSendMessageLoading] = useState(false)
 
@@ -29,31 +25,57 @@ const CustomerListSelected = () => {
     }
 
     const handleCancel = () => {
-        setDeleteConfirmationOpen(false)
+        if (!deleteLoading) {
+            setDeleteConfirmationOpen(false)
+        }
     }
 
-    const handleConfirmDelete = () => {
-        const newCustomerList = customerList.filter((customer) => {
-            return !selectedCustomer.some(
-                (selected) => selected.id === customer.id,
+    const handleConfirmDelete = async () => {
+        const selectedIds = selectedCustomer
+            .map((customer) => customer.id)
+            .filter((id): id is string => Boolean(id))
+
+        if (selectedIds.length === 0) {
+            setDeleteConfirmationOpen(false)
+            return
+        }
+
+        setDeleteLoading(true)
+
+        try {
+            const results = await Promise.allSettled(
+                selectedIds.map((id) => apiDeleteCompany(id)),
             )
-        })
-        setSelectAllCustomer([])
-        mutate(
-            {
-                data: {
-                    companies: newCustomerList,
-                    pagination: {
-                        current_page: 1,
-                        per_page: 10,
-                        total: customerListTotal - selectedCustomer.length,
-                        last_page: 1,
-                    },
-                },
-            },
-            false,
-        )
-        setDeleteConfirmationOpen(false)
+
+            const failedCount = results.filter(
+                (result) => result.status === 'rejected',
+            ).length
+            const successCount = selectedIds.length - failedCount
+
+            if (successCount > 0) {
+                toast.push(
+                    <Notification type="success">
+                        {successCount} compan{successCount > 1 ? 'ies' : 'y'} deleted.
+                    </Notification>,
+                    { placement: 'top-center' },
+                )
+            }
+
+            if (failedCount > 0) {
+                toast.push(
+                    <Notification type="danger">
+                        {failedCount} compan{failedCount > 1 ? 'ies' : 'y'} could not be deleted.
+                    </Notification>,
+                    { placement: 'top-center' },
+                )
+            }
+
+            setSelectAllCustomer([])
+            await mutate()
+            setDeleteConfirmationOpen(false)
+        } finally {
+            setDeleteLoading(false)
+        }
     }
 
     const handleSend = () => {
@@ -130,11 +152,11 @@ const CustomerListSelected = () => {
                 onRequestClose={handleCancel}
                 onCancel={handleCancel}
                 onConfirm={handleConfirmDelete}
+                confirmButtonProps={{ loading: deleteLoading }}
             >
                 <p>
-                    {' '}
                     Are you sure you want to remove these companies? This action
-                    can&apos;t be undo.{' '}
+                    can&apos;t be undo.
                 </p>
             </ConfirmDialog>
             <Dialog

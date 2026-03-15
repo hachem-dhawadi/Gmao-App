@@ -73,7 +73,7 @@ const OverviewSection = ({ control, errors }: OverviewSectionProps) => {
             <h4 className="mb-6">Overview</h4>
             <div className="grid md:grid-cols-2 gap-4">
                 <FormItem
-                    label="First Name"
+                    label="Company Name"
                     invalid={Boolean(errors.firstName)}
                     errorMessage={errors.firstName?.message}
                 >
@@ -84,14 +84,14 @@ const OverviewSection = ({ control, errors }: OverviewSectionProps) => {
                             <Input
                                 type="text"
                                 autoComplete="off"
-                                placeholder="First Name"
+                                placeholder="Company Name"
                                 {...field}
                             />
                         )}
                     />
                 </FormItem>
                 <FormItem
-                    label="User Name"
+                    label="Legal Name"
                     invalid={Boolean(errors.lastName)}
                     errorMessage={errors.lastName?.message}
                 >
@@ -102,7 +102,7 @@ const OverviewSection = ({ control, errors }: OverviewSectionProps) => {
                             <Input
                                 type="text"
                                 autoComplete="off"
-                                placeholder="Last Name"
+                                placeholder="Legal Name"
                                 {...field}
                             />
                         )}

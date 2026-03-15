@@ -27,10 +27,6 @@ type ProfileSchema = {
     dialCode: string
     phoneNumber: string
     img: string
-    country: string
-    address: string
-    postcode: string
-    city: string
 }
 
 type CountryOption = {
@@ -52,28 +48,34 @@ const validationSchema: ZodType<ProfileSchema> = z.object({
     phoneNumber: z
         .string()
         .min(1, { message: 'Please input your mobile number' }),
-    country: z.string().min(1, { message: 'Please select a country' }),
-    address: z.string().min(1, { message: 'Addrress required' }),
-    postcode: z.string().min(1, { message: 'Postcode required' }),
-    city: z.string().min(1, { message: 'City required' }),
     img: z.string(),
 })
 
-const CustomSelectOption = (
-    props: OptionProps<CountryOption> & { variant: 'country' | 'phone' },
-) => {
+const formatDateTime = (value?: string) => {
+    if (!value) {
+        return '-'
+    }
+
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) {
+        return value
+    }
+
+    return parsed.toLocaleString()
+}
+
+const CustomSelectOption = (props: OptionProps<CountryOption>) => {
     return (
         <DefaultOption<CountryOption>
             {...props}
-            customLabel={(data, label) => (
+            customLabel={(data) => (
                 <span className="flex items-center gap-2">
                     <Avatar
                         shape="circle"
                         size={20}
                         src={`/img/countries/${data.value}.png`}
                     />
-                    {props.variant === 'country' && <span>{label}</span>}
-                    {props.variant === 'phone' && <span>{data.dialCode}</span>}
+                    <span>{data.dialCode}</span>
                 </span>
             )}
         />
@@ -145,7 +147,14 @@ const SettingsProfile = () => {
 
     useEffect(() => {
         if (data) {
-            reset(data)
+            reset({
+                firstName: data.firstName || '',
+                lastName: data.lastName || '',
+                email: data.email || '',
+                dialCode: data.dialCode || '',
+                phoneNumber: data.phoneNumber || '',
+                img: data.img || '',
+            })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data])
@@ -156,6 +165,10 @@ const SettingsProfile = () => {
             mutate({ ...data, ...values }, false)
         }
     }
+
+    const statusLabel = data?.isActive ? 'Active' : 'Inactive'
+    const statusDotClass = data?.isActive ? 'bg-emerald-500' : 'bg-gray-400'
+    const statusTextClass = data?.isActive ? 'text-emerald-600' : 'text-gray-500'
 
     return (
         <>
@@ -181,9 +194,7 @@ const SettingsProfile = () => {
                                         onChange={(files) => {
                                             if (files.length > 0) {
                                                 field.onChange(
-                                                    URL.createObjectURL(
-                                                        files[0],
-                                                    ),
+                                                    URL.createObjectURL(files[0]),
                                                 )
                                             }
                                         }}
@@ -269,10 +280,7 @@ const SettingsProfile = () => {
                 </FormItem>
                 <div className="flex items-end gap-4 w-full mb-6">
                     <FormItem
-                        invalid={
-                            Boolean(errors.phoneNumber) ||
-                            Boolean(errors.dialCode)
-                        }
+                        invalid={Boolean(errors.phoneNumber) || Boolean(errors.dialCode)}
                     >
                         <label className="form-label mb-2">Phone number</label>
                         <Controller
@@ -286,7 +294,6 @@ const SettingsProfile = () => {
                                     components={{
                                         Option: (props) => (
                                             <CustomSelectOption
-                                                variant="phone"
                                                 {...(props as OptionProps<CountryOption>)}
                                             />
                                         ),
@@ -294,8 +301,7 @@ const SettingsProfile = () => {
                                     }}
                                     placeholder=""
                                     value={dialCodeList.filter(
-                                        (option) =>
-                                            option.dialCode === field.value,
+                                        (option) => option.dialCode === field.value,
                                     )}
                                     onChange={(option) =>
                                         field.onChange(option?.dialCode)
@@ -306,10 +312,7 @@ const SettingsProfile = () => {
                     </FormItem>
                     <FormItem
                         className="w-full"
-                        invalid={
-                            Boolean(errors.phoneNumber) ||
-                            Boolean(errors.dialCode)
-                        }
+                        invalid={Boolean(errors.phoneNumber) || Boolean(errors.dialCode)}
                         errorMessage={errors.phoneNumber?.message}
                     >
                         <Controller
@@ -327,95 +330,29 @@ const SettingsProfile = () => {
                         />
                     </FormItem>
                 </div>
-                <h4 className="mb-6">Address information</h4>
-                <FormItem
-                    label="Country"
-                    invalid={Boolean(errors.country)}
-                    errorMessage={errors.country?.message}
-                >
-                    <Controller
-                        name="country"
-                        control={control}
-                        render={({ field }) => (
-                            <Select<CountryOption>
-                                options={countryList}
-                                {...field}
-                                components={{
-                                    Option: (props) => (
-                                        <CustomSelectOption
-                                            variant="country"
-                                            {...(props as OptionProps<CountryOption>)}
-                                        />
-                                    ),
-                                    Control: CustomControl,
-                                }}
-                                placeholder=""
-                                value={countryList.filter(
-                                    (option) => option.value === field.value,
-                                )}
-                                onChange={(option) =>
-                                    field.onChange(option?.value)
-                                }
-                            />
-                        )}
-                    />
-                </FormItem>
-                <FormItem
-                    label="Address"
-                    invalid={Boolean(errors.address)}
-                    errorMessage={errors.address?.message}
-                >
-                    <Controller
-                        name="address"
-                        control={control}
-                        render={({ field }) => (
-                            <Input
-                                type="text"
-                                autoComplete="off"
-                                placeholder="Address"
-                                {...field}
-                            />
-                        )}
-                    />
-                </FormItem>
+
+                <h4 className="mb-6">Other information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormItem
-                        label="City"
-                        invalid={Boolean(errors.city)}
-                        errorMessage={errors.city?.message}
-                    >
-                        <Controller
-                            name="city"
-                            control={control}
-                            render={({ field }) => (
-                                <Input
-                                    type="text"
-                                    autoComplete="off"
-                                    placeholder="City"
-                                    {...field}
-                                />
-                            )}
-                        />
+                    <FormItem label="Locale">
+                        <Input value={data?.locale || '-'} readOnly />
                     </FormItem>
-                    <FormItem
-                        label="Postal Code"
-                        invalid={Boolean(errors.postcode)}
-                        errorMessage={errors.postcode?.message}
-                    >
-                        <Controller
-                            name="postcode"
-                            control={control}
-                            render={({ field }) => (
-                                <Input
-                                    type="text"
-                                    autoComplete="off"
-                                    placeholder="Postal Code"
-                                    {...field}
-                                />
-                            )}
-                        />
+                    <FormItem label="Account status">
+                        <div className="h-11 px-3 border border-gray-300 dark:border-gray-600 rounded-md flex items-center">
+                            <span className={`h-2.5 w-2.5 rounded-full mr-2 ${statusDotClass}`} />
+                            <span className={`font-semibold ${statusTextClass}`}>{statusLabel}</span>
+                        </div>
+                    </FormItem>
+                    <FormItem label="Last login">
+                        <Input value={formatDateTime(data?.lastLoginAt)} readOnly />
+                    </FormItem>
+                    <FormItem label="Created at">
+                        <Input value={formatDateTime(data?.createdAt)} readOnly />
+                    </FormItem>
+                    <FormItem label="Updated at">
+                        <Input value={formatDateTime(data?.updatedAt)} readOnly />
                     </FormItem>
                 </div>
+
                 <div className="flex justify-end">
                     <Button
                         variant="solid"

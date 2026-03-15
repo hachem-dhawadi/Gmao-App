@@ -1,5 +1,5 @@
 import Button from '@/components/ui/Button'
-import { TbCloudDownload, TbUserPlus } from 'react-icons/tb'
+import { TbCloudDownload, TbBuilding, TbPlus } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import useCustomerList from '../hooks/useCustomerList'
 import { CSVLink } from 'react-csv'
@@ -25,7 +25,12 @@ const CustomerListActionTools = () => {
             </CSVLink>
             <Button
                 variant="solid"
-                icon={<TbUserPlus className="text-xl" />}
+                icon={
+                    <span className="flex items-center">
+                        <TbPlus className="text-lg" />
+                        <TbBuilding className="text-lg" />
+                    </span>
+                }
                 onClick={() => navigate('/concepts/company/company-create')}
             >
                 Add new
