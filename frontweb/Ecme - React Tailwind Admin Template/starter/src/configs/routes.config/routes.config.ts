@@ -239,12 +239,22 @@ export const protectedRoutes: Routes = [
         path: '/concepts/company/company-edit/:id',
         component: lazy(() => import('@/views/concepts/company/CompanyEdit')),
         authority: [],
+        meta: {
+            header: {
+                title: 'Edit company',
+            },
+        },
     },
     {
         key: 'concepts.company.companyCreate',
         path: '/concepts/company/company-create',
         component: lazy(() => import('@/views/concepts/company/CompanyCreate')),
         authority: [],
+        meta: {
+            header: {
+                title: 'Create company',
+            },
+        },
     },
     {
         key: 'concepts.company.companyDetails',
@@ -285,3 +295,4 @@ export const protectedRoutes: Routes = [
     ...placeholderRoutes,
     ...othersRoute,
 ]
+
