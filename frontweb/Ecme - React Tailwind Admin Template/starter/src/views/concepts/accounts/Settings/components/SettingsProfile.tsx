@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
 import Upload from '@/components/ui/Upload'
 import Input from '@/components/ui/Input'
@@ -10,7 +10,10 @@ import { countryList } from '@/constants/countries.constant'
 import { components } from 'react-select'
 import type { ControlProps, OptionProps } from 'react-select'
 import { apiGetSettingsProfile } from '@/services/AccontsService'
-import sleep from '@/utils/sleep'
+import { apiUpdateProfile } from '@/services/AuthService'
+import { useSessionUser } from '@/store/authStore'
+import toast from '@/components/ui/toast'
+import Notification from '@/components/ui/Notification'
 import useSWR from 'swr'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm, Controller } from 'react-hook-form'
@@ -64,6 +67,30 @@ const formatDateTime = (value?: string) => {
     return parsed.toLocaleString()
 }
 
+const buildPhone = (dialCode: string, phoneNumber: string): string => {
+    const dialDigits = (dialCode || '').replace(/[^\d]/g, '')
+    const formattedDial = dialDigits ? `+${dialDigits}` : ''
+    const rawPhone = (phoneNumber || '').trim()
+
+    if (!rawPhone) {
+        return ''
+    }
+
+    const phoneDigits = rawPhone.replace(/[^\d]/g, '')
+    if (!phoneDigits) {
+        return ''
+    }
+
+    if (formattedDial) {
+        const localDigits = phoneDigits.startsWith(dialDigits)
+            ? phoneDigits.slice(dialDigits.length)
+            : phoneDigits
+        return `${formattedDial}${localDigits ? ` ${localDigits}` : ''}`
+    }
+
+    return rawPhone.startsWith('+') ? `+${phoneDigits}` : phoneDigits
+}
+
 const CustomSelectOption = (props: OptionProps<CountryOption>) => {
     return (
         <DefaultOption<CountryOption>
@@ -100,6 +127,10 @@ const CustomControl = ({ children, ...props }: ControlProps<CountryOption>) => {
 }
 
 const SettingsProfile = () => {
+    const setUser = useSessionUser((state) => state.setUser)
+    const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null)
+    const [removeAvatar, setRemoveAvatar] = useState(false)
+
     const { data, mutate } = useSWR(
         '/api/settings/profile/',
         () => apiGetSettingsProfile<GetSettingsProfileResponse>(),
@@ -147,6 +178,8 @@ const SettingsProfile = () => {
 
     useEffect(() => {
         if (data) {
+            setSelectedAvatarFile(null)
+            setRemoveAvatar(false)
             reset({
                 firstName: data.firstName || '',
                 lastName: data.lastName || '',
@@ -160,9 +193,44 @@ const SettingsProfile = () => {
     }, [data])
 
     const onSubmit = async (values: ProfileSchema) => {
-        await sleep(500)
-        if (data) {
-            mutate({ ...data, ...values }, false)
+        const name = `${values.firstName} ${values.lastName}`.trim()
+        const phone = buildPhone(values.dialCode, values.phoneNumber)
+
+        try {
+            const response = await apiUpdateProfile({
+                name,
+                email: values.email,
+                phone,
+                locale: data?.locale || null,
+                avatarFile: selectedAvatarFile,
+                removeAvatar,
+            })
+
+            const updatedUser = response?.data?.user
+            const updatedAvatar =
+                updatedUser?.avatar_url || updatedUser?.avatar_path || ''
+
+            setUser({
+                userName: updatedUser?.name || name,
+                email: updatedUser?.email || values.email,
+                phone: updatedUser?.phone || phone,
+                avatar: updatedAvatar,
+            })
+
+            await mutate()
+
+            toast.push(
+                <Notification type="success">Profile updated successfully.</Notification>,
+                { placement: 'top-center' },
+            )
+        } catch (error: unknown) {
+            const message =
+                (error as { response?: { data?: { message?: string } } })
+                    ?.response?.data?.message || 'Failed to update profile.'
+
+            toast.push(<Notification type="danger">{message}</Notification>, {
+                placement: 'top-center',
+            })
         }
     }
 
@@ -193,6 +261,8 @@ const SettingsProfile = () => {
                                         beforeUpload={beforeUpload}
                                         onChange={(files) => {
                                             if (files.length > 0) {
+                                                setSelectedAvatarFile(files[0])
+                                                setRemoveAvatar(false)
                                                 field.onChange(
                                                     URL.createObjectURL(files[0]),
                                                 )
@@ -212,6 +282,8 @@ const SettingsProfile = () => {
                                         size="sm"
                                         type="button"
                                         onClick={() => {
+                                            setSelectedAvatarFile(null)
+                                            setRemoveAvatar(true)
                                             field.onChange('')
                                         }}
                                     >
@@ -354,11 +426,7 @@ const SettingsProfile = () => {
                 </div>
 
                 <div className="flex justify-end">
-                    <Button
-                        variant="solid"
-                        type="submit"
-                        loading={isSubmitting}
-                    >
+                    <Button variant="solid" type="submit" loading={isSubmitting}>
                         Save
                     </Button>
                 </div>

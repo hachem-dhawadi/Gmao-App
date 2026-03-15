@@ -49,12 +49,27 @@ export type ResetPassword = {
     password: string
 }
 
+export type UpdateProfileRequest = {
+    name: string
+    email: string
+    phone: string
+    locale?: string | null
+    avatarFile?: File | null
+    removeAvatar?: boolean
+}
+
+export type UpdatePasswordRequest = {
+    currentPassword: string
+    password: string
+    passwordConfirmation: string
+}
 export type BackendAuthUser = {
     id: number
     name: string
     email: string
     phone: string | null
     avatar_path: string | null
+    avatar_url?: string | null
     locale: string | null
     is_active: boolean
     is_superadmin: boolean
@@ -150,6 +165,12 @@ export type MeResponse = ApiEnvelope<{
     } | null
 }>
 
+export type UpdateProfileResponse = ApiEnvelope<{
+    user: BackendAuthUser
+}>
+
+export type UpdatePasswordResponse = ApiEnvelope<Record<string, never>>
+
 export type AuthRequestStatus = 'success' | 'failed' | ''
 
 export type AuthResult = Promise<{
@@ -176,6 +197,10 @@ export type OauthSignInCallbackPayload = {
     onSignIn: (tokens: Token, user?: User) => void
     redirect: () => void
 }
+
+
+
+
 
 
 

@@ -70,7 +70,7 @@ const mapBackendUser = (
 
     return {
         userId: String(backendUser.id),
-        avatar: backendUser.avatar_path,
+        avatar: backendUser.avatar_url || backendUser.avatar_path,
         userName: backendUser.name,
         email: backendUser.email,
         phone: backendUser.phone,
@@ -269,3 +269,4 @@ function AuthProvider({ children }: AuthProviderProps) {
 }
 
 export default AuthProvider
+

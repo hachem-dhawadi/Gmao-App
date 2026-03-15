@@ -7,11 +7,15 @@ import type {
     UpdateCompanyRequest,
     ForgotPassword,
     ResetPassword,
+    UpdateProfileRequest,
+    UpdatePasswordRequest,
     SignInResponse,
     SignUpResponse,
     CreateCompanyResponse,
     UpdateCompanyResponse,
     MeResponse,
+    UpdateProfileResponse,
+    UpdatePasswordResponse,
 } from '@/@types/auth'
 
 export async function apiSignIn(data: SignInCredential) {
@@ -113,6 +117,49 @@ export async function apiMe() {
     })
 }
 
+export async function apiUpdateProfile(data: UpdateProfileRequest) {
+    const formData = new FormData()
+
+    formData.append('name', data.name)
+    formData.append('email', data.email)
+    formData.append('phone', data.phone)
+
+    if (typeof data.locale === 'string') {
+        formData.append('locale', data.locale)
+    }
+
+    if (data.avatarFile) {
+        formData.append('avatar', data.avatarFile)
+    }
+
+    if (data.removeAvatar) {
+        formData.append('remove_avatar', '1')
+    }
+
+    formData.append('_method', 'PATCH')
+
+    return ApiService.fetchDataWithAxios<UpdateProfileResponse>({
+        url: endpointConfig.updateProfile,
+        method: 'post',
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    })
+}
+
+export async function apiUpdatePassword(data: UpdatePasswordRequest) {
+    return ApiService.fetchDataWithAxios<UpdatePasswordResponse>({
+        url: endpointConfig.updatePassword,
+        method: 'patch',
+        data: {
+            current_password: data.currentPassword,
+            password: data.password,
+            password_confirmation: data.passwordConfirmation,
+        },
+    })
+}
+
 export async function apiForgotPassword<T>(data: ForgotPassword) {
     return ApiService.fetchDataWithAxios<T>({
         url: endpointConfig.forgotPassword,
@@ -128,5 +175,8 @@ export async function apiResetPassword<T>(data: ResetPassword) {
         data,
     })
 }
+
+
+
 
 

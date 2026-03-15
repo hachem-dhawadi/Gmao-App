@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\LoginRequest;
+use App\Http\Requests\Api\V1\Auth\UpdatePasswordRequest;
+use App\Http\Requests\Api\V1\Auth\UpdateProfileRequest;
 use App\Http\Resources\Api\V1\Auth\AuthUserResource;
 use App\Models\File;
 use App\Models\Member;
@@ -168,6 +170,61 @@ class LoginController extends Controller
             ],
         ]);
     }
+
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $validated = $request->validated();
+
+        if ($request->boolean('remove_avatar') && $user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+            $user->avatar_path = null;
+        }
+
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+
+            $validated['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        $user->forceFill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'locale' => $validated['locale'] ?? $user->locale,
+            'avatar_path' => $validated['avatar_path'] ?? $user->avatar_path,
+        ])->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully.',
+            'data' => [
+                'user' => AuthUserResource::make($user->refresh())->resolve(),
+            ],
+        ]);
+    }
+
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $validated = $request->validated();
+
+        $user->forceFill([
+            'password' => $validated['password'],
+        ])->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully.',
+        ]);
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */

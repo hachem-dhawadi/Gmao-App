@@ -21,6 +21,8 @@ Route::prefix('v1')->group(function (): void {
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/logout', [LoginController::class, 'logout']);
             Route::get('/me', [LoginController::class, 'me']);
+            Route::patch('/me', [LoginController::class, 'updateProfile']);
+            Route::patch('/password', [LoginController::class, 'updatePassword']);
         });
     });
 
@@ -58,3 +60,4 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/companies/{company}/members/{member}', [SuperadminCompanyMemberController::class, 'destroy']);
     });
 });
+

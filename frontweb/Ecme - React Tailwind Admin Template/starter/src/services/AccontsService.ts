@@ -103,7 +103,7 @@ const mapMeToSettingsProfile = (response: MeResponse | unknown): GetSettingsProf
     const userName = meUser?.name || sessionUser.userName || ''
     const userEmail = meUser?.email || sessionUser.email || ''
     const userPhone = meUser?.phone ?? sessionUser.phone ?? ''
-    const userAvatar = meUser?.avatar_path || sessionUser.avatar || ''
+    const userAvatar = meUser?.avatar_url || meUser?.avatar_path || sessionUser.avatar || ''
 
     const { firstName, lastName } = splitFullName(userName)
     const { dialCode, phoneNumber } = splitPhone(userPhone || null)
@@ -182,3 +182,4 @@ export async function apiGetPricingPlans<T>() {
         method: 'get',
     })
 }
+

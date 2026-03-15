@@ -7,6 +7,9 @@ const endpointConfig = {
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
     me: '/auth/me',
+    updateProfile: '/auth/me',
+    updatePassword: '/auth/password',
 }
 
 export default endpointConfig
+
