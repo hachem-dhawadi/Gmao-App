@@ -145,7 +145,15 @@ function AuthProvider({ children }: AuthProviderProps) {
         setToken('')
         localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
         localStorage.removeItem(OWNER_COMPANY_TAB_KEY)
-        setUser({})
+        setUser({
+            userId: '',
+            avatar: '',
+            userName: '',
+            email: '',
+            authority: [],
+            isSuperadmin: false,
+            phone: null,
+        })
         setSessionSignedIn(false)
     }
 
@@ -269,4 +277,5 @@ function AuthProvider({ children }: AuthProviderProps) {
 }
 
 export default AuthProvider
+
 

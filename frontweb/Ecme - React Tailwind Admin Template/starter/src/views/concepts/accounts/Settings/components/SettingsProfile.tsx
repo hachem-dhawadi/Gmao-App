@@ -128,19 +128,23 @@ const CustomControl = ({ children, ...props }: ControlProps<CountryOption>) => {
 
 const SettingsProfile = () => {
     const setUser = useSessionUser((state) => state.setUser)
+    const currentUserId = useSessionUser((state) => state.user.userId)
     const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null)
     const [removeAvatar, setRemoveAvatar] = useState(false)
+    const profileSwrKey = currentUserId
+        ? `/api/settings/profile/${currentUserId}`
+        : null
 
     const { data, mutate } = useSWR(
-        '/api/settings/profile/',
+        profileSwrKey,
         () => apiGetSettingsProfile<GetSettingsProfileResponse>(),
         {
             revalidateOnFocus: false,
-            revalidateIfStale: false,
+            revalidateIfStale: true,
             revalidateOnReconnect: false,
+            revalidateOnMount: true,
         },
     )
-
     const dialCodeList = useMemo(() => {
         const newCountryList: Array<CountryOption> = JSON.parse(
             JSON.stringify(countryList),
@@ -436,3 +440,5 @@ const SettingsProfile = () => {
 }
 
 export default SettingsProfile
+
+
