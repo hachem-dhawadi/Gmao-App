@@ -9,7 +9,7 @@ import type { FormSectionBaseProps } from './types'
 
 type ProfileImageSectionProps = FormSectionBaseProps
 
-const ProfileImage = ({ control }: ProfileImageSectionProps) => {
+const ProfileImage = ({ control, setValue }: ProfileImageSectionProps) => {
     const beforeUpload = (files: FileList | null) => {
         let valid: string | boolean = true
 
@@ -57,9 +57,14 @@ const ProfileImage = ({ control }: ProfileImageSectionProps) => {
                                     beforeUpload={beforeUpload}
                                     onChange={(files) => {
                                         if (files.length > 0) {
-                                            field.onChange(
-                                                URL.createObjectURL(files[0]),
-                                            )
+                                            const file = files[0]
+                                            field.onChange(URL.createObjectURL(file))
+                                            setValue('imgFile', file, {
+                                                shouldDirty: true,
+                                            })
+                                            setValue('removeAvatar', false, {
+                                                shouldDirty: true,
+                                            })
                                         }
                                     }}
                                 >
@@ -71,6 +76,23 @@ const ProfileImage = ({ control }: ProfileImageSectionProps) => {
                                         Upload Image
                                     </Button>
                                 </Upload>
+                                {field.value && (
+                                    <Button
+                                        className="mt-2"
+                                        type="button"
+                                        onClick={() => {
+                                            field.onChange('')
+                                            setValue('imgFile', null, {
+                                                shouldDirty: true,
+                                            })
+                                            setValue('removeAvatar', true, {
+                                                shouldDirty: true,
+                                            })
+                                        }}
+                                    >
+                                        Remove Image
+                                    </Button>
+                                )}
                             </>
                         )}
                     />

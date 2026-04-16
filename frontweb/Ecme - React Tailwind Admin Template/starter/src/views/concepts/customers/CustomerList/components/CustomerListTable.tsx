@@ -116,11 +116,11 @@ const CustomerListTable = () => {
                 },
             },
             {
-                header: 'Spent',
-                accessorKey: 'totalSpending',
-                cell: (props) => {
-                    return <span>${props.row.original.totalSpending}</span>
-                },
+                header: 'Phone',
+                accessorKey: 'personalInfo.phoneNumber',
+                cell: (props) => (
+                    <span>{props.row.original.personalInfo.phoneNumber || '-'}</span>
+                ),
             },
             {
                 header: '',

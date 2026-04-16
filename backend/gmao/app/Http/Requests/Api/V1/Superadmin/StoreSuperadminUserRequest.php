@@ -30,6 +30,7 @@ class StoreSuperadminUserRequest extends FormRequest
             'is_active' => ['sometimes', 'boolean'],
             'is_superadmin' => ['sometimes', 'boolean'],
             'two_factor_enabled' => ['sometimes', 'boolean'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
     }
 }

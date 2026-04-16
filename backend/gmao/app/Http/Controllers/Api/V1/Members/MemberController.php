@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -83,6 +84,9 @@ class MemberController extends Controller
     {
         $validated = $request->validated();
         $currentCompany = $request->attributes->get('currentCompany');
+        $avatarPath = $request->hasFile('avatar')
+            ? $request->file('avatar')?->store('avatars', 'public')
+            : null;
 
         if (! $currentCompany) {
             return response()->json([
@@ -145,7 +149,7 @@ class MemberController extends Controller
             ], 422);
         }
 
-        $member = DB::transaction(function () use ($validated, $currentCompany, $roles, $existingUser): Member {
+        $member = DB::transaction(function () use ($validated, $currentCompany, $roles, $existingUser, $avatarPath): Member {
             $user = $existingUser;
 
             if (! $user) {
@@ -153,15 +157,26 @@ class MemberController extends Controller
                     'name' => $validated['name'],
                     'email' => $validated['email'],
                     'phone' => $validated['phone'],
+                    'avatar_path' => $avatarPath,
                     'password' => Hash::make(Str::random(32)),
                     'is_active' => true,
                     'is_superadmin' => false,
                 ]);
             } else {
-                $user->forceFill([
+                $userPayload = [
                     'name' => $validated['name'],
                     'phone' => $validated['phone'],
-                ])->save();
+                ];
+
+                if ($avatarPath) {
+                    if ($user->avatar_path) {
+                        Storage::disk('public')->delete($user->avatar_path);
+                    }
+
+                    $userPayload['avatar_path'] = $avatarPath;
+                }
+
+                $user->forceFill($userPayload)->save();
             }
 
             $member = Member::query()->create([
@@ -207,7 +222,11 @@ class MemberController extends Controller
             ], 404);
         }
 
-        if ($validated === []) {
+        if (
+            $validated === []
+            && ! $request->hasFile('avatar')
+            && ! $request->boolean('remove_avatar')
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'No fields provided for update.',
@@ -268,11 +287,28 @@ class MemberController extends Controller
             }
         }
 
-        $updatedMember = DB::transaction(function () use ($validated, $member, $user, $roles): Member {
+        $updatedMember = DB::transaction(function () use ($validated, $member, $user, $roles, $request): Member {
             $userPayload = [];
             foreach (['name', 'email', 'phone'] as $field) {
                 if (array_key_exists($field, $validated)) {
                     $userPayload[$field] = $validated[$field];
+                }
+            }
+
+            if ($request->boolean('remove_avatar') && $user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+                $userPayload['avatar_path'] = null;
+            }
+
+            if ($request->hasFile('avatar')) {
+                $newAvatarPath = $request->file('avatar')?->store('avatars', 'public');
+
+                if ($newAvatarPath) {
+                    if ($user->avatar_path) {
+                        Storage::disk('public')->delete($user->avatar_path);
+                    }
+
+                    $userPayload['avatar_path'] = $newAvatarPath;
                 }
             }
 

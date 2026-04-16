@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -37,11 +38,15 @@ class UserController extends Controller
     public function store(StoreSuperadminUserRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $avatarPath = $request->hasFile('avatar')
+            ? $request->file('avatar')?->store('avatars', 'public')
+            : null;
 
         $user = User::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'],
+            'avatar_path' => $avatarPath,
             'password' => $validated['password'],
             'locale' => $validated['locale'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
@@ -81,7 +86,11 @@ class UserController extends Controller
     {
         $validated = $request->validated();
 
-        if ($validated === []) {
+        if (
+            $validated === []
+            && ! $request->hasFile('avatar')
+            && ! $request->boolean('remove_avatar')
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'No fields provided for update.',
@@ -98,6 +107,23 @@ class UserController extends Controller
 
         if (array_key_exists('password', $validated)) {
             $payload['password'] = $validated['password'];
+        }
+
+        if ($request->boolean('remove_avatar') && $user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+            $payload['avatar_path'] = null;
+        }
+
+        if ($request->hasFile('avatar')) {
+            $newAvatarPath = $request->file('avatar')?->store('avatars', 'public');
+
+            if ($newAvatarPath) {
+                if ($user->avatar_path) {
+                    Storage::disk('public')->delete($user->avatar_path);
+                }
+
+                $payload['avatar_path'] = $newAvatarPath;
+            }
         }
 
         if ($payload !== []) {

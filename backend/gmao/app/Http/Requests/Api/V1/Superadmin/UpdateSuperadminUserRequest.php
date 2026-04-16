@@ -36,6 +36,8 @@ class UpdateSuperadminUserRequest extends FormRequest
             'is_active' => ['sometimes', 'boolean'],
             'is_superadmin' => ['sometimes', 'boolean'],
             'two_factor_enabled' => ['sometimes', 'boolean'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'remove_avatar' => ['sometimes', 'boolean'],
         ];
     }
 }

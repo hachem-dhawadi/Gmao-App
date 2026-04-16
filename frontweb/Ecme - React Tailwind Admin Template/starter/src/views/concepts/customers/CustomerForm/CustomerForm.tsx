@@ -4,7 +4,7 @@ import Container from '@/components/shared/Container'
 import BottomStickyBar from '@/components/template/BottomStickyBar'
 import OverviewSection from './OverviewSection'
 import AddressSection from './AddressSection'
-import TagsSection from './TagsSection'
+import UserRoleSection from './UserRoleSection'
 import ProfileImageSection from './ProfileImageSection'
 import AccountSection from './AccountSection'
 import isEmpty from 'lodash/isEmpty'
@@ -19,6 +19,10 @@ type CustomerFormProps = {
     onFormSubmit: (values: CustomerFormSchema) => void
     defaultValues?: CustomerFormSchema
     newCustomer?: boolean
+    showPasswordFields?: boolean
+    showAddressSection?: boolean
+    showEmployeeCode?: boolean
+    showLocale?: boolean
 } & CommonProps
 
 const validationSchema: ZodType<CustomerFormSchema> = z.object({
@@ -32,12 +36,20 @@ const validationSchema: ZodType<CustomerFormSchema> = z.object({
     phoneNumber: z
         .string()
         .min(1, { message: 'Please input your mobile number' }),
-    country: z.string().min(1, { message: 'Please select a country' }),
-    address: z.string().min(1, { message: 'Addrress required' }),
-    postcode: z.string().min(1, { message: 'Postcode required' }),
-    city: z.string().min(1, { message: 'City required' }),
+    country: z.string().optional(),
+    address: z.string().optional(),
+    postcode: z.string().optional(),
+    city: z.string().optional(),
     img: z.string(),
-    tags: z.array(z.object({ value: z.string(), label: z.string() })),
+    imgFile: z.any().optional().nullable(),
+    removeAvatar: z.boolean().optional(),
+    employeeCode: z.string().optional(),
+    locale: z.string().optional(),
+    role: z.enum(['admin', 'hr', 'manager', 'technician', ''], {
+        errorMap: () => ({ message: 'Please select a role' }),
+    }),
+    password: z.string().optional(),
+    passwordConfirmation: z.string().optional(),
 })
 
 const CustomerForm = (props: CustomerFormProps) => {
@@ -45,12 +57,17 @@ const CustomerForm = (props: CustomerFormProps) => {
         onFormSubmit,
         defaultValues = {},
         newCustomer = false,
+        showPasswordFields = false,
+        showAddressSection = false,
+        showEmployeeCode = false,
+        showLocale = false,
         children,
     } = props
 
     const {
         handleSubmit,
         reset,
+        setValue,
         formState: { errors },
         control,
     } = useForm<CustomerFormSchema>({
@@ -58,6 +75,15 @@ const CustomerForm = (props: CustomerFormProps) => {
             ...{
                 banAccount: false,
                 accountVerified: true,
+                password: '',
+                passwordConfirmation: '',
+                imgFile: null,
+                removeAvatar: false,
+                role: 'technician',
+                country: 'TN',
+                locale: 'TN',
+                dialCode: '+216',
+                city: 'Tunis',
             },
             ...defaultValues,
         },
@@ -84,17 +110,39 @@ const CustomerForm = (props: CustomerFormProps) => {
             <Container>
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="gap-4 flex flex-col flex-auto">
-                        <OverviewSection control={control} errors={errors} />
-                        <AddressSection control={control} errors={errors} />
+                        <OverviewSection
+                            control={control}
+                            errors={errors}
+                            setValue={setValue}
+                            showPasswordFields={showPasswordFields}
+                            showEmployeeCode={showEmployeeCode}
+                            showLocale={showLocale}
+                        />
+                        {showAddressSection && (
+                            <AddressSection
+                                control={control}
+                                errors={errors}
+                                setValue={setValue}
+                            />
+                        )}
                     </div>
                     <div className="md:w-[370px] gap-4 flex flex-col">
                         <ProfileImageSection
                             control={control}
                             errors={errors}
+                            setValue={setValue}
                         />
-                        <TagsSection control={control} errors={errors} />
+                        <UserRoleSection
+                            control={control}
+                            errors={errors}
+                            setValue={setValue}
+                        />
                         {!newCustomer && (
-                            <AccountSection control={control} errors={errors} />
+                            <AccountSection
+                                control={control}
+                                errors={errors}
+                                setValue={setValue}
+                            />
                         )}
                     </div>
                 </div>

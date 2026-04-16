@@ -1,4 +1,4 @@
-import type { Control, FieldErrors } from 'react-hook-form'
+import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form'
 
 export type OverviewFields = {
     firstName: string
@@ -7,21 +7,27 @@ export type OverviewFields = {
     dialCode: string
     phoneNumber: string
     img: string
+    employeeCode?: string
+    locale?: string
+    password?: string
+    passwordConfirmation?: string
 }
 
 export type AddressFields = {
-    country: string
-    address: string
-    postcode: string
-    city: string
+    country?: string
+    address?: string
+    postcode?: string
+    city?: string
 }
 
 export type ProfileImageFields = {
     img: string
+    imgFile?: File | null
+    removeAvatar?: boolean
 }
 
-export type TagsFields = {
-    tags: Array<{ value: string; label: string }>
+export type RoleField = {
+    role: 'admin' | 'hr' | 'manager' | 'technician' | ''
 }
 
 export type AccountField = {
@@ -32,10 +38,11 @@ export type AccountField = {
 export type CustomerFormSchema = OverviewFields &
     AddressFields &
     ProfileImageFields &
-    TagsFields &
+    RoleField &
     AccountField
 
 export type FormSectionBaseProps = {
     control: Control<CustomerFormSchema>
     errors: FieldErrors<CustomerFormSchema>
+    setValue: UseFormSetValue<CustomerFormSchema>
 }
