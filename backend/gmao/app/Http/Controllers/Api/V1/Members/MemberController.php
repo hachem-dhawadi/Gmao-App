@@ -9,7 +9,6 @@ use App\Http\Resources\Api\V1\Members\MemberResource;
 use App\Models\Member;
 use App\Models\Role;
 use App\Models\User;
-use App\Notifications\EmployeePasswordSetupNotification;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,10 +16,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Throwable;
 
 class MemberController extends Controller
 {
@@ -158,7 +154,8 @@ class MemberController extends Controller
                     'email' => $validated['email'],
                     'phone' => $validated['phone'],
                     'avatar_path' => $avatarPath,
-                    'password' => Hash::make(Str::random(32)),
+                    'password' => Hash::make($validated['password']),
+                    'locale' => $validated['locale'] ?? null,
                     'is_active' => true,
                     'is_superadmin' => false,
                 ]);
@@ -167,6 +164,14 @@ class MemberController extends Controller
                     'name' => $validated['name'],
                     'phone' => $validated['phone'],
                 ];
+
+                if (! empty($validated['locale'])) {
+                    $userPayload['locale'] = $validated['locale'];
+                }
+
+                if (! empty($validated['password'])) {
+                    $userPayload['password'] = Hash::make($validated['password']);
+                }
 
                 if ($avatarPath) {
                     if ($user->avatar_path) {
@@ -189,7 +194,6 @@ class MemberController extends Controller
             ]);
 
             $member->roles()->sync($roles->pluck('id')->all());
-            $this->sendPasswordSetup($user);
 
             return $member->load(['user', 'roles']);
         });
@@ -393,31 +397,6 @@ class MemberController extends Controller
             ->get();
 
         return $roles->count() === $roleInputs->count() ? $roles : null;
-    }
-
-    private function sendPasswordSetup(User $user): void
-    {
-        $plainToken = Str::random(64);
-
-        DB::table('password_reset_tokens')
-            ->where('user_id', $user->id)
-            ->delete();
-
-        DB::table('password_reset_tokens')->insert([
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'token_hash' => hash('sha256', $plainToken),
-            'created_at' => now(),
-        ]);
-
-        try {
-            $user->notify(new EmployeePasswordSetupNotification($plainToken, $user->email));
-        } catch (Throwable $exception) {
-            Log::warning('Employee setup email could not be sent.', [
-                'email' => $user->email,
-                'error' => $exception->getMessage(),
-            ]);
-        }
     }
 
     /**

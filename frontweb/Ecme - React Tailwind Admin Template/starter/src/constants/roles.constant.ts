@@ -1,3 +1,6 @@
 export const SUPERADMIN = 'superadmin'
 export const ADMIN = 'admin'
 export const USER = 'user'
+export const HR = 'hr'
+export const MANAGER = 'manager'
+export const TECHNICIAN = 'technician'

@@ -7,12 +7,17 @@ import type { Routes } from '@/@types/routes'
 export const publicRoutes: Routes = [...authRoute]
 
 const DrawerPlaceholder = lazy(() => import('@/views/demo/DrawerPlaceholder'))
+const EcommerceDashboard = lazy(() => import('@/views/dashboards/EcommerceDashboard'))
+const Calendar = lazy(() => import('@/views/concepts/calendar/Calendar'))
+const FileManager = lazy(() => import('@/views/concepts/files/FileManager'))
+const Mail = lazy(() => import('@/views/concepts/mail/Mail'))
+const Chat = lazy(() => import('@/views/concepts/chat/Chat'))
 
 const placeholderRoutes: Routes = [
     {
         key: 'dashboard.ecommerce',
         path: '/dashboards/ecommerce',
-        component: DrawerPlaceholder,
+        component: EcommerceDashboard,
         authority: [],
     },
     {
@@ -174,30 +179,119 @@ const placeholderRoutes: Routes = [
     {
         key: 'concepts.calendar',
         path: '/concepts/calendar',
-        component: DrawerPlaceholder,
+        component: Calendar,
         authority: [],
     },
     {
         key: 'concepts.fileManager',
         path: '/concepts/file-manager',
-        component: DrawerPlaceholder,
+        component: FileManager,
         authority: [],
+        meta: {
+            pageContainerType: 'contained',
+            pageBackgroundType: 'plain',
+        },
     },
     {
         key: 'concepts.mail',
         path: '/concepts/mail',
-        component: DrawerPlaceholder,
+        component: Mail,
         authority: [],
     },
     {
         key: 'concepts.chat',
         path: '/concepts/chat',
-        component: DrawerPlaceholder,
+        component: Chat,
         authority: [],
     },
     {
         key: 'others.landing',
         path: '/others/landing',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    // GMAO placeholder routes
+    {
+        key: 'concepts.assets.assetList',
+        path: '/concepts/assets/asset-list',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.assets.assetCreate',
+        path: '/concepts/assets/asset-create',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.workOrders.workOrderList',
+        path: '/concepts/work-orders/work-order-list',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.workOrders.workOrderCreate',
+        path: '/concepts/work-orders/work-order-create',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.pm.pmList',
+        path: '/concepts/pm/pm-list',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.pm.pmCreate',
+        path: '/concepts/pm/pm-create',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.inventory.items',
+        path: '/concepts/inventory/items',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.inventory.warehouses',
+        path: '/concepts/inventory/warehouses',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.inventory.stockMoves',
+        path: '/concepts/inventory/stock-moves',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.purchasing.suppliers',
+        path: '/concepts/purchasing/suppliers',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.purchasing.purchaseOrders',
+        path: '/concepts/purchasing/purchase-orders',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.purchasing.receipts',
+        path: '/concepts/purchasing/receipts',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.departments',
+        path: '/concepts/departments',
+        component: DrawerPlaceholder,
+        authority: [],
+    },
+    {
+        key: 'concepts.rolesPermissions',
+        path: '/concepts/roles-permissions',
         component: DrawerPlaceholder,
         authority: [],
     },

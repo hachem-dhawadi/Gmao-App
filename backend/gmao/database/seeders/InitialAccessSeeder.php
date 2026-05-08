@@ -105,5 +105,59 @@ class InitialAccessSeeder extends Seeder
         );
 
         $hrMember->roles()->syncWithoutDetaching([$roles['hr']->id]);
+
+        $managerUser = User::query()->updateOrCreate(
+            ['email' => 'manager@gmao.test'],
+            [
+                'name' => 'Operations Manager',
+                'password' => Hash::make('Manager123!'),
+                'phone' => '+21633333333',
+                'locale' => 'fr',
+                'two_factor_enabled' => false,
+                'is_active' => true,
+                'is_superadmin' => false,
+            ]
+        );
+
+        $managerMember = Member::query()->firstOrCreate(
+            [
+                'company_id' => $company->id,
+                'user_id' => $managerUser->id,
+            ],
+            [
+                'employee_code' => 'MGR-001',
+                'job_title' => 'Operations Manager',
+                'status' => 'active',
+            ]
+        );
+
+        $managerMember->roles()->syncWithoutDetaching([$roles['manager']->id]);
+
+        $techUser = User::query()->updateOrCreate(
+            ['email' => 'technician@gmao.test'],
+            [
+                'name' => 'Field Technician',
+                'password' => Hash::make('Tech123456!'),
+                'phone' => '+21644444444',
+                'locale' => 'fr',
+                'two_factor_enabled' => false,
+                'is_active' => true,
+                'is_superadmin' => false,
+            ]
+        );
+
+        $techMember = Member::query()->firstOrCreate(
+            [
+                'company_id' => $company->id,
+                'user_id' => $techUser->id,
+            ],
+            [
+                'employee_code' => 'TECH-001',
+                'job_title' => 'Technician',
+                'status' => 'active',
+            ]
+        );
+
+        $techMember->roles()->syncWithoutDetaching([$roles['technician']->id]);
     }
 }

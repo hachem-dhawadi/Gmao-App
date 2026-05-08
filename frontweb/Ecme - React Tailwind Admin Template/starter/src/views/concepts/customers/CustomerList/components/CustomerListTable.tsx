@@ -7,6 +7,9 @@ import useCustomerList from '../hooks/useCustomerList'
 import { Link, useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
 import { TbPencil, TbEye } from 'react-icons/tb'
+import { useSessionUser } from '@/store/authStore'
+import useAuthority from '@/utils/hooks/useAuthority'
+import { ADMIN, HR } from '@/constants/roles.constant'
 import type { OnSortParam, ColumnDef, Row } from '@/components/shared/DataTable'
 import type { Customer } from '../types'
 import type { TableQueries } from '@/@types/common'
@@ -33,21 +36,25 @@ const NameColumn = ({ row }: { row: Customer }) => {
 const ActionColumn = ({
     onEdit,
     onViewDetail,
+    canEdit,
 }: {
     onEdit: () => void
     onViewDetail: () => void
+    canEdit: boolean
 }) => {
     return (
         <div className="flex items-center gap-3">
-            <Tooltip title="Edit">
-                <div
-                    className={`text-xl cursor-pointer select-none font-semibold`}
-                    role="button"
-                    onClick={onEdit}
-                >
-                    <TbPencil />
-                </div>
-            </Tooltip>
+            {canEdit && (
+                <Tooltip title="Edit">
+                    <div
+                        className={`text-xl cursor-pointer select-none font-semibold`}
+                        role="button"
+                        onClick={onEdit}
+                    >
+                        <TbPencil />
+                    </div>
+                </Tooltip>
+            )}
             <Tooltip title="View">
                 <div
                     className={`text-xl cursor-pointer select-none font-semibold`}
@@ -74,6 +81,9 @@ const CustomerListTable = () => {
         setSelectedCustomer,
         selectedCustomer,
     } = useCustomerList()
+
+    const userAuthority = useSessionUser((state) => state.user.authority)
+    const canEdit = useAuthority(userAuthority, [ADMIN, HR])
 
     const handleEdit = (customer: Customer) => {
         navigate(`/concepts/customers/customer-edit/${customer.id}`)
@@ -131,12 +141,13 @@ const CustomerListTable = () => {
                         onViewDetail={() =>
                             handleViewDetails(props.row.original)
                         }
+                        canEdit={canEdit}
                     />
                 ),
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [],
+        [canEdit],
     )
 
     const handleSetTableData = (data: TableQueries) => {

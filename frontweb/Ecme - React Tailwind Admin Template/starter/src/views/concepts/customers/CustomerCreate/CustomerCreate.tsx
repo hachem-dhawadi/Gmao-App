@@ -5,39 +5,32 @@ import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import CustomerForm from '../CustomerForm'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { apiCreateMember } from '@/services/CustomersService'
 import {
-    apiCreateMember,
-    apiCreateSuperadminUser,
-} from '@/services/CustomersService'
+    apiGetCompaniesList,
+    type SuperadminCompany,
+} from '@/services/CompaniesService'
 import { useSessionUser } from '@/store/authStore'
+import { CURRENT_COMPANY_ID_KEY } from '@/constants/app.constant'
 import { TbTrash } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { mutate as globalMutate } from 'swr'
+import useSWR from 'swr'
 import type { CustomerFormSchema } from '../CustomerForm'
 
 const buildPhone = (dialCode: string, phoneNumber: string): string => {
     const dialDigits = (dialCode || '').replace(/[^\d]/g, '')
     const formattedDial = dialDigits ? `+${dialDigits}` : ''
     const rawPhone = (phoneNumber || '').trim()
-
-    if (!rawPhone) {
-        return ''
-    }
-
+    if (!rawPhone) return ''
     const phoneDigits = rawPhone.replace(/[^\d]/g, '')
-
-    if (!phoneDigits) {
-        return ''
-    }
-
+    if (!phoneDigits) return ''
     if (formattedDial) {
         const localDigits = phoneDigits.startsWith(dialDigits)
             ? phoneDigits.slice(dialDigits.length)
             : phoneDigits
-
         return `${formattedDial}${localDigits ? ` ${localDigits}` : ''}`
     }
-
     return rawPhone.startsWith('+') ? `+${phoneDigits}` : phoneDigits
 }
 
@@ -45,81 +38,117 @@ const generateEmployeeCode = (firstName: string, lastName: string): string => {
     const prefix = `${(firstName || '').slice(0, 2)}${(lastName || '').slice(0, 2)}`
         .replace(/\s+/g, '')
         .toUpperCase()
-
     return `EMP-${prefix || 'USER'}-${Date.now().toString().slice(-6)}`
 }
 
+type CompanyOption = { value: number; label: string }
+
 const CustomerCreate = () => {
     const navigate = useNavigate()
-
     const isSuperadmin = useSessionUser((state) => Boolean(state.user.isSuperadmin))
 
-    const [discardConfirmationOpen, setDiscardConfirmationOpen] =
-        useState(false)
+    const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null)
+    const [discardConfirmationOpen, setDiscardConfirmationOpen] = useState(false)
     const [isSubmiting, setIsSubmiting] = useState(false)
 
+    const { data: companiesData } = useSWR<SuperadminCompany[]>(
+        isSuperadmin ? '/superadmin/companies/all' : null,
+        async () => {
+            const res = await apiGetCompaniesList<{
+                success: boolean
+                data: { companies: SuperadminCompany[] }
+            }>({ per_page: 200 })
+            return res.data.companies
+        },
+        { revalidateOnFocus: false },
+    )
+
+    const companyOptions: CompanyOption[] = (companiesData || [])
+        .filter((c) => c.is_active && c.approval_status === 'approved')
+        .map((c) => ({ value: c.id, label: c.name }))
+
     const handleFormSubmit = async (values: CustomerFormSchema) => {
+        if (isSuperadmin && !selectedCompanyId) {
+            toast.push(
+                <Notification type="warning">
+                    Please select a company to assign this user to.
+                </Notification>,
+                { placement: 'top-center' },
+            )
+            return
+        }
+
         const name = `${values.firstName} ${values.lastName}`.trim()
         const phone = buildPhone(values.dialCode, values.phoneNumber)
         const selectedRole = values.role || 'technician'
+        const password = (values.password || '').trim()
+        const passwordConfirmation = (values.passwordConfirmation || '').trim()
+
+        if (password && password !== passwordConfirmation) {
+            toast.push(
+                <Notification type="danger">
+                    Password confirmation does not match.
+                </Notification>,
+                { placement: 'top-center' },
+            )
+            return
+        }
 
         try {
             setIsSubmiting(true)
 
-            if (isSuperadmin) {
-                const password = (values.password || '').trim()
-                const passwordConfirmation = (values.passwordConfirmation || '').trim()
+            const prevCompanyId = localStorage.getItem(CURRENT_COMPANY_ID_KEY)
+            if (isSuperadmin && selectedCompanyId) {
+                localStorage.setItem(
+                    CURRENT_COMPANY_ID_KEY,
+                    String(selectedCompanyId),
+                )
+            }
 
-                if (!password || !passwordConfirmation) {
-                    throw new Error('Password and confirmation are required for superadmin user creation.')
-                }
-
-                if (password.length < 8) {
-                    throw new Error('Password must be at least 8 characters.')
-                }
-
-                if (password !== passwordConfirmation) {
-                    throw new Error('Password confirmation does not match.')
-                }
-
-                await apiCreateSuperadminUser({
-                    name,
-                    email: values.email,
-                    phone,
-                    password,
-                    password_confirmation: passwordConfirmation,
-                    locale: values.locale || 'TN',
-                    is_active: true,
-                    is_superadmin: false,
-                    two_factor_enabled: false,
-                    avatar: values.imgFile || null,
-                })
-            } else {
+            try {
                 await apiCreateMember({
                     name,
                     email: values.email,
                     phone,
-                    employee_code:
-                        values.employeeCode?.trim() ||
-                        generateEmployeeCode(values.firstName, values.lastName),
+                    employee_code: generateEmployeeCode(
+                        values.firstName,
+                        values.lastName,
+                    ),
                     job_title: selectedRole
-                        ? selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)
+                        ? selectedRole.charAt(0).toUpperCase() +
+                          selectedRole.slice(1)
                         : null,
                     roles: [selectedRole],
+                    locale: values.locale || 'TN',
+                    password: password || null,
+                    password_confirmation: password ? passwordConfirmation : null,
                     department_id: null,
                     avatar: values.imgFile || null,
                 })
+            } finally {
+                if (isSuperadmin) {
+                    if (prevCompanyId) {
+                        localStorage.setItem(
+                            CURRENT_COMPANY_ID_KEY,
+                            prevCompanyId,
+                        )
+                    } else {
+                        localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+                    }
+                }
             }
 
             await globalMutate(
                 (key) =>
                     Array.isArray(key) &&
                     typeof key[0] === 'string' &&
-                    (key[0] === '/members' || key[0] === '/superadmin/users'),
+                    key[0] === '/members',
             )
 
             toast.push(
-                <Notification type="success">User created successfully.</Notification>,
+                <Notification type="success">
+                    User created successfully.
+                </Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/customers/customer-list')
@@ -130,38 +159,22 @@ const CustomerCreate = () => {
                 (error as Error)?.message ||
                 'Failed to create user.'
 
-            toast.push(<Notification type="danger">{backendMessage}</Notification>, {
-                placement: 'top-center',
-            })
+            toast.push(
+                <Notification type="danger">{backendMessage}</Notification>,
+                { placement: 'top-center' },
+            )
         } finally {
             setIsSubmiting(false)
         }
-    }
-
-    const handleConfirmDiscard = () => {
-        setDiscardConfirmationOpen(false)
-        toast.push(
-            <Notification type="success">Changes discarded.</Notification>,
-            { placement: 'top-center' },
-        )
-        navigate('/concepts/customers/customer-list')
-    }
-
-    const handleDiscard = () => {
-        setDiscardConfirmationOpen(true)
-    }
-
-    const handleCancel = () => {
-        setDiscardConfirmationOpen(false)
     }
 
     return (
         <>
             <CustomerForm
                 newCustomer
-                showPasswordFields={isSuperadmin}
-                showEmployeeCode={!isSuperadmin}
-                showLocale={isSuperadmin}
+                companyOptions={isSuperadmin ? companyOptions : []}
+                selectedCompanyId={selectedCompanyId}
+                onCompanyChange={setSelectedCompanyId}
                 defaultValues={{
                     firstName: '',
                     lastName: '',
@@ -178,7 +191,7 @@ const CustomerCreate = () => {
                     imgFile: null,
                     removeAvatar: false,
                     role: 'technician',
-                    employeeCode: '',
+                    locale: 'TN',
                 }}
                 onFormSubmit={handleFormSubmit}
             >
@@ -193,7 +206,9 @@ const CustomerCreate = () => {
                                     'border-error ring-1 ring-error text-error hover:border-error hover:ring-error hover:text-error bg-transparent'
                                 }
                                 icon={<TbTrash />}
-                                onClick={handleDiscard}
+                                onClick={() =>
+                                    setDiscardConfirmationOpen(true)
+                                }
                             >
                                 Discard
                             </Button>
@@ -212,10 +227,13 @@ const CustomerCreate = () => {
                 isOpen={discardConfirmationOpen}
                 type="danger"
                 title="Discard changes"
-                onClose={handleCancel}
-                onRequestClose={handleCancel}
-                onCancel={handleCancel}
-                onConfirm={handleConfirmDiscard}
+                onClose={() => setDiscardConfirmationOpen(false)}
+                onRequestClose={() => setDiscardConfirmationOpen(false)}
+                onCancel={() => setDiscardConfirmationOpen(false)}
+                onConfirm={() => {
+                    setDiscardConfirmationOpen(false)
+                    navigate('/concepts/customers/customer-list')
+                }}
             >
                 <p>
                     Are you sure you want discard this? This action can&apos;t

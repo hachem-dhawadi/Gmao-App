@@ -87,6 +87,9 @@ export type CreateMemberRequest = {
     employee_code: string
     job_title?: string | null
     roles: string[]
+    locale?: string | null
+    password?: string | null
+    password_confirmation?: string | null
     department_id?: number | null
     avatar?: File | null
 }
@@ -122,6 +125,7 @@ export type UpdateMemberRequest = {
     job_title?: string | null
     employee_code?: string
     status?: string
+    locale?: string | null
     avatar?: File | null
     remove_avatar?: boolean
 }
@@ -216,6 +220,13 @@ export async function apiCreateMember<
 
         if (data.job_title !== undefined) {
             formData.append('job_title', data.job_title ?? '')
+        }
+        if (data.locale !== undefined) {
+            formData.append('locale', data.locale ?? '')
+        }
+        if (data.password) {
+            formData.append('password', data.password)
+            formData.append('password_confirmation', data.password_confirmation ?? data.password)
         }
         if (data.department_id !== undefined) {
             formData.append(
@@ -355,6 +366,9 @@ export async function apiUpdateCompanyMemberById<
         }
         if (data.status !== undefined) {
             formData.append('status', data.status)
+        }
+        if (data.locale !== undefined) {
+            formData.append('locale', data.locale ?? '')
         }
         if (Array.isArray(data.roles)) {
             data.roles.forEach((role) => {

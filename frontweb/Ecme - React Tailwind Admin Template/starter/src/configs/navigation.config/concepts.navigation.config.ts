@@ -4,651 +4,298 @@ import {
     NAV_ITEM_TYPE_COLLAPSE,
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
-import { ADMIN, USER } from '@/constants/roles.constant'
+import {
+    ADMIN,
+    HR,
+    MANAGER,
+    TECHNICIAN,
+    SUPERADMIN,
+} from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
+const ALL_COMPANY_ROLES = [ADMIN, HR, MANAGER, TECHNICIAN]
+const ALL_ROLES = [SUPERADMIN, ADMIN, HR, MANAGER, TECHNICIAN]
+const OPS_ROLES = [ADMIN, MANAGER, TECHNICIAN]
+const ADMIN_MANAGER = [ADMIN, MANAGER]
+const PEOPLE_MANAGERS = [SUPERADMIN, ADMIN, HR, MANAGER]
+
 const conceptsNavigationConfig: NavigationTree[] = [
+    // ─── GMAO ────────────────────────────────────────────────────────
     {
-        key: 'concepts',
+        key: 'gmao',
         path: '',
-        title: 'Concepts',
-        translateKey: 'nav.concepts',
+        title: 'GMAO',
+        translateKey: 'nav.gmao',
         icon: 'concepts',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: [ADMIN, USER],
-        meta: {
-            horizontalMenu: {
-                layout: 'columns',
-                columns: 4,
-            },
-        },
+        authority: ALL_COMPANY_ROLES,
         subMenu: [
+            // Assets
             {
-                key: 'concepts.ai',
+                key: 'concepts.assets',
                 path: '',
-                title: 'AI',
-                translateKey: 'nav.conceptsAi.ai',
-                icon: 'ai',
+                title: 'Assets',
+                translateKey: 'nav.assets.assets',
+                icon: 'assets',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.conceptsAi.aiDesc',
-                        label: 'AI tools and resources',
-                    },
-                },
+                authority: OPS_ROLES,
                 subMenu: [
                     {
-                        key: 'concepts.ai.chat',
-                        path: `${CONCEPTS_PREFIX_PATH}/ai/chat`,
-                        title: 'Chat',
-                        translateKey: 'nav.conceptsAi.chat',
-                        icon: 'aiChat',
+                        key: 'concepts.assets.assetList',
+                        path: `${CONCEPTS_PREFIX_PATH}/assets/asset-list`,
+                        title: 'Asset List',
+                        translateKey: 'nav.assets.assetList',
+                        icon: 'assetList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey: 'nav.conceptsAi.chatDesc',
-                                label: 'AI-powered chat systems',
-                            },
-                        },
+                        authority: OPS_ROLES,
                         subMenu: [],
                     },
                     {
-                        key: 'concepts.ai.image',
-                        path: `${CONCEPTS_PREFIX_PATH}/ai/image`,
-                        title: 'Image',
-                        translateKey: 'nav.conceptsAi.image',
-                        icon: 'aiImage',
+                        key: 'concepts.assets.assetCreate',
+                        path: `${CONCEPTS_PREFIX_PATH}/assets/asset-create`,
+                        title: 'Add Asset',
+                        translateKey: 'nav.assets.assetCreate',
+                        icon: 'assetCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey: 'nav.conceptsAi.imageDesc',
-                                label: 'AI image processing',
-                            },
-                        },
+                        authority: ADMIN_MANAGER,
                         subMenu: [],
                     },
                 ],
             },
+
+            // Work Orders
             {
-                key: 'concepts.projects',
+                key: 'concepts.workOrders',
                 path: '',
-                title: 'Projects',
-                translateKey: 'nav.conceptsProjects.projects',
-                icon: 'projects',
+                title: 'Work Orders',
+                translateKey: 'nav.workOrders.workOrders',
+                icon: 'workOrders',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.conceptsProjects.projectsDesc',
-                        label: 'Manage and track projects',
-                    },
-                },
+                authority: OPS_ROLES,
                 subMenu: [
                     {
-                        key: 'concepts.projects.scrumBoard',
-                        path: `${CONCEPTS_PREFIX_PATH}/projects/scrum-board`,
-                        title: 'Scrum Board',
-                        translateKey: 'nav.conceptsProjects.scrumBoard',
-                        icon: 'projectScrumBoard',
+                        key: 'concepts.workOrders.workOrderList',
+                        path: `${CONCEPTS_PREFIX_PATH}/work-orders/work-order-list`,
+                        title: 'Work Order List',
+                        translateKey: 'nav.workOrders.workOrderList',
+                        icon: 'workOrderList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProjects.scrumBoardDesc',
-                                label: 'Manage your scrum workflow',
-                            },
-                        },
+                        authority: OPS_ROLES,
                         subMenu: [],
                     },
                     {
-                        key: 'concepts.projects.projectList',
-                        path: `${CONCEPTS_PREFIX_PATH}/projects/project-list`,
-                        title: 'Project List',
-                        translateKey: 'nav.conceptsProjects.projectList',
-                        icon: 'projectList',
+                        key: 'concepts.workOrders.workOrderCreate',
+                        path: `${CONCEPTS_PREFIX_PATH}/work-orders/work-order-create`,
+                        title: 'New Work Order',
+                        translateKey: 'nav.workOrders.workOrderCreate',
+                        icon: 'workOrderCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProjects.projectListDesc',
-                                label: 'Organize all projects',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.projects.projectDetails',
-                        path: `${CONCEPTS_PREFIX_PATH}/projects/project-details/27`,
-                        title: 'Details',
-                        translateKey: 'nav.conceptsProjects.projectDetails',
-                        icon: 'projectDetails',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProjects.projectDetailsDesc',
-                                label: 'Project detailed information',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.projects.projectTasks',
-                        path: `${CONCEPTS_PREFIX_PATH}/projects/tasks`,
-                        title: 'Tasks',
-                        translateKey: 'nav.conceptsProjects.projectTasks',
-                        icon: 'projectTask',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProjects.projectTasksDesc',
-                                label: 'Manage project tasks',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.projects.projectIssue',
-                        path: `${CONCEPTS_PREFIX_PATH}/projects/tasks/1`,
-                        title: 'Issue',
-                        translateKey: 'nav.conceptsProjects.projectIssue',
-                        icon: 'projectIssue',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProjects.projectIssueDesc',
-                                label: 'Resolve project issues',
-                            },
-                        },
+                        authority: OPS_ROLES,
                         subMenu: [],
                     },
                 ],
             },
+
+            // Preventive Maintenance
             {
-                key: 'concepts.company',
+                key: 'concepts.pm',
                 path: '',
-                title: 'Company',
-                translateKey: 'nav.conceptsCompany.company',
-                icon: 'company',
+                title: 'Preventive Maintenance',
+                translateKey: 'nav.pm.pm',
+                icon: 'pm',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.conceptsCompany.companyDesc',
-                        label: 'Company management',
-                    },
-                },
+                authority: ADMIN_MANAGER,
                 subMenu: [
                     {
-                        key: 'concepts.company.companyList',
-                        path: `${CONCEPTS_PREFIX_PATH}/company/company-list`,
-                        title: 'List',
-                        translateKey: 'nav.conceptsCompany.companyList',
-                        icon: 'companyList',
+                        key: 'concepts.pm.pmList',
+                        path: `${CONCEPTS_PREFIX_PATH}/pm/pm-list`,
+                        title: 'PM Plans',
+                        translateKey: 'nav.pm.pmList',
+                        icon: 'pmList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsCompany.companyListDesc',
-                                label: 'List of all companies',
-                            },
-                        },
+                        authority: ADMIN_MANAGER,
                         subMenu: [],
                     },
                     {
-                        key: 'concepts.company.companyCreate',
-                        path: `${CONCEPTS_PREFIX_PATH}/company/company-create`,
-                        title: 'Create',
-                        translateKey: 'nav.conceptsCompany.companyCreate',
-                        icon: 'companyCreate',
+                        key: 'concepts.pm.pmCreate',
+                        path: `${CONCEPTS_PREFIX_PATH}/pm/pm-create`,
+                        title: 'New PM Plan',
+                        translateKey: 'nav.pm.pmCreate',
+                        icon: 'pmCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsCompany.companyCreateDesc',
-                                label: 'Add a new company',
-                            },
-                        },
+                        authority: [ADMIN],
                         subMenu: [],
                     },
                 ],
             },
+
+            // Inventory
             {
-                key: 'concepts.customers',
+                key: 'concepts.inventory',
                 path: '',
-                title: 'Customers',
-                translateKey: 'nav.conceptsCustomers.customers',
-                icon: 'customers',
+                title: 'Inventory',
+                translateKey: 'nav.inventory.inventory',
+                icon: 'inventory',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.conceptsCustomers.customersDesc',
-                        label: 'Customer management',
+                authority: OPS_ROLES,
+                subMenu: [
+                    {
+                        key: 'concepts.inventory.items',
+                        path: `${CONCEPTS_PREFIX_PATH}/inventory/items`,
+                        title: 'Items',
+                        translateKey: 'nav.inventory.items',
+                        icon: 'inventoryItems',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: OPS_ROLES,
+                        subMenu: [],
                     },
-                },
+                    {
+                        key: 'concepts.inventory.warehouses',
+                        path: `${CONCEPTS_PREFIX_PATH}/inventory/warehouses`,
+                        title: 'Warehouses',
+                        translateKey: 'nav.inventory.warehouses',
+                        icon: 'inventoryWarehouses',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: ADMIN_MANAGER,
+                        subMenu: [],
+                    },
+                    {
+                        key: 'concepts.inventory.stockMoves',
+                        path: `${CONCEPTS_PREFIX_PATH}/inventory/stock-moves`,
+                        title: 'Stock Moves',
+                        translateKey: 'nav.inventory.stockMoves',
+                        icon: 'inventoryStockMoves',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: OPS_ROLES,
+                        subMenu: [],
+                    },
+                ],
+            },
+
+            // Purchasing
+            {
+                key: 'concepts.purchasing',
+                path: '',
+                title: 'Purchasing',
+                translateKey: 'nav.purchasing.purchasing',
+                icon: 'purchasing',
+                type: NAV_ITEM_TYPE_COLLAPSE,
+                authority: ADMIN_MANAGER,
+                subMenu: [
+                    {
+                        key: 'concepts.purchasing.suppliers',
+                        path: `${CONCEPTS_PREFIX_PATH}/purchasing/suppliers`,
+                        title: 'Suppliers',
+                        translateKey: 'nav.purchasing.suppliers',
+                        icon: 'purchasingSuppliers',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'concepts.purchasing.purchaseOrders',
+                        path: `${CONCEPTS_PREFIX_PATH}/purchasing/purchase-orders`,
+                        title: 'Purchase Orders',
+                        translateKey: 'nav.purchasing.purchaseOrders',
+                        icon: 'purchasingOrders',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: ADMIN_MANAGER,
+                        subMenu: [],
+                    },
+                    {
+                        key: 'concepts.purchasing.receipts',
+                        path: `${CONCEPTS_PREFIX_PATH}/purchasing/receipts`,
+                        title: 'Receipts',
+                        translateKey: 'nav.purchasing.receipts',
+                        icon: 'purchasingReceipts',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: ADMIN_MANAGER,
+                        subMenu: [],
+                    },
+                ],
+            },
+        ],
+    },
+
+    // ─── PEOPLE ──────────────────────────────────────────────────────
+    {
+        key: 'people',
+        path: '',
+        title: 'People',
+        translateKey: 'nav.people',
+        icon: 'customers',
+        type: NAV_ITEM_TYPE_TITLE,
+        authority: PEOPLE_MANAGERS,
+        subMenu: [
+            // Members
+            {
+                key: 'concepts.members',
+                path: '',
+                title: 'Members',
+                translateKey: 'nav.members.members',
+                icon: 'members',
+                type: NAV_ITEM_TYPE_COLLAPSE,
+                authority: PEOPLE_MANAGERS,
                 subMenu: [
                     {
                         key: 'concepts.customers.customerList',
                         path: `${CONCEPTS_PREFIX_PATH}/customers/customer-list`,
-                        title: 'List',
-                        translateKey: 'nav.conceptsCustomers.customerList',
-                        icon: 'customerList',
+                        title: 'Member List',
+                        translateKey: 'nav.members.memberList',
+                        icon: 'memberList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsCustomers.customerListDesc',
-                                label: 'List of all customers',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.customers.customerEdit',
-                        path: `${CONCEPTS_PREFIX_PATH}/customers/customer-edit/1`,
-                        title: 'Edit',
-                        translateKey: 'nav.conceptsCustomers.customerEdit',
-                        icon: 'customerEdit',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsCustomers.customerEditDesc',
-                                label: 'Edit customer info',
-                            },
-                        },
+                        authority: PEOPLE_MANAGERS,
                         subMenu: [],
                     },
                     {
                         key: 'concepts.customers.customerCreate',
                         path: `${CONCEPTS_PREFIX_PATH}/customers/customer-create`,
-                        title: 'Create',
-                        translateKey: 'nav.conceptsCustomers.customerCreate',
-                        icon: 'customerCreate',
+                        title: 'Add Member',
+                        translateKey: 'nav.members.memberCreate',
+                        icon: 'memberCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsCustomers.customerCreateDesc',
-                                label: 'Add a new customer',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.customers.customerDetails',
-                        path: `${CONCEPTS_PREFIX_PATH}/customers/customer-details/1`,
-                        title: 'Details',
-                        translateKey: 'nav.conceptsCustomers.customerDetails',
-                        icon: 'customerDetails',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsCustomers.customerDetailsDesc',
-                                label: 'Detailed customer info',
-                            },
-                        },
+                        authority: [SUPERADMIN, ADMIN, HR],
                         subMenu: [],
                     },
                 ],
             },
+
+            // Departments
             {
-                key: 'concepts.products',
-                path: '',
-                title: 'Products',
-                translateKey: 'nav.conceptsProducts.products',
-                icon: 'products',
-                type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.conceptsProducts.productsDesc',
-                        label: 'Product inventory management',
-                    },
-                },
-                subMenu: [
-                    {
-                        key: 'concepts.products.productList',
-                        path: `${CONCEPTS_PREFIX_PATH}/products/product-list`,
-                        title: 'List',
-                        translateKey: 'nav.conceptsProducts.productList',
-                        icon: 'productList',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProducts.productListDesc',
-                                label: 'All products listed',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.products.productEdit',
-                        path: `${CONCEPTS_PREFIX_PATH}/products/product-edit/12`,
-                        title: 'Edit',
-                        translateKey: 'nav.conceptsProducts.productEdit',
-                        icon: 'productEdit',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProducts.productEditDesc',
-                                label: 'Edit product details',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.products.productCreate',
-                        path: `${CONCEPTS_PREFIX_PATH}/products/product-create`,
-                        title: 'Create',
-                        translateKey: 'nav.conceptsProducts.productCreate',
-                        icon: 'productCreate',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProducts.productCreateDesc',
-                                label: 'Add new product',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.products.productDetails',
-                        path: `${CONCEPTS_PREFIX_PATH}/products/product-details/12`,
-                        title: 'Details',
-                        translateKey: 'nav.conceptsProducts.productDetails',
-                        icon: 'productDetails',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsProducts.productDetailsDesc',
-                                label: 'Detailed product info',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                ],
+                key: 'concepts.departments',
+                path: `${CONCEPTS_PREFIX_PATH}/departments`,
+                title: 'Departments',
+                translateKey: 'nav.departments',
+                icon: 'departments',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, HR, MANAGER],
+                subMenu: [],
             },
+
+            // Roles & Permissions
             {
-                key: 'concepts.orders',
-                path: '',
-                title: 'Orders',
-                translateKey: 'nav.conceptsOrders.orders',
-                icon: 'orders',
-                type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.conceptsOrders.ordersDesc',
-                        label: 'Customer orders management',
-                    },
-                },
-                subMenu: [
-                    {
-                        key: 'concepts.orders.orderList',
-                        path: `${CONCEPTS_PREFIX_PATH}/orders/order-list`,
-                        title: 'List',
-                        translateKey: 'nav.conceptsOrders.orderList',
-                        icon: 'orderList',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsOrders.orderListDesc',
-                                label: 'View all customer orders',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.orders.orderEdit',
-                        path: `${CONCEPTS_PREFIX_PATH}/orders/order-edit/95954`,
-                        title: 'Edit',
-                        translateKey: 'nav.conceptsOrders.orderEdit',
-                        icon: 'orderEdit',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsOrders.orderEditDesc',
-                                label: 'Edit order details',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.orders.orderCreate',
-                        path: `${CONCEPTS_PREFIX_PATH}/orders/order-create`,
-                        title: 'Create',
-                        translateKey: 'nav.conceptsOrders.orderCreate',
-                        icon: 'orderCreate',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsOrders.orderCreateDesc',
-                                label: 'Create new order',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.orders.orderDetails',
-                        path: `${CONCEPTS_PREFIX_PATH}/orders/order-details/95954`,
-                        title: 'Details',
-                        translateKey: 'nav.conceptsOrders.orderDetails',
-                        icon: 'ordeDetails',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsOrders.orderDetailsDesc',
-                                label: 'Detailed order information',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                ],
+                key: 'concepts.rolesPermissions',
+                path: `${CONCEPTS_PREFIX_PATH}/roles-permissions`,
+                title: 'Roles & Permissions',
+                translateKey: 'nav.rolesPermissions',
+                icon: 'rolesPermissions',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN],
+                subMenu: [],
             },
-            {
-                key: 'concepts.account',
-                path: '',
-                title: 'Account',
-                translateKey: 'nav.conceptsAccount.account',
-                icon: 'account',
-                type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.conceptsAccount.accountDesc',
-                        label: 'Account settings and info',
-                    },
-                },
-                subMenu: [
-                    {
-                        key: 'concepts.account.settings',
-                        path: `${CONCEPTS_PREFIX_PATH}/account/settings`,
-                        title: 'Settings',
-                        translateKey: 'nav.conceptsAccount.settings',
-                        icon: 'accountSettings',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsAccount.settingsDesc',
-                                label: 'Configure your settings',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.account.activityLog',
-                        path: `${CONCEPTS_PREFIX_PATH}/account/activity-log`,
-                        title: 'Activity log',
-                        translateKey: 'nav.conceptsAccount.activityLog',
-                        icon: 'accountActivityLogs',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsAccount.activityLogDesc',
-                                label: 'View recent activities',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.account.rolesPermissions',
-                        path: `${CONCEPTS_PREFIX_PATH}/account/roles-permissions`,
-                        title: 'Roles & Permissions',
-                        translateKey: 'nav.conceptsAccount.rolesPermissions',
-                        icon: 'accountRoleAndPermission',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsAccount.rolesPermissionsDesc',
-                                label: 'Manage roles & permissions',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.account.pricing',
-                        path: `${CONCEPTS_PREFIX_PATH}/account/pricing`,
-                        title: 'Pricing',
-                        translateKey: 'nav.conceptsAccount.pricing',
-                        icon: 'accountPricing',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey: 'nav.conceptsAccount.pricingDesc',
-                                label: 'View pricing plans',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                ],
-            },
-            {
-                key: 'concepts.helpCenter',
-                path: '',
-                title: 'Help Center',
-                translateKey: 'nav.conceptsHelpCenter.helpCenter',
-                icon: 'helpCenter',
-                type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.conceptsHelpCenter.helpCenterDesc',
-                        label: 'Support and articles',
-                    },
-                },
-                subMenu: [
-                    {
-                        key: 'concepts.helpCenter.supportHub',
-                        path: `${CONCEPTS_PREFIX_PATH}/help-center/support-hub`,
-                        title: 'Support Hub',
-                        translateKey: 'nav.conceptsHelpCenter.supportHub',
-                        icon: 'helpCeterSupportHub',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsHelpCenter.supportHubDesc',
-                                label: 'Central support hub',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.helpCenter.article',
-                        path: `${CONCEPTS_PREFIX_PATH}/help-center/article/pWBKE_0UiQ`,
-                        title: 'Article',
-                        translateKey: 'nav.conceptsHelpCenter.article',
-                        icon: 'helpCeterArticle',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsHelpCenter.articleDesc',
-                                label: 'Read support articles',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.helpCenter.editArticle',
-                        path: `${CONCEPTS_PREFIX_PATH}/help-center/edit-article/pWBKE_0UiQ`,
-                        title: 'Edit Article',
-                        translateKey: 'nav.conceptsHelpCenter.editArticle',
-                        icon: 'helpCeterEditArticle',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsHelpCenter.editArticleDesc',
-                                label: 'Modify article content',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.helpCenter.manageArticle',
-                        path: `${CONCEPTS_PREFIX_PATH}/help-center/manage-article`,
-                        title: 'Manage Article',
-                        translateKey: 'nav.conceptsHelpCenter.manageArticle',
-                        icon: 'helpCeterManageArticle',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER],
-                        meta: {
-                            description: {
-                                translateKey:
-                                    'nav.conceptsHelpCenter.manageArticleDesc',
-                                label: 'Article management',
-                            },
-                        },
-                        subMenu: [],
-                    },
-                ],
-            },
+        ],
+    },
+
+    // ─── WORKSPACE ───────────────────────────────────────────────────
+    {
+        key: 'workspace',
+        path: '',
+        title: 'Workspace',
+        translateKey: 'nav.workspace',
+        icon: 'fileManager',
+        type: NAV_ITEM_TYPE_TITLE,
+        authority: ALL_ROLES,
+        subMenu: [
             {
                 key: 'concepts.calendar',
                 path: `${CONCEPTS_PREFIX_PATH}/calendar`,
@@ -656,13 +303,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.calendar',
                 icon: 'calendar',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.calendarDesc',
-                        label: 'Schedule and events',
-                    },
-                },
+                authority: ALL_ROLES,
                 subMenu: [],
             },
             {
@@ -672,13 +313,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.fileManager',
                 icon: 'fileManager',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.fileManagerDesc',
-                        label: 'Manage your files',
-                    },
-                },
+                authority: ALL_ROLES,
                 subMenu: [],
             },
             {
@@ -688,13 +323,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.mail',
                 icon: 'mail',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.mailDesc',
-                        label: 'Manage your emails',
-                    },
-                },
+                authority: ALL_ROLES,
                 subMenu: [],
             },
             {
@@ -704,13 +333,30 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.chat',
                 icon: 'chat',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: [ADMIN, USER],
-                meta: {
-                    description: {
-                        translateKey: 'nav.chatDesc',
-                        label: 'Chat with friends',
-                    },
-                },
+                authority: ALL_ROLES,
+                subMenu: [],
+            },
+        ],
+    },
+
+    // ─── ACCOUNT ─────────────────────────────────────────────────────
+    {
+        key: 'account',
+        path: '',
+        title: 'Account',
+        translateKey: 'nav.account',
+        icon: 'account',
+        type: NAV_ITEM_TYPE_TITLE,
+        authority: ALL_ROLES,
+        subMenu: [
+            {
+                key: 'concepts.account.settings',
+                path: `${CONCEPTS_PREFIX_PATH}/account/settings`,
+                title: 'Settings',
+                translateKey: 'nav.account.settings',
+                icon: 'accountSettings',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: ALL_ROLES,
                 subMenu: [],
             },
         ],
@@ -718,8 +364,3 @@ const conceptsNavigationConfig: NavigationTree[] = [
 ]
 
 export default conceptsNavigationConfig
-
-
-
-
-

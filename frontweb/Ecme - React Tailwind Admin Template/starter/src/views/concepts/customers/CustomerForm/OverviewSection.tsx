@@ -12,10 +12,13 @@ import { components } from 'react-select'
 import type { FormSectionBaseProps } from './types'
 import type { ControlProps, OptionProps } from 'react-select'
 
+type CompanyOption = { value: number; label: string }
+
 type OverviewSectionProps = FormSectionBaseProps & {
-    showPasswordFields?: boolean
-    showEmployeeCode?: boolean
-    showLocale?: boolean
+    showOnCreate?: boolean
+    companyOptions?: CompanyOption[]
+    selectedCompanyId?: number | null
+    onCompanyChange?: (id: number | null) => void
 }
 
 type CountryOption = {
@@ -82,15 +85,15 @@ const LocaleSelectOption = (props: OptionProps<CountryOption>) => {
 const OverviewSection = ({
     control,
     errors,
-    showPasswordFields = false,
-    showEmployeeCode = false,
-    showLocale = false,
+    showOnCreate = false,
+    companyOptions = [],
+    selectedCompanyId = null,
+    onCompanyChange,
 }: OverviewSectionProps) => {
     const dialCodeList = useMemo(() => {
         const newCountryList: Array<CountryOption> = JSON.parse(
             JSON.stringify(countryList),
         )
-
         return newCountryList.map((country) => {
             country.label = country.dialCode
             return country
@@ -138,6 +141,7 @@ const OverviewSection = ({
                     />
                 </FormItem>
             </div>
+
             <FormItem
                 label="Email"
                 invalid={Boolean(errors.email)}
@@ -156,36 +160,33 @@ const OverviewSection = ({
                     )}
                 />
             </FormItem>
-            {showLocale && (
-                <FormItem
-                    label="Location"
-                    invalid={Boolean(errors.locale)}
-                    errorMessage={errors.locale?.message}
-                >
-                    <Controller
-                        name="locale"
-                        control={control}
-                        render={({ field }) => (
-                            <Select<CountryOption>
-                                options={countryList}
-                                components={{
-                                    Option: LocaleSelectOption,
-                                    Control: ControlBase,
-                                }}
-                                placeholder="Select location"
-                                value={
-                                    countryList.find(
-                                        (option) => option.value === field.value,
-                                    ) || null
-                                }
-                                onChange={(option) =>
-                                    field.onChange(option?.value)
-                                }
-                            />
-                        )}
-                    />
-                </FormItem>
-            )}
+
+            <FormItem
+                label="Location"
+                invalid={Boolean(errors.locale)}
+                errorMessage={errors.locale?.message}
+            >
+                <Controller
+                    name="locale"
+                    control={control}
+                    render={({ field }) => (
+                        <Select<CountryOption>
+                            options={countryList}
+                            components={{
+                                Option: LocaleSelectOption,
+                                Control: ControlBase,
+                            }}
+                            placeholder="Select location"
+                            value={
+                                countryList.find(
+                                    (option) => option.value === field.value,
+                                ) || null
+                            }
+                            onChange={(option) => field.onChange(option?.value)}
+                        />
+                    )}
+                />
+            </FormItem>
 
             <div className="flex items-end gap-4 w-full">
                 <FormItem
@@ -240,69 +241,66 @@ const OverviewSection = ({
                 </FormItem>
             </div>
 
-            {showEmployeeCode && (
-                <FormItem
-                    label="Employee Code"
-                    invalid={Boolean(errors.employeeCode)}
-                    errorMessage={errors.employeeCode?.message}
-                >
-                    <Controller
-                        name="employeeCode"
-                        control={control}
-                        render={({ field }) => (
-                            <Input
-                                type="text"
-                                autoComplete="off"
-                                placeholder="e.g. EMP-001"
-                                {...field}
-                                value={field.value || ''}
+            {showOnCreate && (
+                <>
+                    <div className="grid md:grid-cols-2 gap-4 mt-2">
+                        <FormItem
+                            label="Password"
+                            invalid={Boolean(errors.password)}
+                            errorMessage={errors.password?.message}
+                        >
+                            <Controller
+                                name="password"
+                                control={control}
+                                render={({ field }) => (
+                                    <Input
+                                        type="password"
+                                        autoComplete="new-password"
+                                        placeholder="Password"
+                                        {...field}
+                                        value={field.value || ''}
+                                    />
+                                )}
                             />
-                        )}
-                    />
-                </FormItem>
-            )}
+                        </FormItem>
+                        <FormItem
+                            label="Confirm Password"
+                            invalid={Boolean(errors.passwordConfirmation)}
+                            errorMessage={errors.passwordConfirmation?.message}
+                        >
+                            <Controller
+                                name="passwordConfirmation"
+                                control={control}
+                                render={({ field }) => (
+                                    <Input
+                                        type="password"
+                                        autoComplete="new-password"
+                                        placeholder="Confirm Password"
+                                        {...field}
+                                        value={field.value || ''}
+                                    />
+                                )}
+                            />
+                        </FormItem>
+                    </div>
 
-            {showPasswordFields && (
-                <div className="grid md:grid-cols-2 gap-4 mt-4">
-                    <FormItem
-                        label="Password"
-                        invalid={Boolean(errors.password)}
-                        errorMessage={errors.password?.message}
-                    >
-                        <Controller
-                            name="password"
-                            control={control}
-                            render={({ field }) => (
-                                <Input
-                                    type="password"
-                                    autoComplete="new-password"
-                                    placeholder="Password"
-                                    {...field}
-                                    value={field.value || ''}
-                                />
-                            )}
-                        />
-                    </FormItem>
-                    <FormItem
-                        label="Confirm Password"
-                        invalid={Boolean(errors.passwordConfirmation)}
-                        errorMessage={errors.passwordConfirmation?.message}
-                    >
-                        <Controller
-                            name="passwordConfirmation"
-                            control={control}
-                            render={({ field }) => (
-                                <Input
-                                    type="password"
-                                    autoComplete="new-password"
-                                    placeholder="Confirm Password"
-                                    {...field}
-                                    value={field.value || ''}
-                                />
-                            )}
-                        />
-                    </FormItem>
-                </div>
+                    {companyOptions.length > 0 && (
+                        <FormItem label="Assign to Company" className="mt-2">
+                            <Select<CompanyOption>
+                                placeholder="Select a company..."
+                                options={companyOptions}
+                                value={
+                                    companyOptions.find(
+                                        (o) => o.value === selectedCompanyId,
+                                    ) || null
+                                }
+                                onChange={(option) =>
+                                    onCompanyChange?.(option?.value ?? null)
+                                }
+                            />
+                        </FormItem>
+                    )}
+                </>
             )}
         </Card>
     )

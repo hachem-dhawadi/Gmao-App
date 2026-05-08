@@ -30,6 +30,9 @@ class StoreMemberRequest extends FormRequest
             'roles.*' => ['required'],
             'job_title' => ['nullable', 'string', 'max:255'],
             'employee_code' => ['required', 'string', 'max:255'],
+            'locale' => ['nullable', 'string', 'max:10'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
     }

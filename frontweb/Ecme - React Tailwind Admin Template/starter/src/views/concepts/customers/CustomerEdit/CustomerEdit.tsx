@@ -163,7 +163,7 @@ const toDefaultValuesFromMember = (
         city: 'Tunis',
         postcode: '',
         role: primaryRoleCode,
-        employeeCode: member.employee_code || '',
+        locale: (member.user as { locale?: string })?.locale || 'TN',
         banAccount: !isActive,
         accountVerified: isActive,
         password: '',
@@ -278,7 +278,7 @@ const CustomerEdit = () => {
                     roles: [selectedRole],
                     job_title: toTitleCase(selectedRole),
                     status: values.banAccount ? 'inactive' : 'active',
-                    ...(values.employeeCode ? { employee_code: values.employeeCode } : {}),
+                    locale: values.locale || 'TN',
                 }
                 if (values.imgFile instanceof File) {
                     payload.avatar = values.imgFile
@@ -415,9 +415,6 @@ const CustomerEdit = () => {
                     <CustomerForm
                         defaultValues={getDefaultValues() as CustomerFormSchema}
                         newCustomer={false}
-                        showPasswordFields={isSuperadmin}
-                        showEmployeeCode={!isSuperadmin}
-                        showLocale={isSuperadmin}
                         onFormSubmit={handleFormSubmit}
                     >
                         <Container>

@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import isEmpty from 'lodash/isEmpty'
-import { SUPERADMIN } from '@/constants/roles.constant'
 
 function useAuthority(
     userAuthority: string[] = [],
@@ -8,11 +7,6 @@ function useAuthority(
     emptyCheck = false,
 ) {
     const roleMatched = useMemo(() => {
-        // Superadmin has global access across all guarded routes/menus.
-        if (userAuthority.includes(SUPERADMIN)) {
-            return true
-        }
-
         return authority.some((role) => userAuthority.includes(role))
     }, [authority, userAuthority])
 

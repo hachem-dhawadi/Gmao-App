@@ -87,6 +87,14 @@ import {
     PiToolboxDuotone,
     PiCodeDuotone,
     PiPasswordDuotone,
+    PiWrenchDuotone,
+    PiClipboardTextDuotone as PiClipboardDuotone,
+    PiWarehouseDuotone,
+    PiTruckDuotone,
+    PiReceiptDuotone,
+    PiBuildingsDuotone,
+    PiUsersThreeDuotone,
+    PiShieldPlusDuotone,
 } from 'react-icons/pi'
 import type { JSX } from 'react'
 
@@ -196,6 +204,28 @@ const navigationIcon: NavigationIcons = {
     sharedComponentDoc: <PiShareNetworkDuotone />,
     utilsDoc: <PiToolboxDuotone />,
     changeLog: <PiCodeDuotone />,
+    assets: <PiWrenchDuotone />,
+    assetList: <PiListChecksDuotone />,
+    assetCreate: <PiPlusSquareDuotone />,
+    workOrders: <PiClipboardDuotone />,
+    workOrderList: <PiListChecksDuotone />,
+    workOrderCreate: <PiPlusSquareDuotone />,
+    pm: <PiCalendarCheckDuotone />,
+    pmList: <PiListChecksDuotone />,
+    pmCreate: <PiPlusSquareDuotone />,
+    inventory: <PiWarehouseDuotone />,
+    inventoryItems: <PiPackageDuotone />,
+    inventoryWarehouses: <PiWarehouseDuotone />,
+    inventoryStockMoves: <PiTruckDuotone />,
+    purchasing: <PiShoppingCartDuotone />,
+    purchasingSuppliers: <PiUsersThreeDuotone />,
+    purchasingOrders: <PiReceiptDuotone />,
+    purchasingReceipts: <PiReceiptDuotone />,
+    members: <PiUsersDuotone />,
+    memberList: <PiUserListDuotone />,
+    memberCreate: <PiUserPlusDuotone />,
+    departments: <PiBuildingsDuotone />,
+    rolesPermissions: <PiShieldPlusDuotone />,
 }
 
 export default navigationIcon

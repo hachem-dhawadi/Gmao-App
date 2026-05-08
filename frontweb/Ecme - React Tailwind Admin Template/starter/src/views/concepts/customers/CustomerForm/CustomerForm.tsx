@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Form } from '@/components/ui/Form'
 import Container from '@/components/shared/Container'
 import BottomStickyBar from '@/components/template/BottomStickyBar'
@@ -11,21 +11,22 @@ import isEmpty from 'lodash/isEmpty'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import type { ZodType } from 'zod'
 import type { CommonProps } from '@/@types/common'
 import type { CustomerFormSchema } from './types'
+
+type CompanyOption = { value: number; label: string }
 
 type CustomerFormProps = {
     onFormSubmit: (values: CustomerFormSchema) => void
     defaultValues?: CustomerFormSchema
     newCustomer?: boolean
-    showPasswordFields?: boolean
     showAddressSection?: boolean
-    showEmployeeCode?: boolean
-    showLocale?: boolean
+    companyOptions?: CompanyOption[]
+    selectedCompanyId?: number | null
+    onCompanyChange?: (id: number | null) => void
 } & CommonProps
 
-const validationSchema: ZodType<CustomerFormSchema> = z.object({
+const baseSchema = z.object({
     firstName: z.string().min(1, { message: 'First name required' }),
     lastName: z.string().min(1, { message: 'Last name required' }),
     email: z
@@ -52,17 +53,41 @@ const validationSchema: ZodType<CustomerFormSchema> = z.object({
     passwordConfirmation: z.string().optional(),
 })
 
+const buildValidationSchema = (newCustomer: boolean) => {
+    if (!newCustomer) return baseSchema
+
+    return baseSchema
+        .extend({
+            password: z
+                .string()
+                .min(1, { message: 'Password is required' })
+                .min(8, { message: 'Password must be at least 8 characters' }),
+            passwordConfirmation: z
+                .string()
+                .min(1, { message: 'Please confirm your password' }),
+        })
+        .refine((data) => data.password === data.passwordConfirmation, {
+            message: 'Passwords do not match',
+            path: ['passwordConfirmation'],
+        })
+}
+
 const CustomerForm = (props: CustomerFormProps) => {
     const {
         onFormSubmit,
         defaultValues = {},
         newCustomer = false,
-        showPasswordFields = false,
         showAddressSection = false,
-        showEmployeeCode = false,
-        showLocale = false,
+        companyOptions = [],
+        selectedCompanyId = null,
+        onCompanyChange,
         children,
     } = props
+
+    const validationSchema = useMemo(
+        () => buildValidationSchema(newCustomer),
+        [newCustomer],
+    )
 
     const {
         handleSubmit,
@@ -114,9 +139,10 @@ const CustomerForm = (props: CustomerFormProps) => {
                             control={control}
                             errors={errors}
                             setValue={setValue}
-                            showPasswordFields={showPasswordFields}
-                            showEmployeeCode={showEmployeeCode}
-                            showLocale={showLocale}
+                            showOnCreate={newCustomer}
+                            companyOptions={companyOptions}
+                            selectedCompanyId={selectedCompanyId}
+                            onCompanyChange={onCompanyChange}
                         />
                         {showAddressSection && (
                             <AddressSection
