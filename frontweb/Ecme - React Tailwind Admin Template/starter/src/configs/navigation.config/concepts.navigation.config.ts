@@ -263,13 +263,34 @@ const conceptsNavigationConfig: NavigationTree[] = [
             // Departments
             {
                 key: 'concepts.departments',
-                path: `${CONCEPTS_PREFIX_PATH}/departments`,
+                path: '',
                 title: 'Departments',
                 translateKey: 'nav.departments',
                 icon: 'departments',
-                type: NAV_ITEM_TYPE_ITEM,
+                type: NAV_ITEM_TYPE_COLLAPSE,
                 authority: [ADMIN, HR, MANAGER],
-                subMenu: [],
+                subMenu: [
+                    {
+                        key: 'concepts.departments.departmentList',
+                        path: `${CONCEPTS_PREFIX_PATH}/departments`,
+                        title: 'Department List',
+                        translateKey: 'nav.departments.departmentList',
+                        icon: 'memberList',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, HR, MANAGER],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'concepts.departments.departmentCreate',
+                        path: `${CONCEPTS_PREFIX_PATH}/departments/department-create`,
+                        title: 'Add Department',
+                        translateKey: 'nav.departments.departmentCreate',
+                        icon: 'memberCreate',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, HR],
+                        subMenu: [],
+                    },
+                ],
             },
 
             // Roles & Permissions

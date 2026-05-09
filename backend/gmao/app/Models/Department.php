@@ -5,11 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Member extends Model
+class Department extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -20,18 +19,18 @@ class Member extends Model
         return $this->belongsTo(Company::class);
     }
 
-    public function user(): BelongsTo
+    public function parent(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Department::class, 'parent_department_id');
     }
 
-    public function department(): BelongsTo
+    public function children(): HasMany
     {
-        return $this->belongsTo(Department::class);
+        return $this->hasMany(Department::class, 'parent_department_id');
     }
 
-    public function roles(): BelongsToMany
+    public function members(): HasMany
     {
-        return $this->belongsToMany(Role::class, 'member_roles');
+        return $this->hasMany(Member::class);
     }
 }

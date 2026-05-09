@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Companies\ApproveCompanyController;
 use App\Http\Controllers\Api\V1\Companies\OwnerCompanyController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Departments\DepartmentController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as SuperadminCompanyMemberController;
@@ -29,6 +30,14 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->prefix('companies')->group(function (): void {
         Route::post('/', [OwnerCompanyController::class, 'store']);
         Route::patch('/current', [OwnerCompanyController::class, 'update']);
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('departments')->group(function (): void {
+        Route::get('/', [DepartmentController::class, 'index'])->middleware('permission:departments.read');
+        Route::get('/{department}', [DepartmentController::class, 'show'])->middleware('permission:departments.read');
+        Route::post('/', [DepartmentController::class, 'store'])->middleware('permission:departments.create');
+        Route::patch('/{department}', [DepartmentController::class, 'update'])->middleware('permission:departments.update');
+        Route::delete('/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:departments.delete');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('members')->group(function (): void {

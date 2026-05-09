@@ -7,6 +7,10 @@ import type { Routes } from '@/@types/routes'
 export const publicRoutes: Routes = [...authRoute]
 
 const DrawerPlaceholder = lazy(() => import('@/views/demo/DrawerPlaceholder'))
+const DepartmentList = lazy(() => import('@/views/concepts/departments/DepartmentList'))
+const DepartmentCreate = lazy(() => import('@/views/concepts/departments/DepartmentCreate'))
+const DepartmentEdit = lazy(() => import('@/views/concepts/departments/DepartmentEdit'))
+const DepartmentDetails = lazy(() => import('@/views/concepts/departments/DepartmentDetails'))
 const EcommerceDashboard = lazy(() => import('@/views/dashboards/EcommerceDashboard'))
 const Calendar = lazy(() => import('@/views/concepts/calendar/Calendar'))
 const FileManager = lazy(() => import('@/views/concepts/files/FileManager'))
@@ -284,12 +288,6 @@ const placeholderRoutes: Routes = [
         authority: [],
     },
     {
-        key: 'concepts.departments',
-        path: '/concepts/departments',
-        component: DrawerPlaceholder,
-        authority: [],
-    },
-    {
         key: 'concepts.rolesPermissions',
         path: '/concepts/roles-permissions',
         component: DrawerPlaceholder,
@@ -372,6 +370,30 @@ export const protectedRoutes: Routes = [
         key: 'concepts.customers.customerCreate',
         path: '/concepts/customers/customer-create',
         component: lazy(() => import('@/views/concepts/customers/CustomerCreate')),
+        authority: [],
+    },
+    {
+        key: 'concepts.departments',
+        path: '/concepts/departments',
+        component: DepartmentList,
+        authority: [],
+    },
+    {
+        key: 'concepts.departments.departmentCreate',
+        path: '/concepts/departments/department-create',
+        component: DepartmentCreate,
+        authority: [],
+    },
+    {
+        key: 'concepts.departments.departmentEdit',
+        path: '/concepts/departments/department-edit/:id',
+        component: DepartmentEdit,
+        authority: [],
+    },
+    {
+        key: 'concepts.departments.departmentDetails',
+        path: '/concepts/departments/department-details/:id',
+        component: DepartmentDetails,
         authority: [],
     },
     {

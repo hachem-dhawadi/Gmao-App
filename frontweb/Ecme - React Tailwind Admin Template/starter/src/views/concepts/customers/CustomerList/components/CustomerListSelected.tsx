@@ -14,9 +14,7 @@ import { TbChecks } from 'react-icons/tb'
 const CustomerListSelected = () => {
     const {
         selectedCustomer,
-        customerList,
         mutate,
-        customerListTotal,
         setSelectAllCustomer,
     } = useCustomerList()
 
@@ -33,19 +31,8 @@ const CustomerListSelected = () => {
     }
 
     const handleConfirmDelete = () => {
-        const newCustomerList = customerList.filter((customer) => {
-            return !selectedCustomer.some(
-                (selected) => selected.id === customer.id,
-            )
-        })
         setSelectAllCustomer([])
-        mutate(
-            {
-                list: newCustomerList,
-                total: customerListTotal - selectedCustomer.length,
-            },
-            false,
-        )
+        mutate()
         setDeleteConfirmationOpen(false)
     }
 
@@ -89,10 +76,9 @@ const CustomerListSelected = () => {
                                 )}
                             </span>
 
-                            <div className="flex items-center">
+                            <div className="flex items-center gap-3">
                                 <Button
                                     size="sm"
-                                    className="ltr:mr-3 rtl:ml-3"
                                     type="button"
                                     customColorClass={() =>
                                         'border-error ring-1 ring-error text-error hover:border-error hover:ring-error hover:text-error'
@@ -109,6 +95,12 @@ const CustomerListSelected = () => {
                                     }
                                 >
                                     Message
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => setSelectAllCustomer([])}
+                                >
+                                    Clear selection
                                 </Button>
                             </div>
                         </div>
