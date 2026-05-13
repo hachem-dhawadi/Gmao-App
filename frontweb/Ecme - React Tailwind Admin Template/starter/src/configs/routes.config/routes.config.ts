@@ -8,6 +8,11 @@ export const publicRoutes: Routes = [...authRoute]
 
 const DrawerPlaceholder = lazy(() => import('@/views/demo/DrawerPlaceholder'))
 const DepartmentList = lazy(() => import('@/views/concepts/departments/DepartmentList'))
+const AssetList = lazy(() => import('@/views/concepts/assets/AssetList'))
+const RolesPermissions = lazy(() => import('@/views/concepts/rolesPermissions/RolesPermissions'))
+const AssetCreate = lazy(() => import('@/views/concepts/assets/AssetCreate'))
+const AssetEdit = lazy(() => import('@/views/concepts/assets/AssetEdit'))
+const AssetDetails = lazy(() => import('@/views/concepts/assets/AssetDetails'))
 const DepartmentCreate = lazy(() => import('@/views/concepts/departments/DepartmentCreate'))
 const DepartmentEdit = lazy(() => import('@/views/concepts/departments/DepartmentEdit'))
 const DepartmentDetails = lazy(() => import('@/views/concepts/departments/DepartmentDetails'))
@@ -216,18 +221,6 @@ const placeholderRoutes: Routes = [
     },
     // GMAO placeholder routes
     {
-        key: 'concepts.assets.assetList',
-        path: '/concepts/assets/asset-list',
-        component: DrawerPlaceholder,
-        authority: [],
-    },
-    {
-        key: 'concepts.assets.assetCreate',
-        path: '/concepts/assets/asset-create',
-        component: DrawerPlaceholder,
-        authority: [],
-    },
-    {
         key: 'concepts.workOrders.workOrderList',
         path: '/concepts/work-orders/work-order-list',
         component: DrawerPlaceholder,
@@ -290,7 +283,7 @@ const placeholderRoutes: Routes = [
     {
         key: 'concepts.rolesPermissions',
         path: '/concepts/roles-permissions',
-        component: DrawerPlaceholder,
+        component: RolesPermissions,
         authority: [],
     },
 ]
@@ -394,6 +387,30 @@ export const protectedRoutes: Routes = [
         key: 'concepts.departments.departmentDetails',
         path: '/concepts/departments/department-details/:id',
         component: DepartmentDetails,
+        authority: [],
+    },
+    {
+        key: 'concepts.assets.assetList',
+        path: '/concepts/assets/asset-list',
+        component: AssetList,
+        authority: [],
+    },
+    {
+        key: 'concepts.assets.assetCreate',
+        path: '/concepts/assets/asset-create',
+        component: AssetCreate,
+        authority: [],
+    },
+    {
+        key: 'concepts.assets.assetEdit',
+        path: '/concepts/assets/asset-edit/:id',
+        component: AssetEdit,
+        authority: [],
+    },
+    {
+        key: 'concepts.assets.assetDetails',
+        path: '/concepts/assets/asset-details/:id',
+        component: AssetDetails,
         authority: [],
     },
     {

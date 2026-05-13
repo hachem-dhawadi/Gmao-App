@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Companies\ApproveCompanyController;
 use App\Http\Controllers\Api\V1\Companies\OwnerCompanyController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\Assets\AssetController;
+use App\Http\Controllers\Api\V1\Roles\RoleController;
+use App\Http\Controllers\Api\V1\Assets\AssetTypeController;
 use App\Http\Controllers\Api\V1\Departments\DepartmentController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
@@ -38,6 +41,20 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/', [DepartmentController::class, 'store'])->middleware('permission:departments.create');
         Route::patch('/{department}', [DepartmentController::class, 'update'])->middleware('permission:departments.update');
         Route::delete('/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:departments.delete');
+    });
+
+    Route::middleware('auth:sanctum')->get('/asset-types', [AssetTypeController::class, 'index']);
+
+    Route::middleware(['auth:sanctum', 'company.context'])
+        ->get('/roles', [RoleController::class, 'index'])
+        ->middleware('permission:roles.read');
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('assets')->group(function (): void {
+        Route::get('/', [AssetController::class, 'index'])->middleware('permission:assets.read');
+        Route::get('/{asset}', [AssetController::class, 'show'])->middleware('permission:assets.read');
+        Route::post('/', [AssetController::class, 'store'])->middleware('permission:assets.write');
+        Route::patch('/{asset}', [AssetController::class, 'update'])->middleware('permission:assets.write');
+        Route::delete('/{asset}', [AssetController::class, 'destroy'])->middleware('permission:assets.delete');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('members')->group(function (): void {

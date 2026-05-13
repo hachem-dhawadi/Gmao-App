@@ -109,6 +109,7 @@ class CompanyRbacSetupService
             'departments.delete' => 'Delete departments',
             'assets.read' => 'Read assets',
             'assets.write' => 'Manage assets',
+            'assets.delete' => 'Delete assets',
             'work_orders.read' => 'Read work orders',
             'work_orders.write' => 'Manage work orders',
             'inventory.read' => 'Read inventory',
