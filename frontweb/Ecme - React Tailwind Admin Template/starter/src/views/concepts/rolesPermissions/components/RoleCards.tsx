@@ -4,6 +4,13 @@ import { TbArrowRight } from 'react-icons/tb'
 import type { Role } from '@/services/RolesService'
 import type { Member } from '@/services/MembersService'
 
+const roleDescriptions: Record<string, string> = {
+    admin: 'Full access to all features, settings and company management.',
+    hr: 'Manage members, departments and human resources operations.',
+    manager: 'Oversee work orders, assets and team assignments.',
+    technician: 'Execute work orders and log maintenance activities.',
+}
+
 type RoleCardsProps = {
     roles: Role[]
     members: Member[]
@@ -26,8 +33,8 @@ const RoleCards = ({ roles, members, onEditRole }: RoleCardsProps) => {
                         <div className="flex items-center justify-between">
                             <h6 className="font-bold">{role.label}</h6>
                         </div>
-                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                            {role.permissions.length} permissions assigned
+                        <p className="mt-2">
+                            {role.description || roleDescriptions[role.code] || `${role.permissions.length} permissions assigned`}
                         </p>
                         <div className="flex items-center justify-between mt-4">
                             <div className="flex flex-col">

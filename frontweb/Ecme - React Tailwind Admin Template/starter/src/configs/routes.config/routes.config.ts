@@ -30,6 +30,9 @@ const WarehouseCreate = lazy(() => import('@/views/concepts/inventory/WarehouseC
 const WarehouseEdit = lazy(() => import('@/views/concepts/inventory/WarehouseEdit/WarehouseEdit'))
 const WarehouseDetails = lazy(() => import('@/views/concepts/inventory/WarehouseDetails/WarehouseDetails'))
 const StockMoveList = lazy(() => import('@/views/concepts/inventory/StockMoveList/StockMoveList'))
+const PmPlanList = lazy(() => import('@/views/concepts/pm/PmPlanList/PmPlanList'))
+const PmPlanCreate = lazy(() => import('@/views/concepts/pm/PmPlanCreate/PmPlanCreate'))
+const PmPlanEdit = lazy(() => import('@/views/concepts/pm/PmPlanEdit/PmPlanEdit'))
 const EcommerceDashboard = lazy(() => import('@/views/dashboards/EcommerceDashboard'))
 const Calendar = lazy(() => import('@/views/concepts/calendar/Calendar'))
 const FileManager = lazy(() => import('@/views/concepts/files/FileManager'))
@@ -267,14 +270,20 @@ const placeholderRoutes: Routes = [
     {
         key: 'concepts.pm.pmList',
         path: '/concepts/pm/pm-list',
-        component: DrawerPlaceholder,
+        component: PmPlanList,
         authority: [],
     },
     {
         key: 'concepts.pm.pmCreate',
         path: '/concepts/pm/pm-create',
-        component: DrawerPlaceholder,
-        authority: [],
+        component: PmPlanCreate,
+        authority: [ADMIN, MANAGER],
+    },
+    {
+        key: 'concepts.pm.pmEdit',
+        path: '/concepts/pm/pm-edit/:id',
+        component: PmPlanEdit,
+        authority: [ADMIN, MANAGER],
     },
     {
         key: 'concepts.inventory.items',

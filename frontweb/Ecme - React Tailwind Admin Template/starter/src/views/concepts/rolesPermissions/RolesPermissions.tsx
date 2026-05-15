@@ -8,17 +8,21 @@ import { apiGetMembersList } from '@/services/MembersService'
 import RoleCards from './components/RoleCards'
 import MembersSection from './components/MembersSection'
 import RolePermissionsDialog from './components/RolePermissionsDialog'
+import CreateRoleDialog from './components/CreateRoleDialog'
 import type { RolesResponse, Role } from '@/services/RolesService'
 import type { MembersListResponse } from '@/services/MembersService'
 
 const RolesPermissions = () => {
     const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+    const [createOpen, setCreateOpen] = useState(false)
 
-    const { data: rolesData, isLoading: rolesLoading } = useSWR(
-        '/roles',
-        () => apiGetRoles<RolesResponse>(),
-        { revalidateOnFocus: false },
-    )
+    const {
+        data: rolesData,
+        isLoading: rolesLoading,
+        mutate: mutateRoles,
+    } = useSWR('/roles', () => apiGetRoles<RolesResponse>(), {
+        revalidateOnFocus: false,
+    })
 
     const {
         data: membersData,
@@ -47,7 +51,12 @@ const RolesPermissions = () => {
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-6">
                         <h3>Roles & Permissions</h3>
-                        <Button variant="solid">Create role</Button>
+                        <Button
+                            variant="solid"
+                            onClick={() => setCreateOpen(true)}
+                        >
+                            Create role
+                        </Button>
                     </div>
                     <div className="mb-10">
                         <RoleCards
@@ -71,6 +80,13 @@ const RolesPermissions = () => {
             <RolePermissionsDialog
                 role={selectedRole}
                 onClose={() => setSelectedRole(null)}
+                mutate={mutateRoles}
+            />
+
+            <CreateRoleDialog
+                isOpen={createOpen}
+                onClose={() => setCreateOpen(false)}
+                mutate={mutateRoles}
             />
         </>
     )

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\WorkOrders\WorkLogController;
 use App\Http\Controllers\Api\V1\Inventory\ItemController;
 use App\Http\Controllers\Api\V1\Inventory\WarehouseController;
 use App\Http\Controllers\Api\V1\Inventory\StockMoveController;
+use App\Http\Controllers\Api\V1\Pm\PmPlanController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as SuperadminCompanyMemberController;
 use App\Http\Controllers\Api\V1\Superadmin\UserController as SuperadminUserController;
@@ -50,9 +51,11 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware('auth:sanctum')->get('/asset-types', [AssetTypeController::class, 'index']);
 
-    Route::middleware(['auth:sanctum', 'company.context'])
-        ->get('/roles', [RoleController::class, 'index'])
-        ->middleware('permission:roles.read');
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('roles')->group(function (): void {
+        Route::get('/', [RoleController::class, 'index'])->middleware('permission:roles.read');
+        Route::post('/', [RoleController::class, 'store'])->middleware('permission:roles.write');
+        Route::patch('/{role}', [RoleController::class, 'update'])->middleware('permission:roles.write');
+    });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('assets')->group(function (): void {
         Route::get('/', [AssetController::class, 'index'])->middleware('permission:assets.read');
@@ -113,6 +116,14 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/', [StockMoveController::class, 'index'])->middleware('permission:inventory.read');
         Route::post('/', [StockMoveController::class, 'store'])->middleware('permission:inventory.write');
         Route::delete('/{stockMove}', [StockMoveController::class, 'destroy'])->middleware('permission:inventory.write');
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('pm/plans')->group(function (): void {
+        Route::get('/', [PmPlanController::class, 'index'])->middleware('permission:pm_plans.read');
+        Route::get('/{pmPlan}', [PmPlanController::class, 'show'])->middleware('permission:pm_plans.read');
+        Route::post('/', [PmPlanController::class, 'store'])->middleware('permission:pm_plans.write');
+        Route::patch('/{pmPlan}', [PmPlanController::class, 'update'])->middleware('permission:pm_plans.write');
+        Route::delete('/{pmPlan}', [PmPlanController::class, 'destroy'])->middleware('permission:pm_plans.delete');
     });
 
     Route::middleware(['auth:sanctum', 'superadmin'])->prefix('superadmin')->group(function (): void {

@@ -1,59 +1,74 @@
-import { useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
+import Input from '@/components/ui/Input'
 import ScrollBar from '@/components/ui/ScrollBar'
 import Segment from '@/components/ui/Segment'
+import { FormItem } from '@/components/ui/Form'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import classNames from '@/utils/classNames'
 import isLastChild from '@/utils/isLastChild'
-import { apiUpdateRole } from '@/services/RolesService'
+import { apiCreateRole } from '@/services/RolesService'
 import { accessModules, moduleIcon } from '../constants'
 import { TbCheck } from 'react-icons/tb'
 import type { KeyedMutator } from 'swr'
-import type { Role, RolesResponse } from '@/services/RolesService'
+import type { RolesResponse } from '@/services/RolesService'
 
-type RolePermissionsDialogProps = {
-    role: Role | null
+type CreateRoleDialogProps = {
+    isOpen: boolean
     onClose: () => void
     mutate: KeyedMutator<RolesResponse>
 }
 
-const RolePermissionsDialog = ({
-    role,
-    onClose,
-    mutate,
-}: RolePermissionsDialogProps) => {
+const CreateRoleDialog = ({ isOpen, onClose, mutate }: CreateRoleDialogProps) => {
+    const roleNameRef = useRef<HTMLInputElement>(null)
+    const descriptionRef = useRef<HTMLTextAreaElement>(null)
     const [selectedPerms, setSelectedPerms] = useState<Record<string, string[]>>({})
     const [submitting, setSubmitting] = useState(false)
 
-    // Initialise selections whenever the role changes
-    useEffect(() => {
-        if (!role) return
-        const initial: Record<string, string[]> = {}
-        accessModules.forEach((module) => {
-            initial[module.id] = module.accessor
-                .filter((a) => role.permissions.some((p) => p.code === a.value))
-                .map((a) => a.value)
-        })
-        setSelectedPerms(initial)
-    }, [role])
+    const handlePermChange = (values: string[], moduleId: string) => {
+        setSelectedPerms((prev) => ({ ...prev, [moduleId]: values }))
+    }
 
     const handleClose = () => {
+        setSelectedPerms({})
         onClose()
     }
 
-    const handleUpdate = async () => {
-        if (!role) return
+    const handleSubmit = async () => {
+        const label = roleNameRef.current?.value?.trim()
+        if (!label) {
+            toast.push(
+                <Notification type="danger">Role name is required.</Notification>,
+                { placement: 'top-center' },
+            )
+            return
+        }
+
         const permissions = Object.values(selectedPerms).flat()
+        if (permissions.length === 0) {
+            toast.push(
+                <Notification type="danger">
+                    Select at least one permission.
+                </Notification>,
+                { placement: 'top-center' },
+            )
+            return
+        }
+
         setSubmitting(true)
         try {
-            await apiUpdateRole(role.id, { permissions })
+            await apiCreateRole({
+                label,
+                description: descriptionRef.current?.value?.trim() || null,
+                permissions,
+            })
             await mutate()
             toast.push(
                 <Notification type="success">
-                    Role &quot;{role.label}&quot; updated successfully.
+                    Role &quot;{label}&quot; created successfully.
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -61,7 +76,7 @@ const RolePermissionsDialog = ({
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to update role permissions.
+                    Failed to create role. The name may already exist.
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -72,19 +87,27 @@ const RolePermissionsDialog = ({
 
     return (
         <Dialog
-            isOpen={!!role}
+            isOpen={isOpen}
             width={900}
             onClose={handleClose}
             onRequestClose={handleClose}
         >
-            <h4>{role?.label}</h4>
-            {role?.description && (
-                <p className="mt-1 text-gray-500 dark:text-gray-400">
-                    {role.description}
-                </p>
-            )}
+            <h4>Create role</h4>
             <ScrollBar className="mt-6 max-h-[600px] overflow-y-auto">
                 <div className="px-4">
+                    <FormItem label="Role name">
+                        <Input ref={roleNameRef} placeholder="e.g. Supervisor" />
+                    </FormItem>
+                    <FormItem label="Description">
+                        <Input
+                            ref={descriptionRef}
+                            textArea
+                            placeholder="Describe what this role can do..."
+                            rows={2}
+                        />
+                    </FormItem>
+                    <span className="font-semibold">Permission</span>
+
                     {accessModules.map((module, index) => (
                         <div
                             key={module.id}
@@ -97,10 +120,7 @@ const RolePermissionsDialog = ({
                                 <Avatar
                                     className="bg-transparent dark:bg-transparent p-2 border-2 border-gray-200 dark:border-gray-600 text-primary"
                                     size={50}
-                                    icon={(() => {
-                                        const Icon = moduleIcon[module.id]
-                                        return Icon ? <Icon /> : null
-                                    })()}
+                                    icon={(() => { const Icon = moduleIcon[module.id]; return Icon ? <Icon /> : null })()}
                                     shape="round"
                                 />
                                 <div>
@@ -114,10 +134,7 @@ const RolePermissionsDialog = ({
                                     selectionType="multiple"
                                     value={selectedPerms[module.id] ?? []}
                                     onChange={(val) =>
-                                        setSelectedPerms((prev) => ({
-                                            ...prev,
-                                            [module.id]: val as string[],
-                                        }))
+                                        handlePermChange(val as string[], module.id)
                                     }
                                 >
                                     {module.accessor.map((access) => (
@@ -156,6 +173,7 @@ const RolePermissionsDialog = ({
                             </div>
                         </div>
                     ))}
+
                     <div className="flex justify-end mt-6">
                         <Button
                             className="ltr:mr-2 rtl:ml-2"
@@ -167,9 +185,9 @@ const RolePermissionsDialog = ({
                         <Button
                             variant="solid"
                             loading={submitting}
-                            onClick={handleUpdate}
+                            onClick={handleSubmit}
                         >
-                            Update
+                            Create
                         </Button>
                     </div>
                 </div>
@@ -178,4 +196,4 @@ const RolePermissionsDialog = ({
     )
 }
 
-export default RolePermissionsDialog
+export default CreateRoleDialog
