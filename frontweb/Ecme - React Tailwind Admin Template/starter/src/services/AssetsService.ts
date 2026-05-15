@@ -1,5 +1,12 @@
 import ApiService from './ApiService'
 
+export type ImageItem = {
+    id: string
+    name: string
+    img: string
+    file?: File
+}
+
 export type AssetType = {
     id: number
     name: string
@@ -24,6 +31,7 @@ export type Asset = {
     installed_at: string | null
     created_at: string | null
     updated_at: string | null
+    images?: string[]
     asset_type: AssetType | null
 }
 
@@ -53,38 +61,6 @@ export type AssetTypesResponse = {
     data: { asset_types: AssetType[] }
 }
 
-export type CreateAssetRequest = {
-    name: string
-    code: string
-    asset_type_id: number
-    status: string
-    serial_number?: string | null
-    manufacturer?: string | null
-    model?: string | null
-    location?: string | null
-    address_label?: string | null
-    notes?: string | null
-    purchase_date?: string | null
-    warranty_end_at?: string | null
-    installed_at?: string | null
-}
-
-export type UpdateAssetRequest = {
-    name?: string
-    code?: string
-    asset_type_id?: number
-    status?: string
-    serial_number?: string | null
-    manufacturer?: string | null
-    model?: string | null
-    location?: string | null
-    address_label?: string | null
-    notes?: string | null
-    purchase_date?: string | null
-    warranty_end_at?: string | null
-    installed_at?: string | null
-}
-
 export async function apiGetAssetTypes<T = AssetTypesResponse>() {
     return ApiService.fetchDataWithAxios<T>({
         url: '/asset-types',
@@ -112,24 +88,24 @@ export async function apiGetAssetById<T = AssetResponse>(
     })
 }
 
-export async function apiCreateAsset<T = AssetResponse>(
-    data: CreateAssetRequest,
-) {
-    return ApiService.fetchDataWithAxios<T>({
+export async function apiCreateAsset<T = AssetResponse>(data: FormData) {
+    return ApiService.fetchDataWithAxios<T, unknown>({
         url: '/assets',
         method: 'post',
         data,
+        headers: { 'Content-Type': 'multipart/form-data' },
     })
 }
 
 export async function apiUpdateAsset<T = AssetResponse>(
     id: string | number,
-    data: UpdateAssetRequest,
+    data: FormData,
 ) {
-    return ApiService.fetchDataWithAxios<T>({
+    return ApiService.fetchDataWithAxios<T, unknown>({
         url: `/assets/${id}`,
-        method: 'patch',
+        method: 'post',
         data,
+        headers: { 'Content-Type': 'multipart/form-data' },
     })
 }
 

@@ -1,7 +1,7 @@
 import { lazy } from 'react'
 import authRoute from './authRoute'
 import othersRoute from './othersRoute'
-import { SUPERADMIN } from '@/constants/roles.constant'
+import { SUPERADMIN, ADMIN, MANAGER } from '@/constants/roles.constant'
 import type { Routes } from '@/@types/routes'
 
 export const publicRoutes: Routes = [...authRoute]
@@ -16,6 +16,20 @@ const AssetDetails = lazy(() => import('@/views/concepts/assets/AssetDetails'))
 const DepartmentCreate = lazy(() => import('@/views/concepts/departments/DepartmentCreate'))
 const DepartmentEdit = lazy(() => import('@/views/concepts/departments/DepartmentEdit'))
 const DepartmentDetails = lazy(() => import('@/views/concepts/departments/DepartmentDetails'))
+const WorkOrderList = lazy(() => import('@/views/concepts/workOrders/WorkOrderList'))
+const WorkOrderCreate = lazy(() => import('@/views/concepts/workOrders/WorkOrderCreate'))
+const WorkOrderEdit = lazy(() => import('@/views/concepts/workOrders/WorkOrderEdit'))
+const WorkOrderDetails = lazy(() => import('@/views/concepts/workOrders/WorkOrderDetails'))
+const WorkOrderBoard = lazy(() => import('@/views/concepts/workOrders/WorkOrderBoard'))
+const ItemList = lazy(() => import('@/views/concepts/inventory/ItemList/ItemList'))
+const ItemCreate = lazy(() => import('@/views/concepts/inventory/ItemCreate/ItemCreate'))
+const ItemEdit = lazy(() => import('@/views/concepts/inventory/ItemEdit/ItemEdit'))
+const ItemDetails = lazy(() => import('@/views/concepts/inventory/ItemDetails/ItemDetails'))
+const WarehouseList = lazy(() => import('@/views/concepts/inventory/WarehouseList/WarehouseList'))
+const WarehouseCreate = lazy(() => import('@/views/concepts/inventory/WarehouseCreate/WarehouseCreate'))
+const WarehouseEdit = lazy(() => import('@/views/concepts/inventory/WarehouseEdit/WarehouseEdit'))
+const WarehouseDetails = lazy(() => import('@/views/concepts/inventory/WarehouseDetails/WarehouseDetails'))
+const StockMoveList = lazy(() => import('@/views/concepts/inventory/StockMoveList/StockMoveList'))
 const EcommerceDashboard = lazy(() => import('@/views/dashboards/EcommerceDashboard'))
 const Calendar = lazy(() => import('@/views/concepts/calendar/Calendar'))
 const FileManager = lazy(() => import('@/views/concepts/files/FileManager'))
@@ -223,13 +237,31 @@ const placeholderRoutes: Routes = [
     {
         key: 'concepts.workOrders.workOrderList',
         path: '/concepts/work-orders/work-order-list',
-        component: DrawerPlaceholder,
+        component: WorkOrderList,
         authority: [],
     },
     {
         key: 'concepts.workOrders.workOrderCreate',
         path: '/concepts/work-orders/work-order-create',
-        component: DrawerPlaceholder,
+        component: WorkOrderCreate,
+        authority: [],
+    },
+    {
+        key: 'concepts.workOrders.workOrderEdit',
+        path: '/concepts/work-orders/work-order-edit/:id',
+        component: WorkOrderEdit,
+        authority: [],
+    },
+    {
+        key: 'concepts.workOrders.workOrderDetails',
+        path: '/concepts/work-orders/work-order-details/:id',
+        component: WorkOrderDetails,
+        authority: [],
+    },
+    {
+        key: 'concepts.workOrders.workOrderBoard',
+        path: '/concepts/work-orders/work-order-board',
+        component: WorkOrderBoard,
         authority: [],
     },
     {
@@ -247,19 +279,55 @@ const placeholderRoutes: Routes = [
     {
         key: 'concepts.inventory.items',
         path: '/concepts/inventory/items',
-        component: DrawerPlaceholder,
+        component: ItemList,
+        authority: [],
+    },
+    {
+        key: 'concepts.inventory.items.itemCreate',
+        path: '/concepts/inventory/items/item-create',
+        component: ItemCreate,
+        authority: [ADMIN, MANAGER],
+    },
+    {
+        key: 'concepts.inventory.items.itemEdit',
+        path: '/concepts/inventory/items/item-edit/:id',
+        component: ItemEdit,
+        authority: [ADMIN, MANAGER],
+    },
+    {
+        key: 'concepts.inventory.items.itemDetails',
+        path: '/concepts/inventory/items/item-details/:id',
+        component: ItemDetails,
         authority: [],
     },
     {
         key: 'concepts.inventory.warehouses',
         path: '/concepts/inventory/warehouses',
-        component: DrawerPlaceholder,
+        component: WarehouseList,
+        authority: [],
+    },
+    {
+        key: 'concepts.inventory.warehouses.warehouseCreate',
+        path: '/concepts/inventory/warehouses/warehouse-create',
+        component: WarehouseCreate,
+        authority: [ADMIN, MANAGER],
+    },
+    {
+        key: 'concepts.inventory.warehouses.warehouseEdit',
+        path: '/concepts/inventory/warehouses/warehouse-edit/:id',
+        component: WarehouseEdit,
+        authority: [ADMIN, MANAGER],
+    },
+    {
+        key: 'concepts.inventory.warehouses.warehouseDetails',
+        path: '/concepts/inventory/warehouses/warehouse-details/:id',
+        component: WarehouseDetails,
         authority: [],
     },
     {
         key: 'concepts.inventory.stockMoves',
         path: '/concepts/inventory/stock-moves',
-        component: DrawerPlaceholder,
+        component: StockMoveList,
         authority: [],
     },
     {
@@ -285,6 +353,9 @@ const placeholderRoutes: Routes = [
         path: '/concepts/roles-permissions',
         component: RolesPermissions,
         authority: [],
+        meta: {
+            pageBackgroundType: 'plain',
+        },
     },
 ]
 

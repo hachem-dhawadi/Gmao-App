@@ -209,6 +209,7 @@ const navigationIcon: NavigationIcons = {
     assetCreate: <PiPlusSquareDuotone />,
     workOrders: <PiClipboardDuotone />,
     workOrderList: <PiListChecksDuotone />,
+    workOrderBoard: <PiChalkboardSimpleDuotone />,
     workOrderCreate: <PiPlusSquareDuotone />,
     pm: <PiCalendarCheckDuotone />,
     pmList: <PiListChecksDuotone />,

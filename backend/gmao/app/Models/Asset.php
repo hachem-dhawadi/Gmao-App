@@ -19,6 +19,7 @@ class Asset extends Model
         'warranty_end_at' => 'date',
         'installed_at'    => 'datetime',
         'archived_at'     => 'datetime',
+        'images'          => 'array',
     ];
 
     public function company(): BelongsTo
@@ -29,6 +30,11 @@ class Asset extends Model
     public function assetType(): BelongsTo
     {
         return $this->belongsTo(AssetType::class);
+    }
+
+    public function workOrders(): HasMany
+    {
+        return $this->hasMany(WorkOrder::class);
     }
 
     public function values(): HasMany

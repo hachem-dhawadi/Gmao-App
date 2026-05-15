@@ -67,11 +67,6 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                 label="Code"
                 invalid={Boolean(errors.code)}
                 errorMessage={errors.code?.message}
-                extra={
-                    <span className="text-xs text-gray-400">
-                        Unique identifier, uppercase
-                    </span>
-                }
             >
                 <Controller
                     name="code"

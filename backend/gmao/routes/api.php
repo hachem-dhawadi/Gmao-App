@@ -10,6 +10,11 @@ use App\Http\Controllers\Api\V1\Roles\RoleController;
 use App\Http\Controllers\Api\V1\Assets\AssetTypeController;
 use App\Http\Controllers\Api\V1\Departments\DepartmentController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
+use App\Http\Controllers\Api\V1\WorkOrders\WorkOrderController;
+use App\Http\Controllers\Api\V1\WorkOrders\WorkLogController;
+use App\Http\Controllers\Api\V1\Inventory\ItemController;
+use App\Http\Controllers\Api\V1\Inventory\WarehouseController;
+use App\Http\Controllers\Api\V1\Inventory\StockMoveController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as SuperadminCompanyMemberController;
 use App\Http\Controllers\Api\V1\Superadmin\UserController as SuperadminUserController;
@@ -63,6 +68,51 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/', [MemberController::class, 'store'])->middleware('permission:members.create');
         Route::patch('/{member}', [MemberController::class, 'update'])->middleware('permission:members.update');
         Route::delete('/{member}', [MemberController::class, 'destroy'])->middleware('permission:members.delete');
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('work-orders')->group(function (): void {
+        Route::get('/', [WorkOrderController::class, 'index'])->middleware('permission:work_orders.read');
+        Route::get('/{workOrder}', [WorkOrderController::class, 'show'])->middleware('permission:work_orders.read');
+        Route::post('/', [WorkOrderController::class, 'store'])->middleware('permission:work_orders.write');
+        Route::patch('/{workOrder}', [WorkOrderController::class, 'update'])->middleware('permission:work_orders.write');
+        Route::delete('/{workOrder}', [WorkOrderController::class, 'destroy'])->middleware('permission:work_orders.delete');
+
+        // Comments
+        Route::post('/{workOrder}/comments', [WorkOrderController::class, 'addComment'])->middleware('permission:work_orders.write');
+        Route::delete('/{workOrder}/comments/{comment}', [WorkOrderController::class, 'deleteComment'])->middleware('permission:work_orders.write');
+
+        // Attachments
+        Route::post('/{workOrder}/attachments', [WorkOrderController::class, 'addAttachment'])->middleware('permission:work_orders.write');
+        Route::get('/{workOrder}/attachments/{attachment}/download', [WorkOrderController::class, 'downloadAttachment'])->middleware('permission:work_orders.read');
+        Route::delete('/{workOrder}/attachments/{attachment}', [WorkOrderController::class, 'deleteAttachment'])->middleware('permission:work_orders.write');
+
+        // Work Logs
+        Route::get('/{workOrder}/work-logs', [WorkLogController::class, 'index'])->middleware('permission:work_orders.read');
+        Route::post('/{workOrder}/work-logs', [WorkLogController::class, 'store'])->middleware('permission:work_orders.write');
+        Route::patch('/{workOrder}/work-logs/{workLog}', [WorkLogController::class, 'update'])->middleware('permission:work_orders.write');
+        Route::delete('/{workOrder}/work-logs/{workLog}', [WorkLogController::class, 'destroy'])->middleware('permission:work_orders.write');
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('inventory/items')->group(function (): void {
+        Route::get('/', [ItemController::class, 'index'])->middleware('permission:inventory.read');
+        Route::get('/{item}', [ItemController::class, 'show'])->middleware('permission:inventory.read');
+        Route::post('/', [ItemController::class, 'store'])->middleware('permission:inventory.write');
+        Route::patch('/{item}', [ItemController::class, 'update'])->middleware('permission:inventory.write');
+        Route::delete('/{item}', [ItemController::class, 'destroy'])->middleware('permission:inventory.write');
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('inventory/warehouses')->group(function (): void {
+        Route::get('/', [WarehouseController::class, 'index'])->middleware('permission:inventory.read');
+        Route::get('/{warehouse}', [WarehouseController::class, 'show'])->middleware('permission:inventory.read');
+        Route::post('/', [WarehouseController::class, 'store'])->middleware('permission:inventory.write');
+        Route::patch('/{warehouse}', [WarehouseController::class, 'update'])->middleware('permission:inventory.write');
+        Route::delete('/{warehouse}', [WarehouseController::class, 'destroy'])->middleware('permission:inventory.write');
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('inventory/stock-moves')->group(function (): void {
+        Route::get('/', [StockMoveController::class, 'index'])->middleware('permission:inventory.read');
+        Route::post('/', [StockMoveController::class, 'store'])->middleware('permission:inventory.write');
+        Route::delete('/{stockMove}', [StockMoveController::class, 'destroy'])->middleware('permission:inventory.write');
     });
 
     Route::middleware(['auth:sanctum', 'superadmin'])->prefix('superadmin')->group(function (): void {

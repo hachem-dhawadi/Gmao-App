@@ -84,6 +84,16 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         subMenu: [],
                     },
                     {
+                        key: 'concepts.workOrders.workOrderBoard',
+                        path: `${CONCEPTS_PREFIX_PATH}/work-orders/work-order-board`,
+                        title: 'Board',
+                        translateKey: 'nav.workOrders.workOrderBoard',
+                        icon: 'workOrderBoard',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: OPS_ROLES,
+                        subMenu: [],
+                    },
+                    {
                         key: 'concepts.workOrders.workOrderCreate',
                         path: `${CONCEPTS_PREFIX_PATH}/work-orders/work-order-create`,
                         title: 'New Work Order',

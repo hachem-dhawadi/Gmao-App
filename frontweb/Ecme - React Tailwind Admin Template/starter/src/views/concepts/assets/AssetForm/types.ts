@@ -1,3 +1,5 @@
+import type { ImageItem } from '@/services/AssetsService'
+
 export type AssetFormSchema = {
     name: string
     code: string
@@ -12,4 +14,5 @@ export type AssetFormSchema = {
     purchase_date: string
     warranty_end_at: string
     installed_at: string
+    imgList: ImageItem[]
 }

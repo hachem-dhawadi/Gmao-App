@@ -44,21 +44,32 @@ const AssetEdit = () => {
         if (!id) return
         try {
             setIsSubmitting(true)
-            await apiUpdateAsset(id, {
-                name: values.name,
-                code: values.code,
-                asset_type_id: values.asset_type_id!,
-                status: values.status,
-                serial_number: values.serial_number || null,
-                manufacturer: values.manufacturer || null,
-                model: values.model || null,
-                location: values.location || null,
-                address_label: values.address_label || null,
-                notes: values.notes || null,
-                purchase_date: values.purchase_date || null,
-                warranty_end_at: values.warranty_end_at || null,
-                installed_at: values.installed_at || null,
+
+            const fd = new FormData()
+            fd.append('_method', 'PATCH')
+            fd.append('name', values.name)
+            fd.append('code', values.code)
+            fd.append('asset_type_id', String(values.asset_type_id!))
+            fd.append('status', values.status)
+            fd.append('serial_number', values.serial_number || '')
+            fd.append('manufacturer', values.manufacturer || '')
+            fd.append('model', values.model || '')
+            fd.append('location', values.location || '')
+            fd.append('address_label', values.address_label || '')
+            fd.append('notes', values.notes || '')
+            if (values.purchase_date) fd.append('purchase_date', values.purchase_date)
+            if (values.warranty_end_at) fd.append('warranty_end_at', values.warranty_end_at)
+            if (values.installed_at) fd.append('installed_at', values.installed_at)
+
+            values.imgList.forEach((img) => {
+                if (img.file) {
+                    fd.append('images[]', img.file)
+                } else {
+                    fd.append('existing_images[]', img.img)
+                }
             })
+
+            await apiUpdateAsset(id, fd)
 
             await globalMutate(
                 (key) =>
@@ -144,6 +155,11 @@ const AssetEdit = () => {
               purchase_date: data.purchase_date ?? '',
               warranty_end_at: data.warranty_end_at ?? '',
               installed_at: data.installed_at ?? '',
+              imgList: data.images?.map((url, i) => ({
+                  id: `existing-${i}`,
+                  name: url.split('/').pop() || 'image',
+                  img: url,
+              })) ?? [],
           }
         : {}
 

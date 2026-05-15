@@ -30,6 +30,7 @@ class MemberResource extends JsonResource
                 'name' => $this->user->name,
                 'email' => $this->user->email,
                 'phone' => $this->user->phone,
+                'last_login_at' => $this->user->last_login_at?->toISOString(),
             ] : null,
             'roles' => $this->relationLoaded('roles')
                 ? $this->roles->map(fn ($role) => [

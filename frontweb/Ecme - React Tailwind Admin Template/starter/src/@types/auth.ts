@@ -186,6 +186,7 @@ export type User = {
     authority?: string[]
     isSuperadmin?: boolean
     phone?: string | null
+    memberId?: number | null
 }
 
 export type Token = {

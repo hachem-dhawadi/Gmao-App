@@ -30,6 +30,7 @@ class AssetResource extends JsonResource
             'installed_at'    => $this->installed_at?->toISOString(),
             'created_at'      => $this->created_at?->toISOString(),
             'updated_at'      => $this->updated_at?->toISOString(),
+            'images'          => $this->images ?? [],
             'asset_type'      => $this->relationLoaded('assetType') && $this->assetType
                 ? ['id' => $this->assetType->id, 'name' => $this->assetType->name, 'code' => $this->assetType->code]
                 : null,

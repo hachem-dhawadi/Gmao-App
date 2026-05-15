@@ -16,5 +16,6 @@ export type Asset = {
     installed_at: string | null
     created_at: string | null
     updated_at: string | null
+    images?: string[]
     asset_type: { id: number; name: string; code: string } | null
 }

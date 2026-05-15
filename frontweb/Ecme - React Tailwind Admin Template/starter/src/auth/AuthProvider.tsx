@@ -60,9 +60,11 @@ const mapBackendUser = (
     backendUser: BackendAuthUser,
     payload?: AuthPayload,
 ): User => {
+    const selectedMembership = getSelectedMembership(payload)
+
     const roleCodes = backendUser.is_superadmin
         ? []
-        : (getSelectedMembership(payload)?.roles || []).map((role) => role.code)
+        : (selectedMembership?.roles || []).map((role) => role.code)
 
     const authority = backendUser.is_superadmin
         ? ['superadmin']
@@ -76,6 +78,7 @@ const mapBackendUser = (
         phone: backendUser.phone,
         isSuperadmin: backendUser.is_superadmin,
         authority,
+        memberId: selectedMembership?.member_id ?? null,
     }
 }
 
@@ -153,6 +156,7 @@ function AuthProvider({ children }: AuthProviderProps) {
             authority: [],
             isSuperadmin: false,
             phone: null,
+            memberId: null,
         })
         setSessionSignedIn(false)
     }
