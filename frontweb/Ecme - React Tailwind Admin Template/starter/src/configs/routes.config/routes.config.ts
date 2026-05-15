@@ -371,7 +371,7 @@ const placeholderRoutes: Routes = [
 export const protectedRoutes: Routes = [
     {
         key: 'home',
-        path: '/home',
+        path: '/dashboard',
         component: lazy(() => import('@/views/Home')),
         authority: [],
     },

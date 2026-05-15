@@ -1,21 +1,18 @@
 import { useSessionUser } from '@/store/authStore'
-import { CURRENT_COMPANY_ID_KEY } from '@/constants/app.constant'
+import AdminManagerDashboard from './dashboards/GmaoDashboard/AdminManagerDashboard'
+import TechnicianDashboard from './dashboards/GmaoDashboard/TechnicianDashboard'
+import HrDashboard from './dashboards/GmaoDashboard/HrDashboard'
+import SuperadminDashboard from './SuperadminDashboard'
 
 const Home = () => {
-    const user = useSessionUser((state) => state.user)
-    const companyId = localStorage.getItem(CURRENT_COMPANY_ID_KEY)
+    const user = useSessionUser((s) => s.user)
+    const authority = user.authority ?? []
 
-    return (
-        <div className="space-y-2">
-            <h3>Tenant Home</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-                Signed in as: <span className="font-semibold">{user.userName || 'Unknown user'}</span>
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-                Current Company ID header: <span className="font-semibold">{companyId || 'not set'}</span>
-            </p>
-        </div>
-    )
+    if (user.isSuperadmin)                return <SuperadminDashboard />
+    if (authority.includes('technician')) return <TechnicianDashboard />
+    if (authority.includes('hr'))         return <HrDashboard />
+
+    return <AdminManagerDashboard />
 }
 
 export default Home

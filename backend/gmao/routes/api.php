@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\WorkOrders\WorkLogController;
 use App\Http\Controllers\Api\V1\Inventory\ItemController;
 use App\Http\Controllers\Api\V1\Inventory\WarehouseController;
 use App\Http\Controllers\Api\V1\Inventory\StockMoveController;
+use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
 use App\Http\Controllers\Api\V1\Pm\PmPlanController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as SuperadminCompanyMemberController;
@@ -116,6 +117,12 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/', [StockMoveController::class, 'index'])->middleware('permission:inventory.read');
         Route::post('/', [StockMoveController::class, 'store'])->middleware('permission:inventory.write');
         Route::delete('/{stockMove}', [StockMoveController::class, 'destroy'])->middleware('permission:inventory.write');
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('dashboard')->group(function (): void {
+        Route::get('/', [DashboardController::class, 'index']);
+        Route::get('/my', [DashboardController::class, 'my']);
+        Route::get('/hr', [DashboardController::class, 'hr']);
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('pm/plans')->group(function (): void {

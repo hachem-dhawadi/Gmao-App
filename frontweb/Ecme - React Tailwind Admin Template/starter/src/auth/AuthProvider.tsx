@@ -84,7 +84,7 @@ const mapBackendUser = (
 
 const resolvePostAuthPath = (user: User, payload?: AuthPayload): string => {
     if (user.isSuperadmin) {
-        return '/superadmin/dashboard'
+        return appConfig.authenticatedEntryPath
     }
 
     if (!payload || payload.memberships.length === 0) {
