@@ -140,6 +140,7 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('/users/{user}', [SuperadminUserController::class, 'update']);
         Route::delete('/users/{user}', [SuperadminUserController::class, 'destroy']);
 
+        Route::get('/stats', [SuperadminCompanyController::class, 'stats']);
         Route::get('/companies', [SuperadminCompanyController::class, 'index']);
         Route::post('/companies', [SuperadminCompanyController::class, 'store']);
         Route::get('/companies/{company}', [SuperadminCompanyController::class, 'show']);

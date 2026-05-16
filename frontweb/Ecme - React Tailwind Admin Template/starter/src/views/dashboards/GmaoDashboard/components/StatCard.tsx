@@ -6,7 +6,7 @@ type Props = {
     value: number | string
     icon: ReactNode
     iconBg: string
-    sub?: string
+    sub?: ReactNode
     subColor?: string
 }
 
@@ -19,7 +19,11 @@ const StatCard = ({ label, value, icon, iconBg, sub, subColor = 'text-gray-400' 
             <div className="flex-1 min-w-0">
                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{label}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
-                {sub && <p className={`text-xs mt-0.5 ${subColor}`}>{sub}</p>}
+                {sub && (
+                    typeof sub === 'string'
+                        ? <p className={`text-xs mt-0.5 ${subColor}`}>{sub}</p>
+                        : <div className="mt-0.5">{sub}</div>
+                )}
             </div>
         </div>
     </Card>

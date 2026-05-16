@@ -1,4 +1,3 @@
-import { DASHBOARDS_PREFIX_PATH } from '@/constants/route.constant'
 import { NAV_ITEM_TYPE_TITLE, NAV_ITEM_TYPE_ITEM } from '@/constants/navigation.constant'
 import { ADMIN, HR, MANAGER, TECHNICIAN } from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
@@ -16,8 +15,8 @@ const dashboardsNavigationConfig: NavigationTree[] = [
         authority: ALL_COMPANY_ROLES,
         subMenu: [
             {
-                key: 'dashboard.ecommerce',
-                path: `${DASHBOARDS_PREFIX_PATH}/ecommerce`,
+                key: 'home',
+                path: '/dashboard',
                 title: 'Dashboard',
                 translateKey: 'nav.dashboard.dashboard',
                 icon: 'dashboardEcommerce',

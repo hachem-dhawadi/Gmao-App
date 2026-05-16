@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Superadmin\StoreSuperadminCompanyRequest;
 use App\Http\Requests\Api\V1\Superadmin\UpdateSuperadminCompanyRequest;
 use App\Models\Company;
+use App\Models\Member;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 class CompanyController extends Controller
@@ -122,6 +124,41 @@ class CompanyController extends Controller
             'message' => 'Company updated successfully.',
             'data' => [
                 'company' => $this->transformCompany($company),
+            ],
+        ]);
+    }
+
+    public function stats(): JsonResponse
+    {
+        $now              = Carbon::now();
+        $startOfMonth     = $now->copy()->startOfMonth();
+        $startOfLastMonth = $now->copy()->subMonth()->startOfMonth();
+        $endOfLastMonth   = $now->copy()->subMonth()->endOfMonth();
+
+        $totalMembers     = Member::query()->count();
+        $membersThisMonth = Member::query()->whereBetween('created_at', [$startOfMonth, $now])->count();
+        $membersLastMonth = Member::query()->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
+
+        $memberGrowShrink = $membersLastMonth > 0
+            ? (int) round(($membersThisMonth - $membersLastMonth) / $membersLastMonth * 100)
+            : ($membersThisMonth > 0 ? 100 : 0);
+
+        $memberMonthlyStats = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $start = $now->copy()->subMonths($i)->startOfMonth();
+            $end   = $now->copy()->subMonths($i)->endOfMonth();
+            $memberMonthlyStats[] = [
+                'month' => $start->format('M YY'),
+                'count' => Member::query()->whereBetween('created_at', [$start, $end])->count(),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'total_members'        => $totalMembers,
+                'member_grow_shrink'   => $memberGrowShrink,
+                'member_monthly_stats' => $memberMonthlyStats,
             ],
         ]);
     }

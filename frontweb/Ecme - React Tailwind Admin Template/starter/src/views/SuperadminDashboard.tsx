@@ -49,11 +49,15 @@ const fetchCompanies = () =>
         data: { companies: Company[]; pagination: { total: number } }
     }>({ url: '/superadmin/companies', method: 'get', params: { per_page: 100 } })
 
-const fetchUsers = () =>
+const fetchStats = () =>
     ApiService.fetchDataWithAxios<{
         success: boolean
-        data: { pagination: { total: number } }
-    }>({ url: '/superadmin/users', method: 'get', params: { per_page: 1 } })
+        data: {
+            total_members: number
+            member_grow_shrink: number
+            member_monthly_stats: { month: string; count: number }[]
+        }
+    }>({ url: '/superadmin/stats', method: 'get' })
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -133,8 +137,13 @@ const ClickableStatCard = ({
 // ── OverviewCard ───────────────────────────────────────────────────────
 
 const OverviewCard = ({
-    companies, totalUsers,
-}: { companies: Company[]; totalUsers: number }) => {
+    companies, totalMembers, memberGrowShrink, memberMonthlyStats,
+}: {
+    companies: Company[]
+    totalMembers: number
+    memberGrowShrink: number
+    memberMonthlyStats: { month: string; count: number }[]
+}) => {
     const [selected, setSelected] = useState<StatCategory>('companies')
     const sideNavCollapse = useThemeStore(s => s.layout.sideNavCollapse)
     const isFirst = useRef(true)
@@ -150,26 +159,23 @@ const OverviewCard = ({
     const byMonth = useMemo(() => {
         const all     = months6.map(m => companies.filter(c => dayjs(c.created_at).format('MMM YYYY') === m).length)
         const pending = months6.map(m => companies.filter(c => dayjs(c.created_at).format('MMM YYYY') === m && c.approval_status === 'pending').length)
-        const users   = months6.map(m => companies.filter(c => dayjs(c.created_at).format('MMM YYYY') === m && c.is_active).length)
+        const users   = memberMonthlyStats.map(s => s.count)
         return { companies: all, pending, users }
-    }, [companies, months6])
+    }, [companies, months6, memberMonthlyStats])
 
     const growth = useMemo(() => ({
         companies: calcGrowth(byMonth.companies),
         pending:   calcGrowth(byMonth.pending),
-        users:     0,
-    }), [byMonth])
+        users:     memberGrowShrink,
+    }), [byMonth, memberGrowShrink])
 
     const totalCompanies = companies.length
     const totalPending   = companies.filter(c => c.approval_status === 'pending').length
-    const totalMembers   = companies.reduce((s, c) => s + c.members_count, 0)
 
-    const seriesData  = byMonth[selected]
-    const maxVal      = Math.max(...seriesData, 1)
+    const seriesData   = byMonth[selected]
+    const chartLabels  = selected === 'users' ? memberMonthlyStats.map(s => s.month) : labels
+    const maxVal       = Math.max(...seriesData, 1)
     const hasChartData = seriesData.some(v => v > 0)
-
-    // Use totalUsers for the "users" card value, totalMembers in subtitle
-    void totalUsers
 
     return (
         <Card>
@@ -200,7 +206,7 @@ const OverviewCard = ({
                     value={totalMembers}
                     icon={<TbUsers />}
                     iconClass="bg-purple-200 dark:opacity-80"
-                    growShrink={growth.users}
+                    growShrink={memberGrowShrink}
                     label="users"
                     active={selected === 'users'}
                     onClick={setSelected}
@@ -213,10 +219,10 @@ const OverviewCard = ({
                     series={[{
                         name: selected === 'companies' ? 'Registrations'
                             : selected === 'pending' ? 'Pending'
-                            : 'Active companies',
+                            : 'New members',
                         data: seriesData,
                     }]}
-                    xAxis={labels}
+                    xAxis={chartLabels}
                     height="380px"
                     customOptions={{
                         legend: { show: false },
@@ -535,15 +541,17 @@ const SuperadminDashboard = () => {
         fetchCompanies,
         { revalidateOnFocus: false },
     )
-    const { data: usersData, isLoading: loadingU } = useSWR(
-        '/superadmin/users',
-        fetchUsers,
+    const { data: statsData, isLoading: loadingS } = useSWR(
+        '/superadmin/stats',
+        fetchStats,
         { revalidateOnFocus: false },
     )
 
-    const isLoading = loadingC || loadingU
-    const companies  = companiesData?.data?.companies ?? []
-    const totalUsers = usersData?.data?.pagination?.total ?? 0
+    const isLoading         = loadingC || loadingS
+    const companies         = companiesData?.data?.companies ?? []
+    const totalMembers      = statsData?.data?.total_members ?? 0
+    const memberGrowShrink  = statsData?.data?.member_grow_shrink ?? 0
+    const memberMonthlyStats = statsData?.data?.member_monthly_stats ?? []
 
     if (isLoading) {
         return (
@@ -573,7 +581,12 @@ const SuperadminDashboard = () => {
 
                     {/* Left column */}
                     <div className="flex flex-col gap-4 flex-1 min-w-0">
-                        <OverviewCard companies={companies} totalUsers={totalUsers} />
+                        <OverviewCard
+                            companies={companies}
+                            totalMembers={totalMembers}
+                            memberGrowShrink={memberGrowShrink}
+                            memberMonthlyStats={memberMonthlyStats}
+                        />
                         <CompanyByStatusCard companies={companies} />
                     </div>
 
