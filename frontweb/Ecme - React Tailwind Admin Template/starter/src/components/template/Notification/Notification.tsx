@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import classNames from 'classnames'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import Dropdown from '@/components/ui/Dropdown'
@@ -7,243 +7,194 @@ import Spinner from '@/components/ui/Spinner'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip'
-import NotificationAvatar from './NotificationAvatar'
 import NotificationToggle from './NotificationToggle'
-import { HiOutlineMailOpen } from 'react-icons/hi'
 import {
-    apiGetNotificationList,
-    apiGetNotificationCount,
-} from '@/services/CommonService'
+    apiGetNotifications,
+    apiGetUnreadCount,
+    apiMarkNotificationRead,
+    apiMarkAllNotificationsRead,
+} from '@/services/NotificationService'
+import type { AppNotification } from '@/services/NotificationService'
+import { HiOutlineMailOpen } from 'react-icons/hi'
+import { TbClipboardList, TbAt, TbRefresh } from 'react-icons/tb'
 import isLastChild from '@/utils/isLastChild'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { useNavigate } from 'react-router-dom'
-
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import type { DropdownRef } from '@/components/ui/Dropdown'
 
-type NotificationList = {
-    id: string
-    target: string
-    description: string
-    date: string
-    image: string
-    type: number
-    location: string
-    locationLabel: string
-    status: string
-    readed: boolean
+dayjs.extend(relativeTime)
+
+const notificationHeight = 'h-[300px]'
+
+const typeIcon: Record<string, React.ReactNode> = {
+    wo_assigned:       <TbClipboardList className="text-blue-500 text-xl" />,
+    wo_status_changed: <TbRefresh className="text-amber-500 text-xl" />,
+    comment_mention:   <TbAt className="text-purple-500 text-xl" />,
 }
 
-const notificationHeight = 'h-[280px]'
-
 const _Notification = ({ className }: { className?: string }) => {
-    const [notificationList, setNotificationList] = useState<
-        NotificationList[]
-    >([])
-    const [unreadNotification, setUnreadNotification] = useState(false)
-    const [noResult, setNoResult] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const [list, setList]               = useState<AppNotification[]>([])
+    const [unreadCount, setUnreadCount] = useState(0)
+    const [loading, setLoading]         = useState(false)
+    const [dropdownOpen, setDropdownOpen] = useState(false)
 
     const { larger } = useResponsive()
+    const navigate   = useNavigate()
+    const dropdownRef = useRef<DropdownRef>(null)
 
-    const navigate = useNavigate()
-
-    const notificationApiEnabled =
-        import.meta.env.VITE_ENABLE_NOTIFICATIONS === 'true'
-
-    const getNotificationCount = async () => {
-        if (!notificationApiEnabled) {
-            setNoResult(true)
-            setUnreadNotification(false)
-            return
-        }
-
-        try {
-            const resp = await apiGetNotificationCount()
-            if ((resp?.count || 0) > 0) {
-                setNoResult(false)
-                setUnreadNotification(true)
-            } else {
-                setNoResult(true)
-                setUnreadNotification(false)
-            }
-        } catch {
-            setNoResult(true)
-            setUnreadNotification(false)
-        }
-    }
-
-    useEffect(() => {
-        void getNotificationCount()
-    }, [])
-
-    const onNotificationOpen = async () => {
-        if (notificationList.length > 0) {
-            return
-        }
-
-        if (!notificationApiEnabled) {
-            setNoResult(true)
-            return
-        }
-
+    const fetchList = useCallback(async () => {
         setLoading(true)
-
         try {
-            const resp = await apiGetNotificationList()
-            setNotificationList(resp || [])
-            if (!resp || resp.length === 0) {
-                setNoResult(true)
-            }
+            const res = await apiGetNotifications()
+            setList(res.data)
         } catch {
-            setNoResult(true)
-            setNotificationList([])
+            setList([])
         } finally {
             setLoading(false)
         }
+    }, [])
+
+    const fetchCount = useCallback(async () => {
+        try {
+            const res = await apiGetUnreadCount()
+            setUnreadCount(res.data.count)
+        } catch {
+            // silently ignore
+        }
+    }, [])
+
+    // Poll unread count every 30 seconds
+    useEffect(() => {
+        void fetchCount()
+        const id = setInterval(fetchCount, 15_000)
+        return () => clearInterval(id)
+    }, [fetchCount])
+
+    // When a new notification arrives (count goes up) and dropdown is open, refresh the list
+    useEffect(() => {
+        if (dropdownOpen && unreadCount > 0) {
+            void fetchList()
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [unreadCount])
+
+    const onOpen = async () => {
+        setDropdownOpen(true)
+        await fetchList()
     }
 
-    const onMarkAllAsRead = () => {
-        const list = notificationList.map((item: NotificationList) => {
-            if (!item.readed) {
-                item.readed = true
-            }
-            return item
-        })
-        setNotificationList(list)
-        setUnreadNotification(false)
-    }
-
-    const onMarkAsRead = (id: string) => {
-        const list = notificationList.map((item) => {
-            if (item.id === id) {
-                item.readed = true
-            }
-            return item
-        })
-        setNotificationList(list)
-        const hasUnread = notificationList.some((item) => !item.readed)
-
-        if (!hasUnread) {
-            setUnreadNotification(false)
+    const onMarkRead = async (n: AppNotification) => {
+        if (!n.read) {
+            await apiMarkNotificationRead(n.id)
+            setList((prev) => prev.map((item) => item.id === n.id ? { ...item, read: true } : item))
+            setUnreadCount((c) => Math.max(0, c - 1))
+        }
+        if (n.data.wo_id) {
+            navigate(`/concepts/work-orders/work-order-details/${n.data.wo_id}`)
+            dropdownRef.current?.handleDropdownClose()
         }
     }
 
-    const notificationDropdownRef = useRef<DropdownRef>(null)
-
-    const handleViewAllActivity = () => {
-        navigate('/concepts/account/activity-log')
-        if (notificationDropdownRef.current) {
-            notificationDropdownRef.current.handleDropdownClose()
-        }
+    const onMarkAllRead = async () => {
+        await apiMarkAllNotificationsRead()
+        setList((prev) => prev.map((item) => ({ ...item, read: true })))
+        setUnreadCount(0)
     }
 
     return (
         <Dropdown
-            ref={notificationDropdownRef}
+            ref={dropdownRef}
             renderTitle={
                 <NotificationToggle
-                    dot={unreadNotification}
+                    dot={unreadCount > 0}
                     className={className}
+                    count={unreadCount}
                 />
             }
-            menuClass="min-w-[280px] md:min-w-[340px]"
+            menuClass="min-w-[280px] md:min-w-[360px]"
             placement={larger.md ? 'bottom-end' : 'bottom'}
-            onOpen={onNotificationOpen}
+            onOpen={onOpen}
         >
             <Dropdown.Item variant="header">
-                <div className="dark:border-gray-700 px-2 flex items-center justify-between mb-1">
-                    <h6>Notifications</h6>
+                <div className="px-2 flex items-center justify-between mb-1">
+                    <h6>
+                        Notifications
+                        {unreadCount > 0 && (
+                            <span className="ml-2 text-xs font-normal text-primary">
+                                {unreadCount} unread
+                            </span>
+                        )}
+                    </h6>
                     <Tooltip title="Mark all as read">
                         <Button
                             variant="plain"
                             shape="circle"
                             size="sm"
                             icon={<HiOutlineMailOpen className="text-xl" />}
-                            onClick={onMarkAllAsRead}
+                            onClick={onMarkAllRead}
                         />
                     </Tooltip>
                 </div>
             </Dropdown.Item>
-            <ScrollBar
-                className={classNames('overflow-y-auto', notificationHeight)}
-            >
-                {notificationList.length > 0 &&
-                    notificationList.map((item, index) => (
-                        <div key={item.id}>
-                            <div
-                                className={`relative rounded-xl flex px-4 py-3 cursor-pointer hover:bg-gray-100 active:bg-gray-100 dark:hover:bg-gray-700`}
-                                onClick={() => onMarkAsRead(item.id)}
-                            >
-                                <div>
-                                    <NotificationAvatar {...item} />
-                                </div>
-                                <div className="mx-3">
-                                    <div>
-                                        {item.target && (
-                                            <span className="font-semibold heading-text">
-                                                {item.target}{' '}
-                                            </span>
-                                        )}
-                                        <span>{item.description}</span>
-                                    </div>
-                                    <span className="text-xs">{item.date}</span>
-                                </div>
-                                <Badge
-                                    className="absolute top-4 ltr:right-4 rtl:left-4 mt-1.5"
-                                    innerClass={`${
-                                        item.readed
-                                            ? 'bg-gray-300 dark:bg-gray-600'
-                                            : 'bg-primary'
-                                    } `}
-                                />
-                            </div>
-                            {!isLastChild(notificationList, index) ? (
-                                <div className="border-b border-gray-200 dark:border-gray-700 my-2" />
-                            ) : (
-                                ''
-                            )}
-                        </div>
-                    ))}
+
+            <ScrollBar className={classNames('overflow-y-auto', notificationHeight)}>
                 {loading && (
-                    <div
-                        className={classNames(
-                            'flex items-center justify-center',
-                            notificationHeight,
-                        )}
-                    >
+                    <div className={classNames('flex items-center justify-center', notificationHeight)}>
                         <Spinner size={40} />
                     </div>
                 )}
-                {noResult && notificationList.length === 0 && (
-                    <div
-                        className={classNames(
-                            'flex items-center justify-center',
-                            notificationHeight,
-                        )}
-                    >
+
+                {!loading && list.length === 0 && (
+                    <div className={classNames('flex items-center justify-center', notificationHeight)}>
                         <div className="text-center">
                             <img
                                 className="mx-auto mb-2 max-w-[150px]"
                                 src="/img/others/no-notification.png"
-                                alt="no-notification"
+                                alt="no notifications"
                             />
-                            <h6 className="font-semibold">No notifications!</h6>
-                            <p className="mt-1">Please Try again later</p>
+                            <h6 className="font-semibold">No notifications</h6>
+                            <p className="mt-1 text-sm text-gray-400">You're all caught up!</p>
                         </div>
                     </div>
                 )}
+
+                {!loading && list.map((item, index) => (
+                    <div key={item.id}>
+                        <div
+                            className={classNames(
+                                'relative flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors rounded-xl',
+                                item.read
+                                    ? 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                    : 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30',
+                            )}
+                            onClick={() => onMarkRead(item)}
+                        >
+                            <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white dark:bg-gray-700 shadow flex items-center justify-center">
+                                {typeIcon[item.type] ?? <TbClipboardList className="text-gray-400 text-xl" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">
+                                    {item.title}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                                    {item.body}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    {dayjs(item.created_at).fromNow()}
+                                </p>
+                            </div>
+                            {!item.read && (
+                                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5" />
+                            )}
+                        </div>
+                        {!isLastChild(list, index) && (
+                            <div className="border-b border-gray-100 dark:border-gray-700 mx-4" />
+                        )}
+                    </div>
+                ))}
             </ScrollBar>
-            <Dropdown.Item variant="header">
-                <div className="pt-4">
-                    <Button
-                        block
-                        variant="solid"
-                        onClick={handleViewAllActivity}
-                    >
-                        View All Activity
-                    </Button>
-                </div>
-            </Dropdown.Item>
         </Dropdown>
     )
 }

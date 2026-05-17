@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\Inventory\ItemController;
 use App\Http\Controllers\Api\V1\Inventory\WarehouseController;
 use App\Http\Controllers\Api\V1\Inventory\StockMoveController;
 use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
+use App\Http\Controllers\Api\V1\Notifications\NotificationController;
 use App\Http\Controllers\Api\V1\Pm\PmPlanController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as SuperadminCompanyMemberController;
@@ -67,6 +68,7 @@ Route::prefix('v1')->group(function (): void {
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('members')->group(function (): void {
+        Route::get('/for-mention', [MemberController::class, 'forMention']); // no permission gate — any member can see names for @mention
         Route::get('/', [MemberController::class, 'index'])->middleware('permission:members.read');
         Route::get('/{member}', [MemberController::class, 'show'])->middleware('permission:members.read');
         Route::post('/', [MemberController::class, 'store'])->middleware('permission:members.create');
@@ -117,6 +119,13 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/', [StockMoveController::class, 'index'])->middleware('permission:inventory.read');
         Route::post('/', [StockMoveController::class, 'store'])->middleware('permission:inventory.write');
         Route::delete('/{stockMove}', [StockMoveController::class, 'destroy'])->middleware('permission:inventory.write');
+    });
+
+    Route::middleware('auth:sanctum')->prefix('notifications')->group(function (): void {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('/read-all', [NotificationController::class, 'markAllRead']);
+        Route::post('/{notification}/read', [NotificationController::class, 'markRead']);
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('dashboard')->group(function (): void {

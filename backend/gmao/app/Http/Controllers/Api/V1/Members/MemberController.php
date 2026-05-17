@@ -76,6 +76,25 @@ class MemberController extends Controller
         ]);
     }
 
+    public function forMention(Request $request): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+
+        if (! $currentCompany) {
+            return response()->json(['success' => false], 400);
+        }
+
+        $members = Member::query()
+            ->with('user')
+            ->where('company_id', $currentCompany->id)
+            ->get()
+            ->filter(fn ($m) => $m->user?->name)
+            ->map(fn ($m) => ['id' => $m->id, 'name' => $m->user->name])
+            ->values();
+
+        return response()->json(['success' => true, 'data' => $members]);
+    }
+
     public function store(StoreMemberRequest $request): JsonResponse
     {
         $validated = $request->validated();

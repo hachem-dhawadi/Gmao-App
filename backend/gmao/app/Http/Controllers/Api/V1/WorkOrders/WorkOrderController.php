@@ -9,6 +9,7 @@ use App\Http\Resources\Api\V1\WorkOrders\WorkOrderResource;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderAttachment;
 use App\Models\WorkOrderComment;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -118,6 +119,8 @@ class WorkOrderController extends Controller
                 ->mapWithKeys(fn ($id) => [$id => ['assigned_at' => now()]])
                 ->all();
             $workOrder->assignedMembers()->sync($syncData);
+
+            NotificationService::notifyWoAssigned($workOrder, $validated['assigned_member_ids'], $currentMember->id);
         }
 
         $workOrder->load(['asset', 'createdBy.user', 'assignedMembers.user']);
@@ -146,17 +149,23 @@ class WorkOrderController extends Controller
         $assignedMemberIds = $validated['assigned_member_ids'] ?? null;
         unset($validated['assigned_member_ids']);
 
-        // Only Admin / Manager (work_orders.assign) may change assigned members
+        // Only block if the assignment is actually changing
         if ($assignedMemberIds !== null && $currentMember) {
-            $canAssign = $currentMember->roles()
-                ->whereHas('permissions', fn ($q) => $q->where('code', 'work_orders.assign'))
-                ->exists();
+            $currentIds = $workOrder->assignedMembers()->pluck('members.id')->sort()->values()->all();
+            $newIds     = collect($assignedMemberIds)->sort()->values()->all();
+            $isChanging = $currentIds !== $newIds;
 
-            if (! $canAssign) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You do not have permission to assign members to work orders.',
-                ], 403);
+            if ($isChanging) {
+                $canAssign = $currentMember->roles()
+                    ->whereHas('permissions', fn ($q) => $q->where('code', 'work_orders.assign'))
+                    ->exists();
+
+                if (! $canAssign) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to assign members to work orders.',
+                    ], 403);
+                }
             }
         }
 
@@ -183,10 +192,20 @@ class WorkOrderController extends Controller
         }
 
         if ($assignedMemberIds !== null) {
-            $syncData = collect($assignedMemberIds)
+            $previousIds = $workOrder->assignedMembers()->pluck('members.id')->all();
+            $syncData    = collect($assignedMemberIds)
                 ->mapWithKeys(fn ($id) => [$id => ['assigned_at' => now()]])
                 ->all();
             $workOrder->assignedMembers()->sync($syncData);
+
+            $newlyAssigned = array_values(array_diff($assignedMemberIds, $previousIds));
+            if (! empty($newlyAssigned) && $currentMember) {
+                NotificationService::notifyWoAssigned($workOrder, $newlyAssigned, $currentMember->id);
+            }
+        }
+
+        if (isset($validated['status']) && $validated['status'] !== $oldStatus && $currentMember) {
+            NotificationService::notifyWoStatusChanged($workOrder, $oldStatus, $validated['status'], $currentMember->id);
         }
 
         $workOrder->load(['asset', 'createdBy.user', 'assignedMembers.user']);
@@ -239,6 +258,8 @@ class WorkOrderController extends Controller
             'member_id' => $currentMember->id,
             'body'      => $request->body,
         ]);
+
+        NotificationService::notifyMentions($workOrder, $request->body, $currentMember->id);
 
         $comment->load('member.user');
 

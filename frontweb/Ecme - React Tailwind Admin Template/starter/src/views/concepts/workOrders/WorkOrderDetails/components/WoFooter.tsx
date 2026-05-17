@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import MentionTextarea from './MentionTextarea'
 import Tabs from '@/components/ui/Tabs'
 import Button from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip'
@@ -41,6 +42,25 @@ function formatMinutes(minutes: number): string {
     const h = Math.floor(minutes / 60)
     const m = minutes % 60
     return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
+
+// Renders comment text with @[Name] mentions highlighted
+function renderCommentBody(text: string): React.ReactNode {
+    const parts = text.split(/(@\[[^\]]+\])/g)
+    return parts.map((part, i) => {
+        const match = part.match(/^@\[([^\]]+)\]$/)
+        if (match) {
+            return (
+                <span
+                    key={i}
+                    className="font-semibold text-primary bg-primary/10 rounded px-1"
+                >
+                    @{match[1]}
+                </span>
+            )
+        }
+        return part
+    })
 }
 
 function AuthorAvatar({ name }: { name: string }) {
@@ -108,7 +128,7 @@ const WoFooter = ({
     const [savingLog, setSavingLog]       = useState(false)
     const [logForm, setLogForm]           = useState<LogForm>(EMPTY_LOG_FORM)
 
-    const commentRef  = useRef<HTMLTextAreaElement>(null)
+    const [commentText, setCommentText] = useState('')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // ── Permission helpers ────────────────────────────────────────────────────
@@ -128,23 +148,19 @@ const WoFooter = ({
 
     // ── Comments ──────────────────────────────────────────────────────────────
     const handleAddComment = async () => {
-        const body = commentRef.current?.value?.trim()
+        const body = commentText.trim()
         if (!body) return
         setSubmitting(true)
         try {
             const resp = await apiAddWorkOrderComment(workOrderId, body)
             const newComment = (resp as { data: WorkOrderComment }).data
             setComments((prev) => [...prev, newComment])
-            if (commentRef.current) commentRef.current.value = ''
+            setCommentText('')
         } catch {
             toast.push(<Notification type="danger">Failed to add comment.</Notification>, { placement: 'top-center' })
         } finally {
             setSubmitting(false)
         }
-    }
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddComment()
     }
 
     // ── File upload ───────────────────────────────────────────────────────────
@@ -275,7 +291,7 @@ const WoFooter = ({
                                             )}
                                         </div>
                                         <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line leading-relaxed">
-                                            {comment.body}
+                                            {renderCommentBody(comment.body)}
                                         </p>
                                     </div>
                                 </div>
@@ -288,21 +304,23 @@ const WoFooter = ({
                             {canEdit && (
                                 <div className="flex gap-3">
                                     <AuthorAvatar name="Me" />
-                                    <div className="flex-1 relative">
-                                        <textarea
-                                            ref={commentRef}
-                                            rows={3}
-                                            placeholder="Write comment"
-                                            onKeyDown={handleKeyDown}
+                                    <div className="flex-1">
+                                        <MentionTextarea
+                                            value={commentText}
+                                            onChange={setCommentText}
+                                            onSubmit={handleAddComment}
+                                            placeholder="Write a comment… use @ to mention someone"
                                             className="w-full resize-none rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
                                         />
-                                        <button
-                                            onClick={handleAddComment}
-                                            disabled={submitting}
-                                            className="absolute bottom-3 right-4 text-sm font-semibold text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
-                                        >
-                                            {submitting ? 'Sending...' : 'Send'}
-                                        </button>
+                                        <div className="flex justify-end mt-2">
+                                            <button
+                                                onClick={handleAddComment}
+                                                disabled={submitting}
+                                                className="text-sm font-semibold text-primary hover:text-primary/80 disabled:opacity-50 transition-colors"
+                                            >
+                                                {submitting ? 'Sending...' : 'Send'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )}
