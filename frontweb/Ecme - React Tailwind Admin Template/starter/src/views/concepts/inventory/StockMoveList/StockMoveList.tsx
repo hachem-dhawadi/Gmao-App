@@ -45,24 +45,22 @@ type MoveFormSchema = {
     notes: string
 }
 
-const moveTypeConfig: Record<
-    'in' | 'out' | 'adjustment',
-    { label: string; className: string }
-> = {
+const moveTypeConfig: Record<string, { label: string; className: string }> = {
     in: {
         label: 'IN',
-        className:
-            'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
+        className: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
     },
     out: {
         label: 'OUT',
-        className:
-            'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
+        className: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
     },
     adjustment: {
         label: 'ADJ',
-        className:
-            'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+        className: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+    },
+    purchase_receipt: {
+        label: 'RECEIPT',
+        className: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
     },
 }
 
@@ -276,7 +274,10 @@ const StockMoveList = () => {
             header: 'Type',
             accessorKey: 'move_type',
             cell: (props) => {
-                const cfg = moveTypeConfig[props.row.original.move_type]
+                const cfg = moveTypeConfig[props.row.original.move_type] ?? {
+                    label: props.row.original.move_type.toUpperCase(),
+                    className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 border-0',
+                }
                 return (
                     <Tag className={`text-xs font-semibold ${cfg.className}`}>
                         {cfg.label}

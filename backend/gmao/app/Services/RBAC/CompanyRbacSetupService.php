@@ -67,6 +67,8 @@ class CompanyRbacSetupService
                 'inventory.read',
                 'inventory.write',
                 'purchasing.read',
+                'purchasing.write',
+                'purchasing.delete',
                 'notifications.read',
             ],
             'technician' => [
@@ -76,6 +78,7 @@ class CompanyRbacSetupService
                 // work_orders.assign intentionally excluded
                 'pm_plans.read',
                 'inventory.read',
+                'purchasing.read',
                 'files.read',
                 'files.write',
                 'chat.read',
@@ -127,6 +130,7 @@ class CompanyRbacSetupService
             'inventory.write' => 'Manage inventory',
             'purchasing.read' => 'Read purchasing',
             'purchasing.write' => 'Manage purchasing',
+            'purchasing.delete' => 'Delete purchasing records',
             'files.read' => 'Read files',
             'files.write' => 'Manage files',
             'chat.read' => 'Read chat',

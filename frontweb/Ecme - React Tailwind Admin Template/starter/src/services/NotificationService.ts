@@ -10,6 +10,9 @@ export type AppNotification = {
         wo_code?: string
         wo_title?: string
         new_status?: string
+        item_id?: number
+        item_name?: string
+        item_code?: string
     }
     read: boolean
     created_at: string | null

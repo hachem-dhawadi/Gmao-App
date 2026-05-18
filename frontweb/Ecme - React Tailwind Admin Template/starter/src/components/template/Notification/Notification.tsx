@@ -16,7 +16,7 @@ import {
 } from '@/services/NotificationService'
 import type { AppNotification } from '@/services/NotificationService'
 import { HiOutlineMailOpen } from 'react-icons/hi'
-import { TbClipboardList, TbAt, TbRefresh } from 'react-icons/tb'
+import { TbClipboardList, TbAt, TbRefresh, TbAlertTriangle } from 'react-icons/tb'
 import isLastChild from '@/utils/isLastChild'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { useNavigate } from 'react-router-dom'
@@ -32,6 +32,7 @@ const typeIcon: Record<string, React.ReactNode> = {
     wo_assigned:       <TbClipboardList className="text-blue-500 text-xl" />,
     wo_status_changed: <TbRefresh className="text-amber-500 text-xl" />,
     comment_mention:   <TbAt className="text-purple-500 text-xl" />,
+    low_stock:         <TbAlertTriangle className="text-orange-500 text-xl" />,
 }
 
 const _Notification = ({ className }: { className?: string }) => {
@@ -93,6 +94,9 @@ const _Notification = ({ className }: { className?: string }) => {
         }
         if (n.data.wo_id) {
             navigate(`/concepts/work-orders/work-order-details/${n.data.wo_id}`)
+            dropdownRef.current?.handleDropdownClose()
+        } else if (n.data.item_id) {
+            navigate(`/concepts/inventory/items/item-details/${n.data.item_id}`)
             dropdownRef.current?.handleDropdownClose()
         }
     }

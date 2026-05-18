@@ -58,6 +58,19 @@ const formatFrequency = (trigger: PmPlan['trigger']) => {
     return `Every ${trigger.interval_value} ${trigger.interval_unit}`
 }
 
+const NameCell = ({ plan }: { plan: PmPlan }) => {
+    const navigate = useNavigate()
+    return (
+        <div
+            className="cursor-pointer hover:text-primary"
+            onClick={() => navigate(`/concepts/pm/pm-details/${plan.id}`)}
+        >
+            <div className="font-semibold">{plan.name}</div>
+            <div className="text-xs font-mono text-purple-500">{plan.code}</div>
+        </div>
+    )
+}
+
 const ActionColumn = ({ id, canEdit }: { id: number; canEdit: boolean }) => {
     const navigate = useNavigate()
     if (!canEdit) return null
@@ -96,14 +109,7 @@ const PmPlanListTable = () => {
             {
                 header: 'Name',
                 accessorKey: 'name',
-                cell: (props) => (
-                    <div className="font-semibold text-gray-900 dark:text-gray-100">
-                        <div>{props.row.original.name}</div>
-                        <div className="text-xs font-mono text-purple-500">
-                            {props.row.original.code}
-                        </div>
-                    </div>
-                ),
+                cell: (props) => <NameCell plan={props.row.original} />,
             },
             {
                 header: 'Status',

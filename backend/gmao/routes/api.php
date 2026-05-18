@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\V1\Inventory\StockMoveController;
 use App\Http\Controllers\Api\V1\Dashboard\DashboardController;
 use App\Http\Controllers\Api\V1\Notifications\NotificationController;
 use App\Http\Controllers\Api\V1\Pm\PmPlanController;
+use App\Http\Controllers\Api\V1\Purchasing\SupplierController;
+use App\Http\Controllers\Api\V1\Purchasing\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as SuperadminCompanyMemberController;
 use App\Http\Controllers\Api\V1\Superadmin\UserController as SuperadminUserController;
@@ -132,6 +134,28 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/', [DashboardController::class, 'index']);
         Route::get('/my', [DashboardController::class, 'my']);
         Route::get('/hr', [DashboardController::class, 'hr']);
+    });
+
+    // ── Purchasing ────────────────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('purchasing')->group(function (): void {
+        Route::get('/suppliers', [SupplierController::class, 'index'])->middleware('permission:purchasing.read');
+        Route::post('/suppliers', [SupplierController::class, 'store'])->middleware('permission:purchasing.write');
+        Route::patch('/suppliers/{supplier}', [SupplierController::class, 'update'])->middleware('permission:purchasing.write');
+        Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])->middleware('permission:purchasing.delete');
+
+        Route::get('/orders', [PurchaseOrderController::class, 'index'])->middleware('permission:purchasing.read');
+        Route::get('/orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->middleware('permission:purchasing.read');
+        Route::post('/orders', [PurchaseOrderController::class, 'store'])->middleware('permission:purchasing.write');
+        Route::patch('/orders/{purchaseOrder}', [PurchaseOrderController::class, 'update'])->middleware('permission:purchasing.write');
+        Route::delete('/orders/{purchaseOrder}', [PurchaseOrderController::class, 'destroy'])->middleware('permission:purchasing.delete');
+        Route::post('/orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->middleware('permission:purchasing.write');
+        Route::post('/orders/{purchaseOrder}/invoice', [PurchaseOrderController::class, 'recordInvoice'])->middleware('permission:purchasing.write');
+        Route::post('/orders/{purchaseOrder}/pay', [PurchaseOrderController::class, 'markAsPaid'])->middleware('permission:purchasing.write');
+        Route::post('/orders/{purchaseOrder}/dispute', [PurchaseOrderController::class, 'disputeInvoice'])->middleware('permission:purchasing.write');
+        Route::post('/orders/{purchaseOrder}/reopen', [PurchaseOrderController::class, 'reopen'])->middleware('permission:purchasing.write');
+        Route::get('/orders/{purchaseOrder}/payment-proof', [PurchaseOrderController::class, 'downloadPaymentProof'])->middleware('permission:purchasing.read');
+
+        Route::get('/receipts', [PurchaseOrderController::class, 'receipts'])->middleware('permission:purchasing.read');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('pm/plans')->group(function (): void {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\StockMove;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -113,6 +114,23 @@ class StockMoveController extends Controller
             $quantity = -$quantity;
         }
 
+        // Hard block: OUT and negative adjustments cannot exceed available warehouse stock
+        if ($quantity < 0) {
+            $warehouseStock = (float) StockMove::query()
+                ->where('item_id', $validated['item_id'])
+                ->where('warehouse_id', $validated['warehouse_id'])
+                ->sum('quantity');
+
+            $unit = $item->unit ?? 'units';
+            if (abs($quantity) > $warehouseStock) {
+                $available = max(0, $warehouseStock);
+                return response()->json([
+                    'success' => false,
+                    'message' => "Insufficient stock. Available in this warehouse: {$available} {$unit}.",
+                ], 422);
+            }
+        }
+
         $move = StockMove::query()->create([
             'company_id'           => $currentCompany->id,
             'item_id'              => $validated['item_id'],
@@ -131,6 +149,14 @@ class StockMoveController extends Controller
             'warehouse:id,code,name',
             'createdBy.user:id,name',
         ]);
+
+        // Fire low-stock alert when a reducing move brings total at or below min_stock
+        if ($quantity < 0 && $item->min_stock !== null) {
+            $totalStock = (float) StockMove::query()->where('item_id', $item->id)->sum('quantity');
+            if ($totalStock <= (float) $item->min_stock) {
+                NotificationService::notifyLowStock($item, $totalStock);
+            }
+        }
 
         return response()->json([
             'success' => true,

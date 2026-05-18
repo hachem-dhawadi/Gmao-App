@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Item;
 use App\Models\Member;
 use App\Models\Notification;
 use App\Models\WorkOrder;
@@ -88,6 +89,33 @@ class NotificationService
                 'title' => "You were mentioned in a comment",
                 'body'  => "{$fromName} mentioned you in \"{$wo->title}\" ({$wo->code})",
                 'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title],
+            ]);
+        }
+    }
+
+    // ── Inventory: low stock ─────────────────────────────────────────────────
+
+    public static function notifyLowStock(Item $item, float $totalStock): void
+    {
+        $recipients = Member::query()
+            ->where('company_id', $item->company_id)
+            ->whereHas('roles', fn ($q) => $q->whereIn('code', ['admin', 'manager']))
+            ->with('user')
+            ->get();
+
+        $unit = $item->unit ?? 'units';
+
+        foreach ($recipients as $member) {
+            if (! $member->user_id) continue;
+
+            self::create($member->user_id, 'low_stock', [
+                'title' => "Low stock: {$item->name}",
+                'body'  => "\"{$item->name}\" ({$item->code}) is at {$totalStock} {$unit}, at or below the minimum of {$item->min_stock} {$unit}.",
+                'data'  => [
+                    'item_id'   => $item->id,
+                    'item_name' => $item->name,
+                    'item_code' => $item->code,
+                ],
             ]);
         }
     }

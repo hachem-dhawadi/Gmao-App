@@ -2,21 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Receipt extends Model
+class PurchaseOrderStatusHistory extends Model
 {
-    use HasFactory;
-
     public $timestamps = false;
 
     protected $guarded = [];
 
     protected $casts = [
-        'received_at' => 'datetime',
+        'changed_at' => 'datetime',
     ];
 
     public function purchaseOrder(): BelongsTo
@@ -24,8 +20,8 @@ class Receipt extends Model
         return $this->belongsTo(PurchaseOrder::class);
     }
 
-    public function lines(): HasMany
+    public function changedBy(): BelongsTo
     {
-        return $this->hasMany(ReceiptLine::class);
+        return $this->belongsTo(Member::class, 'changed_by_member_id');
     }
 }

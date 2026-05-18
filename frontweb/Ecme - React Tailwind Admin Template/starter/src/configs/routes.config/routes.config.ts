@@ -33,6 +33,13 @@ const StockMoveList = lazy(() => import('@/views/concepts/inventory/StockMoveLis
 const PmPlanList = lazy(() => import('@/views/concepts/pm/PmPlanList/PmPlanList'))
 const PmPlanCreate = lazy(() => import('@/views/concepts/pm/PmPlanCreate/PmPlanCreate'))
 const PmPlanEdit = lazy(() => import('@/views/concepts/pm/PmPlanEdit/PmPlanEdit'))
+const PmPlanDetails = lazy(() => import('@/views/concepts/pm/PmPlanDetails/PmPlanDetails'))
+const SupplierList = lazy(() => import('@/views/concepts/purchasing/SupplierList/SupplierList'))
+const PurchaseOrderList = lazy(() => import('@/views/concepts/purchasing/PurchaseOrderList/PurchaseOrderList'))
+const PurchaseOrderCreate = lazy(() => import('@/views/concepts/purchasing/PurchaseOrderCreate/PurchaseOrderCreate'))
+const PurchaseOrderEdit = lazy(() => import('@/views/concepts/purchasing/PurchaseOrderEdit/PurchaseOrderEdit'))
+const PurchaseOrderDetails = lazy(() => import('@/views/concepts/purchasing/PurchaseOrderDetails/PurchaseOrderDetails'))
+const ReceiptList = lazy(() => import('@/views/concepts/purchasing/ReceiptList/ReceiptList'))
 const EcommerceDashboard = lazy(() => import('@/views/dashboards/EcommerceDashboard'))
 const Calendar = lazy(() => import('@/views/concepts/calendar/Calendar'))
 const FileManager = lazy(() => import('@/views/concepts/files/FileManager'))
@@ -280,6 +287,12 @@ const placeholderRoutes: Routes = [
         authority: [ADMIN, MANAGER],
     },
     {
+        key: 'concepts.pm.pmDetails',
+        path: '/concepts/pm/pm-details/:id',
+        component: PmPlanDetails,
+        authority: [],
+    },
+    {
         key: 'concepts.pm.pmEdit',
         path: '/concepts/pm/pm-edit/:id',
         component: PmPlanEdit,
@@ -342,19 +355,64 @@ const placeholderRoutes: Routes = [
     {
         key: 'concepts.purchasing.suppliers',
         path: '/concepts/purchasing/suppliers',
-        component: DrawerPlaceholder,
+        component: SupplierList,
         authority: [],
     },
     {
         key: 'concepts.purchasing.purchaseOrders',
         path: '/concepts/purchasing/purchase-orders',
-        component: DrawerPlaceholder,
+        component: PurchaseOrderList,
         authority: [],
+    },
+    {
+        key: 'concepts.purchasing.purchaseOrderCreate',
+        path: '/concepts/purchasing/purchase-orders/create',
+        component: PurchaseOrderCreate,
+        authority: [ADMIN, MANAGER],
+        meta: {
+            header: {
+                title: 'Create order',
+                contained: true,
+                description: 'Create new purchase orders quickly and accurately',
+            },
+            footer: false,
+        },
+    },
+    {
+        key: 'concepts.purchasing.purchaseOrderEdit',
+        path: '/concepts/purchasing/purchase-orders/edit/:id',
+        component: PurchaseOrderEdit,
+        authority: [ADMIN, MANAGER],
+        meta: {
+            header: {
+                title: 'Edit order',
+                contained: true,
+            },
+            footer: false,
+        },
+    },
+    {
+        key: 'concepts.purchasing.purchaseOrderDetails',
+        path: '/concepts/purchasing/purchase-orders/:id',
+        component: PurchaseOrderDetails,
+        authority: [],
+        meta: {
+            header: {
+                contained: true,
+                title: lazy(
+                    () => import('@/views/concepts/purchasing/PurchaseOrderDetails/components/PoDetailHeader'),
+                ),
+                extraHeader: lazy(
+                    () => import('@/views/concepts/purchasing/PurchaseOrderDetails/components/PoDetailHeaderExtra'),
+                ),
+            },
+            pageContainerType: 'contained',
+        },
     },
     {
         key: 'concepts.purchasing.receipts',
         path: '/concepts/purchasing/receipts',
-        component: DrawerPlaceholder,
+        component: ReceiptList,
         authority: [],
     },
     {
