@@ -13,6 +13,7 @@ import WoField from './components/WoField'
 import WoFieldDropdown from './components/WoFieldDropdown'
 import WoActivity from './components/WoActivity'
 import WoFooter from './components/WoFooter'
+import WoParts from './components/WoParts'
 import {
     apiGetWorkOrderById,
     apiUpdateWorkOrder,
@@ -69,13 +70,19 @@ const WorkOrderDetails = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER, TECHNICIAN])
+    const currentMemberId = useSessionUser((state) => state.user.memberId)
+    const isAdminOrManager = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const isTechnician = useAuthority(userAuthority, [TECHNICIAN])
     const canAssign = useAuthority(userAuthority, [ADMIN, MANAGER])
 
     const [wo, setWo] = useState<WorkOrder | null>(null)
     const [editingDescription, setEditingDescription] = useState(false)
     const [descriptionDraft, setDescriptionDraft] = useState('')
     const [printOpen, setPrintOpen] = useState(false)
+
+    const isAssignedToWo = wo?.assigned_members.some((m) => m.id === currentMemberId) ?? false
+    const canEdit = isAdminOrManager || (isTechnician && isAssignedToWo)
+    const canManage = isAdminOrManager
 
     const { isLoading } = useSWR<WorkOrder>(
         id ? ['/work-orders/details', id] : null,
@@ -184,7 +191,7 @@ const WorkOrderDetails = () => {
                                 >
                                     Print Label
                                 </Button>
-                                {canEdit && (
+                                {canManage && (
                                     <Button
                                         icon={<TbPencil />}
                                         onClick={() =>
@@ -212,7 +219,7 @@ const WorkOrderDetails = () => {
                                     <input
                                         className="text-2xl font-bold outline-none bg-transparent text-gray-900 dark:text-gray-100 border-b-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:border-primary transition-colors"
                                         defaultValue={wo.title}
-                                        disabled={!canEdit}
+                                        disabled={!canManage}
                                         onBlur={(e) =>
                                             handleTitleBlur(e.target.value)
                                         }
@@ -260,7 +267,7 @@ const WorkOrderDetails = () => {
                                         <WoFieldDropdown
                                             title="Priority"
                                             icon={<TbFlag />}
-                                            disabled={!canEdit}
+                                            disabled={!canManage}
                                             trigger={
                                                 <div className="flex items-center gap-2">
                                                     <TbFlag2Filled
@@ -386,7 +393,7 @@ const WorkOrderDetails = () => {
                                                         ? dayjs(wo.due_at).format('MMM D, YYYY')
                                                         : 'No due date'}
                                                 </span>
-                                                {canEdit && (
+                                                {canManage && (
                                                     <DatePicker
                                                         className="opacity-0 cursor-pointer absolute inset-0"
                                                         value={
@@ -462,6 +469,13 @@ const WorkOrderDetails = () => {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Parts used on this work order */}
+                                <WoParts
+                                    workOrderId={wo.id}
+                                    woCode={wo.code}
+                                    canEdit={canEdit}
+                                />
 
                                 {/* Comments, Attachments & Work Logs */}
                                 <WoFooter

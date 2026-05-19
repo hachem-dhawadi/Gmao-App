@@ -3,14 +3,14 @@ import { TbCloudDownload, TbPlus, TbLayoutKanban } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER, TECHNICIAN } from '@/constants/roles.constant'
+import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import { CSVLink } from 'react-csv'
 import useWorkOrderList from '../hooks/useWorkOrderList'
 
 const WorkOrderListActionTools = () => {
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canCreate = useAuthority(userAuthority, [ADMIN, MANAGER, TECHNICIAN])
+    const canCreate = useAuthority(userAuthority, [ADMIN, MANAGER])
 
     const { workOrderList } = useWorkOrderList()
 

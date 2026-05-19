@@ -167,25 +167,12 @@ class StockMoveController extends Controller
 
     public function destroy(Request $request, StockMove $stockMove): JsonResponse
     {
-        $currentCompany = $request->attributes->get('currentCompany');
-        $currentMember  = $request->attributes->get('currentMember');
-
-        if (! $currentCompany || (int) $stockMove->company_id !== (int) $currentCompany->id) {
-            return response()->json(['success' => false, 'message' => 'Not found.'], 404);
-        }
-
-        $isAdmin = $currentMember?->roles()->where('code', 'admin')->exists() ?? false;
-
-        if (! $isAdmin) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only administrators can delete stock moves.',
-            ], 403);
-        }
-
-        $stockMove->delete();
-
-        return response()->json(['success' => true, 'message' => 'Stock move deleted.']);
+        // Stock moves are immutable financial records — like accounting transactions.
+        // To correct a mistake, create a reversal move (adjustment with negative qty).
+        return response()->json([
+            'success' => false,
+            'message' => 'Stock moves cannot be deleted. Create a reversal adjustment instead.',
+        ], 422);
     }
 
     private function format(StockMove $move): array

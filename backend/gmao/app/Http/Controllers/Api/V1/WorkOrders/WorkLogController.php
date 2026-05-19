@@ -53,6 +53,17 @@ class WorkLogController extends Controller
             ], 422);
         }
 
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager) {
+            $isAssigned = $workOrder->assignedMembers()->where('members.id', $currentMember->id)->exists();
+            if (! $isAssigned) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only log time on work orders assigned to you.',
+                ], 403);
+            }
+        }
+
         $validated = $request->validate([
             'labor_minutes' => 'required|integer|min:1',
             'labor_cost'    => 'nullable|numeric|min:0',

@@ -28,7 +28,7 @@ const PmPlanEdit = () => {
     const [deleteOpen, setDeleteOpen] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canDelete = useAuthority(userAuthority, [ADMIN])
 
     const { data, isLoading } = useSWR<PmPlan>(
         id ? ['/pm/plans/edit', id] : null,

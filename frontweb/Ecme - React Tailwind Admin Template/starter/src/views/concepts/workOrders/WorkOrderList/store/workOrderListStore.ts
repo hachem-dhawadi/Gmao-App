@@ -12,11 +12,13 @@ export const initialTableData: TableQueries = {
 export type WorkOrderFilter = {
     status: 'all' | 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
     priority: 'all' | 'low' | 'medium' | 'high' | 'critical'
+    myOnly: boolean
 }
 
 export const initialFilterData: WorkOrderFilter = {
     status: 'all',
     priority: 'all',
+    myOnly: false,
 }
 
 type WorkOrderListState = {

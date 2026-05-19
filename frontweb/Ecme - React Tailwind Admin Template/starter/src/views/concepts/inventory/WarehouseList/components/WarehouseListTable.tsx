@@ -75,7 +75,7 @@ const WarehouseListTable = () => {
                 header: 'Code',
                 accessorKey: 'code',
                 cell: (props) => (
-                    <span className="font-mono text-sm text-blue-600 dark:text-blue-400">
+                    <span className="font-mono text-sm font-bold">
                         {props.row.original.code}
                     </span>
                 ),

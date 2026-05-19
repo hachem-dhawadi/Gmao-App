@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -15,7 +15,7 @@ import { mutate as globalMutate } from 'swr'
 import useSWR from 'swr'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN } from '@/constants/roles.constant'
+import { ADMIN, MANAGER, TECHNICIAN } from '@/constants/roles.constant'
 import { TbArrowNarrowLeft, TbTrash } from 'react-icons/tb'
 import type { WorkOrderFormSchema } from '../WorkOrderForm'
 import type { WorkOrder } from '../WorkOrderList/types'
@@ -29,7 +29,10 @@ const WorkOrderEdit = () => {
     const [deleteOpen, setDeleteOpen] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
+    const currentMemberId = useSessionUser((state) => state.user.memberId)
     const canDelete = useAuthority(userAuthority, [ADMIN])
+    const isAdminOrManager = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const isTechnician = useAuthority(userAuthority, [TECHNICIAN])
 
     const { data, isLoading } = useSWR<WorkOrder>(
         id ? ['/work-orders/edit', id] : null,
@@ -39,6 +42,16 @@ const WorkOrderEdit = () => {
         },
         { revalidateOnFocus: false, revalidateIfStale: false },
     )
+
+    useEffect(() => {
+        if (!data || isAdminOrManager) return
+        if (isTechnician) {
+            const isAssigned = data.assigned_members?.some((m) => m.id === currentMemberId)
+            if (!isAssigned) {
+                navigate(`/concepts/work-orders/work-order-details/${id}`, { replace: true })
+            }
+        }
+    }, [data, isTechnician, isAdminOrManager, currentMemberId, id, navigate])
 
     const handleFormSubmit = async (values: WorkOrderFormSchema) => {
         if (!id) return

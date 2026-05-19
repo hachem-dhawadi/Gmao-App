@@ -154,8 +154,10 @@ const StockMoveList = () => {
         },
     })
 
-    const watchedItemId = useWatch({ control, name: 'item_id' })
-    const watchedMoveType = useWatch({ control, name: 'move_type' })
+    const watchedItemId      = useWatch({ control, name: 'item_id' })
+    const watchedMoveType    = useWatch({ control, name: 'move_type' })
+    const watchedWarehouseId = useWatch({ control, name: 'warehouse_id' })
+    const watchedQuantity    = useWatch({ control, name: 'quantity' })
 
     // When item changes, clear the warehouse selection
     useEffect(() => {
@@ -170,6 +172,22 @@ const StockMoveList = () => {
         () => apiGetItemById<ItemResponse>(watchedItemId!.value),
         { revalidateOnFocus: false },
     )
+
+    // Current stock in the selected warehouse (for any move type)
+    const currentWarehouseStock = useMemo(() => {
+        if (!watchedItemId || !watchedWarehouseId) return null
+        const entry = itemDetailData?.data?.stock_by_warehouse?.find(
+            (s) => s.warehouse_id === watchedWarehouseId.value,
+        )
+        return entry ? Math.max(0, entry.stock_qty) : 0
+    }, [watchedItemId, watchedWarehouseId, itemDetailData])
+
+    // Available stock for OUT / adjustment moves (null hides the panel for IN)
+    const availableStock = useMemo(() => {
+        if (!watchedItemId || !watchedWarehouseId) return null
+        if (watchedMoveType?.value === 'in') return null
+        return currentWarehouseStock
+    }, [watchedItemId, watchedWarehouseId, watchedMoveType, currentWarehouseStock])
 
     // Compute which warehouses to show in the dialog based on item + move type
     const dialogWarehouseOptions = useMemo(() => {
@@ -515,8 +533,8 @@ const StockMoveList = () => {
                 onRequestClose={() => setDialogOpen(false)}
             >
                 <h5 className="mb-4">Record Stock Move</h5>
-                <Form onSubmit={handleSubmit(handleRecordMove)}>
-                    <div className="flex flex-col gap-3">
+                <Form onSubmit={handleSubmit(handleRecordMove)} className="flex flex-col">
+                    <div className="flex flex-col gap-3 overflow-y-auto max-h-[60vh] pr-1">
                         {/* Item */}
                         <Controller
                             name="item_id"
@@ -601,23 +619,90 @@ const StockMoveList = () => {
                             control={control}
                             rules={{
                                 required: 'Quantity is required',
-                                validate: (v) =>
-                                    parseFloat(v) !== 0 || 'Cannot be zero',
+                                validate: (v) => {
+                                    const n = parseFloat(v)
+                                    if (isNaN(n) || n <= 0) return 'Must be a positive number'
+                                    if (
+                                        watchedMoveType?.value !== 'in' &&
+                                        availableStock !== null &&
+                                        n > availableStock
+                                    ) {
+                                        return `Maximum available is ${availableStock}`
+                                    }
+                                    return true
+                                },
                             }}
-                            render={({ field }) => (
-                                <FormItem
-                                    label="Quantity"
-                                    invalid={!!errors.quantity}
-                                    errorMessage={errors.quantity?.message}
-                                >
-                                    <Input
-                                        {...field}
-                                        type="number"
-                                        step="0.001"
-                                        placeholder="0.000"
-                                    />
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                const unit    = itemDetailData?.data?.item?.unit ?? 'units'
+                                const typed   = parseFloat(watchedQuantity)
+                                const isIn    = watchedMoveType?.value === 'in'
+                                const isOut   = !isIn
+                                const hasQty  = !isNaN(typed) && typed > 0
+                                const showPanel = currentWarehouseStock !== null
+
+                                const remaining = (availableStock !== null && isOut && hasQty)
+                                    ? Math.max(0, availableStock - typed)
+                                    : null
+
+                                const afterIn = (isIn && currentWarehouseStock !== null && hasQty)
+                                    ? currentWarehouseStock + typed
+                                    : null
+
+                                return (
+                                    <div className="flex flex-col gap-2">
+                                        <FormItem
+                                            label="Quantity"
+                                            invalid={!!errors.quantity}
+                                            errorMessage={errors.quantity?.message}
+                                        >
+                                            <Input
+                                                {...field}
+                                                type="number"
+                                                step="0.001"
+                                                min="0.001"
+                                                placeholder="0.000"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === '-' || e.key === 'e') e.preventDefault()
+                                                }}
+                                            />
+                                        </FormItem>
+
+                                        {showPanel && (
+                                            <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 px-4 py-3 flex flex-col gap-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                        Current stock (this warehouse)
+                                                    </span>
+                                                    <span className={`text-sm font-bold ${currentWarehouseStock === 0 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                                                        {currentWarehouseStock} {unit}
+                                                    </span>
+                                                </div>
+
+                                                {(remaining !== null || afterIn !== null) && (
+                                                    <>
+                                                        <div className="border-t border-gray-200 dark:border-gray-600" />
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                After this move
+                                                            </span>
+                                                            {remaining !== null && (
+                                                                <span className={`text-sm font-bold ${remaining === 0 ? 'text-red-500' : 'text-amber-500'}`}>
+                                                                    {remaining} {unit} remaining
+                                                                </span>
+                                                            )}
+                                                            {afterIn !== null && (
+                                                                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                                                    {afterIn} {unit} in stock
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            }}
                         />
 
                         {/* Reference */}
@@ -651,7 +736,7 @@ const StockMoveList = () => {
                         />
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-6">
+                    <div className="flex justify-end gap-3 mt-6 flex-shrink-0">
                         <Button
                             type="button"
                             onClick={() => {

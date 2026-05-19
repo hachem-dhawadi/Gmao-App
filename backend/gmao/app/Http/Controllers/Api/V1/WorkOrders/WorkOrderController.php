@@ -26,10 +26,13 @@ class WorkOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Company context is missing.'], 400);
         }
 
+        $currentMember = $request->attributes->get('currentMember');
+
         $perPage  = max(1, min((int) $request->query('per_page', 15), 100));
         $status   = $request->query('status');
         $priority = $request->query('priority');
         $search   = $request->query('search');
+        $myOnly   = $request->boolean('my_only');
 
         $query = WorkOrder::query()
             ->with(['asset', 'createdBy.user', 'assignedMembers.user'])
@@ -49,6 +52,10 @@ class WorkOrderController extends Controller
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%");
             });
+        }
+
+        if ($myOnly && $currentMember) {
+            $query->whereHas('assignedMembers', fn ($q) => $q->where('members.id', $currentMember->id));
         }
 
         $workOrders = $query->paginate($perPage);
@@ -89,6 +96,11 @@ class WorkOrderController extends Controller
 
         if (! $currentCompany || ! $currentMember) {
             return response()->json(['success' => false, 'message' => 'Company context is missing.'], 400);
+        }
+
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager) {
+            return response()->json(['success' => false, 'message' => 'Only administrators and managers can create work orders.'], 403);
         }
 
         $code = $validated['code'] ?? $this->generateCode($currentCompany->id);
@@ -144,6 +156,10 @@ class WorkOrderController extends Controller
 
         if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
             return response()->json(['success' => false, 'message' => 'Work order not found.'], 404);
+        }
+
+        if (! $this->canModifyWorkOrder($currentMember, $workOrder)) {
+            return response()->json(['success' => false, 'message' => 'You can only modify work orders assigned to you.'], 403);
         }
 
         $assignedMemberIds = $validated['assigned_member_ids'] ?? null;
@@ -220,13 +236,19 @@ class WorkOrderController extends Controller
     public function destroy(Request $request, WorkOrder $workOrder): JsonResponse
     {
         $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
 
-        if (! $currentCompany) {
+        if (! $currentCompany || ! $currentMember) {
             return response()->json(['success' => false, 'message' => 'Company context is missing.'], 400);
         }
 
         if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
             return response()->json(['success' => false, 'message' => 'Work order not found.'], 404);
+        }
+
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager) {
+            return response()->json(['success' => false, 'message' => 'Only administrators and managers can delete work orders.'], 403);
         }
 
         $workOrder->delete();
@@ -250,6 +272,10 @@ class WorkOrderController extends Controller
 
         if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
             return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        if (! $this->canModifyWorkOrder($currentMember, $workOrder)) {
+            return response()->json(['success' => false, 'message' => 'You can only comment on work orders assigned to you.'], 403);
         }
 
         $request->validate(['body' => 'required|string|max:3000']);
@@ -279,12 +305,21 @@ class WorkOrderController extends Controller
         $currentCompany = $request->attributes->get('currentCompany');
         $currentMember  = $request->attributes->get('currentMember');
 
-        if (! $currentCompany) {
+        if (! $currentCompany || ! $currentMember) {
             return response()->json(['success' => false, 'message' => 'Context missing.'], 400);
         }
 
         if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
             return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        if (! $this->canModifyWorkOrder($currentMember, $workOrder)) {
+            return response()->json(['success' => false, 'message' => 'You can only act on work orders assigned to you.'], 403);
+        }
+
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager && $comment->member_id !== $currentMember->id) {
+            return response()->json(['success' => false, 'message' => 'You can only delete your own comments.'], 403);
         }
 
         $comment->delete();
@@ -305,6 +340,10 @@ class WorkOrderController extends Controller
 
         if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
             return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        if (! $this->canModifyWorkOrder($currentMember, $workOrder)) {
+            return response()->json(['success' => false, 'message' => 'You can only add attachments to work orders assigned to you.'], 403);
         }
 
         $request->validate(['file' => 'required|file|max:20480']);
@@ -351,8 +390,9 @@ class WorkOrderController extends Controller
     public function deleteAttachment(Request $request, WorkOrder $workOrder, WorkOrderAttachment $attachment): JsonResponse
     {
         $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
 
-        if (! $currentCompany) {
+        if (! $currentCompany || ! $currentMember) {
             return response()->json(['success' => false, 'message' => 'Context missing.'], 400);
         }
 
@@ -360,10 +400,29 @@ class WorkOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Not found.'], 404);
         }
 
+        if (! $this->canModifyWorkOrder($currentMember, $workOrder)) {
+            return response()->json(['success' => false, 'message' => 'You can only act on work orders assigned to you.'], 403);
+        }
+
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager && $attachment->member_id !== $currentMember->id) {
+            return response()->json(['success' => false, 'message' => 'You can only delete your own attachments.'], 403);
+        }
+
         Storage::disk('public')->delete($attachment->stored_path);
         $attachment->delete();
 
         return response()->json(['success' => true, 'message' => 'Attachment deleted.']);
+    }
+
+    private function canModifyWorkOrder(mixed $member, WorkOrder $workOrder): bool
+    {
+        if (! $member) return false;
+
+        $isAdminOrManager = $member->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if ($isAdminOrManager) return true;
+
+        return $workOrder->assignedMembers()->where('members.id', $member->id)->exists();
     }
 
     private function generateCode(int $companyId): string

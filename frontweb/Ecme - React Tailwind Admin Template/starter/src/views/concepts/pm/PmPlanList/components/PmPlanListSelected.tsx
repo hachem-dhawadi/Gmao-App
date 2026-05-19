@@ -17,7 +17,7 @@ const PmPlanListSelected = () => {
     const [deleting, setDeleting] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canDelete = useAuthority(userAuthority, [ADMIN])
 
     if (selectedPmPlans.length === 0) return null
 

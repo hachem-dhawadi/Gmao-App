@@ -1,7 +1,7 @@
 import { lazy } from 'react'
 import authRoute from './authRoute'
 import othersRoute from './othersRoute'
-import { SUPERADMIN, ADMIN, MANAGER } from '@/constants/roles.constant'
+import { SUPERADMIN, ADMIN, MANAGER, TECHNICIAN } from '@/constants/roles.constant'
 import type { Routes } from '@/@types/routes'
 
 export const publicRoutes: Routes = [...authRoute]
@@ -254,13 +254,13 @@ const placeholderRoutes: Routes = [
         key: 'concepts.workOrders.workOrderCreate',
         path: '/concepts/work-orders/work-order-create',
         component: WorkOrderCreate,
-        authority: [],
+        authority: [ADMIN, MANAGER],
     },
     {
         key: 'concepts.workOrders.workOrderEdit',
         path: '/concepts/work-orders/work-order-edit/:id',
         component: WorkOrderEdit,
-        authority: [],
+        authority: [ADMIN, MANAGER, TECHNICIAN],
     },
     {
         key: 'concepts.workOrders.workOrderDetails',
@@ -350,7 +350,7 @@ const placeholderRoutes: Routes = [
         key: 'concepts.inventory.stockMoves',
         path: '/concepts/inventory/stock-moves',
         component: StockMoveList,
-        authority: [],
+        authority: [ADMIN, MANAGER],
     },
     {
         key: 'concepts.purchasing.suppliers',

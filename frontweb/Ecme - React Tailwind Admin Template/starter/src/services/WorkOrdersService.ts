@@ -1,5 +1,20 @@
 import ApiService from './ApiService'
 
+export type WoPart = {
+    id: number
+    move_type: string
+    quantity: number
+    notes: string | null
+    item: { id: number; code: string; name: string; unit: string | null } | null
+    warehouse: { id: number; code: string; name: string } | null
+    created_by: { id: number; name: string | null } | null
+}
+
+export type WoPartsResponse = {
+    success: boolean
+    data: { parts: WoPart[] }
+}
+
 export type WorkOrderMember = {
     id: number
     name: string | null
@@ -274,5 +289,30 @@ export async function apiDeleteWorkLog(workOrderId: string | number, workLogId: 
     return ApiService.fetchDataWithAxios<{ success: boolean }>({
         url: `/work-orders/${workOrderId}/work-logs/${workLogId}`,
         method: 'delete',
+    })
+}
+
+
+export async function apiGetWoParts(workOrderId: number | string) {
+    return ApiService.fetchDataWithAxios<WoPartsResponse>({
+        url: `/work-orders/${workOrderId}/parts`,
+        method: 'get',
+    })
+}
+
+export async function apiRecordWoPart(
+    workOrderId: number | string,
+    data: {
+        item_id: number
+        warehouse_id: number
+        usage_type: 'used' | 'scrapped'
+        quantity: number
+        notes?: string | null
+    },
+) {
+    return ApiService.fetchDataWithAxios<{ success: boolean; message: string; data: { part: WoPart } }>({
+        url: `/work-orders/${workOrderId}/parts`,
+        method: 'post',
+        data,
     })
 }

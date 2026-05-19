@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Departments\DepartmentController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
 use App\Http\Controllers\Api\V1\WorkOrders\WorkOrderController;
 use App\Http\Controllers\Api\V1\WorkOrders\WorkLogController;
+use App\Http\Controllers\Api\V1\WorkOrders\WoPartsController;
 use App\Http\Controllers\Api\V1\Inventory\ItemController;
 use App\Http\Controllers\Api\V1\Inventory\WarehouseController;
 use App\Http\Controllers\Api\V1\Inventory\StockMoveController;
@@ -99,6 +100,10 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/{workOrder}/work-logs', [WorkLogController::class, 'store'])->middleware('permission:work_orders.write');
         Route::patch('/{workOrder}/work-logs/{workLog}', [WorkLogController::class, 'update'])->middleware('permission:work_orders.write');
         Route::delete('/{workOrder}/work-logs/{workLog}', [WorkLogController::class, 'destroy'])->middleware('permission:work_orders.write');
+
+        // Parts used (technician-friendly — uses work_orders.write, not inventory.write)
+        Route::get('/{workOrder}/parts', [WoPartsController::class, 'index'])->middleware('permission:work_orders.read');
+        Route::post('/{workOrder}/parts', [WoPartsController::class, 'store'])->middleware('permission:work_orders.write');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('inventory/items')->group(function (): void {
