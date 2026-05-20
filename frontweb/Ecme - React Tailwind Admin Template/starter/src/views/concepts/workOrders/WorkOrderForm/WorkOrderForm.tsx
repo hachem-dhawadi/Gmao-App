@@ -10,7 +10,6 @@ import { z } from 'zod'
 import isEmpty from 'lodash/isEmpty'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import type { CommonProps } from '@/@types/common'
 import type { WorkOrderFormSchema } from './types'
 
@@ -44,7 +43,7 @@ const WorkOrderForm = ({
     children,
 }: WorkOrderFormProps) => {
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canAssign = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canAssign = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
 
     const {
         handleSubmit,

@@ -7,6 +7,7 @@ function useAuthority(
     emptyCheck = false,
 ) {
     const roleMatched = useMemo(() => {
+        if (userAuthority.includes('superadmin')) return true
         return authority.some((role) => userAuthority.includes(role))
     }, [authority, userAuthority])
 

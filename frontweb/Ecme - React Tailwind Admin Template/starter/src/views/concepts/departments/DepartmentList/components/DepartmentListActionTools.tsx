@@ -3,14 +3,13 @@ import { TbCloudDownload, TbPlus } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, HR } from '@/constants/roles.constant'
 import { CSVLink } from 'react-csv'
 import useDepartmentList from '../hooks/useDepartmentList'
 
 const DepartmentListActionTools = () => {
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canCreate = useAuthority(userAuthority, [ADMIN, HR])
+    const canCreate = useAuthority(userAuthority, ['departments.create', 'admin', 'hr'])
 
     const { rawList } = useDepartmentList()
 

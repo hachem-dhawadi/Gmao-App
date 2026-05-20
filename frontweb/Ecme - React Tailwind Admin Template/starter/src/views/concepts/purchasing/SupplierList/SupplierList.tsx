@@ -26,7 +26,6 @@ import {
 import type { Supplier, SuppliersResponse } from '@/services/PurchasingService'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import type { ColumnDef } from '@/components/shared/DataTable'
 
 const HAS_OPTIONS = [
@@ -41,7 +40,8 @@ const EMPTY_FORM = { name: '', email: '', phone: '', address: '', contact_name: 
 
 const SupplierList = () => {
     const userAuthority = useSessionUser((s) => s.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canEdit = useAuthority(userAuthority, ['purchasing.write', 'admin', 'manager'])
+    const canDelete = useAuthority(userAuthority, ['purchasing.delete', 'admin', 'manager'])
 
     const [search,      setSearch]      = useState('')
     const [pageIndex,   setPageIndex]   = useState(1)
@@ -221,29 +221,33 @@ const SupplierList = () => {
             id: 'action',
             cell: (props) => {
                 const s = props.row.original
-                return canEdit ? (
+                return (canEdit || canDelete) ? (
                     <div className="flex justify-end text-lg gap-1">
-                        <Tooltip wrapperClass="flex" title="Edit">
-                            <span
-                                className="cursor-pointer p-2 hover:text-primary"
-                                onClick={() => openEdit(s)}
-                            >
-                                <TbPencil />
-                            </span>
-                        </Tooltip>
-                        <Tooltip wrapperClass="flex" title="Delete">
-                            <span
-                                className="cursor-pointer p-2 hover:text-red-500"
-                                onClick={() => handleDeleteClick(s)}
-                            >
-                                <TbTrash />
-                            </span>
-                        </Tooltip>
+                        {canEdit && (
+                            <Tooltip wrapperClass="flex" title="Edit">
+                                <span
+                                    className="cursor-pointer p-2 hover:text-primary"
+                                    onClick={() => openEdit(s)}
+                                >
+                                    <TbPencil />
+                                </span>
+                            </Tooltip>
+                        )}
+                        {canDelete && (
+                            <Tooltip wrapperClass="flex" title="Delete">
+                                <span
+                                    className="cursor-pointer p-2 hover:text-red-500"
+                                    onClick={() => handleDeleteClick(s)}
+                                >
+                                    <TbTrash />
+                                </span>
+                            </Tooltip>
+                        )}
                     </div>
                 ) : null
             },
         },
-    ], [canEdit, openEdit, handleDeleteClick])
+    ], [canEdit, canDelete, openEdit, handleDeleteClick])
 
     const activeFilters = [
         filter.hasEmail !== 'all',

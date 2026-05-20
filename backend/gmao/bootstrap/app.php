@@ -6,7 +6,6 @@ use App\Http\Middleware\EnsureSuperadmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         api: __DIR__.'/../routes/api.php',
@@ -22,5 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Always return JSON for API routes — prevents the framework from calling
+        // route('login') (which doesn't exist) when an AuthenticationException occurs.
+        $exceptions->shouldRenderJsonWhen(function ($request, \Throwable $e): bool {
+            return $request->is('api/*') || $request->expectsJson();
+        });
     })->create();

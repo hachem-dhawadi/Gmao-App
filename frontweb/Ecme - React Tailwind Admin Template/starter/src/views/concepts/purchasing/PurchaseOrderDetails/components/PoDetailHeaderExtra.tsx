@@ -18,13 +18,12 @@ import { apiGetWarehousesList } from '@/services/InventoryService'
 import type { PurchaseOrder, PurchaseOrderResponse } from '@/services/PurchasingService'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 
 const PoDetailHeaderExtra = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const userAuthority = useSessionUser((s) => s.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canEdit = useAuthority(userAuthority, ['purchasing.write', 'admin', 'manager'])
 
     const [receiveOpen, setReceiveOpen] = useState(false)
     const [warehouseId, setWarehouseId] = useState<number | null>(null)

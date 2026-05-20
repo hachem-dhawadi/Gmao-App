@@ -3,14 +3,13 @@ import { TbCloudDownload, TbPlus } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import { CSVLink } from 'react-csv'
 import useWarehouseList from '../hooks/useWarehouseList'
 
 const WarehouseListActionTools = () => {
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canCreate = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canCreate = useAuthority(userAuthority, ['inventory.write', 'admin', 'manager'])
 
     const { warehouseList } = useWarehouseList()
 

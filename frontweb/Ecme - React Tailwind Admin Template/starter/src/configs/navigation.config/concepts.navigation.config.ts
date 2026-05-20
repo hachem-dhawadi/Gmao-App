@@ -4,20 +4,7 @@ import {
     NAV_ITEM_TYPE_COLLAPSE,
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
-import {
-    ADMIN,
-    HR,
-    MANAGER,
-    TECHNICIAN,
-    SUPERADMIN,
-} from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
-
-const ALL_COMPANY_ROLES = [ADMIN, HR, MANAGER, TECHNICIAN]
-const ALL_ROLES = [SUPERADMIN, ADMIN, HR, MANAGER, TECHNICIAN]
-const OPS_ROLES = [ADMIN, MANAGER, TECHNICIAN]
-const ADMIN_MANAGER = [ADMIN, MANAGER]
-const PEOPLE_MANAGERS = [SUPERADMIN, ADMIN, HR, MANAGER]
 
 const conceptsNavigationConfig: NavigationTree[] = [
     // ─── GMAO ────────────────────────────────────────────────────────
@@ -28,7 +15,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
         translateKey: 'nav.gmao',
         icon: 'concepts',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: ALL_COMPANY_ROLES,
+        authority: ['assets.read', 'work_orders.read', 'inventory.read', 'pm_plans.read', 'purchasing.read', 'admin', 'manager', 'technician'],
         subMenu: [
             // Assets
             {
@@ -38,7 +25,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.assets.assets',
                 icon: 'assets',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: OPS_ROLES,
+                authority: ['assets.read', 'admin', 'manager', 'technician'],
                 subMenu: [
                     {
                         key: 'concepts.assets.assetList',
@@ -47,7 +34,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.assets.assetList',
                         icon: 'assetList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: OPS_ROLES,
+                        authority: ['assets.read', 'admin', 'manager', 'technician'],
                         subMenu: [],
                     },
                     {
@@ -57,7 +44,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.assets.assetCreate',
                         icon: 'assetCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: ADMIN_MANAGER,
+                        authority: ['assets.write', 'admin', 'manager'],
                         subMenu: [],
                     },
                 ],
@@ -71,7 +58,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.workOrders.workOrders',
                 icon: 'workOrders',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: OPS_ROLES,
+                authority: ['work_orders.read', 'admin', 'manager', 'technician'],
                 subMenu: [
                     {
                         key: 'concepts.workOrders.workOrderList',
@@ -80,7 +67,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.workOrders.workOrderList',
                         icon: 'workOrderList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: OPS_ROLES,
+                        authority: ['work_orders.read', 'admin', 'manager', 'technician'],
                         subMenu: [],
                     },
                     {
@@ -90,7 +77,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.workOrders.workOrderBoard',
                         icon: 'workOrderBoard',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: OPS_ROLES,
+                        authority: ['work_orders.read', 'admin', 'manager', 'technician'],
                         subMenu: [],
                     },
                     {
@@ -100,7 +87,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.workOrders.workOrderCreate',
                         icon: 'workOrderCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: ADMIN_MANAGER,
+                        authority: ['work_orders.write', 'admin', 'manager', 'technician'],
                         subMenu: [],
                     },
                 ],
@@ -114,7 +101,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.pm.pm',
                 icon: 'pm',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: ADMIN_MANAGER,
+                authority: ['pm_plans.read', 'admin', 'manager'],
                 subMenu: [
                     {
                         key: 'concepts.pm.pmList',
@@ -123,7 +110,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.pm.pmList',
                         icon: 'pmList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: ADMIN_MANAGER,
+                        authority: ['pm_plans.read', 'admin', 'manager'],
                         subMenu: [],
                     },
                     {
@@ -133,7 +120,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.pm.pmCreate',
                         icon: 'pmCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: ADMIN_MANAGER,
+                        authority: ['pm_plans.write', 'admin', 'manager'],
                         subMenu: [],
                     },
                 ],
@@ -147,7 +134,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.inventory.inventory',
                 icon: 'inventory',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: OPS_ROLES,
+                authority: ['inventory.read', 'admin', 'manager', 'technician'],
                 subMenu: [
                     {
                         key: 'concepts.inventory.items',
@@ -156,7 +143,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.inventory.items',
                         icon: 'inventoryItems',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: OPS_ROLES,
+                        authority: ['inventory.read', 'admin', 'manager', 'technician'],
                         subMenu: [],
                     },
                     {
@@ -166,7 +153,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.inventory.warehouses',
                         icon: 'inventoryWarehouses',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: ADMIN_MANAGER,
+                        authority: ['inventory.write', 'admin', 'manager'],
                         subMenu: [],
                     },
                     {
@@ -176,7 +163,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.inventory.stockMoves',
                         icon: 'inventoryStockMoves',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: ADMIN_MANAGER,
+                        authority: ['inventory.write', 'admin', 'manager'],
                         subMenu: [],
                     },
                 ],
@@ -190,7 +177,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.purchasing.purchasing',
                 icon: 'purchasing',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: ADMIN_MANAGER,
+                authority: ['purchasing.read', 'admin', 'manager'],
                 subMenu: [
                     {
                         key: 'concepts.purchasing.suppliers',
@@ -199,7 +186,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.purchasing.suppliers',
                         icon: 'purchasingSuppliers',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN],
+                        authority: ['purchasing.write', 'admin', 'manager'],
                         subMenu: [],
                     },
                     {
@@ -209,7 +196,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.purchasing.purchaseOrders',
                         icon: 'purchasingOrders',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: ADMIN_MANAGER,
+                        authority: ['purchasing.read', 'admin', 'manager'],
                         subMenu: [],
                     },
                     {
@@ -219,7 +206,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.purchasing.receipts',
                         icon: 'purchasingReceipts',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: ADMIN_MANAGER,
+                        authority: ['purchasing.read', 'admin', 'manager'],
                         subMenu: [],
                     },
                 ],
@@ -227,7 +214,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
         ],
     },
 
-    // ─── PEOPLE ──────────────────────────────────────────────────────
+    // ─── PEOPLE ──────────────────────────────────────────────────────────────
     {
         key: 'people',
         path: '',
@@ -235,7 +222,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
         translateKey: 'nav.people',
         icon: 'customers',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: PEOPLE_MANAGERS,
+        authority: ['members.read', 'departments.read', 'roles.read', 'admin', 'manager', 'hr'],
         subMenu: [
             // Members
             {
@@ -245,7 +232,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.members.members',
                 icon: 'members',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: PEOPLE_MANAGERS,
+                authority: ['members.read', 'admin', 'manager', 'hr'],
                 subMenu: [
                     {
                         key: 'concepts.customers.customerList',
@@ -254,7 +241,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.members.memberList',
                         icon: 'memberList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: PEOPLE_MANAGERS,
+                        authority: ['members.read', 'admin', 'manager', 'hr'],
                         subMenu: [],
                     },
                     {
@@ -264,7 +251,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.members.memberCreate',
                         icon: 'memberCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [SUPERADMIN, ADMIN, HR],
+                        authority: ['members.create', 'admin', 'hr'],
                         subMenu: [],
                     },
                 ],
@@ -278,7 +265,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.departments',
                 icon: 'departments',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, HR, MANAGER],
+                authority: ['departments.read', 'admin', 'hr'],
                 subMenu: [
                     {
                         key: 'concepts.departments.departmentList',
@@ -287,7 +274,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.departments.departmentList',
                         icon: 'memberList',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, HR, MANAGER],
+                        authority: ['departments.read', 'admin', 'hr'],
                         subMenu: [],
                     },
                     {
@@ -297,7 +284,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.departments.departmentCreate',
                         icon: 'memberCreate',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, HR],
+                        authority: ['departments.create', 'admin', 'hr'],
                         subMenu: [],
                     },
                 ],
@@ -311,13 +298,13 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.rolesPermissions',
                 icon: 'rolesPermissions',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: [ADMIN],
+                authority: ['roles.read', 'admin'],
                 subMenu: [],
             },
         ],
     },
 
-    // ─── WORKSPACE ───────────────────────────────────────────────────
+    // ─── WORKSPACE ───────────────────────────────────────────────────────────
     {
         key: 'workspace',
         path: '',
@@ -325,7 +312,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
         translateKey: 'nav.workspace',
         icon: 'fileManager',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: ALL_ROLES,
+        authority: ['user'],
         subMenu: [
             {
                 key: 'concepts.calendar',
@@ -334,7 +321,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.calendar',
                 icon: 'calendar',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: ALL_ROLES,
+                authority: ['user'],
                 subMenu: [],
             },
             {
@@ -344,7 +331,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.fileManager',
                 icon: 'fileManager',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: ALL_ROLES,
+                authority: ['files.read', 'admin', 'manager', 'technician'],
                 subMenu: [],
             },
             {
@@ -354,7 +341,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.mail',
                 icon: 'mail',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: ALL_ROLES,
+                authority: ['user'],
                 subMenu: [],
             },
             {
@@ -364,13 +351,13 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.chat',
                 icon: 'chat',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: ALL_ROLES,
+                authority: ['chat.read', 'admin', 'manager', 'technician'],
                 subMenu: [],
             },
         ],
     },
 
-    // ─── ACCOUNT ─────────────────────────────────────────────────────
+    // ─── ACCOUNT ─────────────────────────────────────────────────────────────
     {
         key: 'account',
         path: '',
@@ -378,7 +365,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
         translateKey: 'nav.account',
         icon: 'account',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: ALL_ROLES,
+        authority: ['user'],
         subMenu: [
             {
                 key: 'concepts.account.settings',
@@ -387,7 +374,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.account.settings',
                 icon: 'accountSettings',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: ALL_ROLES,
+                authority: ['user'],
                 subMenu: [],
             },
         ],

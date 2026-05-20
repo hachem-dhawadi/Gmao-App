@@ -15,7 +15,6 @@ import { mutate as globalMutate } from 'swr'
 import useSWR from 'swr'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import { TbArrowNarrowLeft, TbTrash } from 'react-icons/tb'
 import type { PmPlanFormSchema } from '../PmPlanForm'
 import type { PmPlan, PmPlanResponse } from '@/services/PmService'
@@ -28,7 +27,7 @@ const PmPlanEdit = () => {
     const [deleteOpen, setDeleteOpen] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canDelete = useAuthority(userAuthority, ['pm_plans.delete', 'admin'])
 
     const { data, isLoading } = useSWR<PmPlan>(
         id ? ['/pm/plans/edit', id] : null,

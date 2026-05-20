@@ -1,16 +1,14 @@
 import {
     TbUserCog,
     TbBox,
-    TbSettings,
     TbListCheck,
     TbPackage,
     TbShieldCheck,
     TbBuildingSkyscraper,
     TbShoppingCart,
+    TbCalendarStats,
     TbFiles,
     TbMessage,
-    TbBell,
-    TbBuilding,
 } from 'react-icons/tb'
 import type { ComponentType } from 'react'
 
@@ -24,12 +22,6 @@ export type AccessModule = {
 }
 
 export const accessModules: AccessModule[] = [
-    {
-        id: 'companies',
-        name: 'Company',
-        description: 'Access control for company settings',
-        accessor: [{ label: 'Read', value: 'companies.read' }],
-    },
     {
         id: 'members',
         name: 'Member management',
@@ -83,12 +75,23 @@ export const accessModules: AccessModule[] = [
         ],
     },
     {
+        id: 'pm_plans',
+        name: 'PM Plans',
+        description: 'Access control for preventive maintenance plans',
+        accessor: [
+            { label: 'Read', value: 'pm_plans.read' },
+            { label: 'Write', value: 'pm_plans.write' },
+            { label: 'Delete', value: 'pm_plans.delete' },
+        ],
+    },
+    {
         id: 'inventory',
         name: 'Inventory',
         description: 'Access control for inventory management',
         accessor: [
             { label: 'Read', value: 'inventory.read' },
             { label: 'Write', value: 'inventory.write' },
+            { label: 'Delete', value: 'inventory.delete' },
         ],
     },
     {
@@ -98,12 +101,13 @@ export const accessModules: AccessModule[] = [
         accessor: [
             { label: 'Read', value: 'purchasing.read' },
             { label: 'Write', value: 'purchasing.write' },
+            { label: 'Delete', value: 'purchasing.delete' },
         ],
     },
     {
         id: 'files',
-        name: 'File management',
-        description: 'Access control for file operations',
+        name: 'File Manager',
+        description: 'Access to the file manager',
         accessor: [
             { label: 'Read', value: 'files.read' },
             { label: 'Write', value: 'files.write' },
@@ -112,31 +116,23 @@ export const accessModules: AccessModule[] = [
     {
         id: 'chat',
         name: 'Chat',
-        description: 'Access control for chat features',
+        description: 'Access to the chat',
         accessor: [
             { label: 'Read', value: 'chat.read' },
             { label: 'Write', value: 'chat.write' },
         ],
     },
-    {
-        id: 'notifications',
-        name: 'Notifications',
-        description: 'Access control for notifications',
-        accessor: [{ label: 'Read', value: 'notifications.read' }],
-    },
 ]
 
 export const moduleIcon: Record<string, ComponentType> = {
-    companies: TbBuilding,
     members: TbUserCog,
     departments: TbBuildingSkyscraper,
     roles: TbShieldCheck,
     assets: TbBox,
     work_orders: TbListCheck,
+    pm_plans: TbCalendarStats,
     inventory: TbPackage,
     purchasing: TbShoppingCart,
     files: TbFiles,
     chat: TbMessage,
-    notifications: TbBell,
-    configurations: TbSettings,
 }

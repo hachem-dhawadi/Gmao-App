@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import type { Files, Directories, Layout } from '../types'
 
-type DialogProps = { id: string; open: boolean }
+type DialogProps = { id: string; open: boolean; fileType?: string }
+type FileTypeDialogProps = { id: string; open: boolean; fileType: string }
+type CreateDirDialogProps = { open: boolean; parentId: string }
 
 export type FileManagerState = {
     fileList: Files
@@ -9,9 +11,10 @@ export type FileManagerState = {
     selectedFile: string
     openedDirectoryId: string
     directories: Directories
-    deleteDialog: DialogProps
+    deleteDialog: FileTypeDialogProps
+    renameDialog: FileTypeDialogProps
     inviteDialog: DialogProps
-    renameDialog: DialogProps
+    createDirDialog: CreateDirDialogProps
 }
 
 type FileManagerAction = {
@@ -20,10 +23,11 @@ type FileManagerAction = {
     setOpenedDirectoryId: (payload: string) => void
     setDirectories: (payload: Directories) => void
     setSelectedFile: (payload: string) => void
-    setDeleteDialog: (paload: DialogProps) => void
-    setInviteDialog: (paload: DialogProps) => void
-    setRenameDialog: (paload: DialogProps) => void
-    deleteFile: (payload: string) => void
+    setDeleteDialog: (payload: FileTypeDialogProps) => void
+    setRenameDialog: (payload: FileTypeDialogProps) => void
+    setInviteDialog: (payload: DialogProps) => void
+    setCreateDirDialog: (payload: CreateDirDialogProps) => void
+    deleteFile: (payload: { id: string; isDirectory: boolean }) => void
     renameFile: (payload: { id: string; fileName: string }) => void
 }
 
@@ -33,9 +37,10 @@ const initialState: FileManagerState = {
     selectedFile: '',
     openedDirectoryId: '',
     directories: [],
-    deleteDialog: { open: false, id: '' },
-    inviteDialog: { open: false, id: '' },
-    renameDialog: { open: false, id: '' },
+    deleteDialog: { open: false, id: '', fileType: '' },
+    renameDialog: { open: false, id: '', fileType: '' },
+    inviteDialog: { open: false, id: '', fileType: '' },
+    createDirDialog: { open: false, parentId: '' },
 }
 
 export const useFileManagerStore = create<FileManagerState & FileManagerAction>(
@@ -50,22 +55,26 @@ export const useFileManagerStore = create<FileManagerState & FileManagerAction>(
         setDeleteDialog: (payload) => set(() => ({ deleteDialog: payload })),
         setInviteDialog: (payload) => set(() => ({ inviteDialog: payload })),
         setRenameDialog: (payload) => set(() => ({ renameDialog: payload })),
+        setCreateDirDialog: (payload) => set(() => ({ createDirDialog: payload })),
         deleteFile: (payload) =>
             set(() => ({
-                fileList: get().fileList.filter((file) => file.id !== payload),
+                fileList: get().fileList.filter((file) => {
+                    if (file.id !== payload.id) return true
+                    return payload.isDirectory
+                        ? file.fileType !== 'directory'
+                        : file.fileType === 'directory'
+                }),
             })),
         renameFile: (payload) =>
             set(() => ({
                 fileList: get().fileList.map((file) => {
                     if (file.id === payload.id) {
-                        const fileAbbreviationArr = file.name.split('.')
-                        const fileAbbreviation =
-                            fileAbbreviationArr[fileAbbreviationArr.length - 1]
-
-                        if (fileAbbreviationArr.length > 1) {
-                            file.name = `${payload.fileName}.${fileAbbreviation}`
+                        if (file.fileType === 'directory') {
+                            file = { ...file, name: payload.fileName }
                         } else {
-                            file.name = payload.fileName
+                            const parts = file.name.split('.')
+                            const ext = parts.length > 1 ? parts[parts.length - 1] : ''
+                            file = { ...file, name: ext ? `${payload.fileName}.${ext}` : payload.fileName }
                         }
                     }
                     return file

@@ -22,7 +22,6 @@ import { apiGetPurchaseOrders, apiDeletePurchaseOrder } from '@/services/Purchas
 import type { PurchaseOrder, PurchaseOrdersResponse } from '@/services/PurchasingService'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import dayjs from 'dayjs'
 import type { ColumnDef } from '@/components/shared/DataTable'
 
@@ -75,11 +74,11 @@ const OrderCodeCell = ({ row }: { row: PurchaseOrder }) => {
 /* ── Action cell with View + Delete (same icon pattern as demo) ── */
 const ActionCell = ({
     row,
-    canEdit,
+    canDelete,
     onDeleteClick,
 }: {
     row: PurchaseOrder
-    canEdit: boolean
+    canDelete: boolean
     onDeleteClick: (order: PurchaseOrder) => void
 }) => {
     const navigate = useNavigate()
@@ -93,7 +92,7 @@ const ActionCell = ({
                     <TbEye />
                 </span>
             </Tooltip>
-            {canEdit && (
+            {canDelete && (
                 <Tooltip wrapperClass="flex" title="Delete">
                     <span
                         className="cursor-pointer p-2 hover:text-red-500"
@@ -111,7 +110,8 @@ const ActionCell = ({
 const PurchaseOrderList = () => {
     const navigate = useNavigate()
     const userAuthority = useSessionUser((s) => s.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canEdit = useAuthority(userAuthority, ['purchasing.write', 'admin', 'manager'])
+    const canDelete = useAuthority(userAuthority, ['purchasing.delete', 'admin', 'manager'])
 
     const [search, setSearch]               = useState('')
     const [pageIndex, setPageIndex]         = useState(1)
@@ -259,12 +259,12 @@ const PurchaseOrderList = () => {
             cell: (props) => (
                 <ActionCell
                     row={props.row.original}
-                    canEdit={canEdit}
+                    canDelete={canDelete}
                     onDeleteClick={handleDeleteClick}
                 />
             ),
         },
-    ], [canEdit, handleDeleteClick])
+    ], [canDelete, handleDeleteClick])
 
     const activeFilters = [
         filter.status !== 'all',

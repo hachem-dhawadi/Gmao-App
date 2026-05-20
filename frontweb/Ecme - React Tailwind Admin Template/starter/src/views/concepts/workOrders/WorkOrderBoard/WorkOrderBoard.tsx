@@ -13,7 +13,6 @@ import {
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER, TECHNICIAN } from '@/constants/roles.constant'
 import useSWR from 'swr'
 import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/Notification'
@@ -24,7 +23,7 @@ import type { WorkOrdersListResponse } from '@/services/WorkOrdersService'
 const WorkOrderBoard = () => {
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canCreate = useAuthority(userAuthority, [ADMIN, MANAGER, TECHNICIAN])
+    const canCreate = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager', 'technician'])
 
     const { columns, setColumns, moveCard } = useWorkOrderBoardStore()
 

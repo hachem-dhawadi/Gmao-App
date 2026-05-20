@@ -5,44 +5,93 @@ import Upload from '@/components/ui/Upload'
 import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/Notification'
 import UploadMedia from '@/assets/svg/UploadMedia'
-import sleep from '@/utils/sleep'
+import { useFileManagerStore } from '../store/useFileManagerStore'
+import { apiUploadFiles, apiGetFileList } from '@/services/FileService'
+import type { File as FmFile } from '../types'
 
 const UploadFile = () => {
+    const { openedDirectoryId, setFileList, setDirectories } = useFileManagerStore()
+
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
     const [isUploading, setIsUploading] = useState(false)
-    const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
-    const handleUploadDialogClose = () => {
+    const handleClose = () => {
         setUploadDialogOpen(false)
+        setSelectedFiles([])
     }
 
     const handleUpload = async () => {
+        if (selectedFiles.length === 0 || isUploading) return
+
         setIsUploading(true)
-        await sleep(500)
-        handleUploadDialogClose()
-        setIsUploading(false)
-        toast.push(
-            <Notification title={'Successfully uploaded'} type="success" />,
-            { placement: 'top-center' },
-        )
+        try {
+            const formData = new FormData()
+            selectedFiles.forEach((file) => formData.append('files[]', file))
+            if (openedDirectoryId) {
+                formData.append('directory_id', openedDirectoryId)
+            }
+
+            const result = await apiUploadFiles(formData)
+
+            // Primary: show uploaded files immediately from the response — no round-trip needed.
+            // The backend returns the formatted file records in data.items.
+            const newItems = ((result as { data?: { items?: FmFile[] } }).data?.items) ?? []
+            if (newItems.length > 0) {
+                const current = useFileManagerStore.getState().fileList
+                const dirs = current.filter((f) => f.fileType === 'directory')
+                const existingFiles = current.filter((f) => f.fileType !== 'directory')
+                const allFiles = [...existingFiles, ...newItems].sort((a, b) =>
+                    a.name.localeCompare(b.name),
+                )
+                setFileList([...dirs, ...allFiles])
+            }
+
+            // Secondary: silent background reload to sync accurate server state.
+            // Errors are swallowed — the inline update above already shows the file.
+            apiGetFileList(openedDirectoryId || undefined)
+                .then((resp) => {
+                    setDirectories(resp.data.directory)
+                    setFileList(resp.data.list)
+                })
+                .catch(() => {
+                    // Reload failed — inline update stays visible, which is correct
+                })
+
+            toast.push(
+                <Notification
+                    title={`${selectedFiles.length} file(s) uploaded`}
+                    type="success"
+                />,
+                { placement: 'top-center' },
+            )
+            handleClose()
+        } catch {
+            toast.push(
+                <Notification title="Upload failed" type="danger" />,
+                { placement: 'top-center' },
+            )
+        } finally {
+            setIsUploading(false)
+        }
     }
 
     return (
         <>
-            <Button variant="solid" onClick={() => setUploadDialogOpen(true)}>
+            <Button type="button" variant="solid" onClick={() => setUploadDialogOpen(true)}>
                 Upload
             </Button>
             <Dialog
                 isOpen={uploadDialogOpen}
-                onClose={handleUploadDialogClose}
-                onRequestClose={handleUploadDialogClose}
+                onClose={handleClose}
+                onRequestClose={handleClose}
             >
                 <h4>Upload Files</h4>
                 <Upload
                     draggable
                     className="mt-6 bg-gray-100 dark:bg-transparent"
-                    onChange={setUploadedFiles}
-                    onFileRemove={setUploadedFiles}
+                    onChange={setSelectedFiles}
+                    onFileRemove={setSelectedFiles}
                 >
                     <div className="my-4 text-center">
                         <div className="text-6xl mb-4 flex justify-center">
@@ -62,9 +111,10 @@ const UploadFile = () => {
                 <div className="mt-4">
                     <Button
                         block
+                        type="button"
                         loading={isUploading}
                         variant="solid"
-                        disabled={uploadedFiles.length === 0}
+                        disabled={selectedFiles.length === 0 || isUploading}
                         onClick={handleUpload}
                     >
                         Upload

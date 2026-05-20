@@ -15,7 +15,6 @@ import { mutate as globalMutate } from 'swr'
 import useSWR from 'swr'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER, TECHNICIAN } from '@/constants/roles.constant'
 import { TbArrowNarrowLeft, TbTrash } from 'react-icons/tb'
 import type { WorkOrderFormSchema } from '../WorkOrderForm'
 import type { WorkOrder } from '../WorkOrderList/types'
@@ -30,9 +29,8 @@ const WorkOrderEdit = () => {
 
     const userAuthority = useSessionUser((state) => state.user.authority)
     const currentMemberId = useSessionUser((state) => state.user.memberId)
-    const canDelete = useAuthority(userAuthority, [ADMIN])
-    const isAdminOrManager = useAuthority(userAuthority, [ADMIN, MANAGER])
-    const isTechnician = useAuthority(userAuthority, [TECHNICIAN])
+    const canDelete = useAuthority(userAuthority, ['work_orders.delete', 'admin'])
+    const canAssign = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
 
     const { data, isLoading } = useSWR<WorkOrder>(
         id ? ['/work-orders/edit', id] : null,
@@ -44,14 +42,12 @@ const WorkOrderEdit = () => {
     )
 
     useEffect(() => {
-        if (!data || isAdminOrManager) return
-        if (isTechnician) {
-            const isAssigned = data.assigned_members?.some((m) => m.id === currentMemberId)
-            if (!isAssigned) {
-                navigate(`/concepts/work-orders/work-order-details/${id}`, { replace: true })
-            }
+        if (!data || canAssign) return
+        const isAssigned = data.assigned_members?.some((m) => m.id === currentMemberId)
+        if (!isAssigned) {
+            navigate(`/concepts/work-orders/work-order-details/${id}`, { replace: true })
         }
-    }, [data, isTechnician, isAdminOrManager, currentMemberId, id, navigate])
+    }, [data, canAssign, currentMemberId, id, navigate])
 
     const handleFormSubmit = async (values: WorkOrderFormSchema) => {
         if (!id) return

@@ -8,19 +8,18 @@ import WorkOrderListSelected from './components/WorkOrderListSelected'
 import useWorkOrderList from './hooks/useWorkOrderList'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { TECHNICIAN } from '@/constants/roles.constant'
 
 const WorkOrderList = () => {
     const { filterData, setFilterData } = useWorkOrderList()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const isTechnician = useAuthority(userAuthority, [TECHNICIAN])
+    const canAssign = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
 
     useEffect(() => {
-        if (isTechnician) {
+        if (!canAssign) {
             setFilterData({ ...filterData, myOnly: true })
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isTechnician])
+    }, [canAssign])
 
     return (
         <>

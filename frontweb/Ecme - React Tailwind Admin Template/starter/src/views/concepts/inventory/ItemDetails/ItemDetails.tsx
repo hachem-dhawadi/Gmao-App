@@ -10,7 +10,6 @@ import { apiGetItemById } from '@/services/InventoryService'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
 import {
@@ -55,7 +54,7 @@ const ItemDetails = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canEdit = useAuthority(userAuthority, ['inventory.write', 'admin', 'manager'])
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
     const [printOpen, setPrintOpen] = useState(false)
 

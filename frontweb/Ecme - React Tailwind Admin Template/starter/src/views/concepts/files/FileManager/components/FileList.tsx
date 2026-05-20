@@ -7,12 +7,12 @@ import type { Files, Layout } from '../types'
 type FileListProps = {
     fileList: Files
     layout: Layout
-    onRename: (id: string) => void
-    onDownload: () => void
-    onShare: (id: string) => void
-    onDelete: (id: string) => void
+    onRename: (id: string, fileType: string) => void
+    onDownload: (id: string) => void
+    onShare: (id: string, fileType: string) => void
+    onDelete: (id: string, fileType: string) => void
     onOpen: (id: string) => void
-    onClick: (id: string) => void
+    onFileClick: (id: string) => void
 }
 
 const { TBody, THead, Th, Tr } = Table
@@ -26,33 +26,48 @@ const FileList = (props: FileListProps) => {
         onShare,
         onRename,
         onOpen,
-        onClick,
+        onFileClick,
     } = props
 
-    const folders = useMemo(() => {
-        return fileList.filter((file) => file.fileType === 'directory')
-    }, [fileList])
+    const folders = useMemo(
+        () => fileList.filter((f) => f.fileType === 'directory'),
+        [fileList],
+    )
 
-    const files = useMemo(() => {
-        return fileList.filter((file) => file.fileType !== 'directory')
-    }, [fileList])
+    const files = useMemo(
+        () => fileList.filter((f) => f.fileType !== 'directory'),
+        [fileList],
+    )
 
     const renderFileSegment = (list: Files, isFolder?: boolean) => (
         <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 mt-4 gap-4 lg:gap-6">
-            {list.map((file) => (
-                <FileSegment
-                    key={file.id}
-                    fileType={file.fileType}
-                    size={file.size}
-                    name={file.name}
-                    onClick={() => onClick(file.id)}
-                    onDownload={onDownload}
-                    onShare={() => onShare(file.id)}
-                    onDelete={() => onDelete(file.id)}
-                    onRename={() => onRename(file.id)}
-                    {...(isFolder ? { onOpen: () => onOpen(file.id) } : {})}
-                />
-            ))}
+            {list.map((file) =>
+                isFolder ? (
+                    <FileSegment
+                        key={file.id}
+                        fileType={file.fileType}
+                        size={file.size}
+                        name={file.name}
+                        onClick={() => onOpen(file.id)}
+                        onOpen={() => onOpen(file.id)}
+                        onShare={() => onShare(file.id, 'directory')}
+                        onRename={() => onRename(file.id, file.fileType)}
+                        onDelete={() => onDelete(file.id, 'directory')}
+                    />
+                ) : (
+                    <FileSegment
+                        key={file.id}
+                        fileType={file.fileType}
+                        size={file.size}
+                        name={file.name}
+                        onClick={() => onFileClick(file.id)}
+                        onDownload={() => onDownload(file.id)}
+                        onShare={() => onShare(file.id, file.fileType)}
+                        onRename={() => onRename(file.id, file.fileType)}
+                        onDelete={() => onDelete(file.id, file.fileType)}
+                    />
+                ),
+            )}
         </div>
     )
 
@@ -67,20 +82,33 @@ const FileList = (props: FileListProps) => {
                 </Tr>
             </THead>
             <TBody>
-                {list.map((file) => (
-                    <FileRow
-                        key={file.id}
-                        fileType={file.fileType}
-                        size={file.size}
-                        name={file.name}
-                        onClick={() => onClick(file.id)}
-                        onDownload={onDownload}
-                        onShare={() => onShare(file.id)}
-                        onDelete={() => onDelete(file.id)}
-                        onRename={() => onRename(file.id)}
-                        {...(isFolder ? { onOpen: () => onOpen(file.id) } : {})}
-                    />
-                ))}
+                {list.map((file) =>
+                    isFolder ? (
+                        <FileRow
+                            key={file.id}
+                            fileType={file.fileType}
+                            size={file.size}
+                            name={file.name}
+                            onClick={() => onOpen(file.id)}
+                            onOpen={() => onOpen(file.id)}
+                            onShare={() => onShare(file.id, 'directory')}
+                            onRename={() => onRename(file.id, file.fileType)}
+                            onDelete={() => onDelete(file.id, 'directory')}
+                        />
+                    ) : (
+                        <FileRow
+                            key={file.id}
+                            fileType={file.fileType}
+                            size={file.size}
+                            name={file.name}
+                            onClick={() => onFileClick(file.id)}
+                            onDownload={() => onDownload(file.id)}
+                            onShare={() => onShare(file.id, file.fileType)}
+                            onRename={() => onRename(file.id, file.fileType)}
+                            onDelete={() => onDelete(file.id, file.fileType)}
+                        />
+                    ),
+                )}
             </TBody>
         </Table>
     )

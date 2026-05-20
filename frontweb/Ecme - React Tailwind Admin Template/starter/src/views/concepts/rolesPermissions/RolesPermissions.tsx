@@ -9,10 +9,15 @@ import RoleCards from './components/RoleCards'
 import MembersSection from './components/MembersSection'
 import RolePermissionsDialog from './components/RolePermissionsDialog'
 import CreateRoleDialog from './components/CreateRoleDialog'
+import { useSessionUser } from '@/store/authStore'
+import useAuthority from '@/utils/hooks/useAuthority'
 import type { RolesResponse, Role } from '@/services/RolesService'
 import type { MembersListResponse } from '@/services/MembersService'
 
 const RolesPermissions = () => {
+    const userAuthority = useSessionUser((state) => state.user.authority)
+    const canManage = useAuthority(userAuthority, ['roles.write', 'admin'])
+
     const [selectedRole, setSelectedRole] = useState<Role | null>(null)
     const [createOpen, setCreateOpen] = useState(false)
 
@@ -51,17 +56,20 @@ const RolesPermissions = () => {
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-6">
                         <h3>Roles & Permissions</h3>
-                        <Button
-                            variant="solid"
-                            onClick={() => setCreateOpen(true)}
-                        >
-                            Create role
-                        </Button>
+                        {canManage && (
+                            <Button
+                                variant="solid"
+                                onClick={() => setCreateOpen(true)}
+                            >
+                                Create role
+                            </Button>
+                        )}
                     </div>
                     <div className="mb-10">
                         <RoleCards
                             roles={roles}
                             members={members}
+                            canManage={canManage}
                             onEditRole={(role) => setSelectedRole(role)}
                         />
                     </div>
@@ -78,6 +86,7 @@ const RolesPermissions = () => {
             </Container>
 
             <RolePermissionsDialog
+                key={selectedRole?.id ?? 0}
                 role={selectedRole}
                 onClose={() => setSelectedRole(null)}
                 mutate={mutateRoles}

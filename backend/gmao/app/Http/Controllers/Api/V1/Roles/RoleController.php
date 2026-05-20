@@ -57,6 +57,10 @@ class RoleController extends Controller
             return response()->json(['success' => false, 'message' => 'Role not found.'], 404);
         }
 
+        if ($role->code === 'admin') {
+            return response()->json(['success' => false, 'message' => 'The Administrator role cannot be modified.'], 403);
+        }
+
         $validated = $request->validate([
             'label'         => ['sometimes', 'string', 'max:255'],
             'description'   => ['nullable', 'string', 'max:500'],

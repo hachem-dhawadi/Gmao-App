@@ -455,13 +455,13 @@ export const protectedRoutes: Routes = [
         key: 'concepts.company.companyList',
         path: '/concepts/company/company-list',
         component: lazy(() => import('@/views/concepts/company/CompanyList')),
-        authority: [],
+        authority: [SUPERADMIN],
     },
     {
         key: 'concepts.company.companyEdit',
         path: '/concepts/company/company-edit/:id',
         component: lazy(() => import('@/views/concepts/company/CompanyEdit')),
-        authority: [],
+        authority: [SUPERADMIN],
         meta: {
             header: {
                 title: 'Edit company',
@@ -472,7 +472,7 @@ export const protectedRoutes: Routes = [
         key: 'concepts.company.companyCreate',
         path: '/concepts/company/company-create',
         component: lazy(() => import('@/views/concepts/company/CompanyCreate')),
-        authority: [],
+        authority: [SUPERADMIN],
         meta: {
             header: {
                 title: 'Create company',
@@ -483,7 +483,7 @@ export const protectedRoutes: Routes = [
         key: 'concepts.company.companyDetails',
         path: '/concepts/company/company-details/:id',
         component: lazy(() => import('@/views/concepts/company/CompanyDetails')),
-        authority: [],
+        authority: [SUPERADMIN],
     },
     {
         key: 'concepts.customers.customerList',

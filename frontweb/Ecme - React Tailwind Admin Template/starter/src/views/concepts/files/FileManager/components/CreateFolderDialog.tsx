@@ -5,46 +5,41 @@ import Input from '@/components/ui/Input'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { useFileManagerStore } from '../store/useFileManagerStore'
-import { apiRenameFile, apiRenameDirectory } from '@/services/FileService'
+import { apiCreateDirectory } from '@/services/FileService'
 
 type Props = {
-    onRenamed?: () => void
+    onCreated?: () => void
 }
 
-const FileManagerRenameDialog = ({ onRenamed }: Props) => {
-    const { renameDialog, setRenameDialog, renameFile } = useFileManagerStore()
+const CreateFolderDialog = ({ onCreated }: Props) => {
+    const { createDirDialog, setCreateDirDialog } =
+        useFileManagerStore()
 
-    const [newName, setNewName] = useState('')
+    const [name, setName] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // fileType stored when dialog opened — avoids fileList.find() which can match
-    // wrong entity when files and directories share the same numeric ID.
-    const isDirectory = renameDialog.fileType === 'directory'
-
     const handleClose = () => {
-        setRenameDialog({ id: '', open: false, fileType: '' })
-        setNewName('')
+        setCreateDirDialog({ open: false, parentId: '' })
+        setName('')
     }
 
     const handleSubmit = async () => {
-        if (!newName.trim()) return
+        if (!name.trim()) return
         setLoading(true)
         try {
-            if (isDirectory) {
-                await apiRenameDirectory(renameDialog.id, newName.trim())
-            } else {
-                await apiRenameFile(renameDialog.id, newName.trim())
-            }
-            renameFile({ id: renameDialog.id, fileName: newName.trim() })
+            await apiCreateDirectory({
+                name: name.trim(),
+                parent_id: createDirDialog.parentId || null,
+            })
+            onCreated?.()
             toast.push(
-                <Notification type="success" title="Renamed successfully" />,
+                <Notification type="success" title="Folder created!" />,
                 { placement: 'top-end' },
             )
             handleClose()
-            onRenamed?.()
         } catch {
             toast.push(
-                <Notification type="danger" title="Rename failed" />,
+                <Notification type="danger" title="Failed to create folder" />,
                 { placement: 'top-end' },
             )
         } finally {
@@ -54,39 +49,38 @@ const FileManagerRenameDialog = ({ onRenamed }: Props) => {
 
     return (
         <Dialog
-            isOpen={renameDialog.open}
+            isOpen={createDirDialog.open}
             contentClassName="mt-[50%]"
             onClose={handleClose}
             onRequestClose={handleClose}
         >
-            <h4>Rename {isDirectory ? 'folder' : 'file'}</h4>
+            <h4>New Folder</h4>
             <div className="mt-6">
                 <Input
-                    placeholder="New name"
-                    type="text"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="Folder name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                     autoFocus
                 />
             </div>
             <div className="mt-6 flex justify-end items-center gap-2">
                 <Button type="button" size="sm" onClick={handleClose}>
-                    Close
+                    Cancel
                 </Button>
                 <Button
                     type="button"
                     variant="solid"
                     size="sm"
                     loading={loading}
-                    disabled={!newName.trim()}
+                    disabled={!name.trim()}
                     onClick={handleSubmit}
                 >
-                    <span className="flex justify-center min-w-10">Ok</span>
+                    Create
                 </Button>
             </div>
         </Dialog>
     )
 }
 
-export default FileManagerRenameDialog
+export default CreateFolderDialog

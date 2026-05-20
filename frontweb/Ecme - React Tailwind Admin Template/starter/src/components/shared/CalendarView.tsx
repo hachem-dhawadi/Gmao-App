@@ -10,6 +10,7 @@ type EventColors = Record<
     {
         bg: string
         text: string
+        dot?: string
     }
 >
 
@@ -18,36 +19,36 @@ interface CalendarViewProps extends CalendarOptions {
     eventColors?: (colors: EventColors) => EventColors
 }
 
-const defaultColorList: Record<
-    string,
-    {
-        bg: string
-        text: string
-    }
-> = {
+const defaultColorList: EventColors = {
     red: {
-        bg: 'bg-[#fbddd9]',
-        text: 'text-gray-900',
+        bg: 'bg-red-500',
+        text: 'text-white',
+        dot: 'bg-red-300',
     },
     orange: {
-        bg: 'bg-[#ffc6ab]',
-        text: 'text-gray-900',
+        bg: 'bg-orange-500',
+        text: 'text-white',
+        dot: 'bg-orange-300',
     },
     yellow: {
-        bg: 'bg-[#ffd993]',
-        text: 'text-gray-900',
+        bg: 'bg-yellow-400',
+        text: 'text-yellow-900',
+        dot: 'bg-yellow-200',
     },
     green: {
-        bg: 'bg-[#bee9d3]',
-        text: 'text-gray-900',
+        bg: 'bg-emerald-500',
+        text: 'text-white',
+        dot: 'bg-emerald-300',
     },
     blue: {
-        bg: 'bg-[#bce9fb]',
-        text: 'text-gray-900',
+        bg: 'bg-blue-500',
+        text: 'text-white',
+        dot: 'bg-blue-300',
     },
     purple: {
-        bg: 'bg-[#ccbbfc]',
-        text: 'text-gray-900',
+        bg: 'bg-violet-500',
+        text: 'text-white',
+        dot: 'bg-violet-300',
     },
 }
 
@@ -57,6 +58,8 @@ const CalendarView = (props: CalendarViewProps) => {
         eventColors = () => defaultColorList,
         ...rest
     } = props
+
+    const colorList = eventColors(defaultColorList)
 
     return (
         <div className={classNames('calendar', wrapperClass)}>
@@ -70,36 +73,38 @@ const CalendarView = (props: CalendarViewProps) => {
                 eventContent={(arg) => {
                     const { extendedProps } = arg.event
                     const { isEnd, isStart } = arg
+                    const palette = extendedProps.eventColor
+                        ? (colorList[extendedProps.eventColor] ?? null)
+                        : null
+                    const isWo = extendedProps.type === 'work_order'
+
                     return (
                         <div
                             className={classNames(
-                                'custom-calendar-event',
-                                extendedProps.eventColor
-                                    ? (eventColors(defaultColorList) ||
-                                          defaultColorList)[
-                                          extendedProps.eventColor
-                                      ]?.bg
-                                    : '',
-                                extendedProps.eventColor
-                                    ? (eventColors(defaultColorList) ||
-                                          defaultColorList)[
-                                          extendedProps.eventColor
-                                      ]?.text
-                                    : '',
+                                'flex items-center gap-1.5 w-full px-2 py-0.5 rounded-md text-xs font-semibold truncate cursor-pointer select-none',
+                                palette ? palette.bg : 'bg-gray-400',
+                                palette ? palette.text : 'text-white',
                                 isEnd &&
                                     !isStart &&
-                                    'rounded-tl-none! rounded-bl-none! !rtl:rounded-tr-none !rtl:rounded-br-none',
+                                    'rounded-tl-none rounded-bl-none',
                                 !isEnd &&
                                     isStart &&
-                                    'rounded-tr-none! rounded-br-none! !rtl:rounded-tl-none !rtl:rounded-bl-none',
+                                    'rounded-tr-none rounded-br-none',
                             )}
                         >
-                            {!(isEnd && !isStart) && (
-                                <span>{arg.timeText}</span>
+                            {isWo ? (
+                                <span className="text-[10px] opacity-80 flex-shrink-0">
+                                    ⚙
+                                </span>
+                            ) : (
+                                <span
+                                    className={classNames(
+                                        'w-1.5 h-1.5 rounded-full flex-shrink-0 opacity-70',
+                                        palette?.dot ?? 'bg-white',
+                                    )}
+                                />
                             )}
-                            <span className="font-bold ml-1 rtl:mr-1">
-                                {arg.event.title}
-                            </span>
+                            <span className="truncate">{arg.event.title}</span>
                         </div>
                     )
                 }}

@@ -11,11 +11,24 @@ const getFileType = (type: string) => {
         case 'figma':
             return 'Figma'
         case 'image/jpeg':
+        case 'jpeg':
             return 'JPEG'
+        case 'png':
+            return 'PNG'
+        case 'gif':
+            return 'GIF'
+        case 'webp':
+            return 'WEBP'
+        case 'txt':
+            return 'TXT'
+        case 'csv':
+            return 'CSV'
+        case 'zip':
+            return 'ZIP'
         case 'directory':
             return 'Folder'
         default:
-            return <></>
+            return type.toUpperCase() || 'FILE'
     }
 }
 

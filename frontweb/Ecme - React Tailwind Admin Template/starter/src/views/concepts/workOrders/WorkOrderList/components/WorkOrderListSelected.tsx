@@ -9,7 +9,6 @@ import { apiDeleteWorkOrder } from '@/services/WorkOrdersService'
 import { TbChecks } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN } from '@/constants/roles.constant'
 
 const WorkOrderListSelected = () => {
     const { selectedWorkOrder, setSelectAllWorkOrder, mutate } =
@@ -18,7 +17,7 @@ const WorkOrderListSelected = () => {
     const [deleting, setDeleting] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canDelete = useAuthority(userAuthority, ['work_orders.delete', 'admin'])
 
     if (selectedWorkOrder.length === 0) return null
 

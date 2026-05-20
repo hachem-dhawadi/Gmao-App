@@ -12,7 +12,9 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { TbSearch, TbChecks, TbChevronDown } from 'react-icons/tb'
 import dayjs from 'dayjs'
 import { components } from 'react-select'
-import { apiUpdateMemberRoles } from '@/services/MembersService'
+import { apiUpdateMemberRoles, apiDeleteMember } from '@/services/MembersService'
+import Notification from '@/components/ui/Notification'
+import toast from '@/components/ui/toast'
 import type { Member } from '@/services/MembersService'
 import type { Role } from '@/services/RolesService'
 import type { ColumnDef, Row } from '@/components/shared/DataTable'
@@ -92,6 +94,7 @@ const MembersSection = ({
     const [pageSize, setPageSize] = useState(10)
     const [selected, setSelected] = useState<Member[]>([])
     const [deleteOpen, setDeleteOpen] = useState(false)
+    const [deleting, setDeleting] = useState(false)
 
     const roleOptions: RoleOption[] = [
         { label: 'All', value: '' },
@@ -121,8 +124,43 @@ const MembersSection = ({
     }, [filtered, pageIndex, pageSize])
 
     const handleRoleChange = async (member: Member, newRoleCode: string) => {
-        await apiUpdateMemberRoles(member.id, [newRoleCode])
-        mutate()
+        try {
+            await apiUpdateMemberRoles(member.id, [newRoleCode])
+            mutate()
+        } catch {
+            toast.push(
+                <Notification type="danger">
+                    Failed to update role. Please try again.
+                </Notification>,
+                { placement: 'top-center' },
+            )
+        }
+    }
+
+    const handleConfirmDelete = async () => {
+        setDeleting(true)
+        try {
+            await Promise.all(selected.map((m) => apiDeleteMember(m.id)))
+            await mutate()
+            toast.push(
+                <Notification type="success">
+                    {selected.length} member{selected.length > 1 ? 's' : ''}{' '}
+                    removed.
+                </Notification>,
+                { placement: 'top-center' },
+            )
+            setSelected([])
+            setDeleteOpen(false)
+        } catch {
+            toast.push(
+                <Notification type="danger">
+                    Failed to remove one or more members.
+                </Notification>,
+                { placement: 'top-center' },
+            )
+        } finally {
+            setDeleting(false)
+        }
     }
 
     const columns: ColumnDef<Member>[] = useMemo(
@@ -350,13 +388,16 @@ const MembersSection = ({
                 onClose={() => setDeleteOpen(false)}
                 onRequestClose={() => setDeleteOpen(false)}
                 onCancel={() => setDeleteOpen(false)}
-                onConfirm={() => {
-                    setSelected([])
-                    setDeleteOpen(false)
-                }}
+                onConfirm={handleConfirmDelete}
+                confirmButtonProps={{ loading: deleting }}
             >
                 <p>
-                    Are you sure you want to remove these members? This action
+                    Remove{' '}
+                    <strong>
+                        {selected.length} member
+                        {selected.length > 1 ? 's' : ''}
+                    </strong>
+                    ? This will deactivate their access. This action
                     can&apos;t be undone.
                 </p>
             </ConfirmDialog>

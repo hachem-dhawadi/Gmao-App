@@ -66,9 +66,13 @@ const mapBackendUser = (
         ? []
         : (selectedMembership?.roles || []).map((role) => role.code)
 
+    const permissionCodes = backendUser.is_superadmin
+        ? []
+        : (selectedMembership?.roles || []).flatMap((role) => role.permissions ?? [])
+
     const authority = backendUser.is_superadmin
         ? ['superadmin']
-        : Array.from(new Set(['user', ...roleCodes]))
+        : Array.from(new Set(['user', ...roleCodes, ...permissionCodes]))
 
     return {
         userId: String(backendUser.id),

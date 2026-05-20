@@ -9,7 +9,6 @@ import { apiDeleteAsset } from '@/services/AssetsService'
 import { TbChecks } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN } from '@/constants/roles.constant'
 
 const AssetListSelected = () => {
     const { selectedAsset, setSelectAllAsset, mutate } = useAssetList()
@@ -17,7 +16,7 @@ const AssetListSelected = () => {
     const [deleting, setDeleting] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canDelete = useAuthority(userAuthority, ['assets.delete', 'admin'])
 
     if (selectedAsset.length === 0) return null
 

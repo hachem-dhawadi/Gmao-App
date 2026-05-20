@@ -8,7 +8,6 @@ import cloneDeep from 'lodash/cloneDeep'
 import { TbPencil, TbEye } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, HR } from '@/constants/roles.constant'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { Department } from '../types'
 import type { TableQueries } from '@/@types/common'
@@ -76,7 +75,7 @@ const DepartmentListTable = () => {
     } = useDepartmentList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, HR])
+    const canEdit = useAuthority(userAuthority, ['departments.update', 'admin', 'hr'])
 
     const columns: ColumnDef<Department>[] = useMemo(
         () => [

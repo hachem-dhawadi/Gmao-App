@@ -26,7 +26,6 @@ import {
 } from '@/services/InventoryService'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import dayjs from 'dayjs'
 import type { ColumnDef, OnSortParam } from '@/components/shared/DataTable'
 import type {
@@ -83,8 +82,8 @@ const StockMoveList = () => {
     } = useStockMoveList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canCreate = useAuthority(userAuthority, [ADMIN, MANAGER])
-    const isAdmin = useAuthority(userAuthority, [ADMIN])
+    const canCreate = useAuthority(userAuthority, ['inventory.write', 'admin', 'manager'])
+    const isAdmin = useAuthority(userAuthority, ['inventory.delete', 'admin'])
 
     const [dialogOpen, setDialogOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)

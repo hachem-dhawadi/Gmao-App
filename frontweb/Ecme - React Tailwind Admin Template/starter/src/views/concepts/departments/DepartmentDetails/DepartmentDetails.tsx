@@ -7,7 +7,6 @@ import { apiGetDepartmentById } from '@/services/DepartmentsService'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, HR } from '@/constants/roles.constant'
 import useSWR from 'swr'
 import { TbArrowNarrowLeft, TbPencil, TbBuilding, TbUsers, TbLayoutGrid } from 'react-icons/tb'
 import type { DepartmentResponse } from '@/services/DepartmentsService'
@@ -37,7 +36,7 @@ const DepartmentDetails = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, HR])
+    const canEdit = useAuthority(userAuthority, ['departments.update', 'admin', 'hr'])
 
     const { data, isLoading } = useSWR<Department>(
         id ? ['/departments/details', id] : null,

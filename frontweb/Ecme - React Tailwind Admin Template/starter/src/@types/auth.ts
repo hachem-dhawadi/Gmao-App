@@ -122,6 +122,7 @@ export type BackendMembership = {
         id: number
         code: string
         label: string
+        permissions: string[]
     }>
 }
 
@@ -163,6 +164,8 @@ export type MeResponse = ApiEnvelope<{
         job_title: string | null
         status: string
     } | null
+    memberships: BackendMembership[]
+    default_company_id: number | null
 }>
 
 export type UpdateProfileResponse = ApiEnvelope<{

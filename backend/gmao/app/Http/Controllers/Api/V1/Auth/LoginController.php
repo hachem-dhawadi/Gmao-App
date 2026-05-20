@@ -49,6 +49,7 @@ class LoginController extends Controller
             ->with([
                 'company:id,name,legal_name,is_active,approval_status',
                 'roles:id,code,label',
+                'roles.permissions:id,code',
             ])
             ->get()
             ->map(function ($member): array {
@@ -67,6 +68,7 @@ class LoginController extends Controller
                         'id' => $role->id,
                         'code' => $role->code,
                         'label' => $role->label,
+                        'permissions' => $role->permissions->pluck('code')->values()->all(),
                     ])->values()->all(),
                 ];
             })
@@ -135,6 +137,47 @@ class LoginController extends Controller
 
         $currentCompany = $currentMember?->company;
 
+        $memberships = $user->is_superadmin
+            ? []
+            : $user->members()
+                ->with([
+                    'company:id,name,legal_name,is_active,approval_status',
+                    'roles:id,code,label',
+                    'roles.permissions:id,code',
+                ])
+                ->get()
+                ->map(function ($member): array {
+                    return [
+                        'member_id' => $member->id,
+                        'company_id' => $member->company_id,
+                        'company' => $member->company ? [
+                            'id' => $member->company->id,
+                            'name' => $member->company->name,
+                            'legal_name' => $member->company->legal_name,
+                            'is_active' => (bool) $member->company->is_active,
+                            'approval_status' => $member->company->approval_status,
+                        ] : null,
+                        'status' => $member->status,
+                        'roles' => $member->roles->map(fn ($role): array => [
+                            'id' => $role->id,
+                            'code' => $role->code,
+                            'label' => $role->label,
+                            'permissions' => $role->permissions->pluck('code')->values()->all(),
+                        ])->values()->all(),
+                    ];
+                })
+                ->values()
+                ->all();
+
+        $defaultCompanyId = null;
+        if (! $user->is_superadmin) {
+            if (is_string($companyId) && ctype_digit($companyId)) {
+                $defaultCompanyId = (int) $companyId;
+            } elseif ($currentMember) {
+                $defaultCompanyId = $currentMember->company_id;
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Current user retrieved successfully.',
@@ -167,6 +210,8 @@ class LoginController extends Controller
                     'job_title' => $currentMember->job_title,
                     'status' => $currentMember->status,
                 ] : null,
+                'memberships' => $memberships,
+                'default_company_id' => $defaultCompanyId,
             ],
         ]);
     }

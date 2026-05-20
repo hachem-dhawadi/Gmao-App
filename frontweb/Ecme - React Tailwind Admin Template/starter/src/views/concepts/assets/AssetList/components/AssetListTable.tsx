@@ -10,7 +10,6 @@ import useAssetList from '../hooks/useAssetList'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import { apiDeleteAsset } from '@/services/AssetsService'
 import { mutate as globalMutate } from 'swr'
 import cloneDeep from 'lodash/cloneDeep'
@@ -67,8 +66,8 @@ const AssetListTable = () => {
     } = useAssetList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER])
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canEdit = useAuthority(userAuthority, ['assets.write', 'admin', 'manager'])
+    const canDelete = useAuthority(userAuthority, ['assets.delete', 'admin'])
 
     const [deleteTarget, setDeleteTarget] = useState<Asset | null>(null)
 

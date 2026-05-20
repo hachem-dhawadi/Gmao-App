@@ -47,13 +47,15 @@ const FileItemDropdown = (props: FileItemDropdownProps) => {
                     <span>Open</span>
                 </Dropdown.Item>
             )}
-            <Dropdown.Item
-                eventKey="download"
-                onClick={(e) => handleDropdownItemClick(e, onDownload)}
-            >
-                <TbCloudDownload className="text-xl" />
-                <span>Download</span>
-            </Dropdown.Item>
+            {onDownload && (
+                <Dropdown.Item
+                    eventKey="download"
+                    onClick={(e) => handleDropdownItemClick(e, onDownload)}
+                >
+                    <TbCloudDownload className="text-xl" />
+                    <span>Download</span>
+                </Dropdown.Item>
+            )}
             <Dropdown.Item
                 eventKey="rename"
                 onClick={(e) => handleDropdownItemClick(e, onRename)}
@@ -61,15 +63,17 @@ const FileItemDropdown = (props: FileItemDropdownProps) => {
                 <TbPencil className="text-xl" />
                 <span>Rename</span>
             </Dropdown.Item>
+            {onShare && (
+                <Dropdown.Item
+                    eventKey="share"
+                    onClick={(e) => handleDropdownItemClick(e, onShare)}
+                >
+                    <TbUserPlus className="text-xl" />
+                    <span>Share</span>
+                </Dropdown.Item>
+            )}
             <Dropdown.Item
-                eventKey="share"
-                onClick={(e) => handleDropdownItemClick(e, onShare)}
-            >
-                <TbUserPlus className="text-xl" />
-                <span>Share</span>
-            </Dropdown.Item>
-            <Dropdown.Item
-                eventKey="share"
+                eventKey="delete"
                 onClick={(e) => handleDropdownItemClick(e, onDelete)}
             >
                 <span className="flex items-center gap-2 text-error">

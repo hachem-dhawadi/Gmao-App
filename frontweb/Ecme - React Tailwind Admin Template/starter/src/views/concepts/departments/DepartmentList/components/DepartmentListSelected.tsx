@@ -9,7 +9,6 @@ import { apiDeleteDepartment } from '@/services/DepartmentsService'
 import { TbChecks } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN } from '@/constants/roles.constant'
 
 const DepartmentListSelected = () => {
     const { selectedDepartment, setSelectAllDepartment, mutate } =
@@ -18,7 +17,7 @@ const DepartmentListSelected = () => {
     const [deleting, setDeleting] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canDelete = useAuthority(userAuthority, ['departments.delete', 'admin'])
 
     if (selectedDepartment.length === 0) return null
 

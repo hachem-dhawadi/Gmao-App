@@ -10,7 +10,6 @@ import useItemList from '../hooks/useItemList'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import { apiDeleteItem } from '@/services/InventoryService'
 import { mutate as globalMutate } from 'swr'
 import cloneDeep from 'lodash/cloneDeep'
@@ -53,8 +52,8 @@ const ItemListTable = () => {
     } = useItemList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER])
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canEdit = useAuthority(userAuthority, ['inventory.write', 'admin', 'manager'])
+    const canDelete = useAuthority(userAuthority, ['inventory.delete', 'admin'])
 
     const [deleteTarget, setDeleteTarget] = useState<Item | null>(null)
 

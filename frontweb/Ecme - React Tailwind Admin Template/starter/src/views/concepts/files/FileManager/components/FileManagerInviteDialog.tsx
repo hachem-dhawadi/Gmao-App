@@ -1,91 +1,170 @@
-import { useState, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
+import Avatar from '@/components/ui/Avatar'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { useFileManagerStore } from '../store/useFileManagerStore'
-import sleep from '@/utils/sleep'
-import classNames from '@/utils/classNames'
-import { TbLink } from 'react-icons/tb'
+import { apiShareFile, apiShareDirectory } from '@/services/FileService'
+import { apiGetMembersList } from '@/services/MembersService'
+import useSWR from 'swr'
 
-const FileManagerInviteDialog = () => {
-    const { inviteDialog, setInviteDialog } = useFileManagerStore()
+type MemberOption = {
+    value: number
+    label: string
+    email: string
+}
 
-    const inputRef = useRef<HTMLInputElement>(null)
+type Props = {
+    onShared?: () => void
+}
 
-    const [inviting, setInviting] = useState(false)
+const FileManagerInviteDialog = ({ onShared }: Props) => {
+    const { inviteDialog, setInviteDialog, fileList } =
+        useFileManagerStore()
 
-    const handleDialogClose = () => {
+    const [selected, setSelected] = useState<MemberOption[]>([])
+    const [saving, setSaving] = useState(false)
+    const [prePopulated, setPrePopulated] = useState(false)
+
+    const { data: membersResp } = useSWR(
+        inviteDialog.open ? '/members-for-share' : null,
+        () => apiGetMembersList({ per_page: 200 }),
+    )
+
+    const memberOptions: MemberOption[] = useMemo(() => {
+        return (
+            membersResp?.data?.members?.map((m) => ({
+                value: m.id,
+                label: m.user?.name ?? `Member #${m.id}`,
+                email: m.user?.email ?? '',
+            })) ?? []
+        )
+    }, [membersResp])
+
+    const currentFile = useMemo(
+        () => fileList.find((f) => f.id === inviteDialog.id),
+        [fileList, inviteDialog.id],
+    )
+
+    // Pre-populate selected with already-shared members once member options load.
+    // Runs once per dialog open so the user's manual changes aren't overwritten.
+    useEffect(() => {
+        if (!inviteDialog.open || prePopulated || memberOptions.length === 0 || !currentFile) return
+        setSelected(
+            memberOptions.filter((opt) =>
+                currentFile.permissions.some((p) => p.memberId === opt.value),
+            ),
+        )
+        setPrePopulated(true)
+    }, [inviteDialog.open, prePopulated, memberOptions.length, currentFile?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleClose = () => {
         setInviteDialog({ id: '', open: false })
+        setSelected([])
+        setPrePopulated(false)
     }
 
-    const handleInvite = async () => {
-        setInviting(true)
-        await sleep(500)
-        toast.push(
-            <Notification
-                type="success"
-                title="Invitation send!"
-            ></Notification>,
-            { placement: 'top-end' },
-        )
-        setInviting(false)
-    }
+    const isDirectory = inviteDialog.fileType === 'directory'
 
-    const handleCopy = async () => {
-        toast.push(
-            <Notification type="success" title="Copied!"></Notification>,
-            { placement: 'top-end' },
-        )
-        navigator.clipboard.writeText(window.location.href)
+    const handleSave = async () => {
+        setSaving(true)
+        try {
+            const memberIds = selected.map((o) => o.value)
+            if (isDirectory) {
+                await apiShareDirectory(inviteDialog.id, memberIds)
+            } else {
+                await apiShareFile(inviteDialog.id, memberIds)
+            }
+            onShared?.()
+            toast.push(
+                <Notification
+                    type="success"
+                    title={isDirectory ? 'Folder shared successfully' : 'File shared successfully'}
+                />,
+                { placement: 'top-end' },
+            )
+            handleClose()
+        } catch {
+            toast.push(
+                <Notification
+                    type="danger"
+                    title={isDirectory ? 'Failed to share folder' : 'Failed to share file'}
+                />,
+                { placement: 'top-end' },
+            )
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
         <Dialog
             isOpen={inviteDialog.open}
-            contentClassName="mt-[50%]"
-            onClose={handleDialogClose}
-            onRequestClose={handleDialogClose}
+            contentClassName="mt-[20%]"
+            onClose={handleClose}
+            onRequestClose={handleClose}
         >
-            <h4>Share this file</h4>
+            <h4>{isDirectory ? 'Share this folder' : 'Share this file'}</h4>
+            {currentFile && (
+                <p className="mt-1 text-sm text-gray-500">
+                    {currentFile.name}
+                </p>
+            )}
             <div className="mt-6">
-                <Input
-                    ref={inputRef}
-                    placeholder="Email"
-                    type="email"
-                    suffix={
-                        <Button
-                            type="button"
-                            variant="solid"
-                            size="sm"
-                            customColorClass={({ unclickable }) =>
-                                classNames(
-                                    'bg-gray-900 dark:bg-gray-100 dark:hover:bg-gray-200',
-                                    !unclickable
-                                        ? 'hover:bg-gray-800'
-                                        : 'hover:bg-gray-900',
-                                )
-                            }
-                            loading={inviting}
-                            onClick={handleInvite}
-                        >
-                            Invite
-                        </Button>
-                    }
+                <Select
+                    isMulti
+                    placeholder="Select members to share with..."
+                    options={memberOptions}
+                    value={selected}
+                    onChange={(val) => setSelected(val as MemberOption[])}
+                    formatOptionLabel={(opt: MemberOption) => (
+                        <div className="flex items-center gap-2">
+                            <Avatar size={24} shape="circle">
+                                {opt.label.charAt(0).toUpperCase()}
+                            </Avatar>
+                            <div>
+                                <div className="font-semibold text-sm">{opt.label}</div>
+                                <div className="text-xs text-gray-400">{opt.email}</div>
+                            </div>
+                        </div>
+                    )}
                 />
             </div>
-            <div className="mt-6 flex justify-between items-center">
-                <Button
-                    variant="plain"
-                    size="sm"
-                    icon={<TbLink />}
-                    onClick={handleCopy}
-                >
-                    Copy link
+            {currentFile && currentFile.permissions.length > 0 && (
+                <div className="mt-4">
+                    <p className="text-xs text-gray-500 font-semibold mb-2">
+                        Currently shared with:
+                    </p>
+                    <div className="flex flex-col gap-2">
+                        {currentFile.permissions.map((p) => (
+                            <div
+                                key={p.userName}
+                                className="flex items-center gap-2 text-sm"
+                            >
+                                <Avatar size={24} shape="circle">
+                                    {p.userName.charAt(0).toUpperCase()}
+                                </Avatar>
+                                <span>{p.userName}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            <div className="mt-6 flex justify-end items-center gap-2">
+                <Button type="button" size="sm" onClick={handleClose}>
+                    Cancel
                 </Button>
-                <Button variant="solid" size="sm" onClick={handleDialogClose}>
-                    Done
+                <Button
+                    type="button"
+                    variant="solid"
+                    size="sm"
+                    loading={saving}
+                    disabled={selected.length === 0}
+                    onClick={handleSave}
+                >
+                    Share
                 </Button>
             </div>
         </Dialog>

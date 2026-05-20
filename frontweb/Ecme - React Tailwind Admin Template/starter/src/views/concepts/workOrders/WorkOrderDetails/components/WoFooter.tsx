@@ -10,7 +10,6 @@ import { TbDownload, TbTrash, TbPaperclip, TbClock, TbCurrencyDollar, TbPlus, Tb
 import dayjs from 'dayjs'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import {
     apiAddWorkOrderComment,
     apiDeleteWorkOrderComment,
@@ -110,8 +109,8 @@ const WoFooter = ({
     // ── Session ───────────────────────────────────────────────────────────────
     const userAuthority = useSessionUser((s) => s.user.authority)
     const currentMemberId = useSessionUser((s) => s.user.memberId)
-    const isAdmin   = useAuthority(userAuthority, [ADMIN])
-    const isManager = useAuthority(userAuthority, [MANAGER])
+    const canDeleteLogs = useAuthority(userAuthority, ['work_orders.delete', 'admin'])
+    const canManageLogs = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
 
     // ── State ─────────────────────────────────────────────────────────────────
     const [comments, setComments]       = useState<WorkOrderComment[]>(initialComments)
@@ -135,12 +134,11 @@ const WoFooter = ({
     const canLog = canEdit && CAN_LOG_STATUSES.includes(woStatus)
 
     const canEditLog = (log: WorkLog): boolean => {
-        if (isAdmin || isManager) return true
-        // Technician: own log only, WO must be in_progress
+        if (canManageLogs) return true
         return log.member_id === currentMemberId && woStatus === 'in_progress'
     }
 
-    const canDeleteLog = (): boolean => isAdmin
+    const canDeleteLog = (): boolean => canDeleteLogs
 
     // ── Totals ────────────────────────────────────────────────────────────────
     const totalMinutes = workLogs.reduce((acc, l) => acc + (l.labor_minutes ?? 0), 0)

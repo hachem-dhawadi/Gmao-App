@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import DatePicker from '@/components/ui/DatePicker'
 import Dialog from '@/components/ui/Dialog'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { Form, FormItem } from '@/components/ui/Form'
 import Badge from '@/components/ui/Badge'
 import hooks from '@/components/ui/hooks'
@@ -42,6 +43,7 @@ type EventDialogProps = {
     selected: SelectedCell
     onDialogOpen: (open: boolean) => void
     submit: (eventData: EventParam, type: string) => void
+    onDelete?: (db_id: number) => void
 }
 
 const { Control } = components
@@ -49,36 +51,12 @@ const { Control } = components
 const { useUniqueId } = hooks
 
 const colorOptions = [
-    {
-        value: 'red',
-        label: 'red',
-        color: 'bg-red-400',
-    },
-    {
-        value: 'orange',
-        label: 'orange',
-        color: 'bg-orange-400',
-    },
-    {
-        value: 'yellow',
-        label: 'yellow',
-        color: 'bg-yellow-400',
-    },
-    {
-        value: 'green',
-        label: 'green',
-        color: 'bg-green-400',
-    },
-    {
-        value: 'blue',
-        label: 'blue',
-        color: 'bg-blue-400',
-    },
-    {
-        value: 'purple',
-        label: 'purple',
-        color: 'bg-purple-400',
-    },
+    { value: 'red', label: 'red', color: 'bg-red-400' },
+    { value: 'orange', label: 'orange', color: 'bg-orange-400' },
+    { value: 'yellow', label: 'yellow', color: 'bg-yellow-400' },
+    { value: 'green', label: 'green', color: 'bg-green-400' },
+    { value: 'blue', label: 'blue', color: 'bg-blue-400' },
+    { value: 'purple', label: 'purple', color: 'bg-purple-400' },
 ]
 
 const CustomSelectOption = ({
@@ -132,9 +110,10 @@ const validationSchema = z.object({
 })
 
 const EventDialog = (props: EventDialogProps) => {
-    const { submit, open, selected, onDialogOpen } = props
+    const { submit, open, selected, onDialogOpen, onDelete } = props
 
     const newId = useUniqueId('event-')
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
     const handleDialogClose = () => {
         onDialogOpen(false)
@@ -150,9 +129,16 @@ const EventDialog = (props: EventDialogProps) => {
         if (values.endDate) {
             eventData.end = dayjs(values.endDate).format()
         }
-        console.log('eventData', eventData)
         submit?.(eventData, selected.type)
         handleDialogClose()
+    }
+
+    const handleConfirmDelete = () => {
+        if (selected.db_id && onDelete) {
+            onDelete(selected.db_id)
+            setConfirmDeleteOpen(false)
+            handleDialogClose()
+        }
     }
 
     const {
@@ -178,101 +164,136 @@ const EventDialog = (props: EventDialogProps) => {
     }, [selected])
 
     return (
-        <Dialog
-            isOpen={open}
-            onClose={handleDialogClose}
-            onRequestClose={handleDialogClose}
-        >
-            <h5 className="mb-4">
-                {selected.type === 'NEW' ? 'Add New Event' : 'Edit Event'}
-            </h5>
-            <Form
-                className="flex-1 flex flex-col"
-                onSubmit={handleSubmit(onSubmit)}
+        <>
+            <Dialog
+                isOpen={open}
+                onClose={handleDialogClose}
+                onRequestClose={handleDialogClose}
             >
-                <FormItem
-                    label="Event title"
-                    invalid={Boolean(errors.title)}
-                    errorMessage={errors.title?.message}
+                <h5 className="mb-4">
+                    {selected.type === 'NEW' ? 'Add New Event' : 'Edit Event'}
+                </h5>
+                <Form
+                    className="flex-1 flex flex-col"
+                    onSubmit={handleSubmit(onSubmit)}
                 >
-                    <Controller
-                        name="title"
-                        control={control}
-                        render={({ field }) => (
-                            <Input
-                                type="text"
-                                autoComplete="off"
-                                placeholder="Event title"
-                                {...field}
-                            />
-                        )}
-                    />
-                </FormItem>
-                <FormItem
-                    label="Start date"
-                    invalid={Boolean(errors.startDate)}
-                    errorMessage={errors.startDate?.message}
-                >
-                    <Controller
-                        name="startDate"
-                        control={control}
-                        render={({ field }) => (
-                            <DatePicker
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
-                        )}
-                    />
-                </FormItem>
-                <FormItem
-                    label="End date"
-                    invalid={Boolean(errors.endDate)}
-                    errorMessage={errors.endDate?.message}
-                >
-                    <Controller
-                        name="endDate"
-                        control={control}
-                        render={({ field }) => (
-                            <DatePicker
-                                value={field.value}
-                                onChange={field.onChange}
-                            />
-                        )}
-                    />
-                </FormItem>
-                <FormItem
-                    label="Event color"
-                    asterisk={true}
-                    invalid={Boolean(errors.color)}
-                    errorMessage={errors.color?.message}
-                >
-                    <Controller
-                        name="color"
-                        control={control}
-                        render={({ field }) => (
-                            <Select<ColorOption>
-                                options={colorOptions}
-                                value={colorOptions.filter(
-                                    (option) => option.value === field.value,
-                                )}
-                                components={{
-                                    Option: CustomSelectOption,
-                                    Control: CustomControl,
-                                }}
-                                onChange={(selected) => {
-                                    field.onChange(selected?.value)
-                                }}
-                            />
-                        )}
-                    />
-                </FormItem>
-                <FormItem className="mb-0 text-right rtl:text-left">
-                    <Button block variant="solid" type="submit">
-                        {selected.type === 'NEW' ? 'Create' : 'Update'}
-                    </Button>
-                </FormItem>
-            </Form>
-        </Dialog>
+                    <FormItem
+                        label="Event title"
+                        invalid={Boolean(errors.title)}
+                        errorMessage={errors.title?.message}
+                    >
+                        <Controller
+                            name="title"
+                            control={control}
+                            render={({ field }) => (
+                                <Input
+                                    type="text"
+                                    autoComplete="off"
+                                    placeholder="Event title"
+                                    {...field}
+                                />
+                            )}
+                        />
+                    </FormItem>
+                    <FormItem
+                        label="Start date"
+                        invalid={Boolean(errors.startDate)}
+                        errorMessage={errors.startDate?.message}
+                    >
+                        <Controller
+                            name="startDate"
+                            control={control}
+                            render={({ field }) => (
+                                <DatePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                />
+                            )}
+                        />
+                    </FormItem>
+                    <FormItem
+                        label="End date"
+                        invalid={Boolean(errors.endDate)}
+                        errorMessage={errors.endDate?.message}
+                    >
+                        <Controller
+                            name="endDate"
+                            control={control}
+                            render={({ field }) => (
+                                <DatePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                />
+                            )}
+                        />
+                    </FormItem>
+                    <FormItem
+                        label="Event color"
+                        asterisk={true}
+                        invalid={Boolean(errors.color)}
+                        errorMessage={errors.color?.message}
+                    >
+                        <Controller
+                            name="color"
+                            control={control}
+                            render={({ field }) => (
+                                <Select<ColorOption>
+                                    options={colorOptions}
+                                    value={colorOptions.filter(
+                                        (option) => option.value === field.value,
+                                    )}
+                                    components={{
+                                        Option: CustomSelectOption,
+                                        Control: CustomControl,
+                                    }}
+                                    onChange={(selected) => {
+                                        field.onChange(selected?.value)
+                                    }}
+                                />
+                            )}
+                        />
+                    </FormItem>
+
+                    {selected.type === 'EDIT' && onDelete ? (
+                        <div className="flex gap-2 mt-2">
+                            <Button
+                                block
+                                variant="default"
+                                type="button"
+                                className="text-red-500 border-red-200 hover:border-red-400"
+                                onClick={() => setConfirmDeleteOpen(true)}
+                            >
+                                Delete
+                            </Button>
+                            <Button block variant="solid" type="submit">
+                                Update
+                            </Button>
+                        </div>
+                    ) : (
+                        <FormItem className="mb-0 text-right rtl:text-left">
+                            <Button block variant="solid" type="submit">
+                                Create
+                            </Button>
+                        </FormItem>
+                    )}
+                </Form>
+            </Dialog>
+
+            <ConfirmDialog
+                isOpen={confirmDeleteOpen}
+                type="danger"
+                title="Delete event"
+                onClose={() => setConfirmDeleteOpen(false)}
+                onRequestClose={() => setConfirmDeleteOpen(false)}
+                onCancel={() => setConfirmDeleteOpen(false)}
+                onConfirm={handleConfirmDelete}
+            >
+                <p>
+                    Delete <strong>{selected.title}</strong>? This cannot be
+                    undone.
+                </p>
+            </ConfirmDialog>
+        </>
     )
 }
 

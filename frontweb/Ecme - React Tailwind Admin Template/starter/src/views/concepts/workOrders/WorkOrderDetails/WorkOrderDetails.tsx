@@ -22,7 +22,6 @@ import { apiGetMembersList } from '@/services/MembersService'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER, TECHNICIAN } from '@/constants/roles.constant'
 import { mutate as globalMutate } from 'swr'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
@@ -71,9 +70,7 @@ const WorkOrderDetails = () => {
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const currentMemberId = useSessionUser((state) => state.user.memberId)
-    const isAdminOrManager = useAuthority(userAuthority, [ADMIN, MANAGER])
-    const isTechnician = useAuthority(userAuthority, [TECHNICIAN])
-    const canAssign = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canAssign = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
 
     const [wo, setWo] = useState<WorkOrder | null>(null)
     const [editingDescription, setEditingDescription] = useState(false)
@@ -81,8 +78,8 @@ const WorkOrderDetails = () => {
     const [printOpen, setPrintOpen] = useState(false)
 
     const isAssignedToWo = wo?.assigned_members.some((m) => m.id === currentMemberId) ?? false
-    const canEdit = isAdminOrManager || (isTechnician && isAssignedToWo)
-    const canManage = isAdminOrManager
+    const canEdit = canAssign || isAssignedToWo
+    const canManage = canAssign
 
     const { isLoading } = useSWR<WorkOrder>(
         id ? ['/work-orders/details', id] : null,

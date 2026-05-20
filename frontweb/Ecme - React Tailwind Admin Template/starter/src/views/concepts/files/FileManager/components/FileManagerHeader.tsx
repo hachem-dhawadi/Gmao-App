@@ -1,8 +1,9 @@
 import { Fragment } from 'react'
 import Segment from '@/components/ui/Segment'
+import Button from '@/components/ui/Button'
 import UploadFile from './UploadFile'
 import { useFileManagerStore } from '../store/useFileManagerStore'
-import { TbChevronRight, TbLayoutGrid, TbList } from 'react-icons/tb'
+import { TbChevronRight, TbLayoutGrid, TbList, TbFolderPlus } from 'react-icons/tb'
 import type { Layout } from '../types'
 
 type FileManagerHeaderProps = {
@@ -14,7 +15,8 @@ const FileManagerHeader = ({
     onEntryClick,
     onDirectoryClick,
 }: FileManagerHeaderProps) => {
-    const { directories, layout, setLayout } = useFileManagerStore()
+    const { directories, layout, setLayout, openedDirectoryId, setCreateDirDialog } =
+        useFileManagerStore()
 
     const handleEntryClick = () => {
         onEntryClick()
@@ -22,6 +24,10 @@ const FileManagerHeader = ({
 
     const handleDirectoryClick = (id: string) => {
         onDirectoryClick(id)
+    }
+
+    const handleNewFolder = () => {
+        setCreateDirDialog({ open: true, parentId: openedDirectoryId })
     }
 
     return (
@@ -73,6 +79,14 @@ const FileManagerHeader = ({
                         <TbList />
                     </Segment.Item>
                 </Segment>
+                <Button
+                    type="button"
+                    variant="default"
+                    icon={<TbFolderPlus />}
+                    onClick={handleNewFolder}
+                >
+                    New Folder
+                </Button>
                 <UploadFile />
             </div>
         </div>

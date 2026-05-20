@@ -16,6 +16,7 @@ export type File = {
         timestamp: number
     }[]
     permissions: {
+        memberId?: number
         userName: string
         userImg: string
         role: string
@@ -39,8 +40,11 @@ export type Files = File[]
 export type Directories = { id: string; label: string }[]
 
 export type GetFileListResponse = {
-    list: Files
-    directory: Directories
+    success: boolean
+    data: {
+        list: Files
+        directory: Directories
+    }
 }
 
 export type BaseFileItemProps = {

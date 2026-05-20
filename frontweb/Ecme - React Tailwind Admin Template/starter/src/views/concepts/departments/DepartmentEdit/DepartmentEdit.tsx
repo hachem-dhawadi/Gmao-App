@@ -15,7 +15,6 @@ import { mutate as globalMutate } from 'swr'
 import useSWR from 'swr'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN } from '@/constants/roles.constant'
 import { TbArrowNarrowLeft, TbTrash } from 'react-icons/tb'
 import type { DepartmentFormSchema } from '../DepartmentForm'
 import type { Department } from '../DepartmentList/types'
@@ -29,7 +28,7 @@ const DepartmentEdit = () => {
     const [deleteOpen, setDeleteOpen] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canDelete = useAuthority(userAuthority, ['departments.delete', 'admin'])
 
     const { data, isLoading } = useSWR<Department>(
         id ? ['/departments/edit', id] : null,

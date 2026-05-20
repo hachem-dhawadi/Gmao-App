@@ -5,7 +5,6 @@ import useCustomerList from '../hooks/useCustomerList'
 import { CSVLink } from 'react-csv'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, HR } from '@/constants/roles.constant'
 
 const CustomerListActionTools = () => {
     const navigate = useNavigate()
@@ -13,7 +12,7 @@ const CustomerListActionTools = () => {
     const { customerList } = useCustomerList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canCreate = useAuthority(userAuthority, [ADMIN, HR])
+    const canCreate = useAuthority(userAuthority, ['members.create', 'admin', 'hr'])
 
     return (
         <div className="flex flex-col md:flex-row gap-3">

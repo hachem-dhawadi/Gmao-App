@@ -15,7 +15,6 @@ import { mutate as globalMutate } from 'swr'
 import useSWR from 'swr'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN } from '@/constants/roles.constant'
 import { TbArrowNarrowLeft, TbTrash } from 'react-icons/tb'
 import type { AssetFormSchema } from '../AssetForm'
 import type { Asset } from '../AssetList/types'
@@ -29,7 +28,7 @@ const AssetEdit = () => {
     const [deleteOpen, setDeleteOpen] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canDelete = useAuthority(userAuthority, ['assets.delete', 'admin'])
 
     const { data, isLoading } = useSWR<Asset>(
         id ? ['/assets/edit', id] : null,

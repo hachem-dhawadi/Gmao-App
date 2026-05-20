@@ -8,7 +8,6 @@ import cloneDeep from 'lodash/cloneDeep'
 import { TbPencil, TbEye } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { WorkOrder } from '../types'
 import type { TableQueries } from '@/@types/common'
@@ -124,7 +123,7 @@ const WorkOrderListTable = () => {
     } = useWorkOrderList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canEdit = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
 
     const columns: ColumnDef<WorkOrder>[] = useMemo(
         () => [

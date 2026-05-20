@@ -12,7 +12,7 @@ import { TbPlus } from 'react-icons/tb'
 import type { ReactNode } from 'react'
 
 type FileDetailsProps = {
-    onShare: (id: string) => void
+    onShare: (id: string, fileType: string) => void
 }
 
 const InfoRow = ({
@@ -57,16 +57,7 @@ const FileDetails = ({ onShare }: FileDetailsProps) => {
                         <CloseButton onClick={handleDrawerClose} />
                     </div>
                     <div className="mt-10 flex justify-center">
-                        {file.fileType.startsWith('jpeg') ||
-                        file.fileType.startsWith('png') ? (
-                            <img
-                                src={file.srcUrl}
-                                className="max-h-[170px] rounded-xl"
-                                alt={file.name}
-                            />
-                        ) : (
-                            <FileIcon type={file.fileType} size={120} />
-                        )}
+                        <FileIcon type={file.fileType} size={120} />
                     </div>
                     <div className="mt-10 text-center">
                         <h4>{file.name}</h4>
@@ -88,12 +79,14 @@ const FileDetails = ({ onShare }: FileDetailsProps) => {
                                     .unix(file.uploadDate)
                                     .format('MMM DD, YYYY')}
                             />
-                            <InfoRow
-                                label="Last modified"
-                                value={dayjs
-                                    .unix(file.activities[0].timestamp)
-                                    .format('MMM DD, YYYY')}
-                            />
+                            {file.activities.length > 0 && (
+                                <InfoRow
+                                    label="Last modified"
+                                    value={dayjs
+                                        .unix(file.activities[0].timestamp)
+                                        .format('MMM DD, YYYY')}
+                                />
+                            )}
                         </div>
                     </div>
                     <div className="mt-10">
@@ -104,7 +97,7 @@ const FileDetails = ({ onShare }: FileDetailsProps) => {
                                 shape="circle"
                                 icon={<TbPlus />}
                                 size="xs"
-                                onClick={() => onShare(file.id)}
+                                onClick={() => onShare(file.id, file.fileType)}
                             />
                         </div>
                         <div className="mt-6 flex flex-col gap-4">

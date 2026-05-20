@@ -60,3 +60,12 @@ export async function apiUpdateMemberRoles<
         data: { roles: roleCodes },
     })
 }
+
+export async function apiDeleteMember<T = { success: boolean; message: string }>(
+    memberId: number,
+) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/members/${memberId}`,
+        method: 'delete',
+    })
+}

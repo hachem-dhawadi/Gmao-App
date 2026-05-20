@@ -9,7 +9,6 @@ import cloneDeep from 'lodash/cloneDeep'
 import { TbPencil, TbEye } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, HR } from '@/constants/roles.constant'
 import type { OnSortParam, ColumnDef, Row } from '@/components/shared/DataTable'
 import type { Customer } from '../types'
 import type { TableQueries } from '@/@types/common'
@@ -83,7 +82,7 @@ const CustomerListTable = () => {
     } = useCustomerList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, HR])
+    const canEdit = useAuthority(userAuthority, ['members.update', 'admin', 'hr'])
 
     const handleEdit = (customer: Customer) => {
         navigate(`/concepts/customers/customer-edit/${customer.id}`)

@@ -24,6 +24,8 @@ use App\Http\Controllers\Api\V1\Purchasing\PurchaseOrderController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyController as SuperadminCompanyController;
 use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as SuperadminCompanyMemberController;
 use App\Http\Controllers\Api\V1\Superadmin\UserController as SuperadminUserController;
+use App\Http\Controllers\Api\V1\Calendar\CalendarController;
+use App\Http\Controllers\Api\V1\FileManager\FileManagerController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -111,7 +113,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/{item}', [ItemController::class, 'show'])->middleware('permission:inventory.read');
         Route::post('/', [ItemController::class, 'store'])->middleware('permission:inventory.write');
         Route::patch('/{item}', [ItemController::class, 'update'])->middleware('permission:inventory.write');
-        Route::delete('/{item}', [ItemController::class, 'destroy'])->middleware('permission:inventory.write');
+        Route::delete('/{item}', [ItemController::class, 'destroy'])->middleware('permission:inventory.delete');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('inventory/warehouses')->group(function (): void {
@@ -119,13 +121,13 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/{warehouse}', [WarehouseController::class, 'show'])->middleware('permission:inventory.read');
         Route::post('/', [WarehouseController::class, 'store'])->middleware('permission:inventory.write');
         Route::patch('/{warehouse}', [WarehouseController::class, 'update'])->middleware('permission:inventory.write');
-        Route::delete('/{warehouse}', [WarehouseController::class, 'destroy'])->middleware('permission:inventory.write');
+        Route::delete('/{warehouse}', [WarehouseController::class, 'destroy'])->middleware('permission:inventory.delete');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('inventory/stock-moves')->group(function (): void {
         Route::get('/', [StockMoveController::class, 'index'])->middleware('permission:inventory.read');
         Route::post('/', [StockMoveController::class, 'store'])->middleware('permission:inventory.write');
-        Route::delete('/{stockMove}', [StockMoveController::class, 'destroy'])->middleware('permission:inventory.write');
+        Route::delete('/{stockMove}', [StockMoveController::class, 'destroy'])->middleware('permission:inventory.delete');
     });
 
     Route::middleware('auth:sanctum')->prefix('notifications')->group(function (): void {
@@ -161,6 +163,31 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/orders/{purchaseOrder}/payment-proof', [PurchaseOrderController::class, 'downloadPaymentProof'])->middleware('permission:purchasing.read');
 
         Route::get('/receipts', [PurchaseOrderController::class, 'receipts'])->middleware('permission:purchasing.read');
+    });
+
+    // ── File Manager ─────────────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('file-manager')->group(function (): void {
+        Route::get('/', [FileManagerController::class, 'index'])->middleware('permission:files.read');
+
+        // Directories
+        Route::post('/directories', [FileManagerController::class, 'storeDirectory'])->middleware('permission:files.write');
+        Route::patch('/directories/{id}', [FileManagerController::class, 'renameDirectory'])->middleware('permission:files.write');
+        Route::delete('/directories/{id}', [FileManagerController::class, 'destroyDirectory'])->middleware('permission:files.write');
+        Route::post('/directories/{id}/share', [FileManagerController::class, 'shareDirectory'])->middleware('permission:files.write');
+
+        // Files
+        Route::post('/upload', [FileManagerController::class, 'upload'])->middleware('permission:files.write');
+        Route::patch('/files/{id}', [FileManagerController::class, 'renameFile'])->middleware('permission:files.write');
+        Route::delete('/files/{id}', [FileManagerController::class, 'destroyFile'])->middleware('permission:files.write');
+        Route::get('/files/{id}/download', [FileManagerController::class, 'download'])->middleware('permission:files.read');
+        Route::post('/files/{id}/share', [FileManagerController::class, 'shareFile'])->middleware('permission:files.write');
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('calendar')->group(function (): void {
+        Route::get('/', [CalendarController::class, 'index']);
+        Route::post('/', [CalendarController::class, 'store']);
+        Route::patch('/{calendarEvent}', [CalendarController::class, 'update']);
+        Route::delete('/{calendarEvent}', [CalendarController::class, 'destroy']);
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('pm/plans')->group(function (): void {

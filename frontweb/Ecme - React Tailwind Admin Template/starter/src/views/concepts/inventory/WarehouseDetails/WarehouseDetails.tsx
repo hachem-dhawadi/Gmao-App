@@ -7,7 +7,6 @@ import { apiGetWarehouseById } from '@/services/InventoryService'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
 import {
@@ -82,7 +81,7 @@ const WarehouseDetails = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, [ADMIN, MANAGER])
+    const canEdit = useAuthority(userAuthority, ['inventory.write', 'admin', 'manager'])
 
     const { data, isLoading } = useSWR(
         id ? ['/inventory/warehouses/detail', id] : null,

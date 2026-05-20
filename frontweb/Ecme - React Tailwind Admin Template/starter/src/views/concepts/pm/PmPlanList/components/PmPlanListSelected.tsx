@@ -9,7 +9,6 @@ import { apiDeletePmPlan } from '@/services/PmService'
 import { TbChecks } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { ADMIN, MANAGER } from '@/constants/roles.constant'
 
 const PmPlanListSelected = () => {
     const { selectedPmPlans, setSelectAllPmPlan, mutate } = usePmPlanList()
@@ -17,7 +16,7 @@ const PmPlanListSelected = () => {
     const [deleting, setDeleting] = useState(false)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canDelete = useAuthority(userAuthority, [ADMIN])
+    const canDelete = useAuthority(userAuthority, ['pm_plans.delete', 'admin'])
 
     if (selectedPmPlans.length === 0) return null
 

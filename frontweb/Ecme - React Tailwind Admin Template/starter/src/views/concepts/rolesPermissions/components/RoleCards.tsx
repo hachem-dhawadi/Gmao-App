@@ -14,10 +14,11 @@ const roleDescriptions: Record<string, string> = {
 type RoleCardsProps = {
     roles: Role[]
     members: Member[]
+    canManage: boolean
     onEditRole: (role: Role) => void
 }
 
-const RoleCards = ({ roles, members, onEditRole }: RoleCardsProps) => {
+const RoleCards = ({ roles, members, canManage, onEditRole }: RoleCardsProps) => {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {roles.map((role) => {
@@ -51,16 +52,18 @@ const RoleCards = ({ roles, members, onEditRole }: RoleCardsProps) => {
                                     />
                                 </div>
                             </div>
-                            <Button
-                                variant="plain"
-                                size="sm"
-                                className="py-0 h-auto"
-                                icon={<TbArrowRight />}
-                                iconAlignment="end"
-                                onClick={() => onEditRole(role)}
-                            >
-                                Edit role
-                            </Button>
+                            {canManage && role.code !== 'admin' && (
+                                <Button
+                                    variant="plain"
+                                    size="sm"
+                                    className="py-0 h-auto"
+                                    icon={<TbArrowRight />}
+                                    iconAlignment="end"
+                                    onClick={() => onEditRole(role)}
+                                >
+                                    Edit role
+                                </Button>
+                            )}
                         </div>
                     </div>
                 )
