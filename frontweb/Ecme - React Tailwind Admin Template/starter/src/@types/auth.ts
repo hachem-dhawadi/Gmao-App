@@ -46,7 +46,10 @@ export type ForgotPassword = {
 }
 
 export type ResetPassword = {
+    email: string
+    token: string
     password: string
+    passwordConfirmation: string
 }
 
 export type UpdateProfileRequest = {
@@ -138,6 +141,7 @@ export type AuthPayload = {
     token_type: string
     default_company_id: number | null
     memberships: BackendMembership[]
+    requires_otp?: boolean
 }
 
 export type SignInResponse = ApiEnvelope<AuthPayload>

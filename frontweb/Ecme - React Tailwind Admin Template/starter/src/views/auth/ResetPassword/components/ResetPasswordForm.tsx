@@ -11,8 +11,10 @@ import type { CommonProps } from '@/@types/common'
 
 interface ResetPasswordFormProps extends CommonProps {
     resetComplete: boolean
-    setResetComplete?: (compplete: boolean) => void
+    setResetComplete?: (complete: boolean) => void
     setMessage?: (message: string) => void
+    email: string
+    token: string
 }
 
 type ResetPasswordFormSchema = {
@@ -22,7 +24,9 @@ type ResetPasswordFormSchema = {
 
 const validationSchema: ZodType<ResetPasswordFormSchema> = z
     .object({
-        newPassword: z.string({ required_error: 'Please enter your password' }),
+        newPassword: z
+            .string({ required_error: 'Please enter your password' })
+            .min(8, { message: 'Password must be at least 8 characters' }),
         confirmPassword: z.string({
             required_error: 'Confirm Password Required',
         }),
@@ -35,8 +39,7 @@ const validationSchema: ZodType<ResetPasswordFormSchema> = z
 const ResetPasswordForm = (props: ResetPasswordFormProps) => {
     const [isSubmitting, setSubmitting] = useState<boolean>(false)
 
-    const { className, setMessage, setResetComplete, resetComplete, children } =
-        props
+    const { className, setMessage, setResetComplete, resetComplete, children, email, token } = props
 
     const {
         handleSubmit,
@@ -47,26 +50,28 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
     })
 
     const onResetPassword = async (values: ResetPasswordFormSchema) => {
-        const { newPassword } = values
-
-        try {
-            const resp = await apiResetPassword<boolean>({
-                password: newPassword,
-            })
-            if (resp) {
-                setSubmitting(false)
-                setResetComplete?.(true)
-            }
-        } catch (errors) {
-            setMessage?.(
-                typeof errors === 'string'
-                    ? errors
-                    : 'Failed to reset password',
-            )
-            setSubmitting(false)
+        if (!email || !token) {
+            setMessage?.('Invalid reset link. Please request a new one.')
+            return
         }
 
-        setSubmitting(false)
+        setSubmitting(true)
+        try {
+            await apiResetPassword<{ success: boolean; message: string }>({
+                email,
+                token,
+                password: values.newPassword,
+                passwordConfirmation: values.confirmPassword,
+            })
+            setResetComplete?.(true)
+        } catch (error: unknown) {
+            const message =
+                (error as { response?: { data?: { message?: string } } })
+                    ?.response?.data?.message || 'Failed to reset password'
+            setMessage?.(message)
+        } finally {
+            setSubmitting(false)
+        }
     }
 
     return (
@@ -74,7 +79,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
             {!resetComplete ? (
                 <Form onSubmit={handleSubmit(onResetPassword)}>
                     <FormItem
-                        label="Password"
+                        label="New password"
                         invalid={Boolean(errors.newPassword)}
                         errorMessage={errors.newPassword?.message}
                     >
@@ -91,7 +96,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                         />
                     </FormItem>
                     <FormItem
-                        label="Confirm Password"
+                        label="Confirm password"
                         invalid={Boolean(errors.confirmPassword)}
                         errorMessage={errors.confirmPassword?.message}
                     >
@@ -101,7 +106,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                             render={({ field }) => (
                                 <PasswordInput
                                     autoComplete="off"
-                                    placeholder="Confirm Password"
+                                    placeholder="Confirm password"
                                     {...field}
                                 />
                             )}
@@ -113,7 +118,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                         variant="solid"
                         type="submit"
                     >
-                        {isSubmitting ? 'Submiting...' : 'Submit'}
+                        {isSubmitting ? 'Resetting...' : 'Reset password'}
                     </Button>
                 </Form>
             ) : (

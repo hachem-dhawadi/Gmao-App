@@ -7,7 +7,7 @@ import type { BaseFileItemProps } from '../types'
 type FileSegmentProps = BaseFileItemProps
 
 const FileSegment = (props: FileSegmentProps) => {
-    const { fileType, size, name, onClick, loading, ...rest } = props
+    const { fileType, srcUrl, size, name, onClick, loading, ...rest } = props
 
     return (
         <div
@@ -26,7 +26,7 @@ const FileSegment = (props: FileSegmentProps) => {
                 <>
                     <div className="flex items-center gap-2">
                         <div className="text-3xl">
-                            <FileIcon type={fileType || ''} />
+                            <FileIcon type={fileType || ''} srcUrl={srcUrl} />
                         </div>
                         <div>
                             <div className="font-bold heading-text">{name}</div>

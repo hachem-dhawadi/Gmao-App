@@ -13,11 +13,26 @@ import FileManagerRenameDialog from './components/FileManagerRenameDialog'
 import CreateFolderDialog from './components/CreateFolderDialog'
 import { useFileManagerStore } from './store/useFileManagerStore'
 import { apiGetFileList } from '@/services/FileService'
+import { useCompanySwitchStore } from '@/store/companySwitchStore'
+import { useSessionUser } from '@/store/authStore'
 import AxiosBase from '@/services/axios/AxiosBase'
+import { TbBuilding } from 'react-icons/tb'
 
 const { THead, Th, Tr } = Table
 
+const NoCompanyPrompt = () => (
+    <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        <TbBuilding className="text-6xl mb-4 text-gray-300" />
+        <p className="text-lg font-semibold text-gray-500">No company selected</p>
+        <p className="text-sm mt-1">Enter a company context from the company list to access the file manager.</p>
+    </div>
+)
+
 const FileManager = () => {
+    // These hooks must be called first (before any conditional return) to satisfy React's rules of hooks.
+    const isSuperadmin = useSessionUser((s) => s.user.authority?.includes('superadmin'))
+    const activeCompany = useCompanySwitchStore((s) => s.activeCompany)
+
     const {
         layout,
         fileList,
@@ -39,18 +54,12 @@ const FileManager = () => {
         openedDirRef.current = openedDirectoryId
     }, [openedDirectoryId])
 
-    // Simple, reliable loader — no SWR complications
-    // silent=true suppresses the error toast (used for post-CRUD refreshes so the
-    // user only sees the action's own success/failure, not a confusing reload error)
     const loadDirectory = useCallback(
         async (dirId: string, silent = false) => {
             setIsLoading(true)
             let stale = false
             try {
                 const resp = await apiGetFileList(dirId || undefined)
-                // Discard the response if the user navigated away while this
-                // request was in flight — prevents a stale silent refresh from
-                // overwriting a subsequent navigation's results.
                 if (useFileManagerStore.getState().openedDirectoryId !== dirId) {
                     stale = true
                     return
@@ -65,20 +74,17 @@ const FileManager = () => {
                     )
                 }
             } finally {
-                // Only clear the loading flag when this response is the one
-                // that actually updated state — stale requests leave isLoading
-                // true so the in-flight navigation request's spinner stays visible.
                 if (!stale) setIsLoading(false)
             }
         },
-        // Zustand setters and getState are stable — this function is created exactly once
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     )
 
-    // Load root on mount — always reset stale Zustand navigation state from a previous
-    // React Router session (store is not cleared on navigation, only on page reload)
+    // Load root on mount — reset stale Zustand navigation state from a previous session.
+    // Skip the API call for superadmin without a company context (no X-Company-Id header).
     useEffect(() => {
+        if (isSuperadmin && !activeCompany) return
         setOpenedDirectoryId('')
         setDirectories([])
         openedDirRef.current = ''
@@ -89,7 +95,10 @@ const FileManager = () => {
     // Post-CRUD refresh: silent so its failure never produces an extra toast
     const refresh = () => loadDirectory(openedDirRef.current, true)
 
-    // ── handlers ────────────────────────────────────────────────────────────────
+    // ── superadmin guard — rendered after all hooks ──────────────────────────
+    if (isSuperadmin && !activeCompany) return <NoCompanyPrompt />
+
+    // ── handlers ─────────────────────────────────────────────────────────────
 
     const handleOpen = (id: string) => {
         setOpenedDirectoryId(id)
@@ -142,7 +151,7 @@ const FileManager = () => {
         }
     }
 
-    // ── render ───────────────────────────────────────────────────────────────────
+    // ── render ────────────────────────────────────────────────────────────────
 
     return (
         <>

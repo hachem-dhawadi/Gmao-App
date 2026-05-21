@@ -10,7 +10,7 @@ type FileRowProps = BaseFileItemProps
 const { Tr, Td } = Table
 
 const FileRow = (props: FileRowProps) => {
-    const { fileType, size, name, onClick, ...rest } = props
+    const { fileType, srcUrl, size, name, onClick, ...rest } = props
 
     return (
         <Tr>
@@ -21,7 +21,7 @@ const FileRow = (props: FileRowProps) => {
                     onClick={onClick}
                 >
                     <div className="text-3xl">
-                        <FileIcon type={fileType || ''} />
+                        <FileIcon type={fileType || ''} srcUrl={srcUrl} />
                     </div>
                     <div className="font-bold heading-text group-hover:text-primary">
                         {name}

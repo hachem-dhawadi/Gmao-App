@@ -57,7 +57,7 @@ const FileDetails = ({ onShare }: FileDetailsProps) => {
                         <CloseButton onClick={handleDrawerClose} />
                     </div>
                     <div className="mt-10 flex justify-center">
-                        <FileIcon type={file.fileType} size={120} />
+                        <FileIcon type={file.fileType} size={120} srcUrl={file.srcUrl || undefined} />
                     </div>
                     <div className="mt-10 text-center">
                         <h4>{file.name}</h4>

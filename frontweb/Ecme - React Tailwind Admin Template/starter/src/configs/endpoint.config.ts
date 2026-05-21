@@ -6,6 +6,8 @@ const endpointConfig = {
     updateCurrentCompany: '/companies/current',
     forgotPassword: '/auth/forgot-password',
     resetPassword: '/auth/reset-password',
+    sendOtp: '/auth/send-otp',
+    verifyOtp: '/auth/verify-otp',
     me: '/auth/me',
     updateProfile: '/auth/me',
     updatePassword: '/auth/password',

@@ -22,7 +22,7 @@ const splitFullName = (fullName: string) => {
     }
 
     if (nameParts.length === 1) {
-        return { firstName: nameParts[0], lastName: nameParts[0] }
+        return { firstName: nameParts[0], lastName: '' }
     }
 
     return {

@@ -340,4 +340,84 @@ export async function apiGetSuperadminUser<
     })
 }
 
+export type SuperadminUsersResponse = {
+    success: boolean
+    message: string
+    data: {
+        users: SuperadminUser[]
+        pagination: {
+            current_page: number
+            per_page: number
+            total: number
+            last_page: number
+        }
+    }
+}
+
+export async function apiGetUsersList<
+    T = SuperadminUsersResponse,
+    U extends Record<string, unknown> = Record<string, unknown>,
+>(params: U) {
+    const normalizedParams: Record<string, unknown> = { ...params }
+    if (typeof normalizedParams.pageIndex === 'number') {
+        normalizedParams.page = normalizedParams.pageIndex
+        delete normalizedParams.pageIndex
+    }
+    if (typeof normalizedParams.pageSize === 'number') {
+        normalizedParams.per_page = normalizedParams.pageSize
+        delete normalizedParams.pageSize
+    }
+    return ApiService.fetchDataWithAxios<T>({
+        url: '/superadmin/users',
+        method: 'get',
+        params: normalizedParams,
+    })
+}
+
+export async function apiUpdateSuperadminUser<
+    T = SuperadminUserResponse,
+>(id: string | number, data: Partial<{
+    name: string
+    email: string
+    phone: string | null
+    is_active: boolean
+    is_superadmin: boolean
+    two_factor_enabled: boolean
+    password: string
+    password_confirmation: string
+}>) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/superadmin/users/${id}`,
+        method: 'patch',
+        data,
+    })
+}
+
+export async function apiDeleteSuperadminUser<
+    T = { success: boolean; message: string },
+>(id: string | number) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/superadmin/users/${id}`,
+        method: 'delete',
+    })
+}
+
+export async function apiCreateSuperadminUser<
+    T = SuperadminUserResponse,
+>(data: {
+    name: string
+    email: string
+    phone?: string | null
+    password: string
+    password_confirmation: string
+    is_active?: boolean
+    is_superadmin?: boolean
+}) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: '/superadmin/users',
+        method: 'post',
+        data,
+    })
+}
+
 

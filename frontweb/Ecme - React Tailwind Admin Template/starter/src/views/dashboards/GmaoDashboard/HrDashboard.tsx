@@ -92,7 +92,7 @@ const HrDashboard = () => {
         }
     }, [sideNavCollapse])
 
-    const { data, isLoading } = useSWR(
+    const { data, isLoading, error } = useSWR(
         '/dashboard/hr',
         () => apiGetHrDashboard(),
         { revalidateOnFocus: false },
@@ -109,6 +109,17 @@ const HrDashboard = () => {
 
     // new members this month = last monthly_stats entry
     const newThisMonth = monthCounts.length ? monthCounts[monthCounts.length - 1] : 0
+
+    if (error) {
+        return (
+            <Container>
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                    <p className="text-lg font-semibold text-red-500">Dashboard failed to load</p>
+                    <p className="text-sm text-gray-500">{error?.response?.data?.message || error?.message || 'Unknown error'}</p>
+                </div>
+            </Container>
+        )
+    }
 
     return (
         <Loading loading={isLoading}>
@@ -161,25 +172,31 @@ const HrDashboard = () => {
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <Chart
-                                    type="area"
-                                    series={[{ name: 'New Members', data: monthCounts }]}
-                                    xAxis={monthLabels}
-                                    height="300px"
-                                    customOptions={{
-                                        legend: { show: false },
-                                        colors: [COLORS[0]],
-                                        fill: {
-                                            type: 'gradient',
-                                            gradient: {
-                                                shadeIntensity: 1,
-                                                opacityFrom: 0.4,
-                                                opacityTo: 0.05,
-                                                stops: [0, 100],
+                                {monthCounts.length > 0 ? (
+                                    <Chart
+                                        type="area"
+                                        series={[{ name: 'New Members', data: monthCounts }]}
+                                        xAxis={monthLabels}
+                                        height="300px"
+                                        customOptions={{
+                                            legend: { show: false },
+                                            colors: [COLORS[0]],
+                                            fill: {
+                                                type: 'gradient',
+                                                gradient: {
+                                                    shadeIntensity: 1,
+                                                    opacityFrom: 0.4,
+                                                    opacityTo: 0.05,
+                                                    stops: [0, 100],
+                                                },
                                             },
-                                        },
-                                    }}
-                                />
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="flex items-center justify-center h-[300px] text-gray-400 text-sm">
+                                        No member data yet
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
@@ -230,8 +247,9 @@ const HrDashboard = () => {
                                         <THead>
                                             <Tr>
                                                 <Th className="px-0!">Member</Th>
-                                                <Th className="text-right!">Role</Th>
-                                                <Th className="px-0! text-right!">Status</Th>
+                                                <Th>Role</Th>
+                                                <Th>Status</Th>
+                                                <Th className="px-0! text-right!">Joined</Th>
                                             </Tr>
                                         </THead>
                                         <TBody>
@@ -248,22 +266,32 @@ const HrDashboard = () => {
                                                                     {(m.name ?? '?').charAt(0).toUpperCase()}
                                                                 </span>
                                                             </div>
-                                                            <div className="heading-text font-semibold truncate max-w-[100px]">
-                                                                {m.name ?? '—'}
+                                                            <div>
+                                                                <div className="heading-text font-semibold truncate max-w-[100px]">
+                                                                    {m.name ?? '—'}
+                                                                </div>
+                                                                {m.job_title && (
+                                                                    <div className="text-xs text-gray-400 truncate max-w-[100px]">
+                                                                        {m.job_title}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </Td>
-                                                    <Td className="text-right!">
+                                                    <Td>
                                                         {m.role ? (
                                                             <Tag className={`text-xs ${roleTagColors[m.role.toLowerCase()] ?? roleTagColors.viewer}`}>
                                                                 {capitalize(m.role)}
                                                             </Tag>
                                                         ) : '—'}
                                                     </Td>
-                                                    <Td className="px-0! text-right!">
+                                                    <Td>
                                                         <Tag className={`text-xs ${statusTagColors[m.status] ?? statusTagColors.inactive}`}>
                                                             {capitalize(m.status)}
                                                         </Tag>
+                                                    </Td>
+                                                    <Td className="px-0! text-right! text-xs text-gray-400 whitespace-nowrap">
+                                                        {m.created_at ? dayjs(m.created_at).format('MMM D, YYYY') : '—'}
                                                     </Td>
                                                 </Tr>
                                             ))}

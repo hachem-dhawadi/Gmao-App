@@ -160,6 +160,22 @@ export async function apiUpdatePassword(data: UpdatePasswordRequest) {
     })
 }
 
+export async function apiSendOtp(email: string) {
+    return ApiService.fetchDataWithAxios<{ success: boolean; message: string }>({
+        url: endpointConfig.sendOtp,
+        method: 'post',
+        data: { email },
+    })
+}
+
+export async function apiVerifyOtp(email: string, code: string) {
+    return ApiService.fetchDataWithAxios<{ success: boolean; message: string }>({
+        url: endpointConfig.verifyOtp,
+        method: 'post',
+        data: { email, code },
+    })
+}
+
 export async function apiForgotPassword<T>(data: ForgotPassword) {
     return ApiService.fetchDataWithAxios<T>({
         url: endpointConfig.forgotPassword,
@@ -172,7 +188,12 @@ export async function apiResetPassword<T>(data: ResetPassword) {
     return ApiService.fetchDataWithAxios<T>({
         url: endpointConfig.resetPassword,
         method: 'post',
-        data,
+        data: {
+            email: data.email,
+            token: data.token,
+            password: data.password,
+            password_confirmation: data.passwordConfirmation,
+        },
     })
 }
 

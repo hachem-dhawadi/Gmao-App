@@ -37,22 +37,18 @@ const ForgotPasswordForm = (props: ForgotPasswordFormProps) => {
     })
 
     const onForgotPassword = async (values: ForgotPasswordFormSchema) => {
-        const { email } = values
-
+        setSubmitting(true)
         try {
-            const resp = await apiForgotPassword<boolean>({ email })
-            if (resp) {
-                setSubmitting(false)
-                setEmailSent?.(true)
-            }
-        } catch (errors) {
-            setMessage?.(
-                typeof errors === 'string' ? errors : 'Some error occured!',
-            )
+            await apiForgotPassword<{ success: boolean; message: string }>({ email: values.email })
+            setEmailSent?.(true)
+        } catch (error: unknown) {
+            const msg =
+                (error as { response?: { data?: { message?: string } } })
+                    ?.response?.data?.message || 'Failed to send reset email.'
+            setMessage?.(msg)
+        } finally {
             setSubmitting(false)
         }
-
-        setSubmitting(false)
     }
 
     return (

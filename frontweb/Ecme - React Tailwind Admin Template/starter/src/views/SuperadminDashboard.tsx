@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, memo } from 'react'
 import useSWR from 'swr'
 import { useNavigate } from 'react-router-dom'
+import { useCompanySwitchStore } from '@/store/companySwitchStore'
 import Container from '@/components/shared/Container'
 import Card from '@/components/ui/Card'
 import Tag from '@/components/ui/Tag'
@@ -19,7 +20,7 @@ import { COLOR_1, COLOR_2, COLOR_4 } from '@/constants/chart.constant'
 import {
     TbBuilding, TbClock, TbUsers,
     TbCircleCheck, TbCircleX, TbAlertTriangle,
-    TbWorld,
+    TbWorld, TbLogin,
 } from 'react-icons/tb'
 import type { ReactNode } from 'react'
 
@@ -242,71 +243,93 @@ const OverviewCard = ({
 
 // ── CompanyByStatus (replaces CustomerDemographic) ─────────────────────
 
+const DONUT_COLORS = ['#10b981', '#f59e0b', '#ef4444', '#9ca3af']
+
+type StatusEntry = { key: string; label: string; count: number; color: string; percent: number }
+
+type DonutChartProps = {
+    series: number[]
+    labels: string[]
+    colors: string[]
+    total: number
+}
+
+const DonutChart = memo(({ series, labels, colors, total }: DonutChartProps) => (
+    <Chart
+        type="donut"
+        series={series}
+        donutTitle="Total"
+        donutText={String(total)}
+        customOptions={{ labels, colors }}
+        height="220px"
+        width="220px"
+    />
+))
+
+// Hovering state lives here, completely isolated from DonutChart's subtree
+const StatusList = memo(({ statuses }: { statuses: StatusEntry[] }) => {
+    const [hovering, setHovering] = useState('')
+    return (
+        <div className="flex flex-col justify-center flex-1 w-full">
+            {statuses.map(s => (
+                <div
+                    key={s.key}
+                    className={classNames(
+                        'flex items-center gap-4 p-3 rounded-xl transition-colors duration-150 cursor-default',
+                        hovering === s.key && 'bg-gray-100 dark:bg-gray-700',
+                    )}
+                    onMouseEnter={() => setHovering(s.key)}
+                    onMouseLeave={() => setHovering('')}
+                >
+                    <div className="flex items-center gap-2 w-24 flex-shrink-0">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
+                        <span className="text-sm font-semibold heading-text">{s.label}</span>
+                    </div>
+                    <div className="flex-1">
+                        <Progress percent={s.percent} />
+                    </div>
+                    <span className="text-sm font-semibold w-6 text-right text-gray-700 dark:text-gray-300">{s.count}</span>
+                </div>
+            ))}
+        </div>
+    )
+})
+
 const CompanyByStatusCard = ({ companies }: { companies: Company[] }) => {
     const total = companies.length || 1
 
-    const statuses = [
-        { key: 'approved', label: 'Approved', color: 'bg-emerald-500', count: companies.filter(c => c.approval_status === 'approved').length },
-        { key: 'pending',  label: 'Pending',  color: 'bg-amber-400',  count: companies.filter(c => c.approval_status === 'pending').length },
-        { key: 'rejected', label: 'Rejected', color: 'bg-red-500',    count: companies.filter(c => c.approval_status === 'rejected').length },
-        { key: 'inactive', label: 'Inactive', color: 'bg-gray-400',   count: companies.filter(c => !c.is_active).length },
-    ]
+    const statuses = useMemo<StatusEntry[]>(() => [
+        { key: 'approved', label: 'Approved', count: companies.filter(c => c.approval_status === 'approved').length, color: DONUT_COLORS[0] },
+        { key: 'pending',  label: 'Pending',  count: companies.filter(c => c.approval_status === 'pending').length,  color: DONUT_COLORS[1] },
+        { key: 'rejected', label: 'Rejected', count: companies.filter(c => c.approval_status === 'rejected').length, color: DONUT_COLORS[2] },
+        { key: 'inactive', label: 'Inactive', count: companies.filter(c => !c.is_active).length,                     color: DONUT_COLORS[3] },
+    ].map(s => ({ ...s, percent: Math.round((s.count / total) * 100) })), [companies])
 
-    const donutSeries = statuses.map(s => s.count)
-    const donutLabels = statuses.map(s => s.label)
-    const donutColors = ['#10b981', '#f59e0b', '#ef4444', '#9ca3af']
-
-    const [hovering, setHovering] = useState('')
+    const nonZero      = useMemo(() => statuses.filter(s => s.count > 0), [statuses])
+    const donutSeries  = useMemo(() => nonZero.map(s => s.count),  [nonZero])
+    const donutLabels  = useMemo(() => nonZero.map(s => s.label),  [nonZero])
+    const donutColors  = useMemo(() => nonZero.map(s => s.color),  [nonZero])
 
     return (
         <Card>
             <h4>Company Breakdown</h4>
             <div className="flex flex-col xl:flex-row items-center gap-6 mt-4">
-                <div className="flex-shrink-0">
-                    <Chart
-                        type="donut"
-                        series={donutSeries}
-                        donutTitle="Total"
-                        donutText={String(companies.length)}
-                        customOptions={{
-                            labels: donutLabels,
-                            colors: donutColors,
-                        }}
-                        height="220px"
-                        width="220px"
-                    />
-                </div>
-                <div className="flex flex-col justify-center flex-1 w-full">
-                    {statuses.map((s, i) => (
-                        <div
-                            key={s.key}
-                            className={classNames(
-                                'flex items-center gap-4 p-3 rounded-xl transition-colors duration-150 cursor-default',
-                                hovering === s.key && 'bg-gray-100 dark:bg-gray-700',
-                            )}
-                            onMouseEnter={() => setHovering(s.key)}
-                            onMouseLeave={() => setHovering('')}
-                        >
-                            <div className="flex items-center gap-2 w-24 flex-shrink-0">
-                                <span
-                                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                                    style={{ backgroundColor: donutColors[i] }}
-                                />
-                                <span className="text-sm font-semibold heading-text">{s.label}</span>
-                            </div>
-                            <div className="flex-1">
-                                <Progress
-                                    percent={Math.round((s.count / total) * 100)}
-                                    trailClass={classNames(
-                                        'transition-colors duration-150',
-                                        hovering === s.key && 'bg-gray-200 dark:bg-gray-600',
-                                    )}
-                                />
-                            </div>
-                            <span className="text-sm font-semibold w-6 text-right text-gray-700 dark:text-gray-300">{s.count}</span>
+                {/* pointer-events:none prevents ApexCharts from receiving mouse events */}
+                <div className="flex-shrink-0" style={{ pointerEvents: 'none' }}>
+                    {nonZero.length > 0 ? (
+                        <DonutChart
+                            series={donutSeries}
+                            labels={donutLabels}
+                            colors={donutColors}
+                            total={companies.length}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center w-[220px] h-[220px] rounded-full bg-gray-100 dark:bg-gray-700">
+                            <p className="text-xs text-gray-400 text-center px-4">No companies yet</p>
                         </div>
-                    ))}
+                    )}
                 </div>
+                <StatusList statuses={statuses} />
             </div>
         </Card>
     )
@@ -468,68 +491,89 @@ const StatusBreakdownCard = ({ companies }: { companies: Company[] }) => {
 
 const RecentCompaniesTable = ({
     companies, onRow,
-}: { companies: Company[]; onRow: (id: number) => void }) => (
-    <Card>
-        <div className="flex items-center justify-between mb-6">
-            <h4>All Companies</h4>
-        </div>
-        {companies.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">No companies yet</p>
-        ) : (
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-gray-100 dark:border-gray-700">
-                            {['Company', 'Location', 'Status', 'Members', 'Registered'].map(h => (
-                                <th key={h} className="text-left pb-3 pr-4 last:pr-0 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {companies.map(c => (
-                            <tr
-                                key={c.id}
-                                className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors"
-                                onClick={() => onRow(c.id)}
-                            >
-                                <td className="py-3 pr-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-500/20 flex items-center justify-center flex-shrink-0">
-                                            <TbBuilding className="text-sky-500 text-sm" />
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold heading-text">{c.name}</p>
-                                            {c.legal_name && c.legal_name !== c.name && (
-                                                <p className="text-xs text-gray-400">{c.legal_name}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="py-3 pr-4 text-gray-500">
-                                    {[c.city, c.country].filter(Boolean).join(', ') || '—'}
-                                </td>
-                                <td className="py-3 pr-4">
-                                    <Tag className={`text-xs w-fit ${approvalTag[c.approval_status]}`}>
-                                        {c.approval_status.charAt(0).toUpperCase() + c.approval_status.slice(1)}
-                                    </Tag>
-                                </td>
-                                <td className="py-3 pr-4">
-                                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 font-semibold">
-                                        <TbUsers className="text-xs" />
-                                        {c.members_count}
-                                    </div>
-                                </td>
-                                <td className="py-3 text-xs text-gray-400">
-                                    {dayjs(c.created_at).fromNow()}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+}: { companies: Company[]; onRow: (id: number) => void }) => {
+    const navigate = useNavigate()
+    const { enter } = useCompanySwitchStore()
+
+    const handleEnter = (c: Company, e: React.MouseEvent) => {
+        e.stopPropagation()
+        enter({ id: c.id, name: c.name })
+        navigate('/dashboard')
+    }
+
+    return (
+        <Card>
+            <div className="flex items-center justify-between mb-6">
+                <h4>All Companies</h4>
             </div>
-        )}
-    </Card>
-)
+            {companies.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-6">No companies yet</p>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b border-gray-100 dark:border-gray-700">
+                                {['Company', 'Location', 'Status', 'Members', 'Registered', ''].map((h, i) => (
+                                    <th key={i} className="text-left pb-3 pr-4 last:pr-0 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {companies.map(c => (
+                                <tr
+                                    key={c.id}
+                                    className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors"
+                                    onClick={() => onRow(c.id)}
+                                >
+                                    <td className="py-3 pr-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-500/20 flex items-center justify-center flex-shrink-0">
+                                                <TbBuilding className="text-sky-500 text-sm" />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold heading-text">{c.name}</p>
+                                                {c.legal_name && c.legal_name !== c.name && (
+                                                    <p className="text-xs text-gray-400">{c.legal_name}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="py-3 pr-4 text-gray-500">
+                                        {[c.city, c.country].filter(Boolean).join(', ') || '—'}
+                                    </td>
+                                    <td className="py-3 pr-4">
+                                        <Tag className={`text-xs w-fit ${approvalTag[c.approval_status]}`}>
+                                            {c.approval_status.charAt(0).toUpperCase() + c.approval_status.slice(1)}
+                                        </Tag>
+                                    </td>
+                                    <td className="py-3 pr-4">
+                                        <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 font-semibold">
+                                            <TbUsers className="text-xs" />
+                                            {c.members_count}
+                                        </div>
+                                    </td>
+                                    <td className="py-3 pr-4 text-xs text-gray-400">
+                                        {dayjs(c.created_at).fromNow()}
+                                    </td>
+                                    <td className="py-3">
+                                        <button
+                                            className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-deep transition-colors px-2 py-1 rounded-lg hover:bg-primary/10"
+                                            onClick={(e) => handleEnter(c, e)}
+                                            title="Enter company as superadmin"
+                                        >
+                                            <TbLogin className="text-base" />
+                                            Enter
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </Card>
+    )
+}
 
 // ── Main ───────────────────────────────────────────────────────────────
 

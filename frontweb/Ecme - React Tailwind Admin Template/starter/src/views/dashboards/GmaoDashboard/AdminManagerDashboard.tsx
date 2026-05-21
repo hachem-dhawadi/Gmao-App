@@ -24,7 +24,9 @@ import {
     TbProgressBolt, TbCopyCheck, TbArrowDownToArc,
     TbCircleCheck, TbCircleCheckFilled, TbCalendar,
     TbRefresh, TbAlertTriangle, TbLoader,
-    TbPlayerPause, TbCalendarTime,
+    TbPlayerPause, TbCalendarTime, TbEngine,
+    TbUsers, TbUserExclamation, TbTool,
+    TbChevronLeft, TbChevronRight,
 } from 'react-icons/tb'
 import { COLORS } from '@/constants/chart.constant'
 import type { ExtendedTask } from '@/components/shared/GanttChart'
@@ -91,14 +93,17 @@ const capitalize = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.t
 
 // ── 1. WO Overview  (= ProjectOverview) ───────────────────────────────
 
-type KpiBoxProps = { title: string; value: number; icon: ReactNode; className: string }
+type KpiBoxProps = { title: string; value: number; icon: ReactNode; className: string; alert?: boolean }
 
-const KpiBox = ({ title, value, icon, className }: KpiBoxProps) => (
+const KpiBox = ({ title, value, icon, className, alert }: KpiBoxProps) => (
     <div className={classNames('rounded-2xl p-4 flex flex-col justify-center', className)}>
         <div className="flex justify-between items-center relative">
             <div>
-                <div className="mb-4 text-gray-900 font-bold">{title}</div>
-                <h1 className="mb-1 text-gray-900">{value}</h1>
+                <div className="mb-3 text-gray-900 font-bold text-sm">{title}</div>
+                <h2 className="mb-1 text-gray-900">{value}</h2>
+                {alert && value > 0 && (
+                    <span className="text-xs font-semibold text-red-600">Needs attention</span>
+                )}
             </div>
             <div className="flex items-center justify-center min-h-12 min-w-12 max-h-12 max-w-12 bg-gray-900 text-white rounded-full text-2xl">
                 {icon}
@@ -108,32 +113,36 @@ const KpiBox = ({ title, value, icon, className }: KpiBoxProps) => (
 )
 
 const WoOverviewCard = ({
-    wo, onViewAll,
-}: { wo: Record<string, number>; onViewAll: () => void }) => (
+    wo, assets, members, onViewAll,
+}: {
+    wo: Record<string, number>
+    assets: { total: number }
+    members: { total_active: number; technicians: number }
+    onViewAll: () => void
+}) => (
     <Card>
-        <div className="flex items-center justify-between">
-            <h4>Overview</h4>
+        <div className="flex items-center justify-between mb-4">
+            <h4>Operations Overview</h4>
             <Button size="sm" onClick={onViewAll}>All work orders</Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl mt-4">
-            <KpiBox
-                title="Open work orders"
-                value={wo.open ?? 0}
-                icon={<TbProgressBolt />}
-                className="bg-sky-100 dark:bg-sky-500/20"
-            />
-            <KpiBox
-                title="Completed (month)"
-                value={wo.completed_month ?? 0}
-                icon={<TbCopyCheck />}
-                className="bg-emerald-100 dark:bg-emerald-500/20"
-            />
-            <KpiBox
-                title="Overdue"
-                value={wo.overdue ?? 0}
-                icon={<TbArrowDownToArc />}
-                className={wo.overdue ? 'bg-red-100 dark:bg-red-500/20' : 'bg-purple-100 dark:bg-purple-500/20'}
-            />
+
+        {/* Row 1 — Work Orders */}
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Work Orders</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <KpiBox title="Open" value={wo.open ?? 0} icon={<TbProgressBolt />} className="bg-sky-100 dark:bg-sky-500/20" />
+            <KpiBox title="In Progress" value={wo.in_progress ?? 0} icon={<TbLoader />} className="bg-amber-100 dark:bg-amber-500/20" />
+            <KpiBox title="On Hold" value={wo.on_hold ?? 0} icon={<TbPlayerPause />} className="bg-gray-100 dark:bg-gray-700" />
+            <KpiBox title="Overdue" value={wo.overdue ?? 0} icon={<TbArrowDownToArc />} className={wo.overdue ? 'bg-red-100 dark:bg-red-500/20' : 'bg-purple-100 dark:bg-purple-500/20'} alert />
+            <KpiBox title="Unassigned" value={wo.unassigned ?? 0} icon={<TbUserExclamation />} className={wo.unassigned ? 'bg-orange-100 dark:bg-orange-500/20' : 'bg-gray-100 dark:bg-gray-700'} alert />
+        </div>
+
+        {/* Row 2 — Assets & People */}
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4 mb-2">Assets & People</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <KpiBox title="Completed (month)" value={wo.completed_month ?? 0} icon={<TbCopyCheck />} className="bg-emerald-100 dark:bg-emerald-500/20" />
+            <KpiBox title="Total Assets" value={assets?.total ?? 0} icon={<TbEngine />} className="bg-indigo-100 dark:bg-indigo-500/20" />
+            <KpiBox title="Active Members" value={members?.total_active ?? 0} icon={<TbUsers />} className="bg-teal-100 dark:bg-teal-500/20" />
+            <KpiBox title="Technicians" value={members?.technicians ?? 0} icon={<TbTool />} className="bg-violet-100 dark:bg-violet-500/20" />
         </div>
     </Card>
 )
@@ -439,6 +448,7 @@ const WoStatusOverviewCard = ({
     }, [wo, monthlyStats])
 
     const current = data[timeRange]
+    const hasChartData = current.series.some(s => s.data.some(v => v > 0))
 
     return (
         <Card>
@@ -458,23 +468,29 @@ const WoStatusOverviewCard = ({
                 </div>
             </div>
 
-            <Chart
-                key={timeRange}
-                series={current.series}
-                xAxis={current.range}
-                type="bar"
-                customOptions={{
-                    colors: [COLORS[7], COLORS[8]],
-                    legend: { show: false },
-                    plotOptions: {
-                        bar: {
-                            columnWidth: '15px',
-                            borderRadius: 4,
-                            borderRadiusApplication: 'end',
+            {hasChartData ? (
+                <Chart
+                    key={timeRange}
+                    series={current.series}
+                    xAxis={current.range}
+                    type="bar"
+                    customOptions={{
+                        colors: [COLORS[7], COLORS[8]],
+                        legend: { show: false },
+                        plotOptions: {
+                            bar: {
+                                columnWidth: '15px',
+                                borderRadius: 4,
+                                borderRadiusApplication: 'end',
+                            },
                         },
-                    },
-                }}
-            />
+                    }}
+                />
+            ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-400 text-sm">
+                    No work order data for this period
+                </div>
+            )}
         </Card>
     )
 }
@@ -537,6 +553,94 @@ const RecentWoActivityCard = ({
     </Card>
 )
 
+// ── 7. Mini Calendar ──────────────────────────────────────────────────
+
+const CAL_DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
+const MiniCalendar = ({ highlights = [] }: { highlights: string[] }) => {
+    const [current, setCurrent] = useState(() => dayjs().startOf('month'))
+    const today = dayjs()
+
+    const cells = useMemo(() => {
+        const startDay = current.day()
+        const daysInMonth = current.daysInMonth()
+        const grid: (number | null)[] = [
+            ...Array<null>(startDay).fill(null),
+            ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+        ]
+        while (grid.length % 7 !== 0) grid.push(null)
+        return grid
+    }, [current])
+
+    const highlightSet = useMemo(
+        () => new Set(highlights.map(d => dayjs(d).format('YYYY-MM-DD'))),
+        [highlights],
+    )
+
+    return (
+        <Card>
+            <div className="flex items-center justify-between mb-3">
+                <button
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500"
+                    onClick={() => setCurrent(c => c.subtract(1, 'month'))}
+                >
+                    <TbChevronLeft />
+                </button>
+                <span className="font-semibold text-sm heading-text">
+                    {current.format('MMMM YYYY')}
+                </span>
+                <button
+                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500"
+                    onClick={() => setCurrent(c => c.add(1, 'month'))}
+                >
+                    <TbChevronRight />
+                </button>
+            </div>
+
+            <div className="grid grid-cols-7 text-center mb-1">
+                {CAL_DAYS.map(d => (
+                    <div key={d} className="text-xs font-semibold text-gray-400 pb-1">{d}</div>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-7 text-center">
+                {cells.map((day, i) => {
+                    if (!day) return <div key={`e-${i}`} className="py-1" />
+                    const dateStr = current.date(day).format('YYYY-MM-DD')
+                    const isToday = dateStr === today.format('YYYY-MM-DD')
+                    const hasPm   = highlightSet.has(dateStr)
+                    return (
+                        <div key={dateStr} className="relative flex flex-col items-center py-0.5">
+                            <div className={classNames(
+                                'w-7 h-7 flex items-center justify-center rounded-full text-xs font-medium',
+                                isToday && 'bg-primary text-white font-bold',
+                                !isToday && hasPm && 'bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-300 font-semibold',
+                                !isToday && !hasPm && 'text-gray-700 dark:text-gray-300',
+                            )}>
+                                {day}
+                            </div>
+                            {hasPm && (
+                                <span className="w-1 h-1 rounded-full bg-purple-400 mt-0.5" />
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" />
+                    Today
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" />
+                    PM scheduled
+                </div>
+            </div>
+        </Card>
+    )
+}
+
 // ── Loading skeleton ───────────────────────────────────────────────────
 
 const LoadingSkeleton = () => (
@@ -584,8 +688,10 @@ const AdminManagerDashboard = () => {
     }
 
     const d            = data?.data
-    const wo           = d?.work_orders ?? { open: 0, in_progress: 0, on_hold: 0, overdue: 0, completed_month: 0 }
+    const wo           = d?.work_orders ?? { open: 0, in_progress: 0, on_hold: 0, overdue: 0, completed_month: 0, unassigned: 0 }
     const pm           = d?.pm ?? { active: 0, due_week: 0, due_month: 0 }
+    const assets       = d?.assets ?? { total: 0 }
+    const members      = d?.members ?? { total_active: 0, technicians: 0 }
     const pmDueSoon    = d?.pm_due_soon ?? []
     const recentWos    = d?.recent_work_orders ?? []
     const monthlyStats = d?.monthly_stats ?? []
@@ -596,18 +702,25 @@ const AdminManagerDashboard = () => {
 
                 {/* ── Top row ──────────────────────────────────────── */}
                 <div className="flex flex-col xl:flex-row gap-4">
-                    <div className="flex flex-col gap-4 flex-1 xl:max-w-[calc(100%-350px)]">
+                    <div className="flex flex-col gap-4 flex-1 min-w-0">
                         <WoOverviewCard
                             wo={wo}
+                            assets={assets}
+                            members={members}
                             onViewAll={() => navigate('/concepts/work-orders/work-order-list')}
                         />
                         <WoScheduleCard wos={recentWos} />
                     </div>
-                    <div>
+                    <div className="flex flex-col gap-4 xl:w-[350px]">
                         <PmScheduleCard
                             pm={pm}
                             pmDueSoon={pmDueSoon}
                             onViewAll={() => navigate('/concepts/pm/pm-list')}
+                        />
+                        <MiniCalendar
+                            highlights={pmDueSoon
+                                .map(p => p.next_run_at)
+                                .filter((d): d is string => !!d)}
                         />
                     </div>
                 </div>

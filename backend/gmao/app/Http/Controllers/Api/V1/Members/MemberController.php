@@ -169,14 +169,15 @@ class MemberController extends Controller
 
             if (! $user) {
                 $user = User::query()->create([
-                    'name' => $validated['name'],
-                    'email' => $validated['email'],
-                    'phone' => $validated['phone'],
-                    'avatar_path' => $avatarPath,
-                    'password' => Hash::make($validated['password']),
-                    'locale' => $validated['locale'] ?? null,
-                    'is_active' => true,
-                    'is_superadmin' => false,
+                    'name'              => $validated['name'],
+                    'email'             => $validated['email'],
+                    'phone'             => $validated['phone'],
+                    'avatar_path'       => $avatarPath,
+                    'password'          => Hash::make($validated['password']),
+                    'locale'            => $validated['locale'] ?? null,
+                    'is_active'         => true,
+                    'is_superadmin'     => false,
+                    'email_verified_at' => now(), // admin-created members skip OTP
                 ]);
             } else {
                 $userPayload = [
@@ -219,7 +220,7 @@ class MemberController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Member created successfully. Password setup has been triggered.',
+            'message' => 'Member created successfully.',
             'data' => [
                 'member' => MemberResource::make($member)->resolve(),
             ],

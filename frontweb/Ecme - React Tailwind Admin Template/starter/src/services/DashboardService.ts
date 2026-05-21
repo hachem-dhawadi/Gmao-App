@@ -12,7 +12,7 @@ export type PmDueSoon = {
     assigned_to: string | null; next_run_at: string | null
 }
 export type AdminManagerDashboard = {
-    work_orders: { open: number; in_progress: number; on_hold: number; overdue: number; completed_month: number }
+    work_orders: { open: number; in_progress: number; on_hold: number; overdue: number; completed_month: number; unassigned: number }
     pm: { active: number; due_week: number; due_month: number }
     assets: { total: number }
     members: { total_active: number; technicians: number }

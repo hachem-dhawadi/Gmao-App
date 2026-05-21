@@ -31,7 +31,7 @@ class DashboardController extends Controller
         // Work order counts
         $woBase = WorkOrder::query()->where('company_id', $company->id)->whereNull('deleted_at');
 
-        $woOpen            = (clone $woBase)->whereIn('status', ['open', 'in_progress'])->count();
+        $woOpen            = (clone $woBase)->where('status', 'open')->count();
         $woInProgress      = (clone $woBase)->where('status', 'in_progress')->count();
         $woOnHold          = (clone $woBase)->where('status', 'on_hold')->count();
         $woOverdue         = (clone $woBase)
@@ -42,6 +42,10 @@ class DashboardController extends Controller
         $woCompletedMonth  = (clone $woBase)
             ->where('status', 'completed')
             ->whereBetween('closed_at', [$startOfMonth, $now])
+            ->count();
+        $woUnassigned      = (clone $woBase)
+            ->whereIn('status', ['open', 'in_progress'])
+            ->doesntHave('assignedMembers')
             ->count();
 
         // PM counts
@@ -115,6 +119,7 @@ class DashboardController extends Controller
                     'on_hold'          => $woOnHold,
                     'overdue'          => $woOverdue,
                     'completed_month'  => $woCompletedMonth,
+                    'unassigned'       => $woUnassigned,
                 ],
                 'pm' => [
                     'active'      => $pmActive,

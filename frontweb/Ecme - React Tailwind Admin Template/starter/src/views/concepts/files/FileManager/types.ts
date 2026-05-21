@@ -50,6 +50,7 @@ export type GetFileListResponse = {
 export type BaseFileItemProps = {
     name?: string
     fileType?: string
+    srcUrl?: string
     size?: number
     loading?: boolean
     onClick?: () => void

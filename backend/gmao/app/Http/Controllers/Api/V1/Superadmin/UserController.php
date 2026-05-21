@@ -26,6 +26,13 @@ class UserController extends Controller
             $query->withTrashed();
         }
 
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search): void {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
         $users = $query->paginate($perPage);
 
         return response()->json([
@@ -45,7 +52,7 @@ class UserController extends Controller
         $user = User::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'phone' => $validated['phone'] ?? null,
             'avatar_path' => $avatarPath,
             'password' => $validated['password'],
             'locale' => $validated['locale'] ?? null,

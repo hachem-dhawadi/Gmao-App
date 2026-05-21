@@ -1,14 +1,17 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Avatar from '@/components/ui/Avatar'
 import Tag from '@/components/ui/Tag'
 import Tooltip from '@/components/ui/Tooltip'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import DataTable from '@/components/shared/DataTable'
 import useCustomerList from '../hooks/useCustomerList'
 import { Link, useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPencil, TbEye } from 'react-icons/tb'
+import { TbPencil, TbEye, TbTrash, TbLogin } from 'react-icons/tb'
+import { apiDeleteCompany } from '@/services/CompaniesService'
+import { useCompanySwitchStore } from '@/store/companySwitchStore'
 import type { OnSortParam, ColumnDef, Row } from '@/components/shared/DataTable'
 import type { Customer } from '../types'
 import type { TableQueries } from '@/@types/common'
@@ -38,36 +41,49 @@ const LegalNameColumn = ({ row }: { row: Customer }) => {
 const ActionColumn = ({
     onEdit,
     onViewDetail,
+    onDelete,
+    onEnter,
 }: {
     onEdit: () => void
     onViewDetail: () => void
-}) => {
-    return (
-        <div className="flex items-center gap-3">
-            <Tooltip title="Edit">
-                <div
-                    className="text-xl cursor-pointer select-none font-semibold"
-                    role="button"
-                    onClick={onEdit}
-                >
-                    <TbPencil />
-                </div>
-            </Tooltip>
-            <Tooltip title="View">
-                <div
-                    className="text-xl cursor-pointer select-none font-semibold"
-                    role="button"
-                    onClick={onViewDetail}
-                >
-                    <TbEye />
-                </div>
-            </Tooltip>
-        </div>
-    )
-}
+    onDelete: () => void
+    onEnter: () => void
+}) => (
+    <div className="flex items-center gap-3">
+        <Tooltip title="Enter company">
+            <div
+                className="text-xl cursor-pointer select-none font-semibold text-amber-500 hover:text-amber-600"
+                role="button"
+                onClick={onEnter}
+            >
+                <TbLogin />
+            </div>
+        </Tooltip>
+        <Tooltip title="Edit">
+            <div className="text-xl cursor-pointer select-none font-semibold" role="button" onClick={onEdit}>
+                <TbPencil />
+            </div>
+        </Tooltip>
+        <Tooltip title="View">
+            <div className="text-xl cursor-pointer select-none font-semibold" role="button" onClick={onViewDetail}>
+                <TbEye />
+            </div>
+        </Tooltip>
+        <Tooltip title="Delete">
+            <div
+                className="text-xl cursor-pointer select-none font-semibold text-red-500 hover:text-red-600"
+                role="button"
+                onClick={onDelete}
+            >
+                <TbTrash />
+            </div>
+        </Tooltip>
+    </div>
+)
 
 const CustomerListTable = () => {
     const navigate = useNavigate()
+    const { enter } = useCompanySwitchStore()
 
     const {
         customerList,
@@ -78,30 +94,44 @@ const CustomerListTable = () => {
         setSelectAllCustomer,
         setSelectedCustomer,
         selectedCustomer,
+        mutate,
     } = useCustomerList()
 
-    const handleEdit = (customer: Customer) => {
-        if (!customer.id) {
-            toast.push(
-                <Notification type="danger">Invalid company id.</Notification>,
-                { placement: 'top-center' },
-            )
-            return
-        }
+    const [deleteTarget, setDeleteTarget]   = useState<Customer | null>(null)
+    const [deleteLoading, setDeleteLoading] = useState(false)
 
+    const handleEdit = (customer: Customer) => {
         navigate(`/concepts/company/company-edit/${customer.id}`)
     }
 
     const handleViewDetails = (customer: Customer) => {
-        if (!customer.id) {
+        navigate(`/concepts/company/company-details/${customer.id}`)
+    }
+
+    const handleEnterCompany = (customer: Customer) => {
+        enter({ id: customer.id, name: customer.name })
+        navigate('/dashboard')
+    }
+
+    const handleConfirmDelete = async () => {
+        if (!deleteTarget) return
+        setDeleteLoading(true)
+        try {
+            await apiDeleteCompany(deleteTarget.id)
             toast.push(
-                <Notification type="danger">Invalid company id.</Notification>,
+                <Notification type="success">Company deleted.</Notification>,
                 { placement: 'top-center' },
             )
-            return
+            setDeleteTarget(null)
+            await mutate()
+        } catch {
+            toast.push(
+                <Notification type="danger">Failed to delete company.</Notification>,
+                { placement: 'top-center' },
+            )
+        } finally {
+            setDeleteLoading(false)
         }
-
-        navigate(`/concepts/company/company-details/${customer.id}`)
     }
 
     const columns: ColumnDef<Customer>[] = useMemo(
@@ -154,9 +184,9 @@ const CustomerListTable = () => {
                 cell: (props) => (
                     <ActionColumn
                         onEdit={() => handleEdit(props.row.original)}
-                        onViewDetail={() =>
-                            handleViewDetails(props.row.original)
-                        }
+                        onViewDetail={() => handleViewDetails(props.row.original)}
+                        onDelete={() => setDeleteTarget(props.row.original)}
+                        onEnter={() => handleEnterCompany(props.row.original)}
                     />
                 ),
             },
@@ -205,6 +235,7 @@ const CustomerListTable = () => {
     }
 
     return (
+        <>
         <DataTable
             selectable
             columns={columns}
@@ -227,6 +258,23 @@ const CustomerListTable = () => {
             onCheckBoxChange={handleRowSelect}
             onIndeterminateCheckBoxChange={handleAllRowSelect}
         />
+
+        <ConfirmDialog
+            isOpen={!!deleteTarget}
+            type="danger"
+            title="Delete company"
+            onClose={() => setDeleteTarget(null)}
+            onRequestClose={() => setDeleteTarget(null)}
+            onCancel={() => setDeleteTarget(null)}
+            onConfirm={handleConfirmDelete}
+            confirmButtonProps={{ loading: deleteLoading }}
+        >
+            <p>
+                Are you sure you want to delete{' '}
+                <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+            </p>
+        </ConfirmDialog>
+        </>
     )
 }
 

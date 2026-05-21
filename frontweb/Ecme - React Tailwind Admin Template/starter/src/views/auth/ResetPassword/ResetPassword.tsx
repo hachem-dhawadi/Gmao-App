@@ -4,7 +4,7 @@ import Button from '@/components/ui/Button'
 import ActionLink from '@/components/shared/ActionLink'
 import ResetPasswordForm from './components/ResetPasswordForm'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 type ResetPasswordProps = {
     signInUrl?: string
@@ -14,10 +14,12 @@ export const ResetPasswordBase = ({
     signInUrl = '/sign-in',
 }: ResetPasswordProps) => {
     const [resetComplete, setResetComplete] = useState(false)
-
     const [message, setMessage] = useTimeOutMessage()
-
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+
+    const token = searchParams.get('token') ?? ''
+    const email = searchParams.get('email') ?? ''
 
     const handleContinue = () => {
         navigate(signInUrl)
@@ -37,11 +39,16 @@ export const ResetPasswordBase = ({
                     <>
                         <h3 className="mb-1">Set new password</h3>
                         <p className="font-semibold heading-text">
-                            Your new password must different to previos password
+                            Your new password must be different from your previous password
                         </p>
                     </>
                 )}
             </div>
+            {(!token || !email) && !resetComplete && (
+                <Alert showIcon className="mb-4" type="danger">
+                    Invalid reset link. Please request a new password reset.
+                </Alert>
+            )}
             {message && (
                 <Alert showIcon className="mb-4" type="danger">
                     <span className="break-all">{message}</span>
@@ -51,6 +58,8 @@ export const ResetPasswordBase = ({
                 resetComplete={resetComplete}
                 setMessage={setMessage}
                 setResetComplete={setResetComplete}
+                email={email}
+                token={token}
             >
                 <Button
                     block
@@ -58,7 +67,7 @@ export const ResetPasswordBase = ({
                     type="button"
                     onClick={handleContinue}
                 >
-                    Continue
+                    Continue to sign in
                 </Button>
             </ResetPasswordForm>
             <div className="mt-4 text-center">

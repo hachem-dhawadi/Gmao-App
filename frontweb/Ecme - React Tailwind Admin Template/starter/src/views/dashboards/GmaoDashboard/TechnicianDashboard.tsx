@@ -30,6 +30,8 @@ import {
     TbArrowUp,
     TbArrowDown,
     TbMinus,
+    TbCalendarTime,
+    TbCalendarStats,
 } from 'react-icons/tb'
 import type { ReactNode } from 'react'
 
@@ -120,7 +122,7 @@ const TechnicianDashboard = () => {
     const navigate = useNavigate()
     const [woView, setWoView] = useState<'all' | 'active' | 'completed'>('all')
 
-    const { data, isLoading, mutate } = useSWR(
+    const { data, isLoading, error, mutate } = useSWR(
         '/dashboard/my',
         () => apiGetTechnicianDashboard(),
         { revalidateOnFocus: false },
@@ -215,7 +217,20 @@ const TechnicianDashboard = () => {
         }
     }
 
+    const hasChartData = chartMonths.length > 0
+
     // ─────────────────────────────────────────────────────────────────────────
+
+    if (error) {
+        return (
+            <Container>
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                    <p className="text-lg font-semibold text-red-500">Dashboard failed to load</p>
+                    <p className="text-sm text-gray-500">{error?.response?.data?.message || error?.message || 'Unknown error'}</p>
+                </div>
+            </Container>
+        )
+    }
 
     return (
         <Loading loading={isLoading}>
@@ -263,6 +278,64 @@ const TechnicianDashboard = () => {
                             </div>
                         </Card>
 
+                        {/* ── PM Summary Card ────────────────────────────────── */}
+                        <Card>
+                            <div className="flex items-center justify-between mb-4">
+                                <h4>My Preventive Maintenance</h4>
+                                <Button size="sm" variant="solid" onClick={() => navigate('/concepts/pm/pm-list')}>
+                                    View all
+                                </Button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="rounded-2xl p-4 bg-amber-50 dark:bg-amber-500/10 flex items-center gap-4">
+                                    <div className="flex items-center justify-center h-12 w-12 rounded-full bg-amber-200 dark:bg-amber-500/30 text-gray-900 text-2xl flex-shrink-0">
+                                        <TbCalendarTime />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-500">Due This Week</p>
+                                        <h3 className="text-gray-900 dark:text-white">{d.my_pm?.due_week ?? 0}</h3>
+                                    </div>
+                                </div>
+                                <div className="rounded-2xl p-4 bg-sky-50 dark:bg-sky-500/10 flex items-center gap-4">
+                                    <div className="flex items-center justify-center h-12 w-12 rounded-full bg-sky-200 dark:bg-sky-500/30 text-gray-900 text-2xl flex-shrink-0">
+                                        <TbCalendarStats />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-500">Due This Month</p>
+                                        <h3 className="text-gray-900 dark:text-white">{d.my_pm?.due_month ?? 0}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            {d.my_pm_due_soon && d.my_pm_due_soon.length > 0 ? (
+                                <div className="flex flex-col gap-3">
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Upcoming</p>
+                                    {d.my_pm_due_soon.map((pm) => (
+                                        <div key={pm.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-purple-100 dark:bg-purple-500/20 text-gray-900 flex-shrink-0">
+                                                    <TbCalendarTime className="text-purple-500" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm heading-text truncate max-w-[160px]">{pm.name}</p>
+                                                    <p className="text-xs text-gray-400">{pm.code}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="text-sm font-semibold heading-text">
+                                                    {pm.next_run_at ? dayjs(pm.next_run_at).format('MMM D') : '—'}
+                                                </p>
+                                                <p className="text-xs text-gray-400">
+                                                    {pm.next_run_at ? dayjs(pm.next_run_at).format('YYYY') : ''}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-gray-400 text-center py-4">No PM plans due soon</p>
+                            )}
+                        </Card>
+
                         {/* ── Charts row ─────────────────────────────────────── */}
                         <div className="grid grid-cols-1 xl:grid-cols-3 gap-y-4 xl:gap-x-4">
 
@@ -285,6 +358,11 @@ const TechnicianDashboard = () => {
                                         </Segment>
                                     </div>
                                     <div className="mt-6">
+                                        {!hasChartData ? (
+                                            <div className="flex items-center justify-center h-[450px] text-gray-400 text-sm">
+                                                No performance data yet
+                                            </div>
+                                        ) : (
                                         <ApexChart
                                             key={woView}
                                             options={{
@@ -351,6 +429,7 @@ const TechnicianDashboard = () => {
                                             series={chartSeries}
                                             height={450}
                                         />
+                                        )}
                                     </div>
                                 </Card>
                             </div>

@@ -1,4 +1,4 @@
-import { useState, Suspense, lazy } from 'react'
+import { useState, Suspense, lazy, useMemo } from 'react'
 import classNames from 'classnames'
 import Drawer from '@/components/ui/Drawer'
 import NavToggle from '@/components/shared/NavToggle'
@@ -9,6 +9,7 @@ import appConfig from '@/configs/app.config'
 import { useThemeStore } from '@/store/themeStore'
 import { useRouteKeyStore } from '@/store/routeKeyStore'
 import { useSessionUser } from '@/store/authStore'
+import { useCompanySwitchStore } from '@/store/companySwitchStore'
 
 const VerticalMenuContent = lazy(
     () => import('@/components/template/VerticalMenuContent'),
@@ -43,6 +44,19 @@ const MobileNav = ({
     const currentRouteKey = useRouteKeyStore((state) => state.currentRouteKey)
 
     const userAuthority = useSessionUser((state) => state.user.authority)
+    const activeCompany = useCompanySwitchStore((s) => s.activeCompany)
+
+    const filteredNav = useMemo(() => {
+        const isSuperadmin = userAuthority?.includes('superadmin')
+        if (!isSuperadmin || activeCompany) return navigationConfig
+        return navigationConfig.filter(
+            (item) =>
+                item.key === 'superadmin' ||
+                item.key === 'dashboard' ||
+                item.key === 'workspace' ||
+                item.key === 'account',
+        )
+    }, [userAuthority, activeCompany])
 
     return (
         <>
@@ -62,7 +76,7 @@ const MobileNav = ({
                     {isOpen && (
                         <VerticalMenuContent
                             collapsed={false}
-                            navigationTree={navigationConfig}
+                            navigationTree={filteredNav}
                             routeKey={currentRouteKey}
                             userAuthority={userAuthority as string[]}
                             direction={direction}

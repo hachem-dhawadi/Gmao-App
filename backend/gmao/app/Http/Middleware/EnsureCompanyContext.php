@@ -30,6 +30,23 @@ class EnsureCompanyContext
             ], 422);
         }
 
+        // Superadmin bypasses membership check — load company directly
+        if ($user->is_superadmin) {
+            $company = \App\Models\Company::find((int) $companyId);
+
+            if (! $company) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Company not found.',
+                ], 404);
+            }
+
+            $request->attributes->set('currentCompany', $company);
+            $request->attributes->set('currentMember', null);
+
+            return $next($request);
+        }
+
         $member = Member::query()
             ->with('company')
             ->where('company_id', (int) $companyId)

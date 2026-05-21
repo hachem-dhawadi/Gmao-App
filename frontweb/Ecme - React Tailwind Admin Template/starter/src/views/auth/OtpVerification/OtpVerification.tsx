@@ -1,33 +1,61 @@
+import { useState } from 'react'
 import Alert from '@/components/ui/Alert'
 import OtpVerificationForm from './components/OtpVerificationForm'
-import sleep from '@/utils/sleep'
 import useTimeOutMessage from '@/utils/hooks/useTimeOutMessage'
+import { apiSendOtp } from '@/services/AuthService'
+import { useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/auth'
 
 export const OtpVerificationBase = () => {
     const [otpVerified, setOtpVerified] = useTimeOutMessage()
     const [otpResend, setOtpResend] = useTimeOutMessage()
     const [message, setMessage] = useTimeOutMessage()
+    const [resending, setResending] = useState(false)
+
+    const { completePendingSignIn } = useAuth()
+    const [searchParams] = useSearchParams()
+    const email = searchParams.get('email') ?? ''
 
     const handleResendOtp = async () => {
+        if (!email) return
+        setResending(true)
         try {
-            /** simulate api call with sleep */
-            await sleep(500)
-            setOtpResend('We have sent you One Time Password.')
-        } catch (errors) {
-            setMessage?.(
-                typeof errors === 'string' ? errors : 'Some error occured!',
-            )
+            await apiSendOtp(email)
+            setOtpResend('A new verification code has been sent to your email.')
+        } catch (error: unknown) {
+            const msg =
+                (error as { response?: { data?: { message?: string } } })
+                    ?.response?.data?.message || 'Failed to resend code.'
+            setMessage(msg)
+        } finally {
+            setResending(false)
         }
+    }
+
+    const handleVerified = (msg: string) => {
+        setOtpVerified(msg)
+        // Complete sign-in with the pending token, then navigate to company setup
+        setTimeout(() => {
+            completePendingSignIn()
+        }, 1500)
     }
 
     return (
         <div>
             <div className="mb-8">
-                <h3 className="mb-2">OTP Verification</h3>
+                <h3 className="mb-2">Verify your email</h3>
                 <p className="font-semibold heading-text">
-                    We have sent you One Time Password to your email.
+                    We sent a 6-digit code to{' '}
+                    <span className="text-primary">{email || 'your email'}</span>.
+                    Enter it below to continue.
                 </p>
             </div>
+
+            {!email && (
+                <Alert showIcon className="mb-4" type="danger">
+                    Invalid verification link. Please register again.
+                </Alert>
+            )}
             {message && (
                 <Alert showIcon className="mb-4" type="danger">
                     <span className="break-all">{message}</span>
@@ -43,17 +71,23 @@ export const OtpVerificationBase = () => {
                     <span className="break-all">{otpVerified}</span>
                 </Alert>
             )}
-            <OtpVerificationForm
-                setMessage={setMessage}
-                setOtpVerified={setOtpVerified}
-            />
+
+            {email && (
+                <OtpVerificationForm
+                    email={email}
+                    setMessage={setMessage}
+                    setOtpVerified={handleVerified}
+                />
+            )}
+
             <div className="mt-4 text-center">
-                <span className="font-semibold">Din&apos;t receive OTP? </span>
+                <span className="font-semibold">Didn&apos;t receive the code? </span>
                 <button
                     className="heading-text font-bold underline"
                     onClick={handleResendOtp}
+                    disabled={resending}
                 >
-                    Resend OTP
+                    {resending ? 'Sending...' : 'Resend code'}
                 </button>
             </div>
         </div>

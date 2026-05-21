@@ -26,6 +26,12 @@ const authRoute: Routes = [
         component: lazy(() => import('@/views/auth/ResetPassword')),
         authority: [],
     },
+    {
+        key: 'otpVerification',
+        path: `/otp-verification`,
+        component: lazy(() => import('@/views/auth/OtpVerification')),
+        authority: [],
+    },
 ]
 
 export default authRoute

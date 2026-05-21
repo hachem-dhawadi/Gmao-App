@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
+use App\Http\Controllers\Api\V1\Auth\OtpController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\V1\Companies\ApproveCompanyController;
 use App\Http\Controllers\Api\V1\Companies\OwnerCompanyController;
 use App\Http\Controllers\Api\V1\HealthController;
@@ -34,6 +37,10 @@ Route::prefix('v1')->group(function (): void {
     Route::prefix('auth')->group(function (): void {
         Route::post('/register', RegisterController::class);
         Route::post('/login', LoginController::class);
+        Route::post('/forgot-password', ForgotPasswordController::class);
+        Route::post('/reset-password', ResetPasswordController::class);
+        Route::post('/send-otp', [OtpController::class, 'send']);
+        Route::post('/verify-otp', [OtpController::class, 'verify']);
 
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('/logout', [LoginController::class, 'logout']);

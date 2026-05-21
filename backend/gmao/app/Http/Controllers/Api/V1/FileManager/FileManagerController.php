@@ -38,6 +38,9 @@ class FileManagerController extends Controller
             $breadcrumb[] = ['id' => (string) $dir->id, 'label' => $dir->name];
         }
 
+        // Superadmin has no member record — determine once and reuse.
+        $isSuperadmin = $member === null;
+
         // When navigating into a directory that is directly shared with this member,
         // they can see ALL files inside it (folder-level access).
         $folderSharedWithMember = $dirId && $memberId > 0
@@ -56,7 +59,9 @@ class FileManagerController extends Controller
             ->with(['createdBy', 'shares.member.user'])
             ->orderBy('name')
             ->get()
-            ->filter(function (FmDirectory $d) use ($memberId, $folderSharedWithMember) {
+            ->filter(function (FmDirectory $d) use ($memberId, $folderSharedWithMember, $isSuperadmin) {
+                // Superadmin sees all directories.
+                if ($isSuperadmin) return true;
                 // Parent folder is shared — all children are visible.
                 if ($folderSharedWithMember) return true;
                 if ($d->created_by_member_id !== null
@@ -75,15 +80,14 @@ class FileManagerController extends Controller
             })
             ->map(fn (FmDirectory $d) => $this->formatDirectory($d, $member));
 
-        // Files — owner always sees their own; others see files shared with them
-        // OR all files if the current directory is shared with them at folder level.
+        // Files — superadmin sees all company files; others see their own + shared.
         $files = FmFile::query()
             ->where('company_id', $company->id)
             ->where('fm_directory_id', $dirId)
-            ->when(! $folderSharedWithMember, function ($q) use ($member) {
+            ->when(! $isSuperadmin && ! $folderSharedWithMember, function ($q) use ($member) {
                 $q->where(function ($q2) use ($member) {
-                    $q2->where('uploaded_by_member_id', $member?->id)
-                       ->orWhereHas('shares', fn ($q3) => $q3->where('member_id', $member?->id));
+                    $q2->where('uploaded_by_member_id', $member->id)
+                       ->orWhereHas('shares', fn ($q3) => $q3->where('member_id', $member->id));
                 });
             })
             ->with(['uploadedBy', 'shares.member.user'])
@@ -419,11 +423,15 @@ class FileManagerController extends Controller
             ];
         })->values()->all();
 
+        $fileType = $this->resolveFileType($file->mime_type, $file->original_name);
+        $isImage  = in_array($fileType, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'avif'], true)
+            || str_starts_with($file->mime_type, 'image/');
+
         return [
             'id'         => (string) $file->id,
             'name'       => $file->original_name,
-            'fileType'   => $this->resolveFileType($file->mime_type, $file->original_name),
-            'srcUrl'     => '',
+            'fileType'   => $fileType,
+            'srcUrl'     => $isImage ? "/file-manager/files/{$file->id}/download" : '',
             'size'       => $file->size_bytes,
             'author'     => [
                 'name'  => $author?->name ?? 'Unknown',
@@ -454,15 +462,21 @@ class FileManagerController extends Controller
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'doc',
             'application/vnd.ms-powerpoint'                                            => 'ppt',
             'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'ppt',
-            'image/jpeg'                                                               => 'image/jpeg',
-            'image/jpg'                                                                => 'image/jpeg',
+            'image/jpeg'                                                               => 'jpg',
+            'image/jpg'                                                                => 'jpg',
             'image/png'                                                                => 'png',
             'image/gif'                                                                => 'gif',
             'image/webp'                                                               => 'webp',
+            'image/svg+xml'                                                            => 'svg',
+            'image/bmp'                                                                => 'bmp',
+            'image/tiff'                                                               => 'tiff',
+            'image/avif'                                                               => 'avif',
             'text/plain'                                                               => 'txt',
             'text/csv'                                                                 => 'csv',
             'application/zip'                                                          => 'zip',
             'application/x-rar-compressed'                                             => 'zip',
+            'application/x-7z-compressed'                                              => 'zip',
+            'application/x-tar'                                                        => 'zip',
         ];
 
         if (isset($map[$mimeType])) {

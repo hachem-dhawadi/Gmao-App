@@ -58,6 +58,7 @@ const FileList = (props: FileListProps) => {
                     <FileSegment
                         key={file.id}
                         fileType={file.fileType}
+                        srcUrl={file.srcUrl || undefined}
                         size={file.size}
                         name={file.name}
                         onClick={() => onFileClick(file.id)}
@@ -99,6 +100,7 @@ const FileList = (props: FileListProps) => {
                         <FileRow
                             key={file.id}
                             fileType={file.fileType}
+                            srcUrl={file.srcUrl || undefined}
                             size={file.size}
                             name={file.name}
                             onClick={() => onFileClick(file.id)}

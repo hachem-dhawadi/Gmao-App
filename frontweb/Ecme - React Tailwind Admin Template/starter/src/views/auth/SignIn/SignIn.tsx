@@ -7,11 +7,13 @@ import { useThemeStore } from '@/store/themeStore'
 
 type SignInProps = {
     signUpUrl?: string
+    forgotPasswordUrl?: string
     disableSubmit?: boolean
 }
 
 export const SignInBase = ({
     signUpUrl = '/sign-up',
+    forgotPasswordUrl = '/forgot-password',
     disableSubmit,
 }: SignInProps) => {
     const [message, setMessage] = useTimeOutMessage()
@@ -40,15 +42,24 @@ export const SignInBase = ({
                 </Alert>
             )}
             <SignInForm disableSubmit={disableSubmit} setMessage={setMessage} />
+            <div className="mt-4 text-center">
+                <ActionLink
+                    to={forgotPasswordUrl}
+                    className="heading-text font-bold"
+                    themeColor={false}
+                >
+                    Forgot password?
+                </ActionLink>
+            </div>
             <div>
-                <div className="mt-6 text-center">
+                <div className="mt-4 text-center">
                     <span>{`Need to register a company?`} </span>
                     <ActionLink
                         to={signUpUrl}
                         className="heading-text font-bold"
                         themeColor={false}
                     >
-                        Create owner account
+                        Create account
                     </ActionLink>
                 </div>
             </div>

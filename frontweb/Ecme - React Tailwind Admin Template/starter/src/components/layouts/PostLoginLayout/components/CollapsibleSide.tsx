@@ -8,6 +8,7 @@ import Notification from '@/components/template/Notification'
 import UserProfileDropdown from '@/components//template/UserProfileDropdown'
 import SidePanel from '@/components//template/SidePanel'
 import LayoutBase from '@/components//template/LayoutBase'
+import CompanySwitchBanner from '@/components/template/CompanySwitchBanner'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { LAYOUT_COLLAPSIBLE_SIDE } from '@/constants/theme.constant'
 import type { CommonProps } from '@/@types/common'
@@ -42,6 +43,7 @@ const CollapsibleSide = ({ children }: CommonProps) => {
                         }
                     />
                     <div className="h-full flex flex-auto flex-col">
+                        <CompanySwitchBanner />
                         {children}
                     </div>
                 </div>

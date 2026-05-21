@@ -452,6 +452,13 @@ export const protectedRoutes: Routes = [
         authority: [SUPERADMIN],
     },
     {
+        key: 'superadmin.users',
+        path: '/superadmin/users',
+        component: lazy(() => import('@/views/concepts/superadmin/UserList')),
+        authority: [SUPERADMIN],
+        meta: { header: { title: 'All Users' } },
+    },
+    {
         key: 'concepts.company.companyList',
         path: '/concepts/company/company-list',
         component: lazy(() => import('@/views/concepts/company/CompanyList')),

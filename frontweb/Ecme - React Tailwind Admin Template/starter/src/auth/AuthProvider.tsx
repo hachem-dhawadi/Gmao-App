@@ -22,6 +22,12 @@ import type {
 import type { ReactNode, Ref } from 'react'
 import type { NavigateFunction } from 'react-router-dom'
 
+type PendingAuth = {
+    token: string
+    user: User
+    payload: AuthPayload
+}
+
 type AuthProviderProps = { children: ReactNode }
 
 export type IsolatedNavigatorRef = {
@@ -125,6 +131,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     const authenticated = Boolean(token && signedIn)
 
     const navigatorRef = useRef<IsolatedNavigatorRef>(null)
+    const pendingAuthRef = useRef<PendingAuth | null>(null)
 
     const redirect = (signedInUser?: User, payload?: AuthPayload) => {
         const search = window.location.search
@@ -204,13 +211,20 @@ function AuthProvider({ children }: AuthProviderProps) {
                 message: resp.message,
             }
         } catch (errors: unknown) {
-            const message =
-                (errors as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message || String(errors)
+            const errData = (errors as { response?: { data?: { message?: string; requires_email_verification?: boolean; email?: string } } })
+                ?.response?.data
+
+            // Unverified email — redirect to OTP page (no token yet)
+            if (errData?.requires_email_verification && errData?.email) {
+                navigatorRef.current?.navigate(
+                    `/otp-verification?email=${encodeURIComponent(errData.email)}`,
+                )
+                return { status: 'failed', message: errData.message || 'Email not verified' }
+            }
 
             return {
                 status: 'failed',
-                message,
+                message: errData?.message || String(errors),
             }
         }
     }
@@ -228,10 +242,24 @@ function AuthProvider({ children }: AuthProviderProps) {
 
             const mappedUser = mapBackendUser(resp.data.user, resp.data)
 
-            handleSignIn({ accessToken: resp.data.token }, mappedUser)
-            localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
-            localStorage.setItem(OWNER_COMPANY_TAB_KEY, '1')
-            redirect(mappedUser, resp.data)
+            if (resp.data.requires_otp) {
+                // Store auth data without signing in — user must verify email first.
+                // Signing in now would set authenticated=true and PublicRoute would
+                // bounce the user away from /otp-verification back to the dashboard.
+                pendingAuthRef.current = {
+                    token: resp.data.token,
+                    user: mappedUser,
+                    payload: resp.data,
+                }
+                navigatorRef.current?.navigate(
+                    `/otp-verification?email=${encodeURIComponent(resp.data.user.email)}`,
+                )
+            } else {
+                handleSignIn({ accessToken: resp.data.token }, mappedUser)
+                localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+                localStorage.setItem(OWNER_COMPANY_TAB_KEY, '1')
+                redirect(mappedUser, resp.data)
+            }
 
             return {
                 status: 'success',
@@ -247,6 +275,16 @@ function AuthProvider({ children }: AuthProviderProps) {
                 message,
             }
         }
+    }
+
+    const completePendingSignIn = () => {
+        const pending = pendingAuthRef.current
+        if (!pending) return
+        pendingAuthRef.current = null
+        handleSignIn({ accessToken: pending.token }, pending.user)
+        localStorage.removeItem(CURRENT_COMPANY_ID_KEY)
+        localStorage.setItem(OWNER_COMPANY_TAB_KEY, '1')
+        navigatorRef.current?.navigate('/concepts/account/settings?view=company')
     }
 
     const signOut = async () => {
@@ -276,6 +314,7 @@ function AuthProvider({ children }: AuthProviderProps) {
                 signUp,
                 signOut,
                 oAuthSignIn,
+                completePendingSignIn,
             }}
         >
             {children}

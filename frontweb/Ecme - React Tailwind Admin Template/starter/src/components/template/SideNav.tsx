@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import classNames from '@/utils/classNames'
 import ScrollBar from '@/components/ui/ScrollBar'
 import Logo from '@/components/template/Logo'
@@ -5,6 +6,7 @@ import VerticalMenuContent from '@/components/template/VerticalMenuContent'
 import { useThemeStore } from '@/store/themeStore'
 import { useSessionUser } from '@/store/authStore'
 import { useRouteKeyStore } from '@/store/routeKeyStore'
+import { useCompanySwitchStore } from '@/store/companySwitchStore'
 import navigationConfig from '@/configs/navigation.config'
 import appConfig from '@/configs/app.config'
 import { Link } from 'react-router-dom'
@@ -49,8 +51,21 @@ const SideNav = ({
     )
 
     const currentRouteKey = useRouteKeyStore((state) => state.currentRouteKey)
-
     const userAuthority = useSessionUser((state) => state.user.authority)
+    const activeCompany = useCompanySwitchStore((s) => s.activeCompany)
+
+    // Superadmin without an active company context only sees Administration + Dashboard
+    const filteredNav = useMemo(() => {
+        const isSuperadmin = userAuthority?.includes('superadmin')
+        if (!isSuperadmin || activeCompany) return navigationConfig
+        return navigationConfig.filter(
+            (item) =>
+                item.key === 'superadmin' ||
+                item.key === 'dashboard' ||
+                item.key === 'workspace' ||
+                item.key === 'account',
+        )
+    }, [userAuthority, activeCompany])
 
     return (
         <div
@@ -83,7 +98,7 @@ const SideNav = ({
                 <ScrollBar style={{ height: '100%' }} direction={direction}>
                     <VerticalMenuContent
                         collapsed={sideNavCollapse}
-                        navigationTree={navigationConfig}
+                        navigationTree={filteredNav}
                         routeKey={currentRouteKey}
                         direction={direction}
                         translationSetup={translationSetup}

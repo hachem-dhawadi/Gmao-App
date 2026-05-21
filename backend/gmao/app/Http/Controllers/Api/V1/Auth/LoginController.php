@@ -38,6 +38,16 @@ class LoginController extends Controller
             ], 403);
         }
 
+        // Block login if email was never verified (only affects self-registered owners, not superadmins or pre-existing users)
+        if (! $user->is_superadmin && $user->email_verified_at === null) {
+            return response()->json([
+                'success'                      => false,
+                'message'                      => 'Please verify your email before logging in.',
+                'requires_email_verification'  => true,
+                'email'                        => $user->email,
+            ], 403);
+        }
+
         $user->forceFill([
             'last_login_at' => now(),
         ])->save();
