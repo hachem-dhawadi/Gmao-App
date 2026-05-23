@@ -34,6 +34,7 @@ const PmPlanList = lazy(() => import('@/views/concepts/pm/PmPlanList/PmPlanList'
 const PmPlanCreate = lazy(() => import('@/views/concepts/pm/PmPlanCreate/PmPlanCreate'))
 const PmPlanEdit = lazy(() => import('@/views/concepts/pm/PmPlanEdit/PmPlanEdit'))
 const PmPlanDetails = lazy(() => import('@/views/concepts/pm/PmPlanDetails/PmPlanDetails'))
+const Reports = lazy(() => import('@/views/concepts/reports/Reports'))
 const RequestList = lazy(() => import('@/views/concepts/requests/RequestList'))
 const RequestCreate = lazy(() => import('@/views/concepts/requests/RequestCreate'))
 const RequestDetails = lazy(() => import('@/views/concepts/requests/RequestDetails'))
@@ -329,6 +330,12 @@ const placeholderRoutes: Routes = [
         key: 'concepts.inventory.stockMoves',
         path: '/concepts/inventory/stock-moves',
         component: StockMoveList,
+        authority: [ADMIN, MANAGER],
+    },
+    {
+        key: 'concepts.reports',
+        path: '/concepts/reports',
+        component: Reports,
         authority: [ADMIN, MANAGER],
     },
     {

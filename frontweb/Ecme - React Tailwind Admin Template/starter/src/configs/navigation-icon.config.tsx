@@ -229,6 +229,7 @@ const navigationIcon: NavigationIcons = {
     memberCreate: <PiUserPlusDuotone />,
     departments: <PiBuildingsDuotone />,
     rolesPermissions: <PiShieldPlusDuotone />,
+    reports: <PiChartBarDuotone />,
 }
 
 export default navigationIcon

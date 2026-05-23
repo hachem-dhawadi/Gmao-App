@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\V1\Superadmin\UserController as SuperadminUserContr
 use App\Http\Controllers\Api\V1\Calendar\CalendarController;
 use App\Http\Controllers\Api\V1\FileManager\FileManagerController;
 use App\Http\Controllers\Api\V1\MaintenanceRequests\MaintenanceRequestController;
+use App\Http\Controllers\Api\V1\Reports\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -219,6 +220,14 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/', [PmPlanController::class, 'store'])->middleware('permission:pm_plans.write');
         Route::patch('/{pmPlan}', [PmPlanController::class, 'update'])->middleware('permission:pm_plans.write');
         Route::delete('/{pmPlan}', [PmPlanController::class, 'destroy'])->middleware('permission:pm_plans.delete');
+    });
+
+    // ── Reports ───────────────────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('reports')->group(function (): void {
+        Route::get('/work-orders', [ReportController::class, 'workOrders'])->middleware('permission:work_orders.read');
+        Route::get('/assets',      [ReportController::class, 'assets'])->middleware('permission:assets.read');
+        Route::get('/pm',          [ReportController::class, 'pmCompliance'])->middleware('permission:pm_plans.read');
+        Route::get('/inventory',   [ReportController::class, 'inventory'])->middleware('permission:inventory.read');
     });
 
     Route::middleware(['auth:sanctum', 'superadmin'])->prefix('superadmin')->group(function (): void {

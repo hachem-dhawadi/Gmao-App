@@ -35,6 +35,16 @@ const dashboardsNavigationConfig: NavigationTree[] = [
                 authority: ['user'],
                 subMenu: [],
             },
+            {
+                key: 'concepts.reports',
+                path: `${CONCEPTS_PREFIX_PATH}/reports`,
+                title: 'Reports',
+                translateKey: 'nav.reports',
+                icon: 'reports',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, MANAGER],
+                subMenu: [],
+            },
         ],
     },
 ]
