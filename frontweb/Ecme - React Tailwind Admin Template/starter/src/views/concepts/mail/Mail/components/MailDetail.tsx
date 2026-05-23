@@ -1,38 +1,25 @@
-import { useRef } from 'react'
 import Card from '@/components/ui/Card'
 import MailDetailTitle from './MailDetailTitle'
 import MailDetailContent from './MailDetailContent'
 import MailDetailAction from './MailDetailAction'
-import isEmpty from 'lodash/isEmpty'
-import type { Mail } from '../types'
+import { useMailStore } from '../store/mailStore'
 
-type MailDetailProps = {
-    mail?: Partial<Mail>
-}
+const MailDetail = () => {
+    const { activeNotification } = useMailStore()
 
-const MailDetail = ({ mail }: MailDetailProps) => {
-    const scrollRef = useRef(null)
-
-    const hasMailSelected = !isEmpty(mail)
-    const cardHeaderProps = {
-        ...(hasMailSelected
-            ? {
-                  header: {
-                      content: <MailDetailTitle />,
-                      extra: <MailDetailAction />,
-                      className: 'bg-gray-100 dark:bg-gray-700 h-[100px]',
-                  },
-              }
-            : {}),
-    }
+    if (!activeNotification) return null
 
     return (
         <Card
             className="flex-1 h-full max-h-full dark:border-gray-700"
             bodyClass="h-full relative"
-            {...cardHeaderProps}
+            header={{
+                content: <MailDetailTitle />,
+                extra: <MailDetailAction />,
+                className: 'bg-gray-100 dark:bg-gray-700 h-[70px]',
+            }}
         >
-            <MailDetailContent ref={scrollRef} mail={mail} />
+            <MailDetailContent />
         </Card>
     )
 }

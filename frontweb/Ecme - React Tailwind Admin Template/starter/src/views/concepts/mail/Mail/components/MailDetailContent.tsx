@@ -1,99 +1,99 @@
-import IconText from '@/components/shared/IconText'
-import Avatar from '@/components/ui/Avatar'
+import Tag from '@/components/ui/Tag'
+import Button from '@/components/ui/Button'
 import ScrollBar from '@/components/ui/ScrollBar'
-import FileIcon from '@/components/view/FileIcon'
 import classNames from '@/utils/classNames'
-import isLastChild from '@/utils/isLastChild'
-import ReactHtmlParser from 'html-react-parser'
-import { HiOutlineClock } from 'react-icons/hi'
-import type { Mail, Message } from '../types'
-import type { ScrollBarRef } from '@/components/ui/ScrollBar'
-import type { PropsWithChildren, Ref } from 'react'
+import dayjs from 'dayjs'
+import { useNavigate } from 'react-router-dom'
+import { useMailStore } from '../store/mailStore'
+import { typeIconMap, typeLabelMap, typeCategoryMap, categoryColorMap } from '../constants'
+import { TbBell, TbClock, TbArrowRight } from 'react-icons/tb'
 
-type MailDetailContentProps = PropsWithChildren<{
-    mail?: Partial<Mail>
-    ref?: Ref<ScrollBarRef>
-}>
+const resolveRoute = (type: string, data: Record<string, unknown>): string | null => {
+    if (data.wo_id)   return `/concepts/work-orders/work-order-details/${data.wo_id}`
+    if (data.pm_id)   return `/concepts/pm/pm-details/${data.pm_id}`
+    if (data.po_id)   return `/concepts/purchasing/purchase-orders/${data.po_id}`
+    if (data.item_id) return `/concepts/inventory/items/item-details/${data.item_id}`
+    if (type === 'new_member') return `/concepts/customers/customer-list`
+    return null
+}
 
-const MailDetailContent = (props: MailDetailContentProps) => {
-    const { mail = {}, ref } = props
+const MailDetailContent = () => {
+    const { activeNotification } = useMailStore()
+    const navigate = useNavigate()
+
+    if (!activeNotification) return null
+
+    const n = activeNotification
+    const category = typeCategoryMap[n.type] ?? 'system'
+    const route = resolveRoute(n.type, n.data)
+
+    const dataEntries = Object.entries(n.data || {}).filter(
+        ([, v]) => v !== null && v !== undefined && v !== '',
+    )
 
     return (
-        <div className="absolute top-0 left-0 h-full w-full ">
-            <ScrollBar
-                ref={ref}
-                autoHide
-                className="overflow-y-auto h-[calc(100%-100px)]"
-            >
-                <div className="h-full px-6">
-                    {mail.message?.map((msg, index) => (
-                        <div key={msg.id}>
-                            <div
-                                className={classNames(
-                                    'py-8 ltr:pr-4 rtl:pl-4',
-                                    !isLastChild(
-                                        mail.message as Message[],
-                                        index,
-                                    ) &&
-                                        'border-b border-gray-200 dark:border-gray-700',
-                                )}
+        <div className="absolute top-0 left-0 h-full w-full">
+            <ScrollBar autoHide className="overflow-y-auto h-full">
+                <div className="px-6 py-8 max-w-2xl">
+                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                        <Tag
+                            className={classNames(
+                                'text-xs border-0 px-2 py-1 flex items-center gap-1',
+                                categoryColorMap[category] ?? categoryColorMap.system,
+                            )}
+                        >
+                            <span className="text-sm">
+                                {typeIconMap[n.type] ?? <TbBell />}
+                            </span>
+                            {typeLabelMap[n.type] ?? n.type}
+                        </Tag>
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <TbClock className="text-sm" />
+                            {dayjs(n.created_at).format('DD MMM YYYY, HH:mm')}
+                        </span>
+                        {!n.read && (
+                            <span className="text-xs font-semibold text-primary">
+                                Unread
+                            </span>
+                        )}
+                    </div>
+
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm whitespace-pre-wrap">
+                        {n.body}
+                    </p>
+
+                    {route && (
+                        <div className="mt-6">
+                            <Button
+                                size="sm"
+                                variant="solid"
+                                icon={<TbArrowRight />}
+                                onClick={() => navigate(route)}
                             >
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2">
-                                        <Avatar
-                                            shape="circle"
-                                            src={msg.avatar}
-                                        />
-                                        <div>
-                                            <div className="font-bold truncate heading-text">
-                                                {msg.name}
-                                            </div>
-                                            <div>
-                                                To:{' '}
-                                                {mail.mail?.map((to, index) => (
-                                                    <span key={to + index}>
-                                                        {to}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
+                                View in App
+                            </Button>
+                        </div>
+                    )}
+
+                    {dataEntries.length > 0 && (
+                        <div className="mt-8 border-t border-gray-100 dark:border-gray-700 pt-6">
+                            <h6 className="text-xs uppercase text-gray-400 mb-3">
+                                Details
+                            </h6>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {dataEntries.map(([key, value]) => (
+                                    <div key={key}>
+                                        <p className="text-xs text-gray-400 capitalize">
+                                            {key.replace(/_/g, ' ')}
+                                        </p>
+                                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200 break-words">
+                                            {String(value)}
+                                        </p>
                                     </div>
-                                    <IconText
-                                        icon={
-                                            <HiOutlineClock className="text-lg" />
-                                        }
-                                    >
-                                        <span className="font-semibold">
-                                            {msg.date}
-                                        </span>
-                                    </IconText>
-                                </div>
-                                <div className="mt-8">
-                                    {ReactHtmlParser(msg.content)}
-                                </div>
-                                {msg.attachment?.length > 0 && (
-                                    <div className="mt-6 inline-flex flex-wrap gap-4">
-                                        {msg.attachment.map((item) => (
-                                            <div
-                                                key={item.file}
-                                                className="min-w-full md:min-w-[230px] rounded-2xl dark:bg-gray-800 border border-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 dark:border-gray-700 py-4 px-3.5 inline-flex items-center gap-2 transition-all cursor-pointer"
-                                            >
-                                                <FileIcon type={item.type} />
-                                                <div>
-                                                    <div className="font-semibold text-gray-900 dark:text-gray-100">
-                                                        {item.file}
-                                                    </div>
-                                                    <span className="">
-                                                        {item.size}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                ))}
                             </div>
                         </div>
-                    ))}
+                    )}
                 </div>
             </ScrollBar>
         </div>

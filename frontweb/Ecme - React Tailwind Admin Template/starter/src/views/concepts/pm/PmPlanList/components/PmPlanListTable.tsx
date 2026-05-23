@@ -1,21 +1,22 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import DataTable from '@/components/shared/DataTable'
 import Tooltip from '@/components/ui/Tooltip'
 import Tag from '@/components/ui/Tag'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import Notification from '@/components/ui/Notification'
+import toast from '@/components/ui/toast'
 import usePmPlanList from '../hooks/usePmPlanList'
 import { useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPencil } from 'react-icons/tb'
+import { TbPencil, TbTrash } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { apiDeletePmPlan } from '@/services/PmService'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { PmPlan } from '@/services/PmService'
 import type { TableQueries } from '@/@types/common'
 
-const statusConfig: Record<
-    PmPlan['status'],
-    { label: string; className: string }
-> = {
+const statusConfig: Record<PmPlan['status'], { label: string; className: string }> = {
     active: {
         label: 'Active',
         className: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
@@ -30,10 +31,7 @@ const statusConfig: Record<
     },
 }
 
-const priorityConfig: Record<
-    PmPlan['priority'],
-    { label: string; className: string }
-> = {
+const priorityConfig: Record<PmPlan['priority'], { label: string; className: string }> = {
     low: {
         label: 'Low',
         className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
@@ -70,25 +68,47 @@ const NameCell = ({ plan }: { plan: PmPlan }) => {
     )
 }
 
-const ActionColumn = ({ id, canEdit }: { id: number; canEdit: boolean }) => {
+type ActionColumnProps = {
+    id: number
+    canEdit: boolean
+    canDelete: boolean
+    onDelete: (id: number) => void
+}
+
+const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) => {
     const navigate = useNavigate()
-    if (!canEdit) return null
     return (
         <div className="flex items-center justify-end gap-3">
-            <Tooltip title="Edit">
-                <div
-                    className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
-                    role="button"
-                    onClick={() => navigate(`/concepts/pm/pm-edit/${id}`)}
-                >
-                    <TbPencil />
-                </div>
-            </Tooltip>
+            {canEdit && (
+                <Tooltip title="Edit">
+                    <div
+                        className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
+                        role="button"
+                        onClick={() => navigate(`/concepts/pm/pm-edit/${id}`)}
+                    >
+                        <TbPencil />
+                    </div>
+                </Tooltip>
+            )}
+            {canDelete && (
+                <Tooltip title="Delete">
+                    <div
+                        className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
+                        role="button"
+                        onClick={() => onDelete(id)}
+                    >
+                        <TbTrash />
+                    </div>
+                </Tooltip>
+            )}
         </div>
     )
 }
 
 const PmPlanListTable = () => {
+    const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
+    const [deleting, setDeleting] = useState(false)
+
     const {
         pmPlanList,
         pmPlanListTotal,
@@ -98,10 +118,33 @@ const PmPlanListTable = () => {
         selectedPmPlans,
         setSelectedPmPlan,
         setSelectAllPmPlan,
+        mutate,
     } = usePmPlanList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canEdit = useAuthority(userAuthority, ['pm_plans.write', 'admin', 'manager'])
+    const canDelete = useAuthority(userAuthority, ['pm_plans.delete', 'admin'])
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTargetId) return
+        setDeleting(true)
+        try {
+            await apiDeletePmPlan(deleteTargetId)
+            toast.push(
+                <Notification type="success">PM plan deleted.</Notification>,
+                { placement: 'top-center' },
+            )
+            mutate()
+        } catch {
+            toast.push(
+                <Notification type="danger">Failed to delete PM plan.</Notification>,
+                { placement: 'top-center' },
+            )
+        } finally {
+            setDeleting(false)
+            setDeleteTargetId(null)
+        }
+    }
 
     const columns: ColumnDef<PmPlan>[] = useMemo(
         () => [
@@ -176,60 +219,76 @@ const PmPlanListTable = () => {
                 header: '',
                 id: 'action',
                 cell: (props) => (
-                    <ActionColumn id={props.row.original.id} canEdit={canEdit} />
+                    <ActionColumn
+                        id={props.row.original.id}
+                        canEdit={canEdit}
+                        canDelete={canDelete}
+                        onDelete={setDeleteTargetId}
+                    />
                 ),
             },
         ],
-        [canEdit],
+        [canEdit, canDelete],
     )
 
     const handleSetTableData = (data: TableQueries) => {
         setTableData(data)
-        if (selectedPmPlans.length > 0) {
-            setSelectAllPmPlan([])
-        }
+        if (selectedPmPlans.length > 0) setSelectAllPmPlan([])
     }
 
     return (
-        <DataTable
-            selectable
-            columns={columns}
-            data={pmPlanList}
-            noData={!isLoading && pmPlanList.length === 0}
-            loading={isLoading}
-            pagingData={{
-                total: pmPlanListTotal,
-                pageIndex: tableData.pageIndex as number,
-                pageSize: tableData.pageSize as number,
-            }}
-            checkboxChecked={(row) =>
-                selectedPmPlans.some((p) => p.id === row.id)
-            }
-            onPaginationChange={(page) => {
-                const d = cloneDeep(tableData)
-                d.pageIndex = page
-                handleSetTableData(d)
-            }}
-            onSelectChange={(value) => {
-                const d = cloneDeep(tableData)
-                d.pageSize = Number(value)
-                d.pageIndex = 1
-                handleSetTableData(d)
-            }}
-            onSort={(sort: OnSortParam) => {
-                const d = cloneDeep(tableData)
-                d.sort = sort
-                handleSetTableData(d)
-            }}
-            onCheckBoxChange={(checked, row) => setSelectedPmPlan(checked, row)}
-            onIndeterminateCheckBoxChange={(checked, rows: Row<PmPlan>[]) => {
-                if (checked) {
-                    setSelectAllPmPlan(rows.map((r) => r.original))
-                } else {
-                    setSelectAllPmPlan([])
-                }
-            }}
-        />
+        <>
+            <DataTable
+                selectable
+                columns={columns}
+                data={pmPlanList}
+                noData={!isLoading && pmPlanList.length === 0}
+                loading={isLoading}
+                pagingData={{
+                    total: pmPlanListTotal,
+                    pageIndex: tableData.pageIndex as number,
+                    pageSize: tableData.pageSize as number,
+                }}
+                checkboxChecked={(row) => selectedPmPlans.some((p) => p.id === row.id)}
+                onPaginationChange={(page) => {
+                    const d = cloneDeep(tableData)
+                    d.pageIndex = page
+                    handleSetTableData(d)
+                }}
+                onSelectChange={(value) => {
+                    const d = cloneDeep(tableData)
+                    d.pageSize = Number(value)
+                    d.pageIndex = 1
+                    handleSetTableData(d)
+                }}
+                onSort={(sort: OnSortParam) => {
+                    const d = cloneDeep(tableData)
+                    d.sort = sort
+                    handleSetTableData(d)
+                }}
+                onCheckBoxChange={(checked, row) => setSelectedPmPlan(checked, row)}
+                onIndeterminateCheckBoxChange={(checked, rows: Row<PmPlan>[]) => {
+                    if (checked) {
+                        setSelectAllPmPlan(rows.map((r) => r.original))
+                    } else {
+                        setSelectAllPmPlan([])
+                    }
+                }}
+            />
+
+            <ConfirmDialog
+                isOpen={deleteTargetId !== null}
+                type="danger"
+                title="Delete PM Plan"
+                onClose={() => setDeleteTargetId(null)}
+                onRequestClose={() => setDeleteTargetId(null)}
+                onCancel={() => setDeleteTargetId(null)}
+                onConfirm={handleDeleteConfirm}
+                confirmButtonProps={{ loading: deleting }}
+            >
+                <p>Are you sure you want to delete this PM plan? This action cannot be undone.</p>
+            </ConfirmDialog>
+        </>
     )
 }
 

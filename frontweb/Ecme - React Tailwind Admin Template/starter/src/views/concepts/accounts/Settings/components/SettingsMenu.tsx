@@ -10,9 +10,6 @@ import {
     TbUserSquare,
     TbBuilding,
     TbLock,
-    TbBell,
-    TbFileDollar,
-    TbRefreshDot,
 } from 'react-icons/tb'
 import type { View } from '../types'
 
@@ -48,17 +45,6 @@ export const SettingsMenu = ({ onChange }: { onChange?: () => void }) => {
                   ]
                 : []),
             { label: 'Security', value: 'security' as View, icon: <TbLock /> },
-            {
-                label: 'Notification',
-                value: 'notification' as View,
-                icon: <TbBell />,
-            },
-            { label: 'Billing', value: 'billing' as View, icon: <TbFileDollar /> },
-            {
-                label: 'Integration',
-                value: 'integration' as View,
-                icon: <TbRefreshDot />,
-            },
         ],
         [showCompanyTab],
     )

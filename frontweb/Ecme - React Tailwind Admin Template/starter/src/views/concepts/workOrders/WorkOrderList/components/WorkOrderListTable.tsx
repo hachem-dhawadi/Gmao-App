@@ -1,13 +1,17 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import DataTable from '@/components/shared/DataTable'
 import Tooltip from '@/components/ui/Tooltip'
 import Tag from '@/components/ui/Tag'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import Notification from '@/components/ui/Notification'
+import toast from '@/components/ui/toast'
 import useWorkOrderList from '../hooks/useWorkOrderList'
 import { useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPencil, TbEye } from 'react-icons/tb'
+import { TbPencil, TbEye, TbTrash } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { apiDeleteWorkOrder } from '@/services/WorkOrdersService'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { WorkOrder } from '../types'
 import type { TableQueries } from '@/@types/common'
@@ -76,7 +80,14 @@ const PriorityBadge = ({ priority }: { priority: WorkOrder['priority'] }) => {
     return <Tag className={`text-xs ${cfg.className}`}>{cfg.label}</Tag>
 }
 
-const ActionColumn = ({ id, canEdit }: { id: number; canEdit: boolean }) => {
+type ActionColumnProps = {
+    id: number
+    canEdit: boolean
+    canDelete: boolean
+    onDelete: (id: number) => void
+}
+
+const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) => {
     const navigate = useNavigate()
     return (
         <div className="flex items-center justify-end gap-3">
@@ -104,12 +115,25 @@ const ActionColumn = ({ id, canEdit }: { id: number; canEdit: boolean }) => {
                     <TbEye />
                 </div>
             </Tooltip>
+            {canDelete && (
+                <Tooltip title="Delete">
+                    <div
+                        className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
+                        role="button"
+                        onClick={() => onDelete(id)}
+                    >
+                        <TbTrash />
+                    </div>
+                </Tooltip>
+            )}
         </div>
     )
 }
 
 const WorkOrderListTable = () => {
     const navigate = useNavigate()
+    const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
+    const [deleting, setDeleting] = useState(false)
 
     const {
         workOrderList,
@@ -120,10 +144,33 @@ const WorkOrderListTable = () => {
         selectedWorkOrder,
         setSelectedWorkOrder,
         setSelectAllWorkOrder,
+        mutate,
     } = useWorkOrderList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canEdit = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
+    const canDelete = useAuthority(userAuthority, ['work_orders.delete', 'admin'])
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTargetId) return
+        setDeleting(true)
+        try {
+            await apiDeleteWorkOrder(deleteTargetId)
+            toast.push(
+                <Notification type="success">Work order deleted.</Notification>,
+                { placement: 'top-center' },
+            )
+            mutate()
+        } catch {
+            toast.push(
+                <Notification type="danger">Failed to delete work order.</Notification>,
+                { placement: 'top-center' },
+            )
+        } finally {
+            setDeleting(false)
+            setDeleteTargetId(null)
+        }
+    }
 
     const columns: ColumnDef<WorkOrder>[] = useMemo(
         () => [
@@ -210,12 +257,14 @@ const WorkOrderListTable = () => {
                     <ActionColumn
                         id={props.row.original.id}
                         canEdit={canEdit}
+                        canDelete={canDelete}
+                        onDelete={setDeleteTargetId}
                     />
                 ),
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [canEdit],
+        [canEdit, canDelete],
     )
 
     const handleSetTableData = (data: TableQueries) => {
@@ -257,26 +306,41 @@ const WorkOrderListTable = () => {
     }
 
     return (
-        <DataTable
-            selectable
-            columns={columns}
-            data={workOrderList}
-            noData={!isLoading && workOrderList.length === 0}
-            loading={isLoading}
-            pagingData={{
-                total: workOrderListTotal,
-                pageIndex: tableData.pageIndex as number,
-                pageSize: tableData.pageSize as number,
-            }}
-            checkboxChecked={(row) =>
-                selectedWorkOrder.some((w) => w.id === row.id)
-            }
-            onPaginationChange={handlePaginationChange}
-            onSelectChange={handleSelectChange}
-            onSort={handleSort}
-            onCheckBoxChange={handleRowSelect}
-            onIndeterminateCheckBoxChange={handleAllRowSelect}
-        />
+        <>
+            <DataTable
+                selectable
+                columns={columns}
+                data={workOrderList}
+                noData={!isLoading && workOrderList.length === 0}
+                loading={isLoading}
+                pagingData={{
+                    total: workOrderListTotal,
+                    pageIndex: tableData.pageIndex as number,
+                    pageSize: tableData.pageSize as number,
+                }}
+                checkboxChecked={(row) =>
+                    selectedWorkOrder.some((w) => w.id === row.id)
+                }
+                onPaginationChange={handlePaginationChange}
+                onSelectChange={handleSelectChange}
+                onSort={handleSort}
+                onCheckBoxChange={handleRowSelect}
+                onIndeterminateCheckBoxChange={handleAllRowSelect}
+            />
+
+            <ConfirmDialog
+                isOpen={deleteTargetId !== null}
+                type="danger"
+                title="Delete Work Order"
+                onClose={() => setDeleteTargetId(null)}
+                onRequestClose={() => setDeleteTargetId(null)}
+                onCancel={() => setDeleteTargetId(null)}
+                onConfirm={handleDeleteConfirm}
+                confirmButtonProps={{ loading: deleting }}
+            >
+                <p>Are you sure you want to delete this work order? This action cannot be undone.</p>
+            </ConfirmDialog>
+        </>
     )
 }
 

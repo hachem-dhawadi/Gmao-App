@@ -221,6 +221,12 @@ export async function apiReceivePurchaseOrder(
     })
 }
 
+export async function apiSendPoToSupplier(id: number | string) {
+    return ApiService.fetchDataWithAxios<{ success: boolean; message: string }>({
+        url: `/purchasing/orders/${id}/send-to-supplier`, method: 'post',
+    })
+}
+
 // ── Receipts ──────────────────────────────────────────────────────────────────
 
 export async function apiGetReceipts(params?: Record<string, unknown>) {

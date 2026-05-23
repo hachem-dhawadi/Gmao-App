@@ -74,6 +74,15 @@ export type WorkOrderAttachment = {
     created_at: string | null
 }
 
+export type WoChecklistItem = {
+    id: number
+    title: string
+    is_completed: boolean
+    completed_at: string | null
+    completed_by: string | null
+    order_index: number
+}
+
 export type WorkOrder = {
     id: number
     company_id: number
@@ -99,6 +108,7 @@ export type WorkOrder = {
     attachments: WorkOrderAttachment[] | null
     work_logs: WorkLog[] | null
     work_logs_summary: WorkLogSummary | null
+    checklist_items: WoChecklistItem[] | null
 }
 
 export type WorkOrdersListResponse = {
@@ -314,5 +324,18 @@ export async function apiRecordWoPart(
         url: `/work-orders/${workOrderId}/parts`,
         method: 'post',
         data,
+    })
+}
+
+export async function apiToggleChecklistItem(
+    workOrderId: number | string,
+    itemId: number,
+) {
+    return ApiService.fetchDataWithAxios<{
+        success: boolean
+        data: { item: Pick<WoChecklistItem, 'id' | 'is_completed' | 'completed_at' | 'completed_by'> }
+    }>({
+        url: `/work-orders/${workOrderId}/checklist/${itemId}/toggle`,
+        method: 'post',
     })
 }

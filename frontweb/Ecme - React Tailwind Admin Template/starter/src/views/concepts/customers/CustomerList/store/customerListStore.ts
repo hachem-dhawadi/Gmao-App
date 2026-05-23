@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { TableQueries } from '@/@types/common'
 import type { Customer, Filter } from '../types'
+// Filter is imported above — initialFilterData uses it directly
 
 export const initialTableData: TableQueries = {
     pageIndex: 1,
@@ -12,15 +13,8 @@ export const initialTableData: TableQueries = {
     },
 }
 
-export const initialFilterData = {
-    purchasedProducts: '',
-    purchaseChannel: [
-        'Retail Stores',
-        'Online Retailers',
-        'Resellers',
-        'Mobile Apps',
-        'Direct Sales',
-    ],
+export const initialFilterData: Filter = {
+    status: 'all',
 }
 
 export type CustomersListState = {

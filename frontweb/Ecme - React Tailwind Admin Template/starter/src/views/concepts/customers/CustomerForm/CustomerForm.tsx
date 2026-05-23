@@ -46,9 +46,7 @@ const baseSchema = z.object({
     removeAvatar: z.boolean().optional(),
     employeeCode: z.string().optional(),
     locale: z.string().optional(),
-    role: z.enum(['admin', 'hr', 'manager', 'technician', ''], {
-        errorMap: () => ({ message: 'Please select a role' }),
-    }),
+    role: z.string().optional().default(''),
     password: z.string().optional(),
     passwordConfirmation: z.string().optional(),
 })

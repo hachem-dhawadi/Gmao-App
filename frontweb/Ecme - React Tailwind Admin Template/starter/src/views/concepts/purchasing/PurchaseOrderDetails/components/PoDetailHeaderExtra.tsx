@@ -7,12 +7,13 @@ import Input from '@/components/ui/Input'
 import Dialog from '@/components/ui/Dialog'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
-import { TbPrinter, TbEdit, TbPackageImport, TbX, TbRefresh } from 'react-icons/tb'
+import { TbPrinter, TbEdit, TbPackageImport, TbX, TbRefresh, TbMail } from 'react-icons/tb'
 import {
     apiGetPurchaseOrderById,
     apiReceivePurchaseOrder,
     apiUpdatePurchaseOrder,
     apiReopenPurchaseOrder,
+    apiSendPoToSupplier,
 } from '@/services/PurchasingService'
 import { apiGetWarehousesList } from '@/services/InventoryService'
 import type { PurchaseOrder, PurchaseOrderResponse } from '@/services/PurchasingService'
@@ -33,6 +34,7 @@ const PoDetailHeaderExtra = () => {
     const [cancelling, setCancelling]   = useState(false)
     const [reopenOpen, setReopenOpen]   = useState(false)
     const [reopening,  setReopening]    = useState(false)
+    const [sending,    setSending]      = useState(false)
 
     /* Same SWR key as the main page — SWR deduplicates, no extra network request */
     const { data, mutate } = useSWR<PurchaseOrder>(
@@ -125,9 +127,23 @@ const PoDetailHeaderExtra = () => {
         }
     }
 
-    const canReceive = canEdit && data && ['ordered', 'partially_received'].includes(data.status)
-    const canCancel  = canEdit && data && ['draft', 'ordered'].includes(data.status)
-    const canReopen  = canEdit && data?.status === 'cancelled'
+    const handleSendToSupplier = async () => {
+        setSending(true)
+        try {
+            await apiSendPoToSupplier(id!)
+            toast.push(<Notification type="success">Purchase order emailed to supplier.</Notification>, { placement: 'top-center' })
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to send email.'
+            toast.push(<Notification type="danger">{msg}</Notification>, { placement: 'top-center' })
+        } finally {
+            setSending(false)
+        }
+    }
+
+    const canReceive       = canEdit && data && ['ordered', 'partially_received'].includes(data.status)
+    const canCancel        = canEdit && data && ['draft', 'ordered'].includes(data.status)
+    const canReopen        = canEdit && data?.status === 'cancelled'
+    const canSendToSupplier = canEdit && data?.status === 'ordered' && !!data?.supplier?.email
 
     return (
         <>
@@ -153,6 +169,15 @@ const PoDetailHeaderExtra = () => {
                 {canReceive && (
                     <Button icon={<TbPackageImport />} onClick={openReceive}>
                         Receive Items
+                    </Button>
+                )}
+                {canSendToSupplier && (
+                    <Button
+                        icon={<TbMail />}
+                        loading={sending}
+                        onClick={handleSendToSupplier}
+                    >
+                        Email to Supplier
                     </Button>
                 )}
                 <Button icon={<TbPrinter />} onClick={() => window.print()}>

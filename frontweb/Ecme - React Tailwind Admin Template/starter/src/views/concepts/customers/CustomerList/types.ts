@@ -45,8 +45,7 @@ export type GetCustomersListResponse = {
 }
 
 export type Filter = {
-    purchasedProducts: string
-    purchaseChannel: Array<string>
+    status: 'all' | 'active' | 'blocked'
 }
 
 export type Customer = {

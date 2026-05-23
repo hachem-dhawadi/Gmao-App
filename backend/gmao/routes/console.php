@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Run PM trigger check every hour
 Schedule::command('pm:trigger')->hourly();
+
+// Send overdue WO notifications daily at 8am
+Schedule::command('wo:notify-overdue')->dailyAt('08:00');

@@ -4,6 +4,7 @@ import Container from '@/components/shared/Container'
 import BottomStickyBar from '@/components/template/BottomStickyBar'
 import PmPlanMainSection from './PmPlanMainSection'
 import PmPlanSideSection from './PmPlanSideSection'
+import PmTasksSection from './PmTasksSection'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -30,6 +31,14 @@ const validationSchema = z.object({
         required_error: 'Interval unit is required',
     }),
     trigger_next_run_at: z.string().optional().default(''),
+    tasks: z
+        .array(
+            z.object({
+                id: z.number().optional(),
+                title: z.string().min(1, 'Task title is required'),
+            }),
+        )
+        .default([]),
 })
 
 type PmPlanFormProps = {
@@ -59,6 +68,7 @@ const PmPlanForm = ({
             trigger_interval_value: '1',
             trigger_interval_unit: 'months',
             trigger_next_run_at: '',
+            tasks: [],
             ...defaultValues,
         },
         resolver: zodResolver(validationSchema),
@@ -77,6 +87,7 @@ const PmPlanForm = ({
                 trigger_interval_value: '1',
                 trigger_interval_unit: 'months',
                 trigger_next_run_at: '',
+                tasks: [],
                 ...defaultValues,
             })
         }
@@ -93,6 +104,7 @@ const PmPlanForm = ({
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="gap-4 flex flex-col flex-auto">
                         <PmPlanMainSection control={control} errors={errors} />
+                        <PmTasksSection control={control} />
                     </div>
                     <div className="md:w-[370px] gap-4 flex flex-col">
                         <PmPlanSideSection control={control} errors={errors} />

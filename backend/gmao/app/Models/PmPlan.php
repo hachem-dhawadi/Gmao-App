@@ -44,4 +44,9 @@ class PmPlan extends Model
     {
         return $this->hasMany(PmWorkOrder::class);
     }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(PmTask::class)->orderBy('order_index');
+    }
 }

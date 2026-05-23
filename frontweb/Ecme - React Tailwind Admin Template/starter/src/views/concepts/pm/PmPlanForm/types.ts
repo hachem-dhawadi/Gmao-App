@@ -1,3 +1,8 @@
+export type PmTaskField = {
+    id?: number
+    title: string
+}
+
 export type PmPlanFormSchema = {
     name: string
     description: string
@@ -9,4 +14,5 @@ export type PmPlanFormSchema = {
     trigger_interval_value: string
     trigger_interval_unit: 'days' | 'weeks' | 'months'
     trigger_next_run_at: string
+    tasks: PmTaskField[]
 }

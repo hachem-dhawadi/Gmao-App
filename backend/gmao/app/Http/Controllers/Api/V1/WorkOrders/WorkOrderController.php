@@ -33,11 +33,21 @@ class WorkOrderController extends Controller
         $priority = $request->query('priority');
         $search   = $request->query('search');
         $myOnly   = $request->boolean('my_only');
+        $assetId  = $request->query('asset_id');
+
+        $with = ['asset', 'createdBy.user', 'assignedMembers.user'];
+        if ($assetId) {
+            $with[] = 'workLogs';
+        }
 
         $query = WorkOrder::query()
-            ->with(['asset', 'createdBy.user', 'assignedMembers.user'])
+            ->with($with)
             ->where('company_id', $currentCompany->id)
             ->orderByDesc('id');
+
+        if ($assetId) {
+            $query->where('asset_id', $assetId);
+        }
 
         if ($status && $status !== 'all') {
             $query->where('status', $status);
@@ -79,7 +89,7 @@ class WorkOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Work order not found.'], 404);
         }
 
-        $workOrder->load(['asset', 'createdBy.user', 'closedBy.user', 'assignedMembers.user', 'statusHistory.changedBy.user', 'comments.member.user', 'attachments.member.user', 'workLogs.member.user']);
+        $workOrder->load(['asset', 'createdBy.user', 'closedBy.user', 'assignedMembers.user', 'statusHistory.changedBy.user', 'comments.member.user', 'attachments.member.user', 'workLogs.member.user', 'checklistItems.completedBy.user']);
 
         return response()->json([
             'success' => true,

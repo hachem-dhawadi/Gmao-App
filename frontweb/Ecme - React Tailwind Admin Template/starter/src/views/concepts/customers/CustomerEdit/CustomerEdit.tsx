@@ -27,13 +27,12 @@ import useSWR from 'swr'
 import { mutate as globalMutate } from 'swr'
 import type { CustomerFormSchema } from '../CustomerForm'
 
-type RoleCode = CustomerFormSchema['role']
+type RoleCode = string
 
 type CustomerEditData =
     | { mode: 'superadmin'; user: SuperadminUserListItem }
     | { mode: 'owner'; member: CompanyMemberListItem }
 
-const allowedRoleCodes: RoleCode[] = ['admin', 'hr', 'manager', 'technician']
 
 const splitFullName = (fullName: string): { firstName: string; lastName: string } => {
     const parts = fullName.trim().split(/\s+/).filter(Boolean)
@@ -102,11 +101,8 @@ const buildPhone = (dialCode: string, phoneNumber: string): string => {
     return rawPhone.startsWith('+') ? `+${phoneDigits}` : phoneDigits
 }
 
-const normalizeRole = (value?: string | null): RoleCode => {
-    const lowered = (value || '').toLowerCase()
-    return allowedRoleCodes.includes(lowered as RoleCode)
-        ? (lowered as RoleCode)
-        : 'technician'
+const normalizeRole = (value?: string | null): string => {
+    return (value || '').toLowerCase()
 }
 
 const toTitleCase = (value: string): string =>

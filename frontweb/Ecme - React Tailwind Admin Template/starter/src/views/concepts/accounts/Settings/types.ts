@@ -1,10 +1,4 @@
-export type View =
-    | 'profile'
-    | 'company'
-    | 'security'
-    | 'notification'
-    | 'billing'
-    | 'integration'
+export type View = 'profile' | 'company' | 'security'
 
 export type CreditCard = {
     cardHolderName: string

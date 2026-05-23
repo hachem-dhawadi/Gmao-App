@@ -1,20 +1,22 @@
 import ApiService from './ApiService'
 
-export async function apiGetMails<T, U extends Record<string, unknown>>(
-    params: U,
-) {
+export async function apiGetNotifications<T = unknown>() {
     return ApiService.fetchDataWithAxios<T>({
-        url: '/api/mails',
+        url: '/notifications',
         method: 'get',
-        params,
     })
 }
 
-export async function apiGetMail<T, U extends Record<string, unknown>>({
-    id,
-}: U) {
+export async function apiMarkNotificationRead<T = unknown>(id: number) {
     return ApiService.fetchDataWithAxios<T>({
-        url: `/api/mails/${id}`,
-        method: 'get',
+        url: `/notifications/${id}/read`,
+        method: 'post',
+    })
+}
+
+export async function apiMarkAllNotificationsRead<T = unknown>() {
+    return ApiService.fetchDataWithAxios<T>({
+        url: '/notifications/read-all',
+        method: 'post',
     })
 }

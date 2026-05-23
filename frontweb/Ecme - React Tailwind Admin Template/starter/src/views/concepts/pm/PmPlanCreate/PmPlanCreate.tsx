@@ -35,6 +35,7 @@ const PmPlanCreate = () => {
                     interval_unit: values.trigger_interval_unit,
                     next_run_at: values.trigger_next_run_at || null,
                 },
+                tasks: values.tasks.map((t) => ({ id: t.id, title: t.title })),
             })
 
             await globalMutate(

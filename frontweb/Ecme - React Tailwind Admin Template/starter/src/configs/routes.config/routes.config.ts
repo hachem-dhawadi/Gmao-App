@@ -44,7 +44,7 @@ const EcommerceDashboard = lazy(() => import('@/views/dashboards/EcommerceDashbo
 const Calendar = lazy(() => import('@/views/concepts/calendar/Calendar'))
 const FileManager = lazy(() => import('@/views/concepts/files/FileManager'))
 const Mail = lazy(() => import('@/views/concepts/mail/Mail'))
-const Chat = lazy(() => import('@/views/concepts/chat/Chat'))
+const CustomerDetails = lazy(() => import('@/views/concepts/customers/CustomerDetails'))
 
 const placeholderRoutes: Routes = [
     {
@@ -116,7 +116,7 @@ const placeholderRoutes: Routes = [
     {
         key: 'concepts.customers.customerDetails',
         path: '/concepts/customers/customer-details/:id',
-        component: DrawerPlaceholder,
+        component: CustomerDetails,
         authority: [],
     },
     {
@@ -168,24 +168,6 @@ const placeholderRoutes: Routes = [
         authority: [],
     },
     {
-        key: 'concepts.account.activityLog',
-        path: '/concepts/account/activity-log',
-        component: DrawerPlaceholder,
-        authority: [],
-    },
-    {
-        key: 'concepts.account.rolesPermissions',
-        path: '/concepts/account/roles-permissions',
-        component: DrawerPlaceholder,
-        authority: [],
-    },
-    {
-        key: 'concepts.account.pricing',
-        path: '/concepts/account/pricing',
-        component: DrawerPlaceholder,
-        authority: [],
-    },
-    {
         key: 'concepts.helpCenter.supportHub',
         path: '/concepts/help-center/support-hub',
         component: DrawerPlaceholder,
@@ -229,12 +211,6 @@ const placeholderRoutes: Routes = [
         key: 'concepts.mail',
         path: '/concepts/mail',
         component: Mail,
-        authority: [],
-    },
-    {
-        key: 'concepts.chat',
-        path: '/concepts/chat',
-        component: Chat,
         authority: [],
     },
     {

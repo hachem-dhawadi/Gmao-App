@@ -67,4 +67,9 @@ class WorkOrder extends Model
     {
         return $this->hasMany(WorkOrderAttachment::class)->with('member.user')->latest();
     }
+
+    public function checklistItems(): HasMany
+    {
+        return $this->hasMany(WorkOrderChecklistItem::class)->orderBy('order_index');
+    }
 }

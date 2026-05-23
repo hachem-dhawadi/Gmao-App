@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1\Pm;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\PmPlan;
+use App\Models\PmTask;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -67,7 +69,7 @@ class PmPlanController extends Controller
             return response()->json(['success' => false, 'message' => 'PM plan not found.'], 404);
         }
 
-        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'pmWorkOrders.workOrder']);
+        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks', 'pmWorkOrders.workOrder']);
 
         return response()->json([
             'success' => true,
@@ -98,6 +100,8 @@ class PmPlanController extends Controller
             'trigger.interval_value' => 'required|integer|min:1',
             'trigger.interval_unit'  => 'required|in:days,weeks,months',
             'trigger.next_run_at'    => 'nullable|date',
+            'tasks'              => 'nullable|array',
+            'tasks.*.title'      => 'required_with:tasks|string|max:500',
         ]);
 
         $code = $this->generateCode($currentCompany->id);
@@ -127,10 +131,22 @@ class PmPlanController extends Controller
                 'next_run_at'    => $trigger['next_run_at'] ?? null,
             ]);
 
+            foreach ($validated['tasks'] ?? [] as $idx => $taskData) {
+                PmTask::create([
+                    'pm_plan_id'  => $plan->id,
+                    'title'       => $taskData['title'],
+                    'order_index' => $idx,
+                ]);
+            }
+
             return $plan;
         });
 
-        $plan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers']);
+        $plan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks']);
+
+        if (! empty($validated['assigned_member_id'])) {
+            NotificationService::notifyPmAssigned($plan, (int) $validated['assigned_member_id'], $currentMember->id);
+        }
 
         return response()->json([
             'success' => true,
@@ -163,11 +179,15 @@ class PmPlanController extends Controller
             'trigger.interval_value' => 'required_with:trigger|integer|min:1',
             'trigger.interval_unit'  => 'required_with:trigger|in:days,weeks,months',
             'trigger.next_run_at'    => 'nullable|date',
+            'tasks'              => 'sometimes|nullable|array',
+            'tasks.*.id'         => 'nullable|integer|exists:pm_tasks,id',
+            'tasks.*.title'      => 'required_with:tasks|string|max:500',
         ]);
 
         $assetId = $validated['asset_id'] ?? null;
         $trigger  = $validated['trigger'] ?? null;
-        unset($validated['asset_id'], $validated['trigger']);
+        $tasks    = array_key_exists('tasks', $validated) ? ($validated['tasks'] ?? []) : false;
+        unset($validated['asset_id'], $validated['trigger'], $validated['tasks']);
 
         $pmPlan->update($validated);
 
@@ -186,7 +206,32 @@ class PmPlanController extends Controller
             );
         }
 
-        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers']);
+        if ($tasks !== false) {
+            $incomingIds = collect($tasks)->pluck('id')->filter()->values()->all();
+            $pmPlan->tasks()->whereNotIn('id', $incomingIds)->delete();
+
+            foreach ($tasks as $idx => $taskData) {
+                if (! empty($taskData['id'])) {
+                    PmTask::where('id', $taskData['id'])->update([
+                        'title'       => $taskData['title'],
+                        'order_index' => $idx,
+                    ]);
+                } else {
+                    PmTask::create([
+                        'pm_plan_id'  => $pmPlan->id,
+                        'title'       => $taskData['title'],
+                        'order_index' => $idx,
+                    ]);
+                }
+            }
+        }
+
+        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks']);
+
+        $currentMember = $request->attributes->get('currentMember');
+        if (array_key_exists('assigned_member_id', $validated) && ! empty($validated['assigned_member_id']) && $currentMember) {
+            NotificationService::notifyPmAssigned($pmPlan, (int) $validated['assigned_member_id'], $currentMember->id);
+        }
 
         return response()->json([
             'success' => true,
@@ -256,6 +301,13 @@ class PmPlanController extends Controller
                 'next_run_at'    => $trigger->next_run_at?->toISOString(),
                 'last_run_at'    => $trigger->last_run_at?->toISOString(),
             ] : null,
+            'tasks'              => $plan->relationLoaded('tasks')
+                ? $plan->tasks->map(fn ($t) => [
+                    'id'          => $t->id,
+                    'title'       => $t->title,
+                    'order_index' => $t->order_index,
+                ])->values()->all()
+                : [],
         ];
     }
 

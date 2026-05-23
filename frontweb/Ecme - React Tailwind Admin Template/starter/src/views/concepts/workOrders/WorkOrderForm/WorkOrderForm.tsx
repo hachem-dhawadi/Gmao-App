@@ -48,6 +48,7 @@ const WorkOrderForm = ({
     const {
         handleSubmit,
         reset,
+        setValue,
         formState: { errors },
         control,
     } = useForm<WorkOrderFormSchema>({
@@ -96,6 +97,7 @@ const WorkOrderForm = ({
                         <WorkOrderMainSection
                             control={control}
                             errors={errors}
+                            setValue={setValue}
                         />
                     </div>
                     <div className="md:w-[370px] gap-4 flex flex-col">

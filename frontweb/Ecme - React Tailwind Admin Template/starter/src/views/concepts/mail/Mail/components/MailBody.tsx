@@ -1,29 +1,12 @@
-import { useEffect } from 'react'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import MailList from './MailList'
 import MailSidebar from './MailSidebar'
 import MailDetail from './MailDetail'
 import MailBodyTop from './MailBodyTop'
-import useMail from '../hooks/useMail'
-import useQuery from '@/utils/hooks/useQuery'
 import { useMailStore } from '../store/mailStore'
-import isEmpty from 'lodash/isEmpty'
 
 const MailBody = () => {
-    const query = useQuery()
-
-    const id = query.get('mail')
-
-    const { fetchMail } = useMail()
-
-    const { mail } = useMailStore()
-
-    useEffect(() => {
-        if (id && isEmpty(mail)) {
-            fetchMail(id)
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id])
+    const { activeNotification } = useMailStore()
 
     return (
         <AdaptiveCard
@@ -35,10 +18,10 @@ const MailBody = () => {
                 <div className="lg:ltr:pl-6 lg:rtl:pr-6 flex-1">
                     <MailBodyTop />
                     <div className="relative h-[calc(100%-70px)]">
-                        {isEmpty(mail) ? (
-                            <MailList />
+                        {activeNotification ? (
+                            <MailDetail />
                         ) : (
-                            <MailDetail mail={mail} />
+                            <MailList />
                         )}
                     </div>
                 </div>

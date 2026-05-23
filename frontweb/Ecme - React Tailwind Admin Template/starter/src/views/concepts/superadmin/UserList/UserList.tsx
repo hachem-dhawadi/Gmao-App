@@ -10,8 +10,10 @@ const UserList = () => (
         <Container>
             <AdaptiveCard>
                 <div className="flex flex-col gap-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                        <UsersListTableTools />
+                    <div className="flex flex-col md:flex-row md:items-center gap-2">
+                        <div className="flex-1">
+                            <UsersListTableTools />
+                        </div>
                         <UserListActionTools />
                     </div>
                     <UserListTable />

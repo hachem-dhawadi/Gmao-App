@@ -173,9 +173,7 @@ export default function useCustomerList() {
               ?.data?.members?.map(toCustomerFromMember) || []
 
     const queryText = String(tableData.query || '').trim().toLowerCase()
-    const productText = String(filterData.purchasedProducts || '')
-        .trim()
-        .toLowerCase()
+    const statusFilter = filterData.status || 'all'
 
     const customerList = mappedCustomerList.filter((customer) => {
         if (
@@ -196,12 +194,12 @@ export default function useCustomerList() {
             .toLowerCase()
 
         const queryMatches = !queryText || searchable.includes(queryText)
-        const productMatches = !productText || searchable.includes(productText)
+        const statusMatches = statusFilter === 'all' || customer.status === statusFilter
 
-        return queryMatches && productMatches
+        return queryMatches && statusMatches
     })
 
-    const usingClientFilter = queryText.length > 0 || productText.length > 0
+    const usingClientFilter = queryText.length > 0 || statusFilter !== 'all'
 
     const apiTotal = isSuperadmin
         ? (data as SuperadminUsersListResponse | undefined)?.data?.pagination

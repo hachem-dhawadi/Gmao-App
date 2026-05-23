@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\Members\MemberController;
 use App\Http\Controllers\Api\V1\WorkOrders\WorkOrderController;
 use App\Http\Controllers\Api\V1\WorkOrders\WorkLogController;
 use App\Http\Controllers\Api\V1\WorkOrders\WoPartsController;
+use App\Http\Controllers\Api\V1\WorkOrders\WorkOrderChecklistController;
 use App\Http\Controllers\Api\V1\Inventory\ItemController;
 use App\Http\Controllers\Api\V1\Inventory\WarehouseController;
 use App\Http\Controllers\Api\V1\Inventory\StockMoveController;
@@ -113,6 +114,9 @@ Route::prefix('v1')->group(function (): void {
         // Parts used (technician-friendly — uses work_orders.write, not inventory.write)
         Route::get('/{workOrder}/parts', [WoPartsController::class, 'index'])->middleware('permission:work_orders.read');
         Route::post('/{workOrder}/parts', [WoPartsController::class, 'store'])->middleware('permission:work_orders.write');
+
+        // Checklist
+        Route::post('/{workOrder}/checklist/{item}/toggle', [WorkOrderChecklistController::class, 'toggle'])->middleware('permission:work_orders.write');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('inventory/items')->group(function (): void {
@@ -168,6 +172,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/orders/{purchaseOrder}/dispute', [PurchaseOrderController::class, 'disputeInvoice'])->middleware('permission:purchasing.write');
         Route::post('/orders/{purchaseOrder}/reopen', [PurchaseOrderController::class, 'reopen'])->middleware('permission:purchasing.write');
         Route::get('/orders/{purchaseOrder}/payment-proof', [PurchaseOrderController::class, 'downloadPaymentProof'])->middleware('permission:purchasing.read');
+        Route::post('/orders/{purchaseOrder}/send-to-supplier', [PurchaseOrderController::class, 'sendToSupplier'])->middleware('permission:purchasing.write');
 
         Route::get('/receipts', [PurchaseOrderController::class, 'receipts'])->middleware('permission:purchasing.read');
     });

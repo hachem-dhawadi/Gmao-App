@@ -1,14 +1,17 @@
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import Button from '@/components/ui/Button'
 import { FormItem } from '@/components/ui/Form'
 import { Controller } from 'react-hook-form'
-import type { Control, FieldErrors } from 'react-hook-form'
+import { TbRefresh } from 'react-icons/tb'
+import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form'
 import type { WorkOrderFormSchema } from './types'
 
 type Props = {
     control: Control<WorkOrderFormSchema>
     errors: FieldErrors<WorkOrderFormSchema>
+    setValue: UseFormSetValue<WorkOrderFormSchema>
 }
 
 type StatusOption = {
@@ -45,7 +48,14 @@ const DotLabel = ({ label, dotClass }: { label: string; dotClass: string }) => (
     </div>
 )
 
-const WorkOrderMainSection = ({ control, errors }: Props) => {
+function generateWorkOrderCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'
+    let suffix = ''
+    for (let i = 0; i < 4; i++) suffix += chars[Math.floor(Math.random() * chars.length)]
+    return `WO-${suffix}`
+}
+
+const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
     return (
         <Card>
             <h4 className="mb-6">Overview</h4>
@@ -82,15 +92,26 @@ const WorkOrderMainSection = ({ control, errors }: Props) => {
                     name="code"
                     control={control}
                     render={({ field }) => (
-                        <Input
-                            type="text"
-                            autoComplete="off"
-                            placeholder="e.g. WO-0001"
-                            {...field}
-                            onChange={(e) =>
-                                field.onChange(e.target.value.toUpperCase())
-                            }
-                        />
+                        <div className="flex gap-2">
+                            <Input
+                                type="text"
+                                autoComplete="off"
+                                placeholder="e.g. WO-0001"
+                                {...field}
+                                onChange={(e) =>
+                                    field.onChange(e.target.value.toUpperCase())
+                                }
+                            />
+                            <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                icon={<TbRefresh />}
+                                onClick={() =>
+                                    setValue('code', generateWorkOrderCode())
+                                }
+                            />
+                        </div>
                     )}
                 />
             </FormItem>

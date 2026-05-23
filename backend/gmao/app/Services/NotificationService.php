@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Item;
 use App\Models\Member;
 use App\Models\Notification;
+use App\Models\PmPlan;
+use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
 use Illuminate\Support\Carbon;
 
@@ -116,6 +118,94 @@ class NotificationService
                     'item_name' => $item->name,
                     'item_code' => $item->code,
                 ],
+            ]);
+        }
+    }
+
+    // ── PM Plan: assigned ────────────────────────────────────────────────────
+
+    public static function notifyPmAssigned(PmPlan $plan, int $assignedMemberId, int $assignedByMemberId): void
+    {
+        if ($assignedMemberId === $assignedByMemberId) return;
+
+        $member = Member::query()->with('user')->find($assignedMemberId);
+        if (! $member?->user_id) return;
+
+        $assigner = Member::query()->with('user')->find($assignedByMemberId);
+        $fromName = $assigner?->user?->name ?? 'Someone';
+
+        self::create($member->user_id, 'pm_assigned', [
+            'title' => 'You were assigned to a PM plan',
+            'body'  => "{$fromName} assigned you to \"{$plan->name}\" ({$plan->code})",
+            'data'  => ['pm_id' => $plan->id, 'pm_code' => $plan->code, 'pm_name' => $plan->name],
+        ]);
+    }
+
+    // ── Member: new member added ──────────────────────────────────────────────
+
+    public static function notifyNewMember(Member $newMember, int $companyId): void
+    {
+        $admins = Member::query()
+            ->where('company_id', $companyId)
+            ->where('id', '!=', $newMember->id)
+            ->whereHas('roles', fn ($q) => $q->whereIn('code', ['admin', 'manager']))
+            ->with('user')
+            ->get();
+
+        $memberName = $newMember->user?->name ?? 'A new member';
+
+        foreach ($admins as $admin) {
+            if (! $admin->user_id) continue;
+
+            self::create($admin->user_id, 'new_member', [
+                'title' => 'New member added',
+                'body'  => "{$memberName} has been added to the company.",
+                'data'  => ['member_id' => $newMember->id, 'member_name' => $memberName],
+            ]);
+        }
+    }
+
+    // ── Purchase Order: status changed to ordered ─────────────────────────────
+
+    public static function notifyPoOrdered(PurchaseOrder $po, int $changedByMemberId): void
+    {
+        $creator = $po->createdBy;
+        if (! $creator || $creator->id === $changedByMemberId || ! $creator->user_id) return;
+
+        self::create($creator->user_id, 'po_ordered', [
+            'title' => 'Purchase order submitted',
+            'body'  => "PO {$po->code} has been submitted to the supplier.",
+            'data'  => ['po_id' => $po->id, 'po_code' => $po->code],
+        ]);
+    }
+
+    // ── Work Order: overdue ───────────────────────────────────────────────────
+
+    public static function notifyWoOverdue(WorkOrder $wo): void
+    {
+        $recipientIds = [];
+
+        // Notify assigned members
+        foreach ($wo->assignedMembers()->with('user')->get() as $member) {
+            if ($member->user_id) $recipientIds[] = $member->user_id;
+        }
+
+        // Notify admins/managers
+        $managers = Member::query()
+            ->where('company_id', $wo->company_id)
+            ->whereHas('roles', fn ($q) => $q->whereIn('code', ['admin', 'manager']))
+            ->with('user')
+            ->get();
+
+        foreach ($managers as $manager) {
+            if ($manager->user_id) $recipientIds[] = $manager->user_id;
+        }
+
+        foreach (array_unique($recipientIds) as $userId) {
+            self::create($userId, 'wo_overdue', [
+                'title' => 'Work order overdue',
+                'body'  => "Work order \"{$wo->title}\" ({$wo->code}) is past its due date.",
+                'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title],
             ]);
         }
     }

@@ -1,53 +1,58 @@
 import { create } from 'zustand'
-import type { Mail, Category } from '../types'
-
-type MessageDialog = {
-    mode: '' | 'reply' | 'new'
-    open: boolean
-}
+import type { AppNotification } from '../types'
 
 export type MailState = {
-    mailList: Mail[]
-    mailListFetched: boolean
-    mail: Partial<Mail>
-    selectedMailId: string[]
+    notifications: AppNotification[]
+    notificationsFetched: boolean
+    activeNotification: AppNotification | null
+    selectedCategory: string
     mobileSideBarExpand: boolean
-    selectedCategory: Partial<Category>
-    messageDialog: MessageDialog
 }
 
 type MailAction = {
-    setMailList: (payload: Mail[]) => void
-    setMailListFetched: (payload: boolean) => void
-    setMail: (payload: Partial<Mail>) => void
-    setSelectedMail: (payload: string[]) => void
-    setSelectedCategory: (payload: Partial<Category>) => void
-    toggleMessageDialog: (payload: MessageDialog) => void
+    setNotifications: (payload: AppNotification[]) => void
+    setNotificationsFetched: (payload: boolean) => void
+    setActiveNotification: (payload: AppNotification | null) => void
+    setSelectedCategory: (payload: string) => void
     toggleMobileSidebar: (payload: boolean) => void
+    markOneRead: (id: number) => void
+    markAllRead: () => void
 }
 
 const initialState: MailState = {
-    mailList: [],
-    mailListFetched: false,
-    mail: {},
-    selectedMailId: [],
+    notifications: [],
+    notificationsFetched: false,
+    activeNotification: null,
+    selectedCategory: 'all',
     mobileSideBarExpand: false,
-    selectedCategory: {},
-    messageDialog: {
-        mode: '',
-        open: false,
-    },
 }
 
 export const useMailStore = create<MailState & MailAction>((set) => ({
     ...initialState,
-    setMailList: (payload) => set(() => ({ mailList: payload })),
-    setMailListFetched: (payload) => set(() => ({ mailListFetched: payload })),
-    setMail: (payload) => set(() => ({ mail: payload })),
-    setSelectedMail: (payload) => set(() => ({ selectedMailId: payload })),
+    setNotifications: (payload) => set(() => ({ notifications: payload })),
+    setNotificationsFetched: (payload) =>
+        set(() => ({ notificationsFetched: payload })),
+    setActiveNotification: (payload) =>
+        set(() => ({ activeNotification: payload })),
     setSelectedCategory: (payload) =>
         set(() => ({ selectedCategory: payload })),
-    toggleMessageDialog: (payload) => set(() => ({ messageDialog: payload })),
     toggleMobileSidebar: (payload) =>
         set(() => ({ mobileSideBarExpand: payload })),
+    markOneRead: (id) =>
+        set((state) => ({
+            notifications: state.notifications.map((n) =>
+                n.id === id ? { ...n, read: true } : n,
+            ),
+            activeNotification:
+                state.activeNotification?.id === id
+                    ? { ...state.activeNotification, read: true }
+                    : state.activeNotification,
+        })),
+    markAllRead: () =>
+        set((state) => ({
+            notifications: state.notifications.map((n) => ({
+                ...n,
+                read: true,
+            })),
+        })),
 }))

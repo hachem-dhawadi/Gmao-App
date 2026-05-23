@@ -95,6 +95,7 @@ import {
     PiBuildingsDuotone,
     PiUsersThreeDuotone,
     PiShieldPlusDuotone,
+    PiBellDuotone,
 } from 'react-icons/pi'
 import type { JSX } from 'react'
 
@@ -175,6 +176,7 @@ const navigationIcon: NavigationIcons = {
     calendar: <PiCalendarDuotone />,
     fileManager: <PiFolderOpenDuotone />,
     mail: <PiEnvelopeDuotone />,
+    notifications: <PiBellDuotone />,
     account: <PiUserCircleDuotone />,
     accountSettings: <PiGearDuotone />,
     accountActivityLogs: <PiFileTextDuotone />,

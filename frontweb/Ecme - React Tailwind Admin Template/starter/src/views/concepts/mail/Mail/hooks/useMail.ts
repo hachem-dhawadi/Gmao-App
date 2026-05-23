@@ -1,63 +1,57 @@
+import useSWR from 'swr'
 import { useMailStore } from '../store/mailStore'
-import { apiGetMails, apiGetMail } from '@/services/MailServices'
-import useSWRMutation from 'swr/mutation'
-import type {
-    GetMailsResponse,
-    GetMailResponse,
-    GetMailsRequest,
-    GetMailRequest,
-} from '../types'
+import {
+    apiGetNotifications,
+    apiMarkNotificationRead,
+    apiMarkAllNotificationsRead,
+} from '@/services/MailServices'
+import type { GetNotificationsResponse } from '../types'
 
-async function getMails(
-    _: string,
-    { arg }: { arg: { category: string; label: string } },
-) {
-    const data = await apiGetMails<GetMailsResponse, GetMailsRequest>(arg)
-    return data
-}
-
-async function getMail(_: string, { arg }: { arg: string }) {
-    const data = await apiGetMail<GetMailResponse, GetMailRequest>({ id: arg })
-    return data
-}
-
-const useMail = () => {
+const useNotifications = () => {
     const {
-        setMailList,
-        setMail,
-        selectedMailId,
-        setMailListFetched,
-        setSelectedMail,
+        setNotifications,
+        setNotificationsFetched,
+        markOneRead,
+        markAllRead,
     } = useMailStore()
 
-    const { trigger: fetchMails, isMutating: isMailsFetching } = useSWRMutation(
-        `/api/mails/`,
-        getMails,
+    const { isLoading, mutate } = useSWR<GetNotificationsResponse>(
+        '/notifications',
+        () => apiGetNotifications<GetNotificationsResponse>(),
         {
-            onSuccess: (list) => {
-                setSelectedMail([])
-                setMailList(list)
-                setMailListFetched(true)
+            revalidateOnFocus: false,
+            onSuccess: (res) => {
+                setNotifications(res.data || [])
+                setNotificationsFetched(true)
             },
         },
     )
 
-    const { trigger: fetchMail, isMutating: isMailFetching } = useSWRMutation(
-        `/api/mail/${selectedMailId}`,
-        getMail,
-        {
-            onSuccess: (mail) => {
-                setMail(mail)
-            },
-        },
-    )
+    const handleMarkRead = async (id: number) => {
+        try {
+            await apiMarkNotificationRead(id)
+            markOneRead(id)
+            mutate()
+        } catch {
+            // silently fail
+        }
+    }
+
+    const handleMarkAllRead = async () => {
+        try {
+            await apiMarkAllNotificationsRead()
+            markAllRead()
+            mutate()
+        } catch {
+            // silently fail
+        }
+    }
 
     return {
-        fetchMails,
-        isMailsFetching,
-        fetchMail,
-        isMailFetching,
+        isLoading,
+        handleMarkRead,
+        handleMarkAllRead,
     }
 }
 
-export default useMail
+export default useNotifications

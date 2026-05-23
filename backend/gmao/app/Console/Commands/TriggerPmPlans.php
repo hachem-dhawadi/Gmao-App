@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Models\PmPlan;
 use App\Models\PmTrigger;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderChecklistItem;
+use App\Services\NotificationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +24,7 @@ class TriggerPmPlans extends Command
         $dueTriggers = PmTrigger::query()
             ->whereHas('pmPlan', fn ($q) => $q->where('status', 'active'))
             ->where('next_run_at', '<=', $now)
-            ->with(['pmPlan.assets', 'pmPlan.company'])
+            ->with(['pmPlan.assets', 'pmPlan.company', 'pmPlan.tasks'])
             ->get();
 
         if ($dueTriggers->isEmpty()) {
@@ -65,6 +67,18 @@ class TriggerPmPlans extends Command
                 // Assign the technician via pivot
                 if ($plan->assigned_member_id) {
                     $workOrder->assignedMembers()->attach($plan->assigned_member_id, ['assigned_at' => $now]);
+                    NotificationService::notifyWoAssigned($workOrder, [$plan->assigned_member_id], $plan->created_by_member_id ?? $plan->assigned_member_id);
+                }
+
+                // Copy PM tasks → WO checklist items
+                foreach ($plan->tasks as $task) {
+                    WorkOrderChecklistItem::create([
+                        'work_order_id' => $workOrder->id,
+                        'pm_task_id'    => $task->id,
+                        'title'         => $task->title,
+                        'is_completed'  => false,
+                        'order_index'   => $task->order_index,
+                    ]);
                 }
 
                 // Link WO to the PM plan

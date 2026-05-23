@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Api\V1\Purchasing;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PurchaseOrderMail;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
 use App\Models\Receipt;
 use App\Models\ReceiptLine;
 use App\Models\StockMove;
 use App\Models\Warehouse;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class PurchaseOrderController extends Controller
@@ -213,6 +216,11 @@ class PurchaseOrderController extends Controller
         });
 
         $purchaseOrder->load(['supplier', 'createdBy.user', 'lines.item', 'lines.receiptLines']);
+
+        $currentMember = $request->attributes->get('currentMember');
+        if (isset($validated['status']) && $validated['status'] === 'ordered' && $currentMember) {
+            NotificationService::notifyPoOrdered($purchaseOrder, $currentMember->id);
+        }
 
         return response()->json([
             'success' => true,
@@ -493,6 +501,31 @@ class PurchaseOrderController extends Controller
             'success' => true,
             'message' => 'Purchase order reopened as draft.',
             'data'    => ['purchase_order' => $this->formatFull($purchaseOrder)],
+        ]);
+    }
+
+    // ── Email to supplier ─────────────────────────────────────────────────────
+
+    public function sendToSupplier(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+
+        if (! $currentCompany || (int) $purchaseOrder->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        $purchaseOrder->load(['supplier', 'createdBy.user', 'lines.item']);
+
+        if (! $purchaseOrder->supplier?->email) {
+            return response()->json(['success' => false, 'message' => 'Supplier has no email address on file.'], 422);
+        }
+
+        Mail::to($purchaseOrder->supplier->email)
+            ->send(new PurchaseOrderMail($purchaseOrder));
+
+        return response()->json([
+            'success' => true,
+            'message' => "Purchase order sent to {$purchaseOrder->supplier->email}.",
         ]);
     }
 

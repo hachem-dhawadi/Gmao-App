@@ -90,6 +90,16 @@ class WorkOrderResource extends JsonResource
                     'total_cost'    => (float) $this->workLogs->sum('labor_cost'),
                 ]
                 : null,
+            'checklist_items'      => $this->relationLoaded('checklistItems')
+                ? $this->checklistItems->map(fn ($i) => [
+                    'id'           => $i->id,
+                    'title'        => $i->title,
+                    'is_completed' => $i->is_completed,
+                    'completed_at' => $i->completed_at?->toISOString(),
+                    'completed_by' => $i->relationLoaded('completedBy') ? $i->completedBy?->user?->name : null,
+                    'order_index'  => $i->order_index,
+                ])->values()->all()
+                : null,
         ];
     }
 }

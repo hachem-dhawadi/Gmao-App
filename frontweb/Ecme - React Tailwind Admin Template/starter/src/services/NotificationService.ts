@@ -13,6 +13,13 @@ export type AppNotification = {
         item_id?: number
         item_name?: string
         item_code?: string
+        pm_id?: number
+        pm_code?: string
+        pm_name?: string
+        po_id?: number
+        po_code?: string
+        member_id?: number
+        member_name?: string
     }
     read: boolean
     created_at: string | null

@@ -1,27 +1,16 @@
 import ActionButton from './ActionButton'
 import { useMailStore } from '../store/mailStore'
 import { TbArrowLeft } from 'react-icons/tb'
-import { useSearchParams } from 'react-router-dom'
 
 const MailDetailTitle = () => {
-    const { mail, setMail } = useMailStore()
-
-    const [searchParams, setSearchParams] = useSearchParams()
-
-    const handleBackButtonClick = () => {
-        if (searchParams.has('mail')) {
-            searchParams.delete('mail')
-            setSearchParams(searchParams)
-        }
-        setMail({})
-    }
+    const { activeNotification, setActiveNotification } = useMailStore()
 
     return (
         <div className="flex items-center gap-2">
-            <ActionButton onClick={handleBackButtonClick}>
+            <ActionButton onClick={() => setActiveNotification(null)}>
                 <TbArrowLeft />
             </ActionButton>
-            <h4>{mail?.title}</h4>
+            <h4 className="truncate">{activeNotification?.title}</h4>
         </div>
     )
 }

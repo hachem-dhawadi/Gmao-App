@@ -7,6 +7,7 @@ import Tag from '@/components/ui/Tag'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import { apiGetAssetById } from '@/services/AssetsService'
+import { apiGetWorkOrdersList } from '@/services/WorkOrdersService'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
@@ -21,10 +22,68 @@ import {
     TbShieldOff,
     TbAlertTriangle,
     TbMapPin,
+    TbClipboardList,
+    TbClock,
+    TbCurrencyDollar,
+    TbChevronRight,
 } from 'react-icons/tb'
 import { HiEye } from 'react-icons/hi'
 import type { AssetResponse } from '@/services/AssetsService'
+import type { WorkOrder } from '@/services/WorkOrdersService'
 import type { Asset } from '../AssetList/types'
+
+const woStatusConfig: Record<
+    WorkOrder['status'],
+    { label: string; bgClass: string; textClass: string; dot: string }
+> = {
+    open: {
+        label: 'Open',
+        bgClass: 'bg-blue-100 dark:bg-blue-500/20',
+        textClass: 'text-blue-600 dark:text-blue-400',
+        dot: 'bg-blue-500',
+    },
+    in_progress: {
+        label: 'In Progress',
+        bgClass: 'bg-amber-100 dark:bg-amber-500/20',
+        textClass: 'text-amber-600 dark:text-amber-400',
+        dot: 'bg-amber-500',
+    },
+    on_hold: {
+        label: 'On Hold',
+        bgClass: 'bg-gray-100 dark:bg-gray-700',
+        textClass: 'text-gray-500 dark:text-gray-400',
+        dot: 'bg-gray-400',
+    },
+    completed: {
+        label: 'Completed',
+        bgClass: 'bg-emerald-100 dark:bg-emerald-500/20',
+        textClass: 'text-emerald-600 dark:text-emerald-400',
+        dot: 'bg-emerald-500',
+    },
+    cancelled: {
+        label: 'Cancelled',
+        bgClass: 'bg-red-100 dark:bg-red-500/20',
+        textClass: 'text-red-600 dark:text-red-400',
+        dot: 'bg-red-400',
+    },
+}
+
+const woPriorityConfig: Record<
+    WorkOrder['priority'],
+    { label: string; textClass: string }
+> = {
+    low: { label: 'Low', textClass: 'text-gray-400' },
+    medium: { label: 'Medium', textClass: 'text-blue-500' },
+    high: { label: 'High', textClass: 'text-amber-500' },
+    critical: { label: 'Critical', textClass: 'text-red-500 font-bold' },
+}
+
+const formatDuration = (minutes: number): string => {
+    if (minutes < 60) return `${minutes}m`
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
 
 const statusConfig: Record<
     Asset['status'],
@@ -153,6 +212,15 @@ const AssetDetails = () => {
         async () => {
             const resp = await apiGetAssetById<AssetResponse>(id!)
             return resp.data.asset
+        },
+        { revalidateOnFocus: false },
+    )
+
+    const { data: historyData, isLoading: historyLoading } = useSWR<WorkOrder[]>(
+        id ? ['/work-orders', 'asset-history', id] : null,
+        async () => {
+            const resp = await apiGetWorkOrdersList({ asset_id: id, per_page: 100 })
+            return resp.data.work_orders
         },
         { revalidateOnFocus: false },
     )
@@ -351,6 +419,78 @@ const AssetDetails = () => {
                                         </div>
                                     </Card>
                                 )}
+
+                                {/* Maintenance History */}
+                                <Card>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="flex items-center gap-2">
+                                            <TbClipboardList className="text-blue-500" />
+                                            Maintenance History
+                                            {historyData && historyData.length > 0 && (
+                                                <span className="text-sm font-normal text-gray-400">
+                                                    ({historyData.length})
+                                                </span>
+                                            )}
+                                        </h4>
+                                    </div>
+
+                                    {historyLoading ? (
+                                        <div className="flex items-center justify-center py-8 text-gray-400 text-sm gap-2">
+                                            <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                                            Loading history…
+                                        </div>
+                                    ) : !historyData || historyData.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-10 gap-2 text-gray-400">
+                                            <TbClipboardList className="text-4xl" />
+                                            <p className="text-sm">No work orders on record for this asset</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
+                                            {historyData.map((wo) => {
+                                                const woCfg = woStatusConfig[wo.status] ?? woStatusConfig.open
+                                                const priCfg = woPriorityConfig[wo.priority] ?? woPriorityConfig.medium
+                                                const duration = wo.work_logs_summary?.total_minutes
+                                                const cost = wo.work_logs_summary?.total_cost
+                                                const date = wo.closed_at ?? wo.opened_at ?? wo.created_at
+                                                return (
+                                                    <div
+                                                        key={wo.id}
+                                                        className="flex items-center gap-3 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg px-2 -mx-2 transition-colors group"
+                                                        onClick={() => navigate(`/concepts/work-orders/work-order-details/${wo.id}`)}
+                                                    >
+                                                        <span className={`w-2 h-2 rounded-full shrink-0 ${woCfg.dot}`} />
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-mono text-xs text-gray-400">{wo.code}</span>
+                                                                <Tag className={`border-0 text-xs py-0 px-1.5 ${woCfg.bgClass}`}>
+                                                                    <span className={`font-semibold ${woCfg.textClass}`}>{woCfg.label}</span>
+                                                                </Tag>
+                                                                <span className={`text-xs font-semibold ${priCfg.textClass}`}>{priCfg.label}</span>
+                                                            </div>
+                                                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate mt-0.5">{wo.title}</p>
+                                                            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 flex-wrap">
+                                                                <span>{date ? dayjs(date).format('DD MMM YYYY') : '—'}</span>
+                                                                {duration != null && duration > 0 && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        <TbClock className="text-base" />
+                                                                        {formatDuration(duration)}
+                                                                    </span>
+                                                                )}
+                                                                {cost != null && cost > 0 && (
+                                                                    <span className="flex items-center gap-1">
+                                                                        <TbCurrencyDollar className="text-base" />
+                                                                        {cost.toFixed(2)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <TbChevronRight className="text-gray-300 group-hover:text-gray-500 dark:text-gray-600 dark:group-hover:text-gray-400 transition-colors shrink-0" />
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+                                </Card>
                             </div>
 
                             {/* ── Right column ── */}

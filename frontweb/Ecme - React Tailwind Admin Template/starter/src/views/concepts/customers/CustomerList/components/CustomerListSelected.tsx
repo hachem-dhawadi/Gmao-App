@@ -68,7 +68,7 @@ const CustomerListSelected = () => {
                                         <span className="font-semibold flex items-center gap-1">
                                             <span className="heading-text">
                                                 {selectedCustomer.length}{' '}
-                                                Customers
+                                                {selectedCustomer.length === 1 ? 'Member' : 'Members'}
                                             </span>
                                             <span>selected</span>
                                         </span>
@@ -110,7 +110,7 @@ const CustomerListSelected = () => {
             <ConfirmDialog
                 isOpen={deleteConfirmationOpen}
                 type="danger"
-                title="Remove customers"
+                title="Remove members"
                 onClose={handleCancel}
                 onRequestClose={handleCancel}
                 onCancel={handleCancel}
@@ -118,8 +118,7 @@ const CustomerListSelected = () => {
             >
                 <p>
                     {' '}
-                    Are you sure you want to remove these customers? This action
-                    can&apos;t be undo.{' '}
+                    Are you sure you want to remove these members? This action cannot be undone.{' '}
                 </p>
             </ConfirmDialog>
             <Dialog
@@ -128,7 +127,7 @@ const CustomerListSelected = () => {
                 onClose={() => setSendMessageDialogOpen(false)}
             >
                 <h5 className="mb-2">Send Message</h5>
-                <p>Send message to the following customers</p>
+                <p>Send message to the following members</p>
                 <Avatar.Group
                     chained
                     omittedAvatarTooltip

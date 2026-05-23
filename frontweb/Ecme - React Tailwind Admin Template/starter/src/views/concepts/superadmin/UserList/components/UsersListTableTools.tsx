@@ -6,11 +6,6 @@ import type { Filter } from '../types'
 
 type Option = { value: string; label: string }
 
-const roleOptions: Option[] = [
-    { value: 'superadmin', label: 'Superadmin' },
-    { value: 'user', label: 'User' },
-]
-
 const statusOptions: Option[] = [
     { value: 'active', label: 'Active' },
     { value: 'inactive', label: 'Inactive' },
@@ -26,21 +21,18 @@ const UsersListTableTools = () => {
         setTableData(newData)
     }
 
-    const handleRoleChange = (options: Option[]) => {
-        const newFilter: Filter = {
+    const handleStatusChange = (option: Option | null) => {
+        setFilterData({
             ...filterData,
-            userRole: options.map((o) => o.value) as Filter['userRole'],
-        }
-        setFilterData(newFilter)
+            userStatus: option
+                ? [option.value as Filter['userStatus'][number]]
+                : [],
+        })
     }
 
-    const handleStatusChange = (options: Option[]) => {
-        const newFilter: Filter = {
-            ...filterData,
-            userStatus: options.map((o) => o.value) as Filter['userStatus'],
-        }
-        setFilterData(newFilter)
-    }
+    const selectedStatus = statusOptions.find(
+        (o) => filterData.userStatus.length > 0 && filterData.userStatus[0] === o.value,
+    ) || null
 
     return (
         <div className="flex flex-col md:flex-row md:items-center gap-2">
@@ -49,24 +41,11 @@ const UsersListTableTools = () => {
             </div>
             <div className="w-full md:w-44">
                 <Select
-                    isMulti
-                    placeholder="Role"
-                    options={roleOptions}
-                    value={roleOptions.filter((o) =>
-                        filterData.userRole.includes(o.value as Filter['userRole'][number]),
-                    )}
-                    onChange={(selected) => handleRoleChange((selected as Option[]) || [])}
-                />
-            </div>
-            <div className="w-full md:w-44">
-                <Select
-                    isMulti
+                    isClearable
                     placeholder="Status"
                     options={statusOptions}
-                    value={statusOptions.filter((o) =>
-                        filterData.userStatus.includes(o.value as Filter['userStatus'][number]),
-                    )}
-                    onChange={(selected) => handleStatusChange((selected as Option[]) || [])}
+                    value={selectedStatus}
+                    onChange={(selected) => handleStatusChange(selected as Option | null)}
                 />
             </div>
         </div>

@@ -14,6 +14,7 @@ import WoFieldDropdown from './components/WoFieldDropdown'
 import WoActivity from './components/WoActivity'
 import WoFooter from './components/WoFooter'
 import WoParts from './components/WoParts'
+import WoChecklist from './components/WoChecklist'
 import {
     apiGetWorkOrderById,
     apiUpdateWorkOrder,
@@ -466,6 +467,15 @@ const WorkOrderDetails = () => {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Checklist (only shown when items exist) */}
+                                {wo.checklist_items && wo.checklist_items.length > 0 && (
+                                    <WoChecklist
+                                        workOrderId={wo.id}
+                                        initialItems={wo.checklist_items}
+                                        canEdit={canEdit}
+                                    />
+                                )}
 
                                 {/* Parts used on this work order */}
                                 <WoParts

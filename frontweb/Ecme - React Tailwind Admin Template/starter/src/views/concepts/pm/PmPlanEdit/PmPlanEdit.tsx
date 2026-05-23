@@ -58,6 +58,7 @@ const PmPlanEdit = () => {
                     interval_unit: values.trigger_interval_unit,
                     next_run_at: values.trigger_next_run_at || null,
                 },
+                tasks: values.tasks.map((t) => ({ id: t.id, title: t.title })),
             })
 
             await globalMutate(
@@ -147,6 +148,7 @@ const PmPlanEdit = () => {
               trigger_next_run_at: data.trigger?.next_run_at
                   ? data.trigger.next_run_at.substring(0, 10)
                   : '',
+              tasks: (data.tasks ?? []).map((t) => ({ id: t.id, title: t.title })),
           }
         : {}
 

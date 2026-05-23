@@ -1,22 +1,31 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import classNames from 'classnames'
 import withHeaderItem from '@/utils/hoc/withHeaderItem'
 import Dropdown from '@/components/ui/Dropdown'
 import ScrollBar from '@/components/ui/ScrollBar'
 import Spinner from '@/components/ui/Spinner'
-import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Tooltip from '@/components/ui/Tooltip'
 import NotificationToggle from './NotificationToggle'
+import useSWR from 'swr'
 import {
     apiGetNotifications,
-    apiGetUnreadCount,
     apiMarkNotificationRead,
     apiMarkAllNotificationsRead,
 } from '@/services/NotificationService'
-import type { AppNotification } from '@/services/NotificationService'
+import { useMailStore } from '@/views/concepts/mail/Mail/store/mailStore'
+import type { AppNotification } from '@/views/concepts/mail/Mail/types'
 import { HiOutlineMailOpen } from 'react-icons/hi'
-import { TbClipboardList, TbAt, TbRefresh, TbAlertTriangle } from 'react-icons/tb'
+import {
+    TbClipboardList,
+    TbAt,
+    TbRefresh,
+    TbAlertTriangle,
+    TbCalendarRepeat,
+    TbReceipt,
+    TbUserPlus,
+    TbClockExclamation,
+} from 'react-icons/tb'
 import isLastChild from '@/utils/isLastChild'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { useNavigate } from 'react-router-dom'
@@ -31,80 +40,78 @@ const notificationHeight = 'h-[300px]'
 const typeIcon: Record<string, React.ReactNode> = {
     wo_assigned:       <TbClipboardList className="text-blue-500 text-xl" />,
     wo_status_changed: <TbRefresh className="text-amber-500 text-xl" />,
+    wo_overdue:        <TbClockExclamation className="text-red-500 text-xl" />,
     comment_mention:   <TbAt className="text-purple-500 text-xl" />,
     low_stock:         <TbAlertTriangle className="text-orange-500 text-xl" />,
+    pm_assigned:       <TbCalendarRepeat className="text-teal-500 text-xl" />,
+    po_ordered:        <TbReceipt className="text-indigo-500 text-xl" />,
+    new_member:        <TbUserPlus className="text-green-500 text-xl" />,
 }
 
 const _Notification = ({ className }: { className?: string }) => {
-    const [list, setList]               = useState<AppNotification[]>([])
-    const [unreadCount, setUnreadCount] = useState(0)
-    const [loading, setLoading]         = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
+    const [loading, setLoading]           = useState(false)
 
-    const { larger } = useResponsive()
-    const navigate   = useNavigate()
-    const dropdownRef = useRef<DropdownRef>(null)
+    const { larger }   = useResponsive()
+    const navigate     = useNavigate()
+    const dropdownRef  = useRef<DropdownRef>(null)
 
-    const fetchList = useCallback(async () => {
-        setLoading(true)
-        try {
+    const { notifications, setNotifications, markOneRead, markAllRead } = useMailStore()
+    const unreadCount = notifications.filter((n) => !n.read).length
+
+    const { mutate } = useSWR(
+        '/notifications',
+        async () => {
             const res = await apiGetNotifications()
-            setList(res.data)
-        } catch {
-            setList([])
-        } finally {
-            setLoading(false)
-        }
-    }, [])
+            return res.data
+        },
+        {
+            revalidateOnFocus: false,
+            onSuccess: (data) => setNotifications(data ?? []),
+        },
+    )
 
-    const fetchCount = useCallback(async () => {
-        try {
-            const res = await apiGetUnreadCount()
-            setUnreadCount(res.data.count)
-        } catch {
-            // silently ignore
-        }
-    }, [])
-
-    // Poll unread count every 30 seconds
+    // Refresh every 15 seconds
     useEffect(() => {
-        void fetchCount()
-        const id = setInterval(fetchCount, 15_000)
+        const id = setInterval(() => { void mutate() }, 15_000)
         return () => clearInterval(id)
-    }, [fetchCount])
-
-    // When a new notification arrives (count goes up) and dropdown is open, refresh the list
-    useEffect(() => {
-        if (dropdownOpen && unreadCount > 0) {
-            void fetchList()
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [unreadCount])
+    }, [mutate])
 
     const onOpen = async () => {
         setDropdownOpen(true)
-        await fetchList()
+        setLoading(true)
+        try {
+            await mutate()
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const resolveRoute = (n: AppNotification): string | null => {
+        const d = n.data as Record<string, number | string | undefined>
+        if (d.wo_id)     return `/concepts/work-orders/work-order-details/${d.wo_id}`
+        if (d.pm_id)     return `/concepts/pm/pm-details/${d.pm_id}`
+        if (d.po_id)     return `/concepts/purchasing/purchase-orders/${d.po_id}`
+        if (d.item_id)   return `/concepts/inventory/items/item-details/${d.item_id}`
+        if (n.type === 'new_member') return `/concepts/customers/customer-list`
+        return null
     }
 
     const onMarkRead = async (n: AppNotification) => {
         if (!n.read) {
             await apiMarkNotificationRead(n.id)
-            setList((prev) => prev.map((item) => item.id === n.id ? { ...item, read: true } : item))
-            setUnreadCount((c) => Math.max(0, c - 1))
+            markOneRead(n.id)
         }
-        if (n.data.wo_id) {
-            navigate(`/concepts/work-orders/work-order-details/${n.data.wo_id}`)
-            dropdownRef.current?.handleDropdownClose()
-        } else if (n.data.item_id) {
-            navigate(`/concepts/inventory/items/item-details/${n.data.item_id}`)
+        const route = resolveRoute(n)
+        if (route) {
+            navigate(route)
             dropdownRef.current?.handleDropdownClose()
         }
     }
 
     const onMarkAllRead = async () => {
         await apiMarkAllNotificationsRead()
-        setList((prev) => prev.map((item) => ({ ...item, read: true })))
-        setUnreadCount(0)
+        markAllRead()
     }
 
     return (
@@ -150,7 +157,7 @@ const _Notification = ({ className }: { className?: string }) => {
                     </div>
                 )}
 
-                {!loading && list.length === 0 && (
+                {!loading && notifications.length === 0 && (
                     <div className={classNames('flex items-center justify-center', notificationHeight)}>
                         <div className="text-center">
                             <img
@@ -164,7 +171,7 @@ const _Notification = ({ className }: { className?: string }) => {
                     </div>
                 )}
 
-                {!loading && list.map((item, index) => (
+                {!loading && notifications.map((item, index) => (
                     <div key={item.id}>
                         <div
                             className={classNames(
@@ -193,7 +200,7 @@ const _Notification = ({ className }: { className?: string }) => {
                                 <div className="flex-shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5" />
                             )}
                         </div>
-                        {!isLastChild(list, index) && (
+                        {!isLastChild(notifications, index) && (
                             <div className="border-b border-gray-100 dark:border-gray-700 mx-4" />
                         )}
                     </div>

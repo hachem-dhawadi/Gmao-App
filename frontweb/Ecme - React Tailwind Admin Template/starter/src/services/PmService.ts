@@ -1,5 +1,11 @@
 import ApiService from './ApiService'
 
+export type PmTask = {
+    id: number
+    title: string
+    order_index: number
+}
+
 export type PmTrigger = {
     id: number
     type: string
@@ -33,6 +39,7 @@ export type PmPlan = {
     assigned_to: PmMember | null
     created_by: PmMember | null
     trigger: PmTrigger | null
+    tasks: PmTask[]
 }
 
 export type PmPlansListResponse = {
@@ -69,6 +76,7 @@ export type CreatePmPlanRequest = {
         interval_unit: 'days' | 'weeks' | 'months'
         next_run_at?: string | null
     }
+    tasks?: Array<{ id?: number; title: string }>
 }
 
 export async function apiGetPmPlansList<

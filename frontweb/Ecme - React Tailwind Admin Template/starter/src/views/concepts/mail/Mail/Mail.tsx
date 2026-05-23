@@ -1,13 +1,7 @@
 import MailBody from './components/MailBody'
-import MailEditor from './components/MailEditor'
 
 const Mail = () => {
-    return (
-        <>
-            <MailBody />
-            <MailEditor />
-        </>
-    )
+    return <MailBody />
 }
 
 export default Mail

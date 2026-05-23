@@ -15,7 +15,11 @@ const PmPlanList = () => {
                             <h3>Preventive Maintenance Plans</h3>
                             <PmPlanListActionTools />
                         </div>
-                        <PmPlanListTableTools />
+                        <div className="flex flex-col md:flex-row md:items-center gap-2">
+                            <div className="flex-1">
+                                <PmPlanListTableTools />
+                            </div>
+                        </div>
                         <PmPlanListTable />
                     </div>
                 </AdaptiveCard>

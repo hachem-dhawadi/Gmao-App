@@ -9,6 +9,7 @@ use App\Http\Resources\Api\V1\Members\MemberResource;
 use App\Models\Member;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -217,6 +218,8 @@ class MemberController extends Controller
 
             return $member->load(['user', 'roles']);
         });
+
+        NotificationService::notifyNewMember($member, $currentCompany->id);
 
         return response()->json([
             'success' => true,
