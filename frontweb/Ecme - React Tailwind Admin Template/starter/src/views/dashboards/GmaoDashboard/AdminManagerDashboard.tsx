@@ -27,6 +27,7 @@ import {
     TbPlayerPause, TbCalendarTime, TbEngine,
     TbUsers, TbUserExclamation, TbTool,
     TbChevronLeft, TbChevronRight,
+    TbClipboardText, TbCalendarStats, TbClock,
 } from 'react-icons/tb'
 import { COLORS } from '@/constants/chart.constant'
 import type { ExtendedTask } from '@/components/shared/GanttChart'
@@ -147,7 +148,129 @@ const WoOverviewCard = ({
     </Card>
 )
 
-// ── 2. WO Gantt Schedule  (= Schedule) ────────────────────────────────
+// ── 2. CMMS KPI Row — Requests / PM Compliance / MTTR ─────────────────
+
+const complianceColor = (pct: number) =>
+    pct >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+    pct >= 50 ? 'text-amber-500' :
+    'text-red-500'
+
+const complianceBg = (pct: number) =>
+    pct >= 80 ? 'bg-emerald-100 dark:bg-emerald-500/20' :
+    pct >= 50 ? 'bg-amber-100 dark:bg-amber-500/20' :
+    'bg-red-100 dark:bg-red-500/20'
+
+const CmmsKpiRow = ({
+    pendingRequests,
+    pmCompliancePct,
+    mttrHours,
+    onRequests,
+}: {
+    pendingRequests: number
+    pmCompliancePct: number
+    mttrHours: number
+    onRequests: () => void
+}) => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        {/* Pending Requests */}
+        <Card>
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                        Pending Requests
+                    </p>
+                    <h2 className={pendingRequests > 0 ? 'text-amber-500' : ''}>{pendingRequests}</h2>
+                    <p className="text-xs text-gray-400 mt-1">
+                        {pendingRequests > 0 ? 'Awaiting review' : 'All clear'}
+                    </p>
+                </div>
+                <div className="w-11 h-11 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
+                    <TbClipboardText className="text-amber-500 text-xl" />
+                </div>
+            </div>
+            {pendingRequests > 0 && (
+                <Button
+                    className="mt-4"
+                    size="sm"
+                    variant="solid"
+                    block
+                    onClick={onRequests}
+                >
+                    Review {pendingRequests} request{pendingRequests !== 1 ? 's' : ''}
+                </Button>
+            )}
+        </Card>
+
+        {/* PM Compliance */}
+        <Card>
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                        PM Compliance
+                    </p>
+                    <h2 className={complianceColor(pmCompliancePct)}>
+                        {pmCompliancePct}%
+                    </h2>
+                    <p className="text-xs text-gray-400 mt-1">This month</p>
+                </div>
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${complianceBg(pmCompliancePct)}`}>
+                    <TbCalendarStats className={`text-xl ${complianceColor(pmCompliancePct)}`} />
+                </div>
+            </div>
+            <div className="mt-4">
+                <div className="flex justify-between text-xs text-gray-400 mb-1">
+                    <span>Compliance rate</span>
+                    <span className={`font-semibold ${complianceColor(pmCompliancePct)}`}>{pmCompliancePct}%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                    <div
+                        className={`h-full rounded-full transition-all ${
+                            pmCompliancePct >= 80 ? 'bg-emerald-500' :
+                            pmCompliancePct >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${pmCompliancePct}%` }}
+                    />
+                </div>
+            </div>
+        </Card>
+
+        {/* MTTR */}
+        <Card>
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+                        MTTR
+                    </p>
+                    <div className="flex items-end gap-1">
+                        <h2>{mttrHours > 0 ? mttrHours : '—'}</h2>
+                        {mttrHours > 0 && (
+                            <span className="text-sm text-gray-400 mb-1.5">hrs</span>
+                        )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Avg repair time this month</p>
+                </div>
+                <div className="w-11 h-11 rounded-xl bg-sky-100 dark:bg-sky-500/20 flex items-center justify-center">
+                    <TbClock className="text-sky-500 text-xl" />
+                </div>
+            </div>
+            {mttrHours === 0 && (
+                <p className="text-xs text-gray-400 mt-4">No completed WOs this month yet</p>
+            )}
+            {mttrHours > 0 && (
+                <p className="text-xs mt-4">
+                    <span className={mttrHours <= 8 ? 'text-emerald-500 font-semibold' : mttrHours <= 24 ? 'text-amber-500 font-semibold' : 'text-red-500 font-semibold'}>
+                        {mttrHours <= 8 ? 'Excellent' : mttrHours <= 24 ? 'Acceptable' : 'Needs improvement'}
+                    </span>
+                    <span className="text-gray-400"> — target is under 8 hrs</span>
+                </p>
+            )}
+        </Card>
+
+    </div>
+)
+
+// ── 3. WO Gantt Schedule  (= Schedule) ────────────────────────────────
 
 const mapWoToGanttTask = (wo: WoItem): ExtendedTask => {
     const start = wo.created_at
@@ -210,7 +333,7 @@ const WoScheduleCard = ({ wos }: { wos: WoItem[] }) => {
     )
 }
 
-// ── 3. PM Upcoming Sidebar  (= UpcomingSchedule) ──────────────────────
+// ── 4. PM Upcoming Sidebar  (= UpcomingSchedule) ──────────────────────
 
 const PmScheduleCard = ({
     pm, pmDueSoon, onViewAll,
@@ -287,14 +410,14 @@ const PmScheduleCard = ({
         </div>
 
         <div className="mt-4">
-            <Button block size="sm" variant="twoTone" onClick={onViewAll}>
+            <Button block size="sm" variant="default" onClick={onViewAll}>
                 View all PM plans
             </Button>
         </div>
     </Card>
 )
 
-// ── 4. Open Work Orders  (= CurrentTasks — exact copy) ─────────────────
+// ── 5. Open Work Orders  (= CurrentTasks — exact copy) ─────────────────
 
 type WoTask = WoItem & { checked: boolean }
 
@@ -383,7 +506,7 @@ const OpenWorkOrdersCard = ({
     )
 }
 
-// ── 5. WO Status Overview  (= TaskOverview — exact copy) ───────────────
+// ── 6. WO Status Overview  (= TaskOverview — exact copy) ───────────────
 
 type TimeRange = 'status' | 'monthly'
 
@@ -495,7 +618,7 @@ const WoStatusOverviewCard = ({
     )
 }
 
-// ── 6. Recent WO Activity  (= RecentActivity) ─────────────────────────
+// ── 7. Recent WO Activity  (= RecentActivity) ─────────────────────────
 
 const RecentWoActivityCard = ({
     wos, onViewAll, onRow,
@@ -553,7 +676,7 @@ const RecentWoActivityCard = ({
     </Card>
 )
 
-// ── 7. Mini Calendar ──────────────────────────────────────────────────
+// ── 8. Mini Calendar ──────────────────────────────────────────────────
 
 const CAL_DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -687,14 +810,17 @@ const AdminManagerDashboard = () => {
         )
     }
 
-    const d            = data?.data
-    const wo           = d?.work_orders ?? { open: 0, in_progress: 0, on_hold: 0, overdue: 0, completed_month: 0, unassigned: 0 }
-    const pm           = d?.pm ?? { active: 0, due_week: 0, due_month: 0 }
-    const assets       = d?.assets ?? { total: 0 }
-    const members      = d?.members ?? { total_active: 0, technicians: 0 }
-    const pmDueSoon    = d?.pm_due_soon ?? []
-    const recentWos    = d?.recent_work_orders ?? []
-    const monthlyStats = d?.monthly_stats ?? []
+    const d                = data?.data
+    const wo               = d?.work_orders ?? { open: 0, in_progress: 0, on_hold: 0, overdue: 0, completed_month: 0, unassigned: 0 }
+    const pm               = d?.pm ?? { active: 0, due_week: 0, due_month: 0 }
+    const assets           = d?.assets ?? { total: 0 }
+    const members          = d?.members ?? { total_active: 0, technicians: 0 }
+    const pmDueSoon        = d?.pm_due_soon ?? []
+    const recentWos        = d?.recent_work_orders ?? []
+    const monthlyStats     = d?.monthly_stats ?? []
+    const pendingRequests  = d?.pending_requests ?? 0
+    const pmCompliancePct  = d?.pm_compliance_pct ?? 100
+    const mttrHours        = d?.mttr_hours ?? 0
 
     return (
         <Container>
@@ -708,6 +834,12 @@ const AdminManagerDashboard = () => {
                             assets={assets}
                             members={members}
                             onViewAll={() => navigate('/concepts/work-orders/work-order-list')}
+                        />
+                        <CmmsKpiRow
+                            pendingRequests={pendingRequests}
+                            pmCompliancePct={pmCompliancePct}
+                            mttrHours={mttrHours}
+                            onRequests={() => navigate('/concepts/requests/request-list')}
                         />
                         <WoScheduleCard wos={recentWos} />
                     </div>

@@ -15,6 +15,7 @@ import WoActivity from './components/WoActivity'
 import WoFooter from './components/WoFooter'
 import WoParts from './components/WoParts'
 import WoChecklist from './components/WoChecklist'
+import WoClosureSection from './components/WoClosureSection'
 import {
     apiGetWorkOrderById,
     apiUpdateWorkOrder,
@@ -467,6 +468,15 @@ const WorkOrderDetails = () => {
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Failure Analysis — shown when completed or cancelled */}
+                                {(wo.status === 'completed' || wo.status === 'cancelled') && (
+                                    <WoClosureSection
+                                        wo={wo}
+                                        canEdit={canEdit}
+                                        patch={patch}
+                                    />
+                                )}
 
                                 {/* Checklist (only shown when items exist) */}
                                 {wo.checklist_items && wo.checklist_items.length > 0 && (

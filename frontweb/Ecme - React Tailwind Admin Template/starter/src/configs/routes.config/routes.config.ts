@@ -34,6 +34,9 @@ const PmPlanList = lazy(() => import('@/views/concepts/pm/PmPlanList/PmPlanList'
 const PmPlanCreate = lazy(() => import('@/views/concepts/pm/PmPlanCreate/PmPlanCreate'))
 const PmPlanEdit = lazy(() => import('@/views/concepts/pm/PmPlanEdit/PmPlanEdit'))
 const PmPlanDetails = lazy(() => import('@/views/concepts/pm/PmPlanDetails/PmPlanDetails'))
+const RequestList = lazy(() => import('@/views/concepts/requests/RequestList'))
+const RequestCreate = lazy(() => import('@/views/concepts/requests/RequestCreate'))
+const RequestDetails = lazy(() => import('@/views/concepts/requests/RequestDetails'))
 const SupplierList = lazy(() => import('@/views/concepts/purchasing/SupplierList/SupplierList'))
 const PurchaseOrderList = lazy(() => import('@/views/concepts/purchasing/PurchaseOrderList/PurchaseOrderList'))
 const PurchaseOrderCreate = lazy(() => import('@/views/concepts/purchasing/PurchaseOrderCreate/PurchaseOrderCreate'))
@@ -327,6 +330,24 @@ const placeholderRoutes: Routes = [
         path: '/concepts/inventory/stock-moves',
         component: StockMoveList,
         authority: [ADMIN, MANAGER],
+    },
+    {
+        key: 'concepts.requests.requestList',
+        path: '/concepts/requests/request-list',
+        component: RequestList,
+        authority: [],
+    },
+    {
+        key: 'concepts.requests.requestCreate',
+        path: '/concepts/requests/request-create',
+        component: RequestCreate,
+        authority: [],
+    },
+    {
+        key: 'concepts.requests.requestDetails',
+        path: '/concepts/requests/request-details/:id',
+        component: RequestDetails,
+        authority: [],
     },
     {
         key: 'concepts.purchasing.suppliers',

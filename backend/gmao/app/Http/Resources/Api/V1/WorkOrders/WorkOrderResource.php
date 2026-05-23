@@ -28,6 +28,9 @@ class WorkOrderResource extends JsonResource
             'due_at'               => $this->due_at?->toISOString(),
             'closed_at'            => $this->closed_at?->toISOString(),
             'estimated_minutes'    => $this->estimated_minutes,
+            'failure_code'         => $this->failure_code,
+            'root_cause'           => $this->root_cause,
+            'resolution_notes'     => $this->resolution_notes,
             'created_at'           => $this->created_at?->toISOString(),
             'updated_at'           => $this->updated_at?->toISOString(),
             'asset'                => $this->relationLoaded('asset') && $this->asset

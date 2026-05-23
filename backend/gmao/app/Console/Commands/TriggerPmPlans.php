@@ -7,6 +7,7 @@ use App\Models\PmTrigger;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderChecklistItem;
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,9 @@ class TriggerPmPlans extends Command
                     'estimated_minutes'    => $plan->estimated_minutes,
                     'opened_at'            => $now,
                 ]);
+
+                // Notify managers that a WO was auto-generated
+                NotificationService::notifyPmWoGenerated($workOrder, $plan);
 
                 // Assign the technician via pivot
                 if ($plan->assigned_member_id) {

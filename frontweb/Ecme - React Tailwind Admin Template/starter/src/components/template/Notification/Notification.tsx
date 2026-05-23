@@ -18,6 +18,9 @@ import type { AppNotification } from '@/views/concepts/mail/Mail/types'
 import { HiOutlineMailOpen } from 'react-icons/hi'
 import {
     TbClipboardList,
+    TbClipboardText,
+    TbCircleCheck,
+    TbCircleX,
     TbAt,
     TbRefresh,
     TbAlertTriangle,
@@ -38,14 +41,18 @@ dayjs.extend(relativeTime)
 const notificationHeight = 'h-[300px]'
 
 const typeIcon: Record<string, React.ReactNode> = {
-    wo_assigned:       <TbClipboardList className="text-blue-500 text-xl" />,
-    wo_status_changed: <TbRefresh className="text-amber-500 text-xl" />,
-    wo_overdue:        <TbClockExclamation className="text-red-500 text-xl" />,
-    comment_mention:   <TbAt className="text-purple-500 text-xl" />,
-    low_stock:         <TbAlertTriangle className="text-orange-500 text-xl" />,
-    pm_assigned:       <TbCalendarRepeat className="text-teal-500 text-xl" />,
-    po_ordered:        <TbReceipt className="text-indigo-500 text-xl" />,
-    new_member:        <TbUserPlus className="text-green-500 text-xl" />,
+    wo_assigned:        <TbClipboardList className="text-blue-500 text-xl" />,
+    wo_status_changed:  <TbRefresh className="text-amber-500 text-xl" />,
+    wo_overdue:         <TbClockExclamation className="text-red-500 text-xl" />,
+    comment_mention:    <TbAt className="text-purple-500 text-xl" />,
+    low_stock:          <TbAlertTriangle className="text-orange-500 text-xl" />,
+    pm_assigned:        <TbCalendarRepeat className="text-teal-500 text-xl" />,
+    po_ordered:         <TbReceipt className="text-indigo-500 text-xl" />,
+    new_member:         <TbUserPlus className="text-green-500 text-xl" />,
+    new_request:        <TbClipboardText className="text-amber-500 text-xl" />,
+    request_converted:  <TbCircleCheck className="text-emerald-500 text-xl" />,
+    request_rejected:   <TbCircleX className="text-red-500 text-xl" />,
+    pm_wo_generated:    <TbCalendarRepeat className="text-teal-500 text-xl" />,
 }
 
 const _Notification = ({ className }: { className?: string }) => {
@@ -89,10 +96,11 @@ const _Notification = ({ className }: { className?: string }) => {
 
     const resolveRoute = (n: AppNotification): string | null => {
         const d = n.data as Record<string, number | string | undefined>
-        if (d.wo_id)     return `/concepts/work-orders/work-order-details/${d.wo_id}`
-        if (d.pm_id)     return `/concepts/pm/pm-details/${d.pm_id}`
-        if (d.po_id)     return `/concepts/purchasing/purchase-orders/${d.po_id}`
-        if (d.item_id)   return `/concepts/inventory/items/item-details/${d.item_id}`
+        if (d.wo_id)      return `/concepts/work-orders/work-order-details/${d.wo_id}`
+        if (d.pm_id)      return `/concepts/pm/pm-details/${d.pm_id}`
+        if (d.po_id)      return `/concepts/purchasing/purchase-orders/${d.po_id}`
+        if (d.item_id)    return `/concepts/inventory/items/item-details/${d.item_id}`
+        if (d.request_id) return `/concepts/requests/request-details/${d.request_id}`
         if (n.type === 'new_member') return `/concepts/customers/customer-list`
         return null
     }

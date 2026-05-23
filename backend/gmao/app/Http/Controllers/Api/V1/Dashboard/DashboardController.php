@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\V1\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
+use App\Models\MaintenanceRequest;
 use App\Models\Member;
 use App\Models\PmPlan;
+use App\Models\PmTrigger;
 use App\Models\WorkOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -62,6 +64,43 @@ class DashboardController extends Controller
             ->where('status', 'active')
             ->whereHas('roles', fn ($q) => $q->where('code', 'technician'))
             ->count();
+
+        // ── Pending maintenance requests ──────────────────────────────────────
+        $pendingRequests = MaintenanceRequest::query()
+            ->where('company_id', $company->id)
+            ->where('status', 'pending')
+            ->count();
+
+        // ── PM Compliance % (this month) ──────────────────────────────────────
+        // Plans that ran this month
+        $pmRanThisMonth = PmTrigger::query()
+            ->whereHas('pmPlan', fn ($q) => $q->where('company_id', $company->id)->where('status', 'active'))
+            ->whereBetween('last_run_at', [$startOfMonth, $now])
+            ->count();
+
+        // Plans that are overdue (next_run_at <= now and haven't run this month)
+        $pmOverdue = PmTrigger::query()
+            ->whereHas('pmPlan', fn ($q) => $q->where('company_id', $company->id)->where('status', 'active'))
+            ->where('next_run_at', '<=', $now)
+            ->where(fn ($q) => $q->whereNull('last_run_at')->orWhere('last_run_at', '<', $startOfMonth))
+            ->count();
+
+        $pmComplianceTotal = $pmRanThisMonth + $pmOverdue;
+        $pmCompliancePct   = $pmComplianceTotal > 0
+            ? (int) round($pmRanThisMonth / $pmComplianceTotal * 100)
+            : 100;
+
+        // ── MTTR — Mean Time To Repair (hours, this month) ───────────────────
+        $mttrResult = WorkOrder::query()
+            ->where('company_id', $company->id)
+            ->where('status', 'completed')
+            ->whereBetween('closed_at', [$startOfMonth, $now])
+            ->whereNotNull('opened_at')
+            ->whereNotNull('closed_at')
+            ->select(DB::raw('AVG(TIMESTAMPDIFF(HOUR, opened_at, closed_at)) as mttr_hours'))
+            ->first();
+
+        $mttrHours = $mttrResult ? round((float) ($mttrResult->mttr_hours ?? 0), 1) : 0.0;
 
         // Recent work orders
         $recentWorkOrders = WorkOrder::query()
@@ -131,6 +170,9 @@ class DashboardController extends Controller
                     'total_active' => $totalActive,
                     'technicians'  => $totalTechnicians,
                 ],
+                'pending_requests'   => $pendingRequests,
+                'pm_compliance_pct'  => $pmCompliancePct,
+                'mttr_hours'         => $mttrHours,
                 'monthly_stats'      => $monthlyStats,
                 'recent_work_orders' => $recentWorkOrders,
                 'pm_due_soon'        => $pmDueSoon,

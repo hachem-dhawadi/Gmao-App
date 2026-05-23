@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\V1\Superadmin\CompanyMemberController as Superadmin
 use App\Http\Controllers\Api\V1\Superadmin\UserController as SuperadminUserController;
 use App\Http\Controllers\Api\V1\Calendar\CalendarController;
 use App\Http\Controllers\Api\V1\FileManager\FileManagerController;
+use App\Http\Controllers\Api\V1\MaintenanceRequests\MaintenanceRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -200,6 +201,16 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/', [CalendarController::class, 'store']);
         Route::patch('/{calendarEvent}', [CalendarController::class, 'update']);
         Route::delete('/{calendarEvent}', [CalendarController::class, 'destroy']);
+    });
+
+    // ── Maintenance Requests ──────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('requests')->group(function (): void {
+        Route::get('/', [MaintenanceRequestController::class, 'index']);
+        Route::get('/{maintenanceRequest}', [MaintenanceRequestController::class, 'show']);
+        Route::post('/', [MaintenanceRequestController::class, 'store']);
+        Route::post('/{maintenanceRequest}/convert', [MaintenanceRequestController::class, 'convert'])->middleware('permission:work_orders.write');
+        Route::post('/{maintenanceRequest}/reject', [MaintenanceRequestController::class, 'reject'])->middleware('permission:work_orders.write');
+        Route::delete('/{maintenanceRequest}', [MaintenanceRequestController::class, 'destroy'])->middleware('permission:work_orders.delete');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('pm/plans')->group(function (): void {

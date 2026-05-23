@@ -3,12 +3,14 @@
 namespace App\Services;
 
 use App\Models\Item;
+use App\Models\MaintenanceRequest;
 use App\Models\Member;
 use App\Models\Notification;
 use App\Models\PmPlan;
 use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
@@ -122,6 +124,32 @@ class NotificationService
         }
     }
 
+    // ── PM Plan: auto-generated a work order ─────────────────────────────────
+
+    public static function notifyPmWoGenerated(WorkOrder $wo, PmPlan $plan): void
+    {
+        $managers = Member::query()
+            ->where('company_id', $plan->company_id)
+            ->whereHas('roles', fn ($q) => $q->whereIn('code', ['admin', 'manager']))
+            ->with('user')
+            ->get();
+
+        foreach ($managers as $manager) {
+            if (! $manager->user_id) continue;
+
+            self::create($manager->user_id, 'pm_wo_generated', [
+                'title' => 'PM plan auto-generated a work order',
+                'body'  => "Plan \"{$plan->name}\" ({$plan->code}) automatically created work order {$wo->code}.",
+                'data'  => [
+                    'wo_id'   => $wo->id,
+                    'wo_code' => $wo->code,
+                    'pm_id'   => $plan->id,
+                    'pm_code' => $plan->code,
+                ],
+            ]);
+        }
+    }
+
     // ── PM Plan: assigned ────────────────────────────────────────────────────
 
     public static function notifyPmAssigned(PmPlan $plan, int $assignedMemberId, int $assignedByMemberId): void
@@ -206,6 +234,69 @@ class NotificationService
                 'title' => 'Work order overdue',
                 'body'  => "Work order \"{$wo->title}\" ({$wo->code}) is past its due date.",
                 'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title],
+            ]);
+        }
+    }
+
+    // ── Maintenance Request: new request submitted ────────────────────────────
+
+    public static function notifyNewRequest(MaintenanceRequest $req): void
+    {
+        $requester   = $req->requestedBy;
+        $fromName    = $requester?->user?->name ?? 'Someone';
+        $priority    = ucfirst($req->priority);
+
+        $managers = Member::query()
+            ->where('company_id', $req->company_id)
+            ->where('id', '!=', $req->requested_by_member_id)
+            ->whereHas('roles', fn ($q) => $q->whereIn('code', ['admin', 'manager']))
+            ->with('user')
+            ->get();
+
+        foreach ($managers as $manager) {
+            if (! $manager->user_id) continue;
+
+            self::create($manager->user_id, 'new_request', [
+                'title' => "New maintenance request",
+                'body'  => "{$fromName} submitted a {$priority} request: \"{$req->title}\" ({$req->code})",
+                'data'  => [
+                    'request_id'    => $req->id,
+                    'request_code'  => $req->code,
+                    'request_title' => $req->title,
+                ],
+            ]);
+        }
+    }
+
+    // ── Maintenance Request: converted or rejected ────────────────────────────
+
+    public static function notifyRequestReviewed(MaintenanceRequest $req, string $status, ?string $woCode = null): void
+    {
+        $requester = $req->requestedBy;
+        if (! $requester?->user_id) return;
+
+        $reviewer  = $req->reviewedBy;
+        $fromName  = $reviewer?->user?->name ?? 'A manager';
+
+        if ($status === 'converted') {
+            self::create($requester->user_id, 'request_converted', [
+                'title' => "Your request has been approved",
+                'body'  => "{$fromName} converted your request \"{$req->title}\" ({$req->code}) into work order {$woCode}.",
+                'data'  => [
+                    'request_id'   => $req->id,
+                    'request_code' => $req->code,
+                    'wo_code'      => $woCode,
+                ],
+            ]);
+        } else {
+            $reason = $req->review_note ? " Reason: {$req->review_note}" : '';
+            self::create($requester->user_id, 'request_rejected', [
+                'title' => "Your request has been rejected",
+                'body'  => "{$fromName} rejected your request \"{$req->title}\" ({$req->code}).{$reason}",
+                'data'  => [
+                    'request_id'   => $req->id,
+                    'request_code' => $req->code,
+                ],
             ]);
         }
     }

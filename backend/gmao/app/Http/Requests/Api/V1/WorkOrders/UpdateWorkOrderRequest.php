@@ -32,6 +32,9 @@ class UpdateWorkOrderRequest extends FormRequest
             'estimated_minutes' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'assigned_member_ids'   => ['sometimes', 'nullable', 'array'],
             'assigned_member_ids.*' => ['integer', 'exists:members,id'],
+            'failure_code'          => ['sometimes', 'nullable', 'string', 'in:electrical_fault,mechanical_failure,wear_and_tear,operator_error,lack_of_maintenance,manufacturing_defect,environmental,unknown'],
+            'root_cause'            => ['sometimes', 'nullable', 'string', 'in:inadequate_maintenance,operator_error,design_flaw,normal_aging,overload,external_factor,unknown'],
+            'resolution_notes'      => ['sometimes', 'nullable', 'string', 'max:2000'],
         ];
     }
 }

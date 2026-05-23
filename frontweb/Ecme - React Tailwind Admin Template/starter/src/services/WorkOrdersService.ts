@@ -98,6 +98,9 @@ export type WorkOrder = {
     due_at: string | null
     closed_at: string | null
     estimated_minutes: number | null
+    failure_code: string | null
+    root_cause: string | null
+    resolution_notes: string | null
     created_at: string | null
     updated_at: string | null
     asset: WorkOrderAsset | null
@@ -153,6 +156,9 @@ export type UpdateWorkOrderRequest = {
     due_at?: string | null
     estimated_minutes?: number | null
     assigned_member_ids?: number[]
+    failure_code?: string | null
+    root_cause?: string | null
+    resolution_notes?: string | null
 }
 
 export async function apiGetWorkOrdersList<

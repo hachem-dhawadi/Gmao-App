@@ -16,6 +16,9 @@ export type AdminManagerDashboard = {
     pm: { active: number; due_week: number; due_month: number }
     assets: { total: number }
     members: { total_active: number; technicians: number }
+    pending_requests: number
+    pm_compliance_pct: number
+    mttr_hours: number
     monthly_stats: { month: string; active: number; completed: number }[]
     recent_work_orders: RecentWorkOrder[]
     pm_due_soon: PmDueSoon[]
