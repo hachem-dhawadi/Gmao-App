@@ -1,5 +1,7 @@
 import ApiService from './ApiService'
 
+export type ReportParams = { from?: string; to?: string }
+
 export type WoReportData = {
     monthly: { month: string; created: number; completed: number }[]
     by_status: { open: number; in_progress: number; on_hold: number; completed: number; cancelled: number }
@@ -31,7 +33,7 @@ export type InventoryReportData = {
     top_items: { id: number; code: string; name: string; unit: string | null; total_used: number; total_cost: number }[]
 }
 
-export const apiGetWoReport     = () => ApiService.fetchDataWithAxios<{ success: boolean; data: WoReportData }>({ url: '/reports/work-orders', method: 'get' })
-export const apiGetAssetReport  = () => ApiService.fetchDataWithAxios<{ success: boolean; data: AssetReportData }>({ url: '/reports/assets', method: 'get' })
-export const apiGetPmReport     = () => ApiService.fetchDataWithAxios<{ success: boolean; data: PmReportData }>({ url: '/reports/pm', method: 'get' })
-export const apiGetInvReport    = () => ApiService.fetchDataWithAxios<{ success: boolean; data: InventoryReportData }>({ url: '/reports/inventory', method: 'get' })
+export const apiGetWoReport    = (params?: ReportParams) => ApiService.fetchDataWithAxios<{ success: boolean; data: WoReportData }>({ url: '/reports/work-orders', method: 'get', params })
+export const apiGetAssetReport = (params?: ReportParams) => ApiService.fetchDataWithAxios<{ success: boolean; data: AssetReportData }>({ url: '/reports/assets', method: 'get', params })
+export const apiGetPmReport    = (params?: ReportParams) => ApiService.fetchDataWithAxios<{ success: boolean; data: PmReportData }>({ url: '/reports/pm', method: 'get', params })
+export const apiGetInvReport   = (params?: ReportParams) => ApiService.fetchDataWithAxios<{ success: boolean; data: InventoryReportData }>({ url: '/reports/inventory', method: 'get', params })

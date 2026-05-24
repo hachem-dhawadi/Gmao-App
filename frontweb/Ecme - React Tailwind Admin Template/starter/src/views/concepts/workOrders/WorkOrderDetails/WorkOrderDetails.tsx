@@ -19,7 +19,9 @@ import WoClosureSection from './components/WoClosureSection'
 import {
     apiGetWorkOrderById,
     apiUpdateWorkOrder,
+    apiGetWoParts,
 } from '@/services/WorkOrdersService'
+import { printWorkOrder } from './utils/printWorkOrder'
 import { apiGetMembersList } from '@/services/MembersService'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
@@ -31,6 +33,7 @@ import {
     TbArrowNarrowLeft,
     TbPencil,
     TbQrcode,
+    TbPrinter,
     TbCircle,
     TbFlag,
     TbFlag2Filled,
@@ -77,7 +80,8 @@ const WorkOrderDetails = () => {
     const [wo, setWo] = useState<WorkOrder | null>(null)
     const [editingDescription, setEditingDescription] = useState(false)
     const [descriptionDraft, setDescriptionDraft] = useState('')
-    const [printOpen, setPrintOpen] = useState(false)
+    const [printOpen, setPrintOpen]       = useState(false)
+    const [printingWo, setPrintingWo]     = useState(false)
 
     const isAssignedToWo = wo?.assigned_members.some((m) => m.id === currentMemberId) ?? false
     const canEdit = canAssign || isAssignedToWo
@@ -148,6 +152,20 @@ const WorkOrderDetails = () => {
         patch({ assigned_member_ids: newIds })
     }
 
+    const handlePrintWo = async () => {
+        if (!wo) return
+        setPrintingWo(true)
+        try {
+            const partsResp = await apiGetWoParts(wo.id)
+            const parts = partsResp.data?.parts ?? []
+            printWorkOrder(wo, parts)
+        } catch {
+            printWorkOrder(wo, [])
+        } finally {
+            setPrintingWo(false)
+        }
+    }
+
     const handleDescriptionBlur = () => {
         setEditingDescription(false)
         if (descriptionDraft !== (wo?.description || '')) {
@@ -189,6 +207,14 @@ const WorkOrderDetails = () => {
                                     onClick={() => setPrintOpen(true)}
                                 >
                                     Print Label
+                                </Button>
+                                <Button
+                                    variant="default"
+                                    icon={<TbPrinter />}
+                                    loading={printingWo}
+                                    onClick={handlePrintWo}
+                                >
+                                    Print WO
                                 </Button>
                                 {canManage && (
                                     <Button

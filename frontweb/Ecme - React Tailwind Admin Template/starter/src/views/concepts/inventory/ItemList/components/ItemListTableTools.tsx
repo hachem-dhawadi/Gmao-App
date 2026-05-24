@@ -1,11 +1,15 @@
+import { useState } from 'react'
 import cloneDeep from 'lodash/cloneDeep'
 import DebouceInput from '@/components/shared/DebouceInput'
+import Button from '@/components/ui/Button'
 import ItemTableFilter from './ItemTableFilter'
-import { TbSearch } from 'react-icons/tb'
+import BarcodeScanDialog from './BarcodeScanDialog'
+import { TbSearch, TbBarcode } from 'react-icons/tb'
 import useItemList from '../hooks/useItemList'
 
 const ItemListTableTools = () => {
     const { tableData, setTableData } = useItemList()
+    const [scanOpen, setScanOpen] = useState(false)
 
     const handleInputChange = (val: string) => {
         const next = cloneDeep(tableData)
@@ -15,14 +19,31 @@ const ItemListTableTools = () => {
     }
 
     return (
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <DebouceInput
-                placeholder="Search by name, code, barcode…"
-                suffix={<TbSearch className="text-lg" />}
-                onChange={(e) => handleInputChange(e.target.value)}
+        <>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                <div className="flex items-center gap-2 flex-1">
+                    <DebouceInput
+                        placeholder="Search by name, code, barcode…"
+                        suffix={<TbSearch className="text-lg" />}
+                        onChange={(e) => handleInputChange(e.target.value)}
+                    />
+                    <Button
+                        variant="default"
+                        icon={<TbBarcode />}
+                        onClick={() => setScanOpen(true)}
+                        title="Scan barcode"
+                    >
+                        Scan
+                    </Button>
+                </div>
+                <ItemTableFilter />
+            </div>
+
+            <BarcodeScanDialog
+                isOpen={scanOpen}
+                onClose={() => setScanOpen(false)}
             />
-            <ItemTableFilter />
-        </div>
+        </>
     )
 }
 

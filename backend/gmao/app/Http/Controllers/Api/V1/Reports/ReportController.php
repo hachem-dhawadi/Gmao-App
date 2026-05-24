@@ -17,6 +17,15 @@ use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
+    // ── Shared: parse from/to query params ───────────────────────────────────
+
+    private function dateRange(Request $request): array
+    {
+        $from = $request->query('from') ? Carbon::parse($request->query('from'))->startOfDay() : null;
+        $to   = $request->query('to')   ? Carbon::parse($request->query('to'))->endOfDay()     : null;
+        return [$from, $to];
+    }
+
     // ── Work Orders Report ────────────────────────────────────────────────────
 
     public function workOrders(Request $request): JsonResponse
@@ -24,57 +33,89 @@ class ReportController extends Controller
         $company = $request->attributes->get('currentCompany');
         if (! $company) return response()->json(['success' => false, 'message' => 'Company context missing.'], 400);
 
-        $now   = Carbon::now();
-        $woBase = WorkOrder::query()->where('company_id', $company->id)->whereNull('deleted_at');
+        $now = Carbon::now();
+        [$from, $to] = $this->dateRange($request);
 
-        // Monthly stats — last 6 months
+        $woBase = WorkOrder::query()
+            ->where('company_id', $company->id)
+            ->whereNull('deleted_at');
+
+        // Filtered base (for status/priority/technicians counts)
+        $woFiltered = clone $woBase;
+        if ($from) $woFiltered->where('opened_at', '>=', $from);
+        if ($to)   $woFiltered->where('opened_at', '<=', $to);
+
+        // Monthly breakdown — range or default last 6 months
         $monthly = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $start = $now->copy()->subMonths($i)->startOfMonth();
-            $end   = $now->copy()->subMonths($i)->endOfMonth();
-            $monthly[] = [
-                'month'     => $start->format('M Y'),
-                'created'   => (clone $woBase)->whereBetween('opened_at', [$start, $end])->count(),
-                'completed' => (clone $woBase)->where('status', 'completed')->whereBetween('closed_at', [$start, $end])->count(),
-            ];
+        if ($from) {
+            $cursor   = $from->copy()->startOfMonth();
+            $endMonth = ($to ?? $now)->copy()->startOfMonth();
+            $count    = 0;
+            while ($cursor->lte($endMonth) && $count < 12) {
+                $mStart = $cursor->copy()->startOfMonth();
+                $mEnd   = $cursor->copy()->endOfMonth();
+                $monthly[] = [
+                    'month'     => $cursor->format('M Y'),
+                    'created'   => (clone $woBase)->whereBetween('opened_at', [$mStart, $mEnd])->count(),
+                    'completed' => (clone $woBase)->where('status', 'completed')->whereBetween('closed_at', [$mStart, $mEnd])->count(),
+                ];
+                $cursor->addMonth();
+                $count++;
+            }
+        } else {
+            for ($i = 5; $i >= 0; $i--) {
+                $start = $now->copy()->subMonths($i)->startOfMonth();
+                $end   = $now->copy()->subMonths($i)->endOfMonth();
+                $monthly[] = [
+                    'month'     => $start->format('M Y'),
+                    'created'   => (clone $woBase)->whereBetween('opened_at', [$start, $end])->count(),
+                    'completed' => (clone $woBase)->where('status', 'completed')->whereBetween('closed_at', [$start, $end])->count(),
+                ];
+            }
         }
 
-        // By status
+        // By status & priority (date-filtered)
         $byStatus = [
-            'open'        => (clone $woBase)->where('status', 'open')->count(),
-            'in_progress' => (clone $woBase)->where('status', 'in_progress')->count(),
-            'on_hold'     => (clone $woBase)->where('status', 'on_hold')->count(),
-            'completed'   => (clone $woBase)->where('status', 'completed')->count(),
-            'cancelled'   => (clone $woBase)->where('status', 'cancelled')->count(),
+            'open'        => (clone $woFiltered)->where('status', 'open')->count(),
+            'in_progress' => (clone $woFiltered)->where('status', 'in_progress')->count(),
+            'on_hold'     => (clone $woFiltered)->where('status', 'on_hold')->count(),
+            'completed'   => (clone $woFiltered)->where('status', 'completed')->count(),
+            'cancelled'   => (clone $woFiltered)->where('status', 'cancelled')->count(),
         ];
 
-        // By priority
         $byPriority = [
-            'critical' => (clone $woBase)->where('priority', 'critical')->count(),
-            'high'     => (clone $woBase)->where('priority', 'high')->count(),
-            'medium'   => (clone $woBase)->where('priority', 'medium')->count(),
-            'low'      => (clone $woBase)->where('priority', 'low')->count(),
+            'critical' => (clone $woFiltered)->where('priority', 'critical')->count(),
+            'high'     => (clone $woFiltered)->where('priority', 'high')->count(),
+            'medium'   => (clone $woFiltered)->where('priority', 'medium')->count(),
+            'low'      => (clone $woFiltered)->where('priority', 'low')->count(),
         ];
 
-        // Average resolution time (hours) this month
-        $startOfMonth = $now->copy()->startOfMonth();
-        $avgResolution = WorkOrder::query()
+        // Avg resolution — within range or this month
+        $resolBase = WorkOrder::query()
             ->where('company_id', $company->id)
             ->where('status', 'completed')
-            ->whereBetween('closed_at', [$startOfMonth, $now])
             ->whereNotNull('opened_at')
-            ->whereNotNull('closed_at')
+            ->whereNotNull('closed_at');
+        if ($from && $to) {
+            $resolBase->whereBetween('closed_at', [$from, $to]);
+        } else {
+            $resolBase->whereBetween('closed_at', [$now->copy()->startOfMonth(), $now]);
+        }
+        $avgResolution = $resolBase
             ->select(DB::raw('AVG(TIMESTAMPDIFF(HOUR, opened_at, closed_at)) as avg_hours'))
             ->value('avg_hours');
 
-        // Top technicians by WOs completed (all time)
-        $topTechnicians = DB::table('work_order_member')
-            ->join('work_orders', 'work_order_member.work_order_id', '=', 'work_orders.id')
-            ->join('members', 'work_order_member.member_id', '=', 'members.id')
+        // Top technicians (date-filtered)
+        $techQuery = DB::table('work_order_members')
+            ->join('work_orders', 'work_order_members.work_order_id', '=', 'work_orders.id')
+            ->join('members', 'work_order_members.member_id', '=', 'members.id')
             ->join('users', 'members.user_id', '=', 'users.id')
             ->where('work_orders.company_id', $company->id)
             ->where('work_orders.status', 'completed')
-            ->whereNull('work_orders.deleted_at')
+            ->whereNull('work_orders.deleted_at');
+        if ($from) $techQuery->where('work_orders.opened_at', '>=', $from);
+        if ($to)   $techQuery->where('work_orders.opened_at', '<=', $to);
+        $topTechnicians = $techQuery
             ->select('users.name', DB::raw('COUNT(*) as completed_count'))
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('completed_count')
@@ -101,14 +142,17 @@ class ReportController extends Controller
         $company = $request->attributes->get('currentCompany');
         if (! $company) return response()->json(['success' => false, 'message' => 'Company context missing.'], 400);
 
-        $now = Carbon::now();
+        [$from, $to] = $this->dateRange($request);
 
         $assets = Asset::query()
             ->where('assets.company_id', $company->id)
             ->whereNull('assets.deleted_at')
-            ->leftJoin('work_orders', function ($join) {
+            ->leftJoin('work_orders', function ($join) use ($from, $to) {
                 $join->on('work_orders.asset_id', '=', 'assets.id')
                      ->whereNull('work_orders.deleted_at');
+                // Date conditions inside join = part of ON clause, preserves LEFT JOIN
+                if ($from) $join->where('work_orders.opened_at', '>=', $from);
+                if ($to)   $join->where('work_orders.opened_at', '<=', $to);
             })
             ->select(
                 'assets.id',
@@ -124,12 +168,12 @@ class ReportController extends Controller
             ->limit(20)
             ->get()
             ->map(fn ($a) => [
-                'id'                => $a->id,
-                'code'              => $a->code,
-                'name'              => $a->name,
-                'location'          => $a->location,
-                'wo_count'          => (int) $a->wo_count,
-                'total_downtime_h'  => (float) $a->total_downtime_h,
+                'id'                  => $a->id,
+                'code'                => $a->code,
+                'name'                => $a->name,
+                'location'            => $a->location,
+                'wo_count'            => (int) $a->wo_count,
+                'total_downtime_h'    => (float) $a->total_downtime_h,
                 'last_maintenance_at' => $a->last_maintenance_at,
             ]);
 
@@ -147,19 +191,36 @@ class ReportController extends Controller
         if (! $company) return response()->json(['success' => false, 'message' => 'Company context missing.'], 400);
 
         $now = Carbon::now();
+        [$from, $to] = $this->dateRange($request);
 
-        // Monthly compliance for last 6 months
+        // Monthly compliance — range or default last 6 months
         $monthly = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $start = $now->copy()->subMonths($i)->startOfMonth();
-            $end   = $now->copy()->subMonths($i)->endOfMonth();
+        $months  = [];
+
+        if ($from) {
+            $cursor   = $from->copy()->startOfMonth();
+            $endMonth = ($to ?? $now)->copy()->startOfMonth();
+            $count    = 0;
+            while ($cursor->lte($endMonth) && $count < 12) {
+                $months[] = $cursor->copy();
+                $cursor->addMonth();
+                $count++;
+            }
+        } else {
+            for ($i = 5; $i >= 0; $i--) {
+                $months[] = $now->copy()->subMonths($i)->startOfMonth();
+            }
+        }
+
+        foreach ($months as $monthStart) {
+            $start = $monthStart->copy()->startOfMonth();
+            $end   = $monthStart->copy()->endOfMonth();
 
             $ran = PmTrigger::query()
                 ->whereHas('pmPlan', fn ($q) => $q->where('company_id', $company->id))
                 ->whereBetween('last_run_at', [$start, $end])
                 ->count();
 
-            // Overdue = triggers whose next_run_at fell in this period but never ran (or ran after the period)
             $overdue = PmTrigger::query()
                 ->whereHas('pmPlan', fn ($q) => $q->where('company_id', $company->id)->where('status', 'active'))
                 ->whereBetween('next_run_at', [$start, $end])
@@ -167,7 +228,7 @@ class ReportController extends Controller
                 ->count();
 
             $total      = $ran + $overdue;
-            $compliance = $total > 0 ? (int) round($ran / $total * 100) : ($i === 0 ? 100 : null);
+            $compliance = $total > 0 ? (int) round($ran / $total * 100) : null;
 
             $monthly[] = [
                 'month'      => $start->format('M Y'),
@@ -177,39 +238,34 @@ class ReportController extends Controller
             ];
         }
 
-        // PM plan list with status
+        // PM plan list (always current state, not date-filtered)
         $plans = PmPlan::query()
             ->where('company_id', $company->id)
             ->whereNull('deleted_at')
             ->with(['triggers', 'assignedTo.user'])
             ->get()
             ->map(function (PmPlan $p) use ($now) {
-                $trigger     = $p->triggers->first();
-                $lastRun     = $trigger?->last_run_at;
-                $nextRun     = $trigger?->next_run_at;
-                $isOverdue   = $nextRun && $nextRun->lt($now) && (!$lastRun || $lastRun->lt($nextRun));
-                $neverRun    = ! $lastRun;
-
-                $status = $neverRun ? 'never_run' : ($isOverdue ? 'overdue' : 'on_time');
+                $trigger   = $p->triggers->first();
+                $lastRun   = $trigger?->last_run_at;
+                $nextRun   = $trigger?->next_run_at;
+                $isOverdue = $nextRun && $nextRun->lt($now) && (!$lastRun || $lastRun->lt($nextRun));
+                $neverRun  = ! $lastRun;
 
                 return [
-                    'id'          => $p->id,
-                    'code'        => $p->code,
-                    'name'        => $p->name,
-                    'status'      => $p->status,
-                    'assigned_to' => $p->assignedTo?->user?->name,
-                    'last_run_at' => $lastRun?->toISOString(),
-                    'next_run_at' => $nextRun?->toISOString(),
-                    'compliance_status' => $status,
+                    'id'                => $p->id,
+                    'code'              => $p->code,
+                    'name'              => $p->name,
+                    'status'            => $p->status,
+                    'assigned_to'       => $p->assignedTo?->user?->name,
+                    'last_run_at'       => $lastRun?->toISOString(),
+                    'next_run_at'       => $nextRun?->toISOString(),
+                    'compliance_status' => $neverRun ? 'never_run' : ($isOverdue ? 'overdue' : 'on_time'),
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'data'    => [
-                'monthly' => $monthly,
-                'plans'   => $plans,
-            ],
+            'data'    => ['monthly' => $monthly, 'plans' => $plans],
         ]);
     }
 
@@ -220,40 +276,55 @@ class ReportController extends Controller
         $company = $request->attributes->get('currentCompany');
         if (! $company) return response()->json(['success' => false, 'message' => 'Company context missing.'], 400);
 
-        $now          = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $startOfYear  = $now->copy()->startOfYear();
+        $now = Carbon::now();
+        [$from, $to] = $this->dateRange($request);
 
-        // Parts used on WOs (stock_moves with move_type=out linked to work_orders)
         $partsBase = StockMove::query()
             ->join('items', 'stock_moves.item_id', '=', 'items.id')
             ->where('items.company_id', $company->id)
             ->whereNotNull('stock_moves.work_order_id')
             ->where('stock_moves.move_type', 'out');
 
-        $costMonth = (clone $partsBase)
-            ->whereBetween('stock_moves.created_at', [$startOfMonth, $now])
-            ->select(DB::raw('SUM(ABS(stock_moves.quantity) * COALESCE(stock_moves.unit_cost, items.unit_price, 0)) as total'))
-            ->value('total') ?? 0;
+        if ($from || $to) {
+            // Custom range
+            $periodBase = clone $partsBase;
+            if ($from) $periodBase->where('stock_moves.moved_at', '>=', $from);
+            if ($to)   $periodBase->where('stock_moves.moved_at', '<=', $to);
 
-        $costYear = (clone $partsBase)
-            ->whereBetween('stock_moves.created_at', [$startOfYear, $now])
-            ->select(DB::raw('SUM(ABS(stock_moves.quantity) * COALESCE(stock_moves.unit_cost, items.unit_price, 0)) as total'))
-            ->value('total') ?? 0;
+            $costMonth = $periodBase
+                ->select(DB::raw('SUM(ABS(stock_moves.quantity) * COALESCE(items.unit_cost, 0)) as total'))
+                ->value('total') ?? 0;
 
-        // Top 10 most used items (by quantity consumed on WOs)
-        $topItems = StockMove::query()
+            // cost_year same as period when range is set
+            $costYear = $costMonth;
+        } else {
+            $startOfMonth = $now->copy()->startOfMonth();
+            $startOfYear  = $now->copy()->startOfYear();
+
+            $costMonth = (clone $partsBase)
+                ->whereBetween('stock_moves.moved_at', [$startOfMonth, $now])
+                ->select(DB::raw('SUM(ABS(stock_moves.quantity) * COALESCE(items.unit_cost, 0)) as total'))
+                ->value('total') ?? 0;
+
+            $costYear = (clone $partsBase)
+                ->whereBetween('stock_moves.moved_at', [$startOfYear, $now])
+                ->select(DB::raw('SUM(ABS(stock_moves.quantity) * COALESCE(items.unit_cost, 0)) as total'))
+                ->value('total') ?? 0;
+        }
+
+        // Top items (date-filtered)
+        $topQuery = StockMove::query()
             ->join('items', 'stock_moves.item_id', '=', 'items.id')
             ->where('items.company_id', $company->id)
             ->whereNotNull('stock_moves.work_order_id')
-            ->where('stock_moves.move_type', 'out')
+            ->where('stock_moves.move_type', 'out');
+        if ($from) $topQuery->where('stock_moves.moved_at', '>=', $from);
+        if ($to)   $topQuery->where('stock_moves.moved_at', '<=', $to);
+        $topItems = $topQuery
             ->select(
-                'items.id',
-                'items.code',
-                'items.name',
-                'items.unit',
+                'items.id', 'items.code', 'items.name', 'items.unit',
                 DB::raw('SUM(ABS(stock_moves.quantity)) as total_used'),
-                DB::raw('SUM(ABS(stock_moves.quantity) * COALESCE(stock_moves.unit_cost, items.unit_price, 0)) as total_cost')
+                DB::raw('SUM(ABS(stock_moves.quantity) * COALESCE(items.unit_cost, 0)) as total_cost')
             )
             ->groupBy('items.id', 'items.code', 'items.name', 'items.unit')
             ->orderByDesc('total_used')
@@ -268,13 +339,13 @@ class ReportController extends Controller
                 'total_cost' => round((float) $r->total_cost, 2),
             ]);
 
-        // Current stock value (all items in company)
+        // Stock value is always current (not date-filtered)
         $stockValue = DB::table('stock_moves')
             ->join('items', 'stock_moves.item_id', '=', 'items.id')
             ->join('warehouses', 'stock_moves.warehouse_id', '=', 'warehouses.id')
             ->where('items.company_id', $company->id)
             ->whereNull('items.deleted_at')
-            ->select(DB::raw('SUM(stock_moves.quantity * COALESCE(items.unit_price, 0)) as value'))
+            ->select(DB::raw('SUM(ABS(stock_moves.quantity) * COALESCE(items.unit_cost, 0)) as value'))
             ->value('value') ?? 0;
 
         return response()->json([
