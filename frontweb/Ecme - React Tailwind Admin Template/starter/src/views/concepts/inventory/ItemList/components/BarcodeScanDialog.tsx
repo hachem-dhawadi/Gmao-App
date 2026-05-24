@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
@@ -19,6 +20,7 @@ type Props = {
 
 const BarcodeScanDialog = ({ isOpen, onClose }: Props) => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const inputRef  = useRef<HTMLInputElement>(null)
 
     const [mode,     setMode]     = useState<'keyboard' | 'camera'>('keyboard')
@@ -79,7 +81,7 @@ const BarcodeScanDialog = ({ isOpen, onClose }: Props) => {
             setResults(items)
         } catch {
             toast.push(
-                <Notification type="danger">Search failed.</Notification>,
+                <Notification type="danger">{t('inventory.toast.scanFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {

@@ -4,15 +4,17 @@ import PmPlanListTable from './components/PmPlanListTable'
 import PmPlanListActionTools from './components/PmPlanListActionTools'
 import PmPlanListTableTools from './components/PmPlanListTableTools'
 import PmPlanListSelected from './components/PmPlanListSelected'
+import { useTranslation } from 'react-i18next'
 
 const PmPlanList = () => {
+    const { t } = useTranslation()
     return (
         <>
             <Container>
                 <AdaptiveCard>
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                            <h3>Preventive Maintenance Plans</h3>
+                            <h3>{t('pm.pageTitle')}</h3>
                             <PmPlanListActionTools />
                         </div>
                         <div className="flex flex-col md:flex-row md:items-center gap-2">

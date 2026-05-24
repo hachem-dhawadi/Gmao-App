@@ -5,9 +5,11 @@ import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { CSVLink } from 'react-csv'
 import useAssetList from '../hooks/useAssetList'
+import { useTranslation } from 'react-i18next'
 
 const AssetListActionTools = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canCreate = useAuthority(userAuthority, ['assets.write', 'admin', 'manager'])
 
@@ -33,7 +35,7 @@ const AssetListActionTools = () => {
                     icon={<TbCloudDownload className="text-xl" />}
                     className="w-full"
                 >
-                    Download
+                    {t('common.download')}
                 </Button>
             </CSVLink>
             {canCreate && (
@@ -42,7 +44,7 @@ const AssetListActionTools = () => {
                     icon={<TbPlus className="text-xl" />}
                     onClick={() => navigate('/concepts/assets/asset-create')}
                 >
-                    Add Asset
+                    {t('assets.new')}
                 </Button>
             )}
         </div>

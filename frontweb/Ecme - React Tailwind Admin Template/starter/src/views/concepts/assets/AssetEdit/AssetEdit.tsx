@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -23,6 +24,7 @@ import type { AssetResponse } from '@/services/AssetsService'
 const AssetEdit = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
@@ -78,7 +80,7 @@ const AssetEdit = () => {
             )
 
             toast.push(
-                <Notification type="success">Changes saved.</Notification>,
+                <Notification type="success">{t('assets.toast.saved')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/assets/asset-list')
@@ -108,7 +110,7 @@ const AssetEdit = () => {
             )
 
             toast.push(
-                <Notification type="success">Asset deleted.</Notification>,
+                <Notification type="success">{t('assets.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/assets/asset-list')

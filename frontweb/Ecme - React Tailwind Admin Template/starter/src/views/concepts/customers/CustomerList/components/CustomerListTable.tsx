@@ -15,6 +15,7 @@ import { TbPencil, TbEye, TbTrash } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import useSWR from 'swr'
+import { useTranslation } from 'react-i18next'
 import {
     apiDeleteSuperadminUserById,
     apiDeleteCompanyMemberById,
@@ -35,6 +36,7 @@ type MemberDetailModalProps = {
 }
 
 const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailModalProps) => {
+    const { t } = useTranslation()
     const { data, isLoading } = useSWR(
         id ? ['/customers/modal', id, isSuperadmin] : null,
         async () => {
@@ -57,14 +59,14 @@ const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailMo
                 avatar: u.avatar_url || u.avatar_path || '',
                 email: u.email || '-',
                 phone: u.phone || '-',
-                role: u.is_superadmin ? 'Superadmin' : 'User',
-                status: u.is_active ? 'Active' : 'Inactive',
+                role: u.is_superadmin ? t('members.modal.superadmin') : 'User',
+                status: u.is_active ? t('members.status.active') : t('members.status.inactive'),
                 statusClass: u.is_active
                     ? 'bg-emerald-100 text-emerald-600'
                     : 'bg-gray-100 text-gray-500',
                 rows: [
-                    { label: 'Locale', value: u.locale || '-' },
-                    { label: 'Last Login', value: u.last_login_at ? new Date(u.last_login_at).toLocaleString() : '-' },
+                    { label: t('members.modal.locale'), value: u.locale || '-' },
+                    { label: t('members.modal.lastLogin'), value: u.last_login_at ? new Date(u.last_login_at).toLocaleString() : '-' },
                 ],
             }
         }
@@ -76,23 +78,23 @@ const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailMo
             email: m.user?.email || '-',
             phone: m.user?.phone || '-',
             role: m.roles?.[0]?.label || m.job_title || 'Member',
-            status: isActive ? 'Active' : 'Inactive',
+            status: isActive ? t('members.status.active') : t('members.status.inactive'),
             statusClass: isActive
                 ? 'bg-emerald-100 text-emerald-600'
                 : 'bg-gray-100 text-gray-500',
             rows: [
-                { label: 'Employee Code', value: m.employee_code || '-' },
-                { label: 'Job Title', value: m.job_title || '-' },
-                { label: 'Roles', value: m.roles?.map((r) => r.label).join(', ') || '-' },
+                { label: t('members.modal.employeeCode'), value: m.employee_code || '-' },
+                { label: t('members.modal.jobTitle'), value: m.job_title || '-' },
+                { label: t('members.modal.roles'), value: m.roles?.map((r) => r.label).join(', ') || '-' },
             ],
         }
-    }, [data])
+    }, [data, t])
 
     return (
         <div>
             {isLoading && (
                 <div className="flex justify-center items-center py-10">
-                    <span className="text-gray-400">Loading…</span>
+                    <span className="text-gray-400">{t('common.loading')}</span>
                 </div>
             )}
             {!isLoading && info && (
@@ -105,11 +107,11 @@ const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailMo
                     <Tag className={`text-xs border-0 ${info.statusClass}`}>{info.status}</Tag>
                     <div className="w-full grid grid-cols-2 gap-3 mt-2">
                         <div>
-                            <p className="text-xs text-gray-400 uppercase">Email</p>
+                            <p className="text-xs text-gray-400 uppercase">{t('members.modal.email')}</p>
                             <p className="text-sm font-medium break-all">{info.email}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400 uppercase">Phone</p>
+                            <p className="text-xs text-gray-400 uppercase">{t('members.modal.phone')}</p>
                             <p className="text-sm font-medium">{info.phone}</p>
                         </div>
                         {info.rows.map((r) => (
@@ -120,8 +122,8 @@ const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailMo
                         ))}
                     </div>
                     <div className="flex gap-2 mt-2 w-full justify-end">
-                        <Button size="sm" onClick={onClose}>Close</Button>
-                        <Button size="sm" variant="solid" onClick={onEdit}>Edit</Button>
+                        <Button size="sm" onClick={onClose}>{t('members.modal.close')}</Button>
+                        <Button size="sm" variant="solid" onClick={onEdit}>{t('members.modal.edit')}</Button>
                     </div>
                 </div>
             )}
@@ -129,15 +131,15 @@ const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailMo
     )
 }
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-    active: {
-        label: 'Active',
-        className: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
-    },
-    blocked: {
-        label: 'Inactive',
-        className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
-    },
+const statusColor: Record<string, string> = {
+    active:  'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+    blocked: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
+}
+
+const StatusBadge = ({ status }: { status: string }) => {
+    const { t } = useTranslation()
+    const cls = statusColor[status] || statusColor.blocked
+    return <Tag className={`text-xs border-0 ${cls}`}>{t(`members.status.${status}`)}</Tag>
 }
 
 const NameColumn = ({ row }: { row: Customer }) => (
@@ -157,32 +159,36 @@ type ActionColumnProps = {
     canDelete: boolean
 }
 
-const ActionColumn = ({ onEdit, onViewDetail, onDelete, canEdit, canDelete }: ActionColumnProps) => (
-    <div className="flex items-center justify-end gap-3">
-        {canEdit && (
-            <Tooltip title="Edit">
-                <div className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary" role="button" onClick={onEdit}>
-                    <TbPencil />
+const ActionColumn = ({ onEdit, onViewDetail, onDelete, canEdit, canDelete }: ActionColumnProps) => {
+    const { t } = useTranslation()
+    return (
+        <div className="flex items-center justify-end gap-3">
+            {canEdit && (
+                <Tooltip title={t('common.edit')}>
+                    <div className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary" role="button" onClick={onEdit}>
+                        <TbPencil />
+                    </div>
+                </Tooltip>
+            )}
+            <Tooltip title={t('common.view')}>
+                <div className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary" role="button" onClick={onViewDetail}>
+                    <TbEye />
                 </div>
             </Tooltip>
-        )}
-        <Tooltip title="View">
-            <div className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary" role="button" onClick={onViewDetail}>
-                <TbEye />
-            </div>
-        </Tooltip>
-        {canDelete && (
-            <Tooltip title="Delete">
-                <div className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500" role="button" onClick={onDelete}>
-                    <TbTrash />
-                </div>
-            </Tooltip>
-        )}
-    </div>
-)
+            {canDelete && (
+                <Tooltip title={t('common.delete')}>
+                    <div className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500" role="button" onClick={onDelete}>
+                        <TbTrash />
+                    </div>
+                </Tooltip>
+            )}
+        </div>
+    )
+}
 
 const CustomerListTable = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [detailId, setDetailId] = useState<string | null>(null)
@@ -214,13 +220,13 @@ const CustomerListTable = () => {
                 await apiDeleteCompanyMemberById(deleteTarget.id)
             }
             toast.push(
-                <Notification type="success">Member deleted.</Notification>,
+                <Notification type="success">{t('members.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">Failed to delete member.</Notification>,
+                <Notification type="danger">{t('members.toast.deleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -232,32 +238,25 @@ const CustomerListTable = () => {
     const columns: ColumnDef<Customer>[] = useMemo(
         () => [
             {
-                header: 'Name',
+                header: t('members.columns.name'),
                 accessorKey: 'name',
                 cell: (props) => <NameColumn row={props.row.original} />,
             },
             {
-                header: 'Email',
+                header: t('members.columns.email'),
                 accessorKey: 'email',
             },
             {
-                header: 'Role',
+                header: t('members.columns.role'),
                 accessorKey: 'role',
             },
             {
-                header: 'Status',
+                header: t('members.columns.status'),
                 accessorKey: 'status',
-                cell: (props) => {
-                    const cfg = statusConfig[props.row.original.status] || statusConfig.blocked
-                    return (
-                        <Tag className={`text-xs border-0 ${cfg.className}`}>
-                            {cfg.label}
-                        </Tag>
-                    )
-                },
+                cell: (props) => <StatusBadge status={props.row.original.status} />,
             },
             {
-                header: 'Phone',
+                header: t('members.columns.phone'),
                 accessorKey: 'personalInfo.phoneNumber',
                 cell: (props) => (
                     <span>{props.row.original.personalInfo.phoneNumber || '-'}</span>
@@ -278,7 +277,7 @@ const CustomerListTable = () => {
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [canEdit, canDelete],
+        [canEdit, canDelete, t],
     )
 
     const handleSetTableData = (data: TableQueries) => {
@@ -323,14 +322,14 @@ const CustomerListTable = () => {
             <ConfirmDialog
                 isOpen={deleteTarget !== null}
                 type="danger"
-                title="Delete Member"
+                title={t('members.delete.title')}
                 onClose={() => setDeleteTarget(null)}
                 onRequestClose={() => setDeleteTarget(null)}
                 onCancel={() => setDeleteTarget(null)}
                 onConfirm={handleDeleteConfirm}
                 confirmButtonProps={{ loading: deleting }}
             >
-                <p>Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.</p>
+                <p>{t('members.delete.confirm', { name: deleteTarget?.name })}</p>
             </ConfirmDialog>
 
             <Dialog
@@ -339,7 +338,7 @@ const CustomerListTable = () => {
                 onRequestClose={() => setDetailId(null)}
                 width={480}
             >
-                <h5 className="mb-4">Member Details</h5>
+                <h5 className="mb-4">{t('members.pageTitle')}</h5>
                 {detailId && (
                     <MemberDetailModal
                         id={detailId}

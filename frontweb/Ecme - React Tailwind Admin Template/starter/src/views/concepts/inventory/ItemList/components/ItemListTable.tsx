@@ -15,6 +15,7 @@ import { mutate as globalMutate } from 'swr'
 import cloneDeep from 'lodash/cloneDeep'
 import { TbPencil, TbTrash, TbEye } from 'react-icons/tb'
 import { FiPackage } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { Item } from '@/services/InventoryService'
 import type { TableQueries } from '@/@types/common'
@@ -38,6 +39,7 @@ const StockBadge = ({ item }: { item: Item }) => {
 
 const ItemListTable = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
 
     const {
         itemList,
@@ -69,14 +71,12 @@ const ItemListTable = () => {
                     key[0] === '/inventory/items',
             )
             toast.push(
-                <Notification type="success">Item deleted.</Notification>,
+                <Notification type="success">{t('inventory.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
         } catch {
             toast.push(
-                <Notification type="danger">
-                    Failed to delete item.
-                </Notification>,
+                <Notification type="danger">{t('inventory.toast.deleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -87,7 +87,7 @@ const ItemListTable = () => {
     const columns: ColumnDef<Item>[] = useMemo(
         () => [
             {
-                header: 'Item',
+                header: t('inventory.columns.item'),
                 accessorKey: 'name',
                 cell: (props) => {
                     const row = props.row.original
@@ -114,7 +114,7 @@ const ItemListTable = () => {
                 },
             },
             {
-                header: 'Unit',
+                header: t('inventory.columns.unit'),
                 accessorKey: 'unit',
                 cell: (props) => (
                     <span className="font-semibold heading-text">
@@ -123,7 +123,7 @@ const ItemListTable = () => {
                 ),
             },
             {
-                header: 'Unit Cost',
+                header: t('inventory.columns.unitCost'),
                 accessorKey: 'unit_cost',
                 cell: (props) => {
                     const cost = props.row.original.unit_cost
@@ -135,7 +135,7 @@ const ItemListTable = () => {
                 },
             },
             {
-                header: 'Stock',
+                header: t('inventory.columns.stock'),
                 accessorKey: 'total_stock',
                 cell: (props) => <StockBadge item={props.row.original} />,
             },
@@ -144,7 +144,7 @@ const ItemListTable = () => {
                 id: 'action',
                 cell: (props) => (
                     <div className="flex items-center justify-end gap-3">
-                        <Tooltip title="View details">
+                        <Tooltip title={t('common.view')}>
                             <div
                                 className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                                 role="button"
@@ -158,7 +158,7 @@ const ItemListTable = () => {
                             </div>
                         </Tooltip>
                         {canEdit && (
-                            <Tooltip title="Edit">
+                            <Tooltip title={t('common.edit')}>
                                 <div
                                     className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                                     role="button"
@@ -173,7 +173,7 @@ const ItemListTable = () => {
                             </Tooltip>
                         )}
                         {canDelete && (
-                            <Tooltip title="Delete">
+                            <Tooltip title={t('common.delete')}>
                                 <div
                                     className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
                                     role="button"
@@ -189,7 +189,7 @@ const ItemListTable = () => {
                 ),
             },
         ],
-        [canEdit, canDelete, navigate],
+        [canEdit, canDelete, navigate, t],
     )
 
     const handleSetTableData = (data: TableQueries) => {
@@ -244,16 +244,13 @@ const ItemListTable = () => {
             <ConfirmDialog
                 isOpen={!!deleteTarget}
                 type="danger"
-                title="Delete item"
+                title={t('inventory.delete.title')}
                 onClose={() => setDeleteTarget(null)}
                 onRequestClose={() => setDeleteTarget(null)}
                 onCancel={() => setDeleteTarget(null)}
                 onConfirm={handleDelete}
             >
-                <p>
-                    Delete <strong>{deleteTarget?.name}</strong>? This cannot be
-                    undone.
-                </p>
+                <p>{t('inventory.delete.confirm', { name: deleteTarget?.name })}</p>
             </ConfirmDialog>
         </>
     )

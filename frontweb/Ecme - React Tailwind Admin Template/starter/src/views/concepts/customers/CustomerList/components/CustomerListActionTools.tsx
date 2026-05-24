@@ -5,9 +5,11 @@ import useCustomerList from '../hooks/useCustomerList'
 import { CSVLink } from 'react-csv'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { useTranslation } from 'react-i18next'
 
 const CustomerListActionTools = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
 
     const { customerList } = useCustomerList()
 
@@ -25,7 +27,7 @@ const CustomerListActionTools = () => {
                     icon={<TbCloudDownload className="text-xl" />}
                     className="w-full"
                 >
-                    Download
+                    {t('common.download')}
                 </Button>
             </CSVLink>
             {canCreate && (
@@ -36,7 +38,7 @@ const CustomerListActionTools = () => {
                         navigate('/concepts/customers/customer-create')
                     }
                 >
-                    Add new
+                    {t('members.new')}
                 </Button>
             )}
         </div>

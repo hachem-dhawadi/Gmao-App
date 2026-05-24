@@ -6,11 +6,13 @@ import { Form, FormItem } from '@/components/ui/Form'
 import useAssetList from '../hooks/useAssetList'
 import { TbFilter } from 'react-icons/tb'
 import { useForm, Controller } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import type { AssetFilter } from '../store/assetListStore'
 
 const AssetListTableFilter = () => {
     const [dialogOpen, setDialogOpen] = useState(false)
     const { filterData, setFilterData } = useAssetList()
+    const { t } = useTranslation()
 
     const { handleSubmit, reset, control } = useForm<AssetFilter>({
         defaultValues: filterData,
@@ -29,6 +31,14 @@ const AssetListTableFilter = () => {
 
     const isActive = filterData.status !== 'all'
 
+    const statusOptions = [
+        { value: 'all',               label: t('assets.status.all') },
+        { value: 'active',            label: t('assets.status.active') },
+        { value: 'inactive',          label: t('assets.status.inactive') },
+        { value: 'under_maintenance', label: t('assets.status.under_maintenance') },
+        { value: 'decommissioned',    label: t('assets.status.decommissioned') },
+    ]
+
     return (
         <>
             <Button
@@ -40,7 +50,7 @@ const AssetListTableFilter = () => {
                         : ''
                 }
             >
-                Filter{isActive ? ' (1)' : ''}
+                {t('common.filter')}{isActive ? ' (1)' : ''}
             </Button>
 
             <Dialog
@@ -49,21 +59,15 @@ const AssetListTableFilter = () => {
                 onRequestClose={() => setDialogOpen(false)}
                 width={400}
             >
-                <h4 className="mb-4">Filter Assets</h4>
+                <h4 className="mb-4">{t('common.filter')} — {t('assets.pageTitle')}</h4>
                 <Form onSubmit={handleSubmit(onSubmit)}>
-                    <FormItem label="Status">
+                    <FormItem label={t('common.status')}>
                         <Controller
                             name="status"
                             control={control}
                             render={({ field }) => (
                                 <div className="flex flex-col gap-3 mt-2">
-                                    {[
-                                        { value: 'all', label: 'All statuses' },
-                                        { value: 'active', label: 'Active' },
-                                        { value: 'inactive', label: 'Inactive' },
-                                        { value: 'under_maintenance', label: 'Under Maintenance' },
-                                        { value: 'decommissioned', label: 'Decommissioned' },
-                                    ].map((opt) => (
+                                    {statusOptions.map((opt) => (
                                         <Radio
                                             key={opt.value}
                                             name="status"
@@ -81,10 +85,10 @@ const AssetListTableFilter = () => {
 
                     <div className="flex justify-end items-center gap-2 mt-6">
                         <Button type="button" onClick={handleReset}>
-                            Reset
+                            {t('common.reset')}
                         </Button>
                         <Button type="submit" variant="solid">
-                            Apply
+                            {t('common.apply')}
                         </Button>
                     </div>
                 </Form>

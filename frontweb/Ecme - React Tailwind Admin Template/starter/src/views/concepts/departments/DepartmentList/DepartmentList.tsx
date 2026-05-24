@@ -4,15 +4,17 @@ import DepartmentListTable from './components/DepartmentListTable'
 import DepartmentListActionTools from './components/DepartmentListActionTools'
 import DepartmentListTableTools from './components/DepartmentListTableTools'
 import DepartmentListSelected from './components/DepartmentListSelected'
+import { useTranslation } from 'react-i18next'
 
 const DepartmentList = () => {
+    const { t } = useTranslation()
     return (
         <>
             <Container>
                 <AdaptiveCard>
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                            <h3>Departments</h3>
+                            <h3>{t('departments.pageTitle')}</h3>
                             <DepartmentListActionTools />
                         </div>
                         <DepartmentListTableTools />

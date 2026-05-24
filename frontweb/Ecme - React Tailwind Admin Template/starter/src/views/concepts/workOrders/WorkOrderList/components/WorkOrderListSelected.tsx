@@ -9,21 +9,7 @@ import { apiDeleteWorkOrder, apiUpdateWorkOrder } from '@/services/WorkOrdersSer
 import { TbTrash, TbX } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-
-const STATUS_OPTIONS = [
-    { value: 'open',        label: 'Open' },
-    { value: 'in_progress', label: 'In Progress' },
-    { value: 'on_hold',     label: 'On Hold' },
-    { value: 'completed',   label: 'Completed' },
-    { value: 'cancelled',   label: 'Cancelled' },
-]
-
-const PRIORITY_OPTIONS = [
-    { value: 'low',      label: 'Low' },
-    { value: 'medium',   label: 'Medium' },
-    { value: 'high',     label: 'High' },
-    { value: 'critical', label: 'Critical' },
-]
+import { useTranslation } from 'react-i18next'
 
 const Divider = () => (
     <span className="w-px h-5 bg-gray-200 dark:bg-gray-600 shrink-0" />
@@ -34,6 +20,7 @@ const WorkOrderListSelected = () => {
     const [deleteOpen, setDeleteOpen]   = useState(false)
     const [deleting, setDeleting]       = useState(false)
     const [bulkLoading, setBulkLoading] = useState(false)
+    const { t } = useTranslation()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canEdit   = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
@@ -42,7 +29,21 @@ const WorkOrderListSelected = () => {
     if (selectedWorkOrder.length === 0) return null
 
     const count = selectedWorkOrder.length
-    const label = count === 1 ? 'work order' : 'work orders'
+
+    const STATUS_OPTIONS = [
+        { value: 'open',        label: t('wo.status.open') },
+        { value: 'in_progress', label: t('wo.status.in_progress') },
+        { value: 'on_hold',     label: t('wo.status.on_hold') },
+        { value: 'completed',   label: t('wo.status.completed') },
+        { value: 'cancelled',   label: t('wo.status.cancelled') },
+    ]
+
+    const PRIORITY_OPTIONS = [
+        { value: 'low',      label: t('wo.priority.low') },
+        { value: 'medium',   label: t('wo.priority.medium') },
+        { value: 'high',     label: t('wo.priority.high') },
+        { value: 'critical', label: t('wo.priority.critical') },
+    ]
 
     const handleBulkStatus = async (option: { value: string; label: string } | null) => {
         if (!option) return
@@ -54,16 +55,14 @@ const WorkOrderListSelected = () => {
                 ),
             )
             toast.push(
-                <Notification type="success">
-                    {count} {label} → <strong>{option.label}</strong>
-                </Notification>,
+                <Notification type="success">{t('wo.toast.bulkStatusUpdated')}</Notification>,
                 { placement: 'top-center' },
             )
             setSelectAllWorkOrder([])
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">Failed to update status.</Notification>,
+                <Notification type="danger">{t('wo.toast.bulkStatusFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -81,16 +80,14 @@ const WorkOrderListSelected = () => {
                 ),
             )
             toast.push(
-                <Notification type="success">
-                    {count} {label} → priority <strong>{option.label}</strong>
-                </Notification>,
+                <Notification type="success">{t('wo.toast.bulkPriorityUpdated')}</Notification>,
                 { placement: 'top-center' },
             )
             setSelectAllWorkOrder([])
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">Failed to update priority.</Notification>,
+                <Notification type="danger">{t('wo.toast.bulkPriorityFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -103,16 +100,14 @@ const WorkOrderListSelected = () => {
         try {
             await Promise.all(selectedWorkOrder.map((wo) => apiDeleteWorkOrder(wo.id)))
             toast.push(
-                <Notification type="success">
-                    {count} {label} deleted.
-                </Notification>,
+                <Notification type="success">{t('wo.toast.bulkDeleted', { count })}</Notification>,
                 { placement: 'top-center' },
             )
             setSelectAllWorkOrder([])
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">Failed to delete some work orders.</Notification>,
+                <Notification type="danger">{t('wo.toast.bulkDeleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -133,7 +128,7 @@ const WorkOrderListSelected = () => {
                             {count}
                         </span>
                         <span className="text-sm font-medium heading-text whitespace-nowrap">
-                            {count === 1 ? 'Work order' : 'Work orders'} selected
+                            {count === 1 ? t('wo.selected.Item') : t('wo.selected.Items')} {t('common.selected')}
                         </span>
                     </div>
 
@@ -144,7 +139,7 @@ const WorkOrderListSelected = () => {
                         <>
                             <Select
                                 size="sm"
-                                placeholder="Set status…"
+                                placeholder={t('wo.selected.setStatus')}
                                 options={STATUS_OPTIONS}
                                 value={null}
                                 isDisabled={bulkLoading}
@@ -153,7 +148,7 @@ const WorkOrderListSelected = () => {
                             />
                             <Select
                                 size="sm"
-                                placeholder="Set priority…"
+                                placeholder={t('wo.selected.setPriority')}
                                 options={PRIORITY_OPTIONS}
                                 value={null}
                                 isDisabled={bulkLoading}
@@ -169,7 +164,7 @@ const WorkOrderListSelected = () => {
                         <button
                             onClick={() => setDeleteOpen(true)}
                             disabled={bulkLoading}
-                            title="Delete selected"
+                            title={t('common.delete')}
                             className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors disabled:opacity-40"
                         >
                             <TbTrash className="text-lg" />
@@ -180,7 +175,7 @@ const WorkOrderListSelected = () => {
                     <button
                         onClick={() => setSelectAllWorkOrder([])}
                         disabled={bulkLoading}
-                        title="Clear selection"
+                        title={t('common.clearSelection')}
                         className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-40"
                     >
                         <TbX className="text-lg" />
@@ -191,17 +186,14 @@ const WorkOrderListSelected = () => {
             <ConfirmDialog
                 isOpen={deleteOpen}
                 type="danger"
-                title="Delete Work Orders"
+                title={t('wo.selected.deleteTitle')}
                 onClose={() => setDeleteOpen(false)}
                 onRequestClose={() => setDeleteOpen(false)}
                 onCancel={() => setDeleteOpen(false)}
                 onConfirm={handleConfirmDelete}
                 confirmButtonProps={{ loading: deleting }}
             >
-                <p>
-                    Are you sure you want to delete <strong>{count}</strong> {label}?
-                    This action cannot be undone.
-                </p>
+                <p>{t('wo.selected.deleteConfirm', { count })}</p>
             </ConfirmDialog>
         </>
     )

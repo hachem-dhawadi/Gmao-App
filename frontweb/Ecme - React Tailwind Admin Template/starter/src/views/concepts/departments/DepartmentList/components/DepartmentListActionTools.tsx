@@ -5,9 +5,11 @@ import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { CSVLink } from 'react-csv'
 import useDepartmentList from '../hooks/useDepartmentList'
+import { useTranslation } from 'react-i18next'
 
 const DepartmentListActionTools = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canCreate = useAuthority(userAuthority, ['departments.create', 'admin', 'hr'])
 
@@ -33,7 +35,7 @@ const DepartmentListActionTools = () => {
                     icon={<TbCloudDownload className="text-xl" />}
                     className="w-full"
                 >
-                    Download
+                    {t('common.download')}
                 </Button>
             </CSVLink>
             {canCreate && (
@@ -44,7 +46,7 @@ const DepartmentListActionTools = () => {
                         navigate('/concepts/departments/department-create')
                     }
                 >
-                    Add Department
+                    {t('nav.departments.departmentCreate')}
                 </Button>
             )}
         </div>

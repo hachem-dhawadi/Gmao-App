@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import useSWR, { mutate as globalMutate } from 'swr'
 import Container from '@/components/shared/Container'
 import Affix from '@/components/shared/Affix'
@@ -37,6 +38,7 @@ const { Tr, Th, Td, THead, TBody } = Table
 
 const PurchaseOrderEdit = () => {
     const { id }     = useParams()
+    const { t } = useTranslation()
     const navigate   = useNavigate()
     const { larger } = useResponsive()
     const { getTopGapValue } = useLayoutGap()
@@ -118,11 +120,11 @@ const PurchaseOrderEdit = () => {
     const handleSave = async () => {
         if (isDraft) {
             if (!supplierId) {
-                toast.push(<Notification type="warning">Please select a supplier.</Notification>, { placement: 'top-center' })
+                toast.push(<Notification type="warning">{t('purchasing.order.selectSupplier')}</Notification>, { placement: 'top-center' })
                 return
             }
             if (selectedItems.length === 0) {
-                toast.push(<Notification type="warning">Add at least one item.</Notification>, { placement: 'top-center' })
+                toast.push(<Notification type="warning">{t('purchasing.order.addItem')}</Notification>, { placement: 'top-center' })
                 return
             }
         }
@@ -150,7 +152,7 @@ const PurchaseOrderEdit = () => {
 
             await apiUpdatePurchaseOrder(id!, payload)
             await globalMutate((k) => Array.isArray(k) && k[0] === '/purchasing/orders')
-            toast.push(<Notification type="success">Order updated.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('purchasing.order.updated')}</Notification>, { placement: 'top-center' })
             navigate(`/concepts/purchasing/purchase-orders/${id}`)
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to update.'

@@ -8,6 +8,7 @@ import cloneDeep from 'lodash/cloneDeep'
 import { TbPencil, TbEye } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { useTranslation } from 'react-i18next'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { Department } from '../types'
 import type { TableQueries } from '@/@types/common'
@@ -26,10 +27,11 @@ const ActionColumn = ({
     canEdit: boolean
 }) => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     return (
         <div className="flex items-center justify-end gap-3">
             {canEdit && (
-                <Tooltip title="Edit">
+                <Tooltip title={t('common.edit')}>
                     <div
                         className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                         role="button"
@@ -43,7 +45,7 @@ const ActionColumn = ({
                     </div>
                 </Tooltip>
             )}
-            <Tooltip title="View details">
+            <Tooltip title={t('common.view')}>
                 <div
                     className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                     role="button"
@@ -62,6 +64,7 @@ const ActionColumn = ({
 
 const DepartmentListTable = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
 
     const {
         departmentList,
@@ -80,7 +83,7 @@ const DepartmentListTable = () => {
     const columns: ColumnDef<Department>[] = useMemo(
         () => [
             {
-                header: 'Name',
+                header: t('departments.columns.name'),
                 accessorKey: 'name',
                 cell: (props) => (
                     <div
@@ -96,12 +99,12 @@ const DepartmentListTable = () => {
                 ),
             },
             {
-                header: 'Code',
+                header: t('departments.columns.code'),
                 accessorKey: 'code',
                 cell: (props) => <CodeBadge code={props.row.original.code} />,
             },
             {
-                header: 'Parent',
+                header: t('departments.columns.parent'),
                 accessorKey: 'parent',
                 cell: (props) =>
                     props.row.original.parent ? (
@@ -110,12 +113,12 @@ const DepartmentListTable = () => {
                         </span>
                     ) : (
                         <Tag className="bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs border-0">
-                            Top-level
+                            —
                         </Tag>
                     ),
             },
             {
-                header: 'Members',
+                header: t('departments.columns.members'),
                 accessorKey: 'members_count',
                 cell: (props) => (
                     <span className="font-medium">
@@ -124,7 +127,7 @@ const DepartmentListTable = () => {
                 ),
             },
             {
-                header: 'Sub-depts',
+                header: t('departments.columns.subDepts'),
                 accessorKey: 'children_count',
                 cell: (props) => (
                     <span className="font-medium">
@@ -133,7 +136,7 @@ const DepartmentListTable = () => {
                 ),
             },
             {
-                header: 'Description',
+                header: t('departments.columns.description'),
                 accessorKey: 'description',
                 cell: (props) => (
                     <span className="text-gray-500 dark:text-gray-400 truncate max-w-xs block">
@@ -153,7 +156,7 @@ const DepartmentListTable = () => {
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [canEdit],
+        [canEdit, t],
     )
 
     const handleSetTableData = (data: TableQueries) => {

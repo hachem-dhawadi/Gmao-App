@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from 'react'
 import type { ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import useSWR, { mutate as globalMutate } from 'swr'
 import Loading from '@/components/shared/Loading'
 import IconText from '@/components/shared/IconText'
@@ -82,6 +83,7 @@ const InfoRow = ({ label, value }: { label: string; value: ReactNode }) => (
 
 const PurchaseOrderDetails = () => {
     const { id } = useParams()
+    const { t } = useTranslation()
 
     const { data, isLoading } = useSWR<PurchaseOrder>(
         id ? ['/purchasing/orders', id] : null,
@@ -139,7 +141,7 @@ const PurchaseOrderDetails = () => {
                 invoice_amount: parseFloat(invAmount),
             })
             await refresh()
-            toast.push(<Notification type="success">Invoice recorded.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('purchasing.details.invoiceRecorded')}</Notification>, { placement: 'top-center' })
             setInvoiceOpen(false)
             setInvNumber(''); setInvDate(''); setInvAmount('')
         } catch (err: unknown) {
@@ -160,7 +162,7 @@ const PurchaseOrderDetails = () => {
                 proof_file:        proofFile,
             })
             await refresh()
-            toast.push(<Notification type="success">Order marked as paid.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('purchasing.details.markedAsPaid')}</Notification>, { placement: 'top-center' })
             setPayOpen(false)
             setPayMethod('bank_transfer'); setPayRef(''); setPayNote(''); setProofFile(null)
         } catch (err: unknown) {
@@ -181,7 +183,7 @@ const PurchaseOrderDetails = () => {
             a.click()
             URL.revokeObjectURL(url)
         } catch {
-            toast.push(<Notification type="danger">Failed to download proof file.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('purchasing.details.downloadFailed')}</Notification>, { placement: 'top-center' })
         }
     }
 
@@ -191,7 +193,7 @@ const PurchaseOrderDetails = () => {
         try {
             await apiDisputeInvoice(id!, { payment_note: disputeNote.trim() })
             await refresh()
-            toast.push(<Notification type="warning">Invoice marked as disputed.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="warning">{t('purchasing.details.disputed')}</Notification>, { placement: 'top-center' })
             setDisputeOpen(false)
             setDisputeNote('')
         } catch (err: unknown) {

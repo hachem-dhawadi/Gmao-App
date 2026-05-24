@@ -12,56 +12,24 @@ import { TbPencil, TbEye, TbTrash, TbArchive } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { apiDeleteWorkOrder } from '@/services/WorkOrdersService'
+import { useTranslation } from 'react-i18next'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { WorkOrder } from '../types'
 import type { TableQueries } from '@/@types/common'
 
-const statusConfig: Record<
-    WorkOrder['status'],
-    { label: string; className: string }
-> = {
-    open: {
-        label: 'Open',
-        className: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
-    },
-    in_progress: {
-        label: 'In Progress',
-        className: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
-    },
-    on_hold: {
-        label: 'On Hold',
-        className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
-    },
-    completed: {
-        label: 'Completed',
-        className: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
-    },
-    cancelled: {
-        label: 'Cancelled',
-        className: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
-    },
+const statusColor: Record<WorkOrder['status'], string> = {
+    open:        'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
+    in_progress: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+    on_hold:     'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
+    completed:   'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
+    cancelled:   'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
 }
 
-const priorityConfig: Record<
-    WorkOrder['priority'],
-    { label: string; className: string }
-> = {
-    low: {
-        label: 'Low',
-        className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
-    },
-    medium: {
-        label: 'Medium',
-        className: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
-    },
-    high: {
-        label: 'High',
-        className: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
-    },
-    critical: {
-        label: 'Critical',
-        className: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
-    },
+const priorityColor: Record<WorkOrder['priority'], string> = {
+    low:      'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
+    medium:   'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
+    high:     'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+    critical: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
 }
 
 const CodeBadge = ({ code }: { code: string }) => (
@@ -71,13 +39,13 @@ const CodeBadge = ({ code }: { code: string }) => (
 )
 
 const StatusBadge = ({ status }: { status: WorkOrder['status'] }) => {
-    const cfg = statusConfig[status]
-    return <Tag className={`text-xs ${cfg.className}`}>{cfg.label}</Tag>
+    const { t } = useTranslation()
+    return <Tag className={`text-xs ${statusColor[status]}`}>{t(`wo.status.${status}`)}</Tag>
 }
 
 const PriorityBadge = ({ priority }: { priority: WorkOrder['priority'] }) => {
-    const cfg = priorityConfig[priority]
-    return <Tag className={`text-xs ${cfg.className}`}>{cfg.label}</Tag>
+    const { t } = useTranslation()
+    return <Tag className={`text-xs ${priorityColor[priority]}`}>{t(`wo.priority.${priority}`)}</Tag>
 }
 
 type ActionColumnProps = {
@@ -89,34 +57,31 @@ type ActionColumnProps = {
 
 const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     return (
         <div className="flex items-center justify-end gap-3">
             {canEdit && (
-                <Tooltip title="Edit">
+                <Tooltip title={t('common.edit')}>
                     <div
                         className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                         role="button"
-                        onClick={() =>
-                            navigate(`/concepts/work-orders/work-order-edit/${id}`)
-                        }
+                        onClick={() => navigate(`/concepts/work-orders/work-order-edit/${id}`)}
                     >
                         <TbPencil />
                     </div>
                 </Tooltip>
             )}
-            <Tooltip title="View details">
+            <Tooltip title={t('common.view')}>
                 <div
                     className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                     role="button"
-                    onClick={() =>
-                        navigate(`/concepts/work-orders/work-order-details/${id}`)
-                    }
+                    onClick={() => navigate(`/concepts/work-orders/work-order-details/${id}`)}
                 >
                     <TbEye />
                 </div>
             </Tooltip>
             {canDelete && (
-                <Tooltip title="Delete">
+                <Tooltip title={t('common.delete')}>
                     <div
                         className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
                         role="button"
@@ -132,6 +97,7 @@ const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) =
 
 const WorkOrderListTable = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
     const [deleting, setDeleting] = useState(false)
 
@@ -148,7 +114,7 @@ const WorkOrderListTable = () => {
     } = useWorkOrderList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
+    const canEdit   = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
     const canDelete = useAuthority(userAuthority, ['work_orders.delete', 'admin'])
 
     const handleDeleteConfirm = async () => {
@@ -157,13 +123,13 @@ const WorkOrderListTable = () => {
         try {
             await apiDeleteWorkOrder(deleteTargetId)
             toast.push(
-                <Notification type="success">Work order deleted.</Notification>,
+                <Notification type="success">{t('wo.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">Failed to delete work order.</Notification>,
+                <Notification type="danger">{t('wo.toast.deleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -175,7 +141,7 @@ const WorkOrderListTable = () => {
     const columns: ColumnDef<WorkOrder>[] = useMemo(
         () => [
             {
-                header: 'Title',
+                header: t('wo.columns.title'),
                 accessorKey: 'title',
                 cell: (props) => {
                     const wo = props.row.original
@@ -183,16 +149,14 @@ const WorkOrderListTable = () => {
                         <div className="flex items-center gap-2">
                             <span
                                 className="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-primary"
-                                onClick={() =>
-                                    navigate(`/concepts/work-orders/work-order-details/${wo.id}`)
-                                }
+                                onClick={() => navigate(`/concepts/work-orders/work-order-details/${wo.id}`)}
                             >
                                 {wo.title}
                             </span>
                             {wo.archived_at && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
                                     <TbArchive className="text-xs" />
-                                    Archived
+                                    {t('wo.archived')}
                                 </span>
                             )}
                         </div>
@@ -200,26 +164,22 @@ const WorkOrderListTable = () => {
                 },
             },
             {
-                header: 'Code',
+                header: t('wo.columns.code'),
                 accessorKey: 'code',
                 cell: (props) => <CodeBadge code={props.row.original.code} />,
             },
             {
-                header: 'Status',
+                header: t('wo.columns.status'),
                 accessorKey: 'status',
-                cell: (props) => (
-                    <StatusBadge status={props.row.original.status} />
-                ),
+                cell: (props) => <StatusBadge status={props.row.original.status} />,
             },
             {
-                header: 'Priority',
+                header: t('wo.columns.priority'),
                 accessorKey: 'priority',
-                cell: (props) => (
-                    <PriorityBadge priority={props.row.original.priority} />
-                ),
+                cell: (props) => <PriorityBadge priority={props.row.original.priority} />,
             },
             {
-                header: 'Asset',
+                header: t('wo.columns.asset'),
                 accessorKey: 'asset',
                 cell: (props) =>
                     props.row.original.asset ? (
@@ -231,19 +191,19 @@ const WorkOrderListTable = () => {
                     ),
             },
             {
-                header: 'Due',
+                header: t('wo.columns.due'),
                 accessorKey: 'due_at',
                 cell: (props) => {
                     const due    = props.row.original.due_at
                     const status = props.row.original.status
                     if (!due) return <span className="text-gray-400">—</span>
-                    const date     = new Date(due)
-                    const now      = new Date()
-                    const msLeft   = date.getTime() - now.getTime()
+                    const date      = new Date(due)
+                    const now       = new Date()
+                    const msLeft    = date.getTime() - now.getTime()
                     const hoursLeft = msLeft / (1000 * 60 * 60)
                     const isActive  = status !== 'completed' && status !== 'cancelled'
-                    const isOverdue  = isActive && date < now
-                    const isDueSoon  = isActive && !isOverdue && hoursLeft <= 48
+                    const isOverdue = isActive && date < now
+                    const isDueSoon = isActive && !isOverdue && hoursLeft <= 48
                     return (
                         <div className="flex flex-col gap-1">
                             <span className={`text-sm ${isOverdue ? 'text-red-500 font-semibold' : isDueSoon ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-600 dark:text-gray-400'}`}>
@@ -251,12 +211,12 @@ const WorkOrderListTable = () => {
                             </span>
                             {isDueSoon && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 w-fit">
-                                    ⏰ Due in {Math.ceil(hoursLeft)}h
+                                    ⏰ {t('wo.dueSoon', { hours: Math.ceil(hoursLeft) })}
                                 </span>
                             )}
                             {isOverdue && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-red-100 dark:bg-red-500/20 text-red-500 dark:text-red-400 w-fit">
-                                    Overdue
+                                    {t('wo.overdue')}
                                 </span>
                             )}
                         </div>
@@ -264,7 +224,7 @@ const WorkOrderListTable = () => {
                 },
             },
             {
-                header: 'Assigned',
+                header: t('wo.columns.assigned'),
                 accessorKey: 'assigned_members',
                 cell: (props) => {
                     const members = props.row.original.assigned_members
@@ -291,45 +251,12 @@ const WorkOrderListTable = () => {
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [canEdit, canDelete],
+        [canEdit, canDelete, t],
     )
 
     const handleSetTableData = (data: TableQueries) => {
         setTableData(data)
-        if (selectedWorkOrder.length > 0) {
-            setSelectAllWorkOrder([])
-        }
-    }
-
-    const handlePaginationChange = (page: number) => {
-        const newTableData = cloneDeep(tableData)
-        newTableData.pageIndex = page
-        handleSetTableData(newTableData)
-    }
-
-    const handleSelectChange = (value: number) => {
-        const newTableData = cloneDeep(tableData)
-        newTableData.pageSize = Number(value)
-        newTableData.pageIndex = 1
-        handleSetTableData(newTableData)
-    }
-
-    const handleSort = (sort: OnSortParam) => {
-        const newTableData = cloneDeep(tableData)
-        newTableData.sort = sort
-        handleSetTableData(newTableData)
-    }
-
-    const handleRowSelect = (checked: boolean, row: WorkOrder) => {
-        setSelectedWorkOrder(checked, row)
-    }
-
-    const handleAllRowSelect = (checked: boolean, rows: Row<WorkOrder>[]) => {
-        if (checked) {
-            setSelectAllWorkOrder(rows.map((r) => r.original))
-        } else {
-            setSelectAllWorkOrder([])
-        }
+        if (selectedWorkOrder.length > 0) setSelectAllWorkOrder([])
     }
 
     return (
@@ -345,12 +272,23 @@ const WorkOrderListTable = () => {
                     pageIndex: tableData.pageIndex as number,
                     pageSize: tableData.pageSize as number,
                 }}
-                checkboxChecked={(row) =>
-                    selectedWorkOrder.some((w) => w.id === row.id)
-                }
-                onPaginationChange={handlePaginationChange}
-                onSelectChange={handleSelectChange}
-                onSort={handleSort}
+                checkboxChecked={(row) => selectedWorkOrder.some((w) => w.id === row.id)}
+                onPaginationChange={(page) => {
+                    const next = cloneDeep(tableData)
+                    next.pageIndex = page
+                    handleSetTableData(next)
+                }}
+                onSelectChange={(value) => {
+                    const next = cloneDeep(tableData)
+                    next.pageSize = Number(value)
+                    next.pageIndex = 1
+                    handleSetTableData(next)
+                }}
+                onSort={(sort: OnSortParam) => {
+                    const next = cloneDeep(tableData)
+                    next.sort = sort
+                    handleSetTableData(next)
+                }}
                 onCheckBoxChange={handleRowSelect}
                 onIndeterminateCheckBoxChange={handleAllRowSelect}
             />
@@ -358,17 +296,29 @@ const WorkOrderListTable = () => {
             <ConfirmDialog
                 isOpen={deleteTargetId !== null}
                 type="danger"
-                title="Delete Work Order"
+                title={t('wo.delete.title')}
                 onClose={() => setDeleteTargetId(null)}
                 onRequestClose={() => setDeleteTargetId(null)}
                 onCancel={() => setDeleteTargetId(null)}
                 onConfirm={handleDeleteConfirm}
                 confirmButtonProps={{ loading: deleting }}
             >
-                <p>Are you sure you want to delete this work order? This action cannot be undone.</p>
+                <p>{t('wo.delete.confirm')}</p>
             </ConfirmDialog>
         </>
     )
+
+    function handleRowSelect(checked: boolean, row: WorkOrder) {
+        setSelectedWorkOrder(checked, row)
+    }
+
+    function handleAllRowSelect(checked: boolean, rows: Row<WorkOrder>[]) {
+        if (checked) {
+            setSelectAllWorkOrder(rows.map((r) => r.original))
+        } else {
+            setSelectAllWorkOrder([])
+        }
+    }
 }
 
 export default WorkOrderListTable

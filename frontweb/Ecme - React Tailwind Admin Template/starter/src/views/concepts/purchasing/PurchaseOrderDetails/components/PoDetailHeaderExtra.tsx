@@ -8,6 +8,7 @@ import Dialog from '@/components/ui/Dialog'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import { TbPrinter, TbEdit, TbPackageImport, TbX, TbRefresh, TbMail } from 'react-icons/tb'
+import { useTranslation } from 'react-i18next'
 import {
     apiGetPurchaseOrderById,
     apiReceivePurchaseOrder,
@@ -23,6 +24,7 @@ import useAuthority from '@/utils/hooks/useAuthority'
 const PoDetailHeaderExtra = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((s) => s.user.authority)
     const canEdit = useAuthority(userAuthority, ['purchasing.write', 'admin', 'manager'])
 
@@ -36,7 +38,6 @@ const PoDetailHeaderExtra = () => {
     const [reopening,  setReopening]    = useState(false)
     const [sending,    setSending]      = useState(false)
 
-    /* Same SWR key as the main page — SWR deduplicates, no extra network request */
     const { data, mutate } = useSWR<PurchaseOrder>(
         id ? ['/purchasing/orders', id] : null,
         async () => {
@@ -68,7 +69,7 @@ const PoDetailHeaderExtra = () => {
 
     const handleReceive = async () => {
         if (!warehouseId) {
-            toast.push(<Notification type="warning">Please select a warehouse.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="warning">{t('purchasing.receive.selectWarehouseRequired')}</Notification>, { placement: 'top-center' })
             return
         }
         const lines = Object.entries(receiveQtys)
@@ -79,7 +80,7 @@ const PoDetailHeaderExtra = () => {
             .filter((l) => l.qty_received > 0)
 
         if (lines.length === 0) {
-            toast.push(<Notification type="warning">Enter at least one quantity.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="warning">{t('purchasing.receive.enterQtyRequired')}</Notification>, { placement: 'top-center' })
             return
         }
         setReceiving(true)
@@ -87,10 +88,10 @@ const PoDetailHeaderExtra = () => {
             await apiReceivePurchaseOrder(id!, { warehouse_id: warehouseId, lines })
             await mutate()
             await globalMutate((k) => Array.isArray(k) && k[0] === '/purchasing/orders')
-            toast.push(<Notification type="success">Items received and stock updated.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('purchasing.receive.received')}</Notification>, { placement: 'top-center' })
             setReceiveOpen(false)
         } catch (err: unknown) {
-            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to receive.'
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('purchasing.receive.receiveFailed')
             toast.push(<Notification type="danger">{msg}</Notification>, { placement: 'top-center' })
         } finally {
             setReceiving(false)
@@ -103,10 +104,10 @@ const PoDetailHeaderExtra = () => {
             await apiUpdatePurchaseOrder(id!, { status: 'cancelled' })
             await mutate()
             await globalMutate((k) => Array.isArray(k) && k[0] === '/purchasing/orders')
-            toast.push(<Notification type="success">Order cancelled.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('purchasing.cancel.success')}</Notification>, { placement: 'top-center' })
             setCancelOpen(false)
         } catch {
-            toast.push(<Notification type="danger">Failed to cancel order.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('purchasing.cancel.failed')}</Notification>, { placement: 'top-center' })
         } finally {
             setCancelling(false)
         }
@@ -118,10 +119,10 @@ const PoDetailHeaderExtra = () => {
             await apiReopenPurchaseOrder(id!)
             await mutate()
             await globalMutate((k) => Array.isArray(k) && k[0] === '/purchasing/orders')
-            toast.push(<Notification type="success">Order reopened as draft.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('purchasing.reopen.success')}</Notification>, { placement: 'top-center' })
             setReopenOpen(false)
         } catch {
-            toast.push(<Notification type="danger">Failed to reopen order.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('purchasing.reopen.failed')}</Notification>, { placement: 'top-center' })
         } finally {
             setReopening(false)
         }
@@ -131,18 +132,18 @@ const PoDetailHeaderExtra = () => {
         setSending(true)
         try {
             await apiSendPoToSupplier(id!)
-            toast.push(<Notification type="success">Purchase order emailed to supplier.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('purchasing.email.success')}</Notification>, { placement: 'top-center' })
         } catch (err: unknown) {
-            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to send email.'
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('purchasing.email.failed')
             toast.push(<Notification type="danger">{msg}</Notification>, { placement: 'top-center' })
         } finally {
             setSending(false)
         }
     }
 
-    const canReceive       = canEdit && data && ['ordered', 'partially_received'].includes(data.status)
-    const canCancel        = canEdit && data && ['draft', 'ordered'].includes(data.status)
-    const canReopen        = canEdit && data?.status === 'cancelled'
+    const canReceive        = canEdit && data && ['ordered', 'partially_received'].includes(data.status)
+    const canCancel         = canEdit && data && ['draft', 'ordered'].includes(data.status)
+    const canReopen         = canEdit && data?.status === 'cancelled'
     const canSendToSupplier = canEdit && data?.status === 'ordered' && !!data?.supplier?.email
 
     return (
@@ -154,7 +155,7 @@ const PoDetailHeaderExtra = () => {
                         customColorClass={() => 'border-red-500 ring-1 ring-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 bg-transparent'}
                         onClick={() => setCancelOpen(true)}
                     >
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                 )}
                 {canReopen && (
@@ -163,12 +164,12 @@ const PoDetailHeaderExtra = () => {
                         customColorClass={() => 'border-blue-500 ring-1 ring-blue-500 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10 bg-transparent'}
                         onClick={() => setReopenOpen(true)}
                     >
-                        Reopen
+                        {t('common.reopen')}
                     </Button>
                 )}
                 {canReceive && (
                     <Button icon={<TbPackageImport />} onClick={openReceive}>
-                        Receive Items
+                        {t('purchasing.receive.title')}
                     </Button>
                 )}
                 {canSendToSupplier && (
@@ -177,11 +178,11 @@ const PoDetailHeaderExtra = () => {
                         loading={sending}
                         onClick={handleSendToSupplier}
                     >
-                        Email to Supplier
+                        {t('purchasing.email.send')}
                     </Button>
                 )}
                 <Button icon={<TbPrinter />} onClick={() => window.print()}>
-                    Print
+                    {t('common.print')}
                 </Button>
                 {canEdit && data?.status !== 'cancelled' && (
                     <Button
@@ -189,7 +190,7 @@ const PoDetailHeaderExtra = () => {
                         icon={<TbEdit />}
                         onClick={() => navigate(`/concepts/purchasing/purchase-orders/edit/${id}`)}
                     >
-                        Edit
+                        {t('common.edit')}
                     </Button>
                 )}
             </div>
@@ -201,13 +202,13 @@ const PoDetailHeaderExtra = () => {
                 onRequestClose={() => setReceiveOpen(false)}
                 width={600}
             >
-                <h5 className="mb-4 font-semibold">Receive Items</h5>
+                <h5 className="mb-4 font-semibold">{t('purchasing.receive.title')}</h5>
                 <div className="mb-4">
                     <label className="block text-sm font-medium mb-1">
-                        Destination Warehouse <span className="text-red-500">*</span>
+                        {t('purchasing.receive.warehouse')} <span className="text-red-500">*</span>
                     </label>
                     <Select
-                        placeholder="Select warehouse..."
+                        placeholder={t('purchasing.receive.selectWarehouse')}
                         options={warehouseOptions}
                         value={warehouseOptions.find((o) => o.value === warehouseId) ?? null}
                         onChange={(opt) => setWarehouseId(opt?.value ?? null)}
@@ -222,7 +223,7 @@ const PoDetailHeaderExtra = () => {
                             <div className="flex-1 min-w-0">
                                 <p className="font-medium text-sm truncate">{l.item?.name}</p>
                                 <p className="text-xs text-gray-400">
-                                    Pending: {l.qty_pending} {l.item?.unit}
+                                    {t('purchasing.receive.pending', { qty: l.qty_pending, unit: l.item?.unit ?? '' })}
                                 </p>
                             </div>
                             <div className="w-28">
@@ -242,7 +243,7 @@ const PoDetailHeaderExtra = () => {
                 </div>
                 <div className="flex justify-end gap-2 mt-5">
                     <Button variant="plain" onClick={() => setReceiveOpen(false)} disabled={receiving}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         variant="solid"
@@ -250,7 +251,7 @@ const PoDetailHeaderExtra = () => {
                         loading={receiving}
                         onClick={handleReceive}
                     >
-                        Confirm Receipt
+                        {t('purchasing.receive.confirmReceipt')}
                     </Button>
                 </div>
             </Dialog>
@@ -261,13 +262,13 @@ const PoDetailHeaderExtra = () => {
                 onClose={() => setCancelOpen(false)}
                 onRequestClose={() => setCancelOpen(false)}
             >
-                <h5 className="mb-2 font-semibold">Cancel Order</h5>
+                <h5 className="mb-2 font-semibold">{t('purchasing.cancel.title')}</h5>
                 <p className="text-sm text-gray-500 mb-6">
-                    Are you sure you want to cancel <strong>#{data?.code}</strong>? This cannot be undone.
+                    {t('purchasing.cancel.confirm', { code: data?.code ?? '' })}
                 </p>
                 <div className="flex justify-end gap-2">
                     <Button variant="plain" onClick={() => setCancelOpen(false)} disabled={cancelling}>
-                        No
+                        {t('common.no')}
                     </Button>
                     <Button
                         variant="solid"
@@ -275,7 +276,7 @@ const PoDetailHeaderExtra = () => {
                         loading={cancelling}
                         onClick={handleCancel}
                     >
-                        Yes, Cancel
+                        {t('purchasing.cancel.yesCancel')}
                     </Button>
                 </div>
             </Dialog>
@@ -291,16 +292,16 @@ const PoDetailHeaderExtra = () => {
                         <TbRefresh />
                     </div>
                     <div>
-                        <h5 className="font-semibold">Reopen Order</h5>
-                        <p className="text-sm text-gray-500">The order will be moved back to draft.</p>
+                        <h5 className="font-semibold">{t('purchasing.reopen.title')}</h5>
+                        <p className="text-sm text-gray-500">{t('purchasing.reopen.subtitle')}</p>
                     </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-6">
-                    <strong>#{data?.code}</strong> will be reopened as a draft so you can edit it and re-submit.
+                    {t('purchasing.reopen.description', { code: data?.code ?? '' })}
                 </p>
                 <div className="flex justify-end gap-2">
                     <Button variant="plain" onClick={() => setReopenOpen(false)} disabled={reopening}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         variant="solid"
@@ -308,7 +309,7 @@ const PoDetailHeaderExtra = () => {
                         loading={reopening}
                         onClick={handleReopen}
                     >
-                        Yes, Reopen
+                        {t('purchasing.reopen.yesReopen')}
                     </Button>
                 </div>
             </Dialog>

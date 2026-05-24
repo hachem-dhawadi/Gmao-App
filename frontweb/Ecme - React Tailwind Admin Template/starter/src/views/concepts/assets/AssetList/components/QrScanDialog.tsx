@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
 import Tag from '@/components/ui/Tag'
@@ -30,6 +31,7 @@ const statusLabel: Record<Asset['status'], string> = {
 
 const QrScanDialog = ({ isOpen, onClose }: Props) => {
     const navigate  = useNavigate()
+    const { t } = useTranslation()
     const inputRef  = useRef<HTMLInputElement>(null)
 
     const [mode,     setMode]     = useState<'keyboard' | 'camera'>('keyboard')
@@ -80,7 +82,7 @@ const QrScanDialog = ({ isOpen, onClose }: Props) => {
 
             setResults(assets)
         } catch {
-            toast.push(<Notification type="danger">Search failed.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('assets.toast.scanFailed')}</Notification>, { placement: 'top-center' })
         } finally {
             setLoading(false)
         }

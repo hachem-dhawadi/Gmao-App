@@ -9,9 +9,8 @@ import type { CommonProps } from '@/@types/common'
 
 const languageList = [
     { label: 'English', value: 'en', flag: 'US' },
-    { label: 'Chinese', value: 'zh', flag: 'CN' },
-    { label: 'Espanol', value: 'es', flag: 'ES' },
-    { label: 'Arabic', value: 'ar', flag: 'SA' },
+    { label: 'Français', value: 'fr', flag: 'FR' },
+    { label: 'العربية', value: 'ar', flag: 'SA' },
 ]
 
 const _LanguageSelector = ({ className }: CommonProps) => {
@@ -35,9 +34,9 @@ const _LanguageSelector = ({ className }: CommonProps) => {
         <Dropdown renderTitle={selectedLanguage} placement="bottom-end">
             {languageList.map((lang) => (
                 <Dropdown.Item
-                    key={lang.label}
+                    key={lang.value}
                     className="justify-between"
-                    eventKey={lang.label}
+                    eventKey={lang.value}
                     onClick={() => setLang(lang.value)}
                 >
                     <span className="flex items-center">

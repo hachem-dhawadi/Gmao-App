@@ -9,17 +9,20 @@ import { apiDeleteDepartment } from '@/services/DepartmentsService'
 import { TbChecks } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { useTranslation } from 'react-i18next'
 
 const DepartmentListSelected = () => {
-    const { selectedDepartment, setSelectAllDepartment, mutate } =
-        useDepartmentList()
+    const { selectedDepartment, setSelectAllDepartment, mutate } = useDepartmentList()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const { t } = useTranslation()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canDelete = useAuthority(userAuthority, ['departments.delete', 'admin'])
 
     if (selectedDepartment.length === 0) return null
+
+    const count = selectedDepartment.length
 
     const handleConfirmDelete = async () => {
         setDeleting(true)
@@ -28,22 +31,14 @@ const DepartmentListSelected = () => {
                 selectedDepartment.map((d) => apiDeleteDepartment(d.id)),
             )
             toast.push(
-                <Notification type="success">
-                    {selectedDepartment.length}{' '}
-                    {selectedDepartment.length === 1
-                        ? 'department'
-                        : 'departments'}{' '}
-                    deleted.
-                </Notification>,
+                <Notification type="success">{t('departments.toast.bulkDeleted', { count })}</Notification>,
                 { placement: 'top-center' },
             )
             setSelectAllDepartment([])
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">
-                    Failed to delete some departments.
-                </Notification>,
+                <Notification type="danger">{t('departments.toast.bulkDeleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -67,12 +62,10 @@ const DepartmentListSelected = () => {
                             </span>
                             <span className="font-semibold flex items-center gap-1">
                                 <span className="heading-text">
-                                    {selectedDepartment.length}{' '}
-                                    {selectedDepartment.length === 1
-                                        ? 'Department'
-                                        : 'Departments'}
+                                    {count}{' '}
+                                    {count === 1 ? t('departments.selected.Item') : t('departments.selected.Items')}
                                 </span>
-                                <span>selected</span>
+                                <span>{t('common.selected')}</span>
                             </span>
                         </span>
 
@@ -85,14 +78,14 @@ const DepartmentListSelected = () => {
                                     }
                                     onClick={() => setDeleteOpen(true)}
                                 >
-                                    Delete
+                                    {t('common.delete')}
                                 </Button>
                             )}
                             <Button
                                 size="sm"
                                 onClick={() => setSelectAllDepartment([])}
                             >
-                                Clear selection
+                                {t('common.clearSelection')}
                             </Button>
                         </div>
                     </div>
@@ -102,21 +95,14 @@ const DepartmentListSelected = () => {
             <ConfirmDialog
                 isOpen={deleteOpen}
                 type="danger"
-                title="Delete Departments"
+                title={t('departments.selected.deleteTitle')}
                 onClose={() => setDeleteOpen(false)}
                 onRequestClose={() => setDeleteOpen(false)}
                 onCancel={() => setDeleteOpen(false)}
                 onConfirm={handleConfirmDelete}
                 confirmButtonProps={{ loading: deleting }}
             >
-                <p>
-                    Are you sure you want to delete{' '}
-                    <strong>{selectedDepartment.length}</strong>{' '}
-                    {selectedDepartment.length === 1
-                        ? 'department'
-                        : 'departments'}
-                    ? Members will be unassigned.
-                </p>
+                <p>{t('departments.selected.deleteConfirm', { count })}</p>
             </ConfirmDialog>
         </>
     )

@@ -10,6 +10,7 @@ import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
+import { useTranslation } from 'react-i18next'
 import {
     TbPlus,
     TbSearch,
@@ -22,33 +23,34 @@ import {
 import type { MaintenanceRequest } from '@/services/RequestsService'
 import type { RequestsListResponse } from '@/services/RequestsService'
 
-const STATUS_CONFIG = {
-    pending:   { label: 'Pending',   bg: 'bg-amber-100 dark:bg-amber-500/20',    text: 'text-amber-600 dark:text-amber-400',    dot: 'bg-amber-500' },
-    converted: { label: 'Converted', bg: 'bg-emerald-100 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
-    rejected:  { label: 'Rejected',  bg: 'bg-red-100 dark:bg-red-500/20',        text: 'text-red-600 dark:text-red-400',        dot: 'bg-red-400' },
+const statusColor = {
+    pending:   { bg: 'bg-amber-100 dark:bg-amber-500/20',     text: 'text-amber-600 dark:text-amber-400',     dot: 'bg-amber-500' },
+    converted: { bg: 'bg-emerald-100 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
+    rejected:  { bg: 'bg-red-100 dark:bg-red-500/20',         text: 'text-red-600 dark:text-red-400',         dot: 'bg-red-400' },
 }
 
-const PRIORITY_CONFIG = {
-    low:      { label: 'Low',      text: 'text-gray-400' },
-    medium:   { label: 'Medium',   text: 'text-blue-500' },
-    high:     { label: 'High',     text: 'text-amber-500' },
-    critical: { label: 'Critical', text: 'text-red-500 font-bold' },
+const priorityColor = {
+    low:      'text-gray-400',
+    medium:   'text-blue-500',
+    high:     'text-amber-500',
+    critical: 'text-red-500 font-bold',
 }
-
-const TABS = [
-    { key: 'all',       label: 'All',       icon: TbClipboardText },
-    { key: 'pending',   label: 'Pending',   icon: TbClock },
-    { key: 'converted', label: 'Converted', icon: TbCircleCheck },
-    { key: 'rejected',  label: 'Rejected',  icon: TbCircleX },
-]
 
 const RequestList = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const isManager = useAuthority(userAuthority, ['admin', 'manager'])
 
     const [activeTab, setActiveTab] = useState('all')
     const [search, setSearch]       = useState('')
+
+    const tabs = [
+        { key: 'all',       label: t('requests.tabs.all'),       icon: TbClipboardText },
+        { key: 'pending',   label: t('requests.tabs.pending'),   icon: TbClock },
+        { key: 'converted', label: t('requests.tabs.converted'), icon: TbCircleCheck },
+        { key: 'rejected',  label: t('requests.tabs.rejected'),  icon: TbCircleX },
+    ]
 
     const { data, isLoading } = useSWR<MaintenanceRequest[]>(
         ['/requests', activeTab, search],
@@ -73,11 +75,11 @@ const RequestList = () => {
             {/* Page header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h3 className="mb-1">Maintenance Requests</h3>
+                    <h3 className="mb-1">{t('requests.pageTitle')}</h3>
                     <p className="text-sm text-gray-500">
                         {isManager
-                            ? 'Review and convert employee requests into work orders'
-                            : 'Submit and track your maintenance requests'}
+                            ? t('requests.managerSubtitle')
+                            : t('requests.userSubtitle')}
                     </p>
                 </div>
                 <Button
@@ -85,7 +87,7 @@ const RequestList = () => {
                     icon={<TbPlus />}
                     onClick={() => navigate('/concepts/requests/request-create')}
                 >
-                    New Request
+                    {t('requests.new')}
                 </Button>
             </div>
 
@@ -98,7 +100,7 @@ const RequestList = () => {
                         </div>
                         <div>
                             <p className="text-2xl font-bold leading-none">{counts.pending}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">Pending review</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{t('requests.pendingReview')}</p>
                         </div>
                     </Card>
                     <Card className="!p-4 flex items-center gap-3">
@@ -107,7 +109,7 @@ const RequestList = () => {
                         </div>
                         <div>
                             <p className="text-2xl font-bold leading-none">{counts.converted}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">Converted to WO</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{t('requests.convertedToWO')}</p>
                         </div>
                     </Card>
                     <Card className="!p-4 flex items-center gap-3">
@@ -116,7 +118,7 @@ const RequestList = () => {
                         </div>
                         <div>
                             <p className="text-2xl font-bold leading-none">{counts.rejected}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">Rejected</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{t('requests.status.rejected')}</p>
                         </div>
                     </Card>
                 </div>
@@ -126,7 +128,7 @@ const RequestList = () => {
                 {/* Tabs + Search */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                     <div className="flex gap-1">
-                        {TABS.map((tab) => {
+                        {tabs.map((tab) => {
                             const Icon = tab.icon
                             const count = tab.key !== 'all' ? counts[tab.key as keyof typeof counts] : null
                             return (
@@ -156,7 +158,7 @@ const RequestList = () => {
                         <Input
                             size="sm"
                             className="pl-9"
-                            placeholder="Search by title or code…"
+                            placeholder={t('requests.searchPlaceholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -167,20 +169,20 @@ const RequestList = () => {
                 {isLoading ? (
                     <div className="flex items-center justify-center py-20 text-gray-400 gap-2 text-sm">
                         <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-                        Loading…
+                        {t('common.loading')}
                     </div>
                 ) : !data || data.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
                         <TbClipboardText className="text-5xl" />
-                        <p className="text-sm font-medium">No requests found</p>
-                        <p className="text-xs text-gray-400">Submit a request and it will appear here</p>
+                        <p className="text-sm font-medium">{t('requests.noRequests')}</p>
+                        <p className="text-xs text-gray-400">{t('requests.noRequestsHint')}</p>
                         <Button
                             size="sm"
                             variant="solid"
                             icon={<TbPlus />}
                             onClick={() => navigate('/concepts/requests/request-create')}
                         >
-                            Submit a request
+                            {t('requests.submit')}
                         </Button>
                     </div>
                 ) : (
@@ -188,20 +190,20 @@ const RequestList = () => {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-gray-100 dark:border-gray-700 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                                    <th className="pb-3 pr-4">Code</th>
-                                    <th className="pb-3 pr-4">Title</th>
-                                    <th className="pb-3 pr-4">Asset / Location</th>
-                                    <th className="pb-3 pr-4">Priority</th>
-                                    <th className="pb-3 pr-4">Status</th>
-                                    {isManager && <th className="pb-3 pr-4">Requested by</th>}
-                                    <th className="pb-3">Date</th>
+                                    <th className="pb-3 pr-4">{t('requests.columns.code')}</th>
+                                    <th className="pb-3 pr-4">{t('requests.columns.title')}</th>
+                                    <th className="pb-3 pr-4">{t('requests.columns.assetLocation')}</th>
+                                    <th className="pb-3 pr-4">{t('requests.columns.priority')}</th>
+                                    <th className="pb-3 pr-4">{t('requests.columns.status')}</th>
+                                    {isManager && <th className="pb-3 pr-4">{t('requests.columns.requestedBy')}</th>}
+                                    <th className="pb-3">{t('requests.columns.date')}</th>
                                     <th className="pb-3" />
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                                 {data.map((req) => {
-                                    const sc = STATUS_CONFIG[req.status]
-                                    const pc = PRIORITY_CONFIG[req.priority]
+                                    const sc = statusColor[req.status]
+                                    const priorityCls = priorityColor[req.priority]
                                     return (
                                         <tr
                                             key={req.id}
@@ -218,13 +220,17 @@ const RequestList = () => {
                                                 {req.asset?.name ?? req.location ?? '—'}
                                             </td>
                                             <td className="py-3.5 pr-4">
-                                                <span className={`text-xs font-semibold ${pc.text}`}>{pc.label}</span>
+                                                <span className={`text-xs font-semibold ${priorityCls}`}>
+                                                    {t(`requests.priority.${req.priority}`)}
+                                                </span>
                                             </td>
                                             <td className="py-3.5 pr-4">
                                                 <Tag className={`border-0 text-xs ${sc.bg}`}>
                                                     <span className="flex items-center gap-1.5">
                                                         <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
-                                                        <span className={`font-semibold ${sc.text}`}>{sc.label}</span>
+                                                        <span className={`font-semibold ${sc.text}`}>
+                                                            {t(`requests.status.${req.status}`)}
+                                                        </span>
                                                     </span>
                                                 </Tag>
                                             </td>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import useSWR, { mutate as globalMutate } from 'swr'
 import Container from '@/components/shared/Container'
 import Affix from '@/components/shared/Affix'
@@ -24,6 +25,7 @@ import type { SelectedItem, CatalogItem } from './components/ItemSelectSection'
 const PurchaseOrderCreate = () => {
     const navigate   = useNavigate()
     const { larger } = useResponsive()
+    const { t } = useTranslation()
     const { getTopGapValue } = useLayoutGap()
 
     const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
@@ -54,11 +56,11 @@ const PurchaseOrderCreate = () => {
 
     const handleSubmit = async () => {
         if (!supplierId) {
-            toast.push(<Notification type="warning">Please select a supplier.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="warning">{t('purchasing.order.selectSupplier')}</Notification>, { placement: 'top-center' })
             return
         }
         if (selectedItems.length === 0) {
-            toast.push(<Notification type="warning">Add at least one item.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="warning">{t('purchasing.order.addItem')}</Notification>, { placement: 'top-center' })
             return
         }
         setSubmitting(true)
@@ -76,7 +78,7 @@ const PurchaseOrderCreate = () => {
                 })),
             })
             await globalMutate((k) => Array.isArray(k) && k[0] === '/purchasing/orders')
-            toast.push(<Notification type="success">Purchase order created!</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('purchasing.order.created')}</Notification>, { placement: 'top-center' })
             navigate('/concepts/purchasing/purchase-orders')
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to create order.'
@@ -87,7 +89,7 @@ const PurchaseOrderCreate = () => {
     }
 
     const handleConfirmDiscard = () => {
-        toast.push(<Notification type="success">Order discarded!</Notification>, { placement: 'top-center' })
+        toast.push(<Notification type="success">{t('purchasing.order.discarded')}</Notification>, { placement: 'top-center' })
         navigate('/concepts/purchasing/purchase-orders')
     }
 
@@ -150,14 +152,14 @@ const PurchaseOrderCreate = () => {
                                         icon={<TbTrash />}
                                         onClick={() => setDiscardOpen(true)}
                                     >
-                                        Discard
+                                        {t('common.discard')}
                                     </Button>
                                     <Button
                                         variant="solid"
                                         loading={submitting}
                                         onClick={handleSubmit}
                                     >
-                                        Create
+                                        {t('common.create')}
                                     </Button>
                                 </div>
                             </div>
@@ -170,13 +172,13 @@ const PurchaseOrderCreate = () => {
             <ConfirmDialog
                 isOpen={discardOpen}
                 type="danger"
-                title="Discard changes"
+                title={t('purchasing.order.discardTitle')}
                 onClose={() => setDiscardOpen(false)}
                 onRequestClose={() => setDiscardOpen(false)}
                 onCancel={() => setDiscardOpen(false)}
                 onConfirm={handleConfirmDiscard}
             >
-                <p>Are you sure you want to discard this order? This action can&apos;t be undone.</p>
+                <p>{t('purchasing.order.discardConfirm')}</p>
             </ConfirmDialog>
         </>
     )

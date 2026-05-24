@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -16,6 +17,7 @@ import type { ItemResponse } from '@/services/InventoryService'
 const ItemEdit = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [discardOpen, setDiscardOpen] = useState(false)
 
@@ -62,7 +64,7 @@ const ItemEdit = () => {
             )
 
             toast.push(
-                <Notification type="success">Item updated successfully.</Notification>,
+                <Notification type="success">{t('inventory.toast.updated')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/inventory/items')

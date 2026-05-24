@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -23,6 +24,7 @@ import type { WorkOrderResponse } from '@/services/WorkOrdersService'
 const WorkOrderEdit = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
@@ -76,7 +78,7 @@ const WorkOrderEdit = () => {
             )
 
             toast.push(
-                <Notification type="success">Changes saved.</Notification>,
+                <Notification type="success">{t('wo.toast.saved')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/work-orders/work-order-list')

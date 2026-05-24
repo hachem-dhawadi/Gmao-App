@@ -15,43 +15,26 @@ import { mutate as globalMutate } from 'swr'
 import cloneDeep from 'lodash/cloneDeep'
 import { TbPencil, TbTrash, TbEye } from 'react-icons/tb'
 import { TbEngine } from 'react-icons/tb'
+import { useTranslation } from 'react-i18next'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { Asset } from '../types'
 import type { TableQueries } from '@/@types/common'
 
-const statusConfig: Record<
-    Asset['status'],
-    { label: string; className: string }
-> = {
-    active: {
-        label: 'Active',
-        className:
-            'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
-    },
-    inactive: {
-        label: 'Inactive',
-        className:
-            'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
-    },
-    under_maintenance: {
-        label: 'Maintenance',
-        className:
-            'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
-    },
-    decommissioned: {
-        label: 'Decommissioned',
-        className:
-            'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
-    },
+const statusColor: Record<Asset['status'], string> = {
+    active:            'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
+    inactive:          'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
+    under_maintenance: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+    decommissioned:    'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
 }
 
 const StatusBadge = ({ status }: { status: Asset['status'] }) => {
-    const cfg = statusConfig[status]
-    return <Tag className={`text-xs ${cfg.className}`}>{cfg.label}</Tag>
+    const { t } = useTranslation()
+    return <Tag className={`text-xs ${statusColor[status]}`}>{t(`assets.status.${status}`)}</Tag>
 }
 
 const AssetListTable = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
 
     const {
         assetList,
@@ -83,14 +66,12 @@ const AssetListTable = () => {
                     key[0] === '/assets',
             )
             toast.push(
-                <Notification type="success">Asset deleted.</Notification>,
+                <Notification type="success">{t('assets.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
         } catch {
             toast.push(
-                <Notification type="danger">
-                    Failed to delete asset.
-                </Notification>,
+                <Notification type="danger">{t('assets.toast.deleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -101,7 +82,7 @@ const AssetListTable = () => {
     const columns: ColumnDef<Asset>[] = useMemo(
         () => [
             {
-                header: 'Asset',
+                header: t('assets.columns.asset'),
                 accessorKey: 'name',
                 cell: (props) => {
                     const row = props.row.original
@@ -128,7 +109,7 @@ const AssetListTable = () => {
                 },
             },
             {
-                header: 'Type',
+                header: t('assets.columns.type'),
                 accessorKey: 'asset_type',
                 cell: (props) =>
                     props.row.original.asset_type ? (
@@ -140,14 +121,14 @@ const AssetListTable = () => {
                     ),
             },
             {
-                header: 'Status',
+                header: t('assets.columns.status'),
                 accessorKey: 'status',
                 cell: (props) => (
                     <StatusBadge status={props.row.original.status} />
                 ),
             },
             {
-                header: 'Manufacturer / Model',
+                header: t('assets.columns.manufacturerModel'),
                 accessorKey: 'manufacturer',
                 cell: (props) => {
                     const { manufacturer, model } = props.row.original
@@ -161,7 +142,7 @@ const AssetListTable = () => {
                 },
             },
             {
-                header: 'Location',
+                header: t('assets.columns.location'),
                 accessorKey: 'location',
                 cell: (props) => (
                     <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -174,7 +155,7 @@ const AssetListTable = () => {
                 id: 'action',
                 cell: (props) => (
                     <div className="flex items-center justify-end gap-3">
-                        <Tooltip title="View details">
+                        <Tooltip title={t('common.view')}>
                             <div
                                 className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                                 role="button"
@@ -188,7 +169,7 @@ const AssetListTable = () => {
                             </div>
                         </Tooltip>
                         {canEdit && (
-                            <Tooltip title="Edit">
+                            <Tooltip title={t('common.edit')}>
                                 <div
                                     className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                                     role="button"
@@ -203,7 +184,7 @@ const AssetListTable = () => {
                             </Tooltip>
                         )}
                         {canDelete && (
-                            <Tooltip title="Delete">
+                            <Tooltip title={t('common.delete')}>
                                 <div
                                     className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
                                     role="button"
@@ -219,7 +200,7 @@ const AssetListTable = () => {
                 ),
             },
         ],
-        [canEdit, canDelete, navigate],
+        [canEdit, canDelete, navigate, t],
     )
 
     const handleSetTableData = (data: TableQueries) => {
@@ -274,16 +255,13 @@ const AssetListTable = () => {
             <ConfirmDialog
                 isOpen={!!deleteTarget}
                 type="danger"
-                title="Delete asset"
+                title={t('assets.delete.title')}
                 onClose={() => setDeleteTarget(null)}
                 onRequestClose={() => setDeleteTarget(null)}
                 onCancel={() => setDeleteTarget(null)}
                 onConfirm={handleDelete}
             >
-                <p>
-                    Delete <strong>{deleteTarget?.name}</strong>? This cannot
-                    be undone.
-                </p>
+                <p>{t('assets.delete.confirm', { name: deleteTarget?.name })}</p>
             </ConfirmDialog>
         </>
     )

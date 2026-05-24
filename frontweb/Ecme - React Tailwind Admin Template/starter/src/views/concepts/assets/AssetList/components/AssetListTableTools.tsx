@@ -6,9 +6,11 @@ import AssetListTableFilter from './AssetListTableFilter'
 import QrScanDialog from './QrScanDialog'
 import Button from '@/components/ui/Button'
 import { TbQrcode } from 'react-icons/tb'
+import { useTranslation } from 'react-i18next'
 
 const AssetListTableTools = () => {
     const { tableData, setTableData } = useAssetList()
+    const { t } = useTranslation()
     const [scanOpen, setScanOpen] = useState(false)
 
     const handleInputChange = (val: string) => {
@@ -24,7 +26,7 @@ const AssetListTableTools = () => {
                 <AssetListSearch onInputChange={handleInputChange} />
                 <div className="flex items-center gap-2">
                     <Button icon={<TbQrcode />} onClick={() => setScanOpen(true)}>
-                        Scan
+                        {t('assets.scan')}
                     </Button>
                     <AssetListTableFilter />
                 </div>

@@ -8,8 +8,10 @@ import WorkOrderListSelected from './components/WorkOrderListSelected'
 import useWorkOrderList from './hooks/useWorkOrderList'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { useTranslation } from 'react-i18next'
 
 const WorkOrderList = () => {
+    const { t } = useTranslation()
     const { filterData, setFilterData } = useWorkOrderList()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canAssign = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
@@ -27,7 +29,7 @@ const WorkOrderList = () => {
                 <AdaptiveCard>
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                            <h3>Work Orders</h3>
+                            <h3>{t('wo.pageTitle')}</h3>
                             <WorkOrderListActionTools />
                         </div>
                         <WorkOrderListTableTools />

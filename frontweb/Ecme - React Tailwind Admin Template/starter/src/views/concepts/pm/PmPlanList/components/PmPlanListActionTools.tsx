@@ -3,9 +3,11 @@ import { TbPlus } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { useTranslation } from 'react-i18next'
 
 const PmPlanListActionTools = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canCreate = useAuthority(userAuthority, ['pm_plans.write', 'admin', 'manager'])
 
@@ -17,7 +19,7 @@ const PmPlanListActionTools = () => {
                     icon={<TbPlus className="text-xl" />}
                     onClick={() => navigate('/concepts/pm/pm-create')}
                 >
-                    New PM Plan
+                    {t('pm.new')}
                 </Button>
             )}
         </div>

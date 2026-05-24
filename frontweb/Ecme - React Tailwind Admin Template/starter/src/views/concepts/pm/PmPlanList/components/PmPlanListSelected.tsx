@@ -9,33 +9,34 @@ import { apiDeletePmPlan } from '@/services/PmService'
 import { TbChecks } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { useTranslation } from 'react-i18next'
 
 const PmPlanListSelected = () => {
     const { selectedPmPlans, setSelectAllPmPlan, mutate } = usePmPlanList()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const { t } = useTranslation()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canDelete = useAuthority(userAuthority, ['pm_plans.delete', 'admin'])
 
     if (selectedPmPlans.length === 0) return null
 
+    const count = selectedPmPlans.length
+
     const handleConfirmDelete = async () => {
         setDeleting(true)
         try {
             await Promise.all(selectedPmPlans.map((p) => apiDeletePmPlan(p.id)))
             toast.push(
-                <Notification type="success">
-                    {selectedPmPlans.length}{' '}
-                    {selectedPmPlans.length === 1 ? 'PM plan' : 'PM plans'} deleted.
-                </Notification>,
+                <Notification type="success">{t('pm.toast.bulkDeleted', { count })}</Notification>,
                 { placement: 'top-center' },
             )
             setSelectAllPmPlan([])
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">Failed to delete some PM plans.</Notification>,
+                <Notification type="danger">{t('pm.toast.bulkDeleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -59,10 +60,10 @@ const PmPlanListSelected = () => {
                             </span>
                             <span className="font-semibold flex items-center gap-1">
                                 <span className="heading-text">
-                                    {selectedPmPlans.length}{' '}
-                                    {selectedPmPlans.length === 1 ? 'PM Plan' : 'PM Plans'}
+                                    {count}{' '}
+                                    {count === 1 ? t('pm.selected.Item') : t('pm.selected.Items')}
                                 </span>
-                                <span>selected</span>
+                                <span>{t('common.selected')}</span>
                             </span>
                         </span>
 
@@ -75,14 +76,14 @@ const PmPlanListSelected = () => {
                                     }
                                     onClick={() => setDeleteOpen(true)}
                                 >
-                                    Delete
+                                    {t('common.delete')}
                                 </Button>
                             )}
                             <Button
                                 size="sm"
                                 onClick={() => setSelectAllPmPlan([])}
                             >
-                                Clear selection
+                                {t('common.clearSelection')}
                             </Button>
                         </div>
                     </div>
@@ -92,18 +93,14 @@ const PmPlanListSelected = () => {
             <ConfirmDialog
                 isOpen={deleteOpen}
                 type="danger"
-                title="Delete PM Plans"
+                title={t('pm.selected.deleteTitle')}
                 onClose={() => setDeleteOpen(false)}
                 onRequestClose={() => setDeleteOpen(false)}
                 onCancel={() => setDeleteOpen(false)}
                 onConfirm={handleConfirmDelete}
                 confirmButtonProps={{ loading: deleting }}
             >
-                <p>
-                    Are you sure you want to delete{' '}
-                    <strong>{selectedPmPlans.length}</strong>{' '}
-                    {selectedPmPlans.length === 1 ? 'PM plan' : 'PM plans'}?
-                </p>
+                <p>{t('pm.selected.deleteConfirm', { count })}</p>
             </ConfirmDialog>
         </>
     )

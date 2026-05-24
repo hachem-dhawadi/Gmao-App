@@ -4,9 +4,11 @@ import WorkOrderListSearch from './WorkOrderListSearch'
 import WorkOrderListTableFilter from './WorkOrderListTableFilter'
 import Button from '@/components/ui/Button'
 import { TbUser, TbArchive } from 'react-icons/tb'
+import { useTranslation } from 'react-i18next'
 
 const WorkOrderListTableTools = () => {
     const { tableData, setTableData, filterData, setFilterData } = useWorkOrderList()
+    const { t } = useTranslation()
 
     const handleInputChange = (val: string) => {
         const newTableData = cloneDeep(tableData)
@@ -32,14 +34,14 @@ const WorkOrderListTableTools = () => {
                     onClick={toggleMyOnly}
                     className={filterData.myOnly ? 'border-primary ring-1 ring-primary text-primary' : ''}
                 >
-                    {filterData.myOnly ? 'My WOs' : 'All WOs'}
+                    {filterData.myOnly ? t('wo.myWos') : t('wo.allWos')}
                 </Button>
                 <Button
                     icon={<TbArchive />}
                     onClick={toggleArchived}
                     className={filterData.showArchived ? 'border-amber-500 ring-1 ring-amber-500 text-amber-600' : ''}
                 >
-                    {filterData.showArchived ? 'Archived' : 'Archived'}
+                    {t('wo.archived')}
                 </Button>
                 <WorkOrderListTableFilter />
             </div>

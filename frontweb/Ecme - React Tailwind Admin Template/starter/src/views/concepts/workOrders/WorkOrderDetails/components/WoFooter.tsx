@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import MentionTextarea from './MentionTextarea'
 import Tabs from '@/components/ui/Tabs'
 import Button from '@/components/ui/Button'
@@ -107,6 +108,7 @@ const WoFooter = ({
     canEdit,
 }: Props) => {
     // ── Session ───────────────────────────────────────────────────────────────
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((s) => s.user.authority)
     const currentMemberId = useSessionUser((s) => s.user.memberId)
     const canDeleteLogs = useAuthority(userAuthority, ['work_orders.delete', 'admin'])
@@ -155,7 +157,7 @@ const WoFooter = ({
             setComments((prev) => [...prev, newComment])
             setCommentText('')
         } catch {
-            toast.push(<Notification type="danger">Failed to add comment.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('wo.toast.commentFailed')}</Notification>, { placement: 'top-center' })
         } finally {
             setSubmitting(false)
         }
@@ -171,7 +173,7 @@ const WoFooter = ({
             const newAttachment = (resp as { data: WorkOrderAttachment }).data
             setAttachments((prev) => [...prev, newAttachment])
         } catch {
-            toast.push(<Notification type="danger">Failed to upload file.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('wo.toast.uploadFailed')}</Notification>, { placement: 'top-center' })
         } finally {
             setUploading(false)
             if (fileInputRef.current) fileInputRef.current.value = ''
@@ -195,7 +197,7 @@ const WoFooter = ({
             }
             setDeleteTarget(null)
         } catch {
-            toast.push(<Notification type="danger">Failed to delete.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('wo.toast.attachDeleteFailed')}</Notification>, { placement: 'top-center' })
         } finally {
             setDeleting(false)
         }
@@ -224,7 +226,7 @@ const WoFooter = ({
     const handleSaveLog = async () => {
         const mins = parseInt(logForm.labor_minutes, 10)
         if (!mins || mins < 1) {
-            toast.push(<Notification type="warning">Duration (minutes) is required.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="warning">{t('wo.toast.worklogDurationRequired')}</Notification>, { placement: 'top-center' })
             return
         }
         setSavingLog(true)
@@ -247,7 +249,7 @@ const WoFooter = ({
 
             closeLogDialog()
         } catch {
-            toast.push(<Notification type="danger">Failed to save work log.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('wo.toast.worklogFailed')}</Notification>, { placement: 'top-center' })
         } finally {
             setSavingLog(false)
         }

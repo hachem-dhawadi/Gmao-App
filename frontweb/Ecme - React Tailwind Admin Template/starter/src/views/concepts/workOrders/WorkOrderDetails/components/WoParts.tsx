@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import useSWR from 'swr'
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
@@ -54,6 +55,7 @@ type WoPartsProps = {
 const WoParts = ({ workOrderId, woCode, canEdit }: WoPartsProps) => {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const { t } = useTranslation()
 
     const { data: partsData, mutate } = useSWR(
         [`/wo-parts/${workOrderId}`],
@@ -148,11 +150,11 @@ const WoParts = ({ workOrderId, woCode, canEdit }: WoPartsProps) => {
             })
 
             await mutate()
-            toast.push(<Notification type="success">Part recorded.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('wo.toast.partRecorded')}</Notification>, { placement: 'top-center' })
             closeDialog()
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-                ?? 'Failed to record part.'
+                ?? t('wo.toast.partFailed')
             toast.push(<Notification type="danger">{msg}</Notification>, { placement: 'top-center' })
         } finally {
             setSubmitting(false)

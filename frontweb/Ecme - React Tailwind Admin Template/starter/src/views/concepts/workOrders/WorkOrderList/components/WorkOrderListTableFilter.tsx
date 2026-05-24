@@ -6,11 +6,13 @@ import { Form, FormItem } from '@/components/ui/Form'
 import useWorkOrderList from '../hooks/useWorkOrderList'
 import { TbFilter } from 'react-icons/tb'
 import { useForm, Controller } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import type { WorkOrderFilter } from '../store/workOrderListStore'
 
 const WorkOrderListTableFilter = () => {
     const [dialogOpen, setDialogOpen] = useState(false)
     const { filterData, setFilterData } = useWorkOrderList()
+    const { t } = useTranslation()
 
     const { handleSubmit, reset, control } = useForm<WorkOrderFilter>({
         defaultValues: filterData,
@@ -31,6 +33,23 @@ const WorkOrderListTableFilter = () => {
         (filterData.status !== 'all' ? 1 : 0) +
         (filterData.priority !== 'all' ? 1 : 0)
 
+    const statusOptions = [
+        { value: 'all',         label: t('wo.status.all') },
+        { value: 'open',        label: t('wo.status.open') },
+        { value: 'in_progress', label: t('wo.status.in_progress') },
+        { value: 'on_hold',     label: t('wo.status.on_hold') },
+        { value: 'completed',   label: t('wo.status.completed') },
+        { value: 'cancelled',   label: t('wo.status.cancelled') },
+    ]
+
+    const priorityOptions = [
+        { value: 'all',      label: t('wo.priority.all') },
+        { value: 'low',      label: t('wo.priority.low') },
+        { value: 'medium',   label: t('wo.priority.medium') },
+        { value: 'high',     label: t('wo.priority.high') },
+        { value: 'critical', label: t('wo.priority.critical') },
+    ]
+
     return (
         <>
             <Button
@@ -42,7 +61,7 @@ const WorkOrderListTableFilter = () => {
                         : ''
                 }
             >
-                Filter{activeFilters > 0 ? ` (${activeFilters})` : ''}
+                {t('common.filter')}{activeFilters > 0 ? ` (${activeFilters})` : ''}
             </Button>
 
             <Dialog
@@ -51,30 +70,21 @@ const WorkOrderListTableFilter = () => {
                 onRequestClose={() => setDialogOpen(false)}
                 width={400}
             >
-                <h4 className="mb-4">Filter Work Orders</h4>
+                <h4 className="mb-4">{t('wo.filter.title')}</h4>
                 <Form onSubmit={handleSubmit(onSubmit)}>
-                    <FormItem label="Status">
+                    <FormItem label={t('wo.filter.status')}>
                         <Controller
                             name="status"
                             control={control}
                             render={({ field }) => (
                                 <div className="flex flex-col gap-3 mt-2">
-                                    {[
-                                        { value: 'all', label: 'All statuses' },
-                                        { value: 'open', label: 'Open' },
-                                        { value: 'in_progress', label: 'In Progress' },
-                                        { value: 'on_hold', label: 'On Hold' },
-                                        { value: 'completed', label: 'Completed' },
-                                        { value: 'cancelled', label: 'Cancelled' },
-                                    ].map((opt) => (
+                                    {statusOptions.map((opt) => (
                                         <Radio
                                             key={opt.value}
                                             name="status"
                                             value={opt.value}
                                             checked={field.value === opt.value}
-                                            onChange={() =>
-                                                field.onChange(opt.value)
-                                            }
+                                            onChange={() => field.onChange(opt.value)}
                                         >
                                             {opt.label}
                                         </Radio>
@@ -84,27 +94,19 @@ const WorkOrderListTableFilter = () => {
                         />
                     </FormItem>
 
-                    <FormItem label="Priority">
+                    <FormItem label={t('wo.filter.priority')}>
                         <Controller
                             name="priority"
                             control={control}
                             render={({ field }) => (
                                 <div className="flex flex-col gap-3 mt-2">
-                                    {[
-                                        { value: 'all', label: 'All priorities' },
-                                        { value: 'low', label: 'Low' },
-                                        { value: 'medium', label: 'Medium' },
-                                        { value: 'high', label: 'High' },
-                                        { value: 'critical', label: 'Critical' },
-                                    ].map((opt) => (
+                                    {priorityOptions.map((opt) => (
                                         <Radio
                                             key={opt.value}
                                             name="priority"
                                             value={opt.value}
                                             checked={field.value === opt.value}
-                                            onChange={() =>
-                                                field.onChange(opt.value)
-                                            }
+                                            onChange={() => field.onChange(opt.value)}
                                         >
                                             {opt.label}
                                         </Radio>
@@ -116,10 +118,10 @@ const WorkOrderListTableFilter = () => {
 
                     <div className="flex justify-end items-center gap-2 mt-6">
                         <Button type="button" onClick={handleReset}>
-                            Reset
+                            {t('common.reset')}
                         </Button>
                         <Button type="submit" variant="solid">
-                            Apply
+                            {t('common.apply')}
                         </Button>
                     </div>
                 </Form>

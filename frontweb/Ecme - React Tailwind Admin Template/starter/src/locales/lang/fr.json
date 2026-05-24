@@ -1,0 +1,451 @@
+{
+    "nav": {
+        "dashboard": { "dashboard": "Tableau de bord" },
+        "requests": "Demandes",
+        "reports": "Rapports",
+        "gmao": "GMAO",
+        "assets": { "assets": "Équipements", "assetList": "Liste des équipements", "assetCreate": "Ajouter un équipement" },
+        "workOrders": { "workOrders": "Bons de travaux", "workOrderList": "Liste des BT", "workOrderBoard": "Tableau", "workOrderCreate": "Nouveau BT" },
+        "pm": { "pm": "Maintenance préventive", "pmList": "Plans de MP", "pmCreate": "Nouveau plan" },
+        "inventory": { "inventory": "Inventaire", "items": "Articles", "warehouses": "Entrepôts", "stockMoves": "Mouvements de stock" },
+        "purchasing": { "purchasing": "Achats", "suppliers": "Fournisseurs", "purchaseOrders": "Bons de commande", "receipts": "Réceptions" },
+        "people": "Personnel",
+        "members": { "members": "Membres", "memberList": "Liste des membres", "memberCreate": "Ajouter un membre" },
+        "departments": { "departments": "Départements", "departmentList": "Liste des départements", "departmentCreate": "Ajouter un département" },
+        "rolesPermissions": "Rôles & Permissions",
+        "workspace": "Espace de travail",
+        "calendar": "Calendrier",
+        "fileManager": "Gestionnaire de fichiers",
+        "notifications": "Notifications",
+        "account": { "account": "Compte", "settings": "Paramètres" }
+    },
+    "common": {
+        "search": "Rechercher",
+        "filter": "Filtrer",
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "view": "Voir les détails",
+        "save": "Enregistrer",
+        "cancel": "Annuler",
+        "reset": "Réinitialiser",
+        "apply": "Appliquer",
+        "add": "Ajouter",
+        "close": "Fermer",
+        "confirm": "Confirmer",
+        "create": "Créer",
+        "download": "Télécharger",
+        "addNew": "Ajouter",
+        "boardView": "Vue tableau",
+        "query": "Requête",
+        "all": "Tous",
+        "yes": "Oui",
+        "no": "Non",
+        "loading": "Chargement...",
+        "noData": "Aucune donnée trouvée",
+        "scan": "Scanner",
+        "name": "Nom",
+        "code": "Code",
+        "status": "Statut",
+        "priority": "Priorité",
+        "date": "Date",
+        "email": "E-mail",
+        "phone": "Téléphone",
+        "location": "Emplacement",
+        "description": "Description",
+        "active": "Actif",
+        "inactive": "Inactif",
+        "selected": "sélectionné(s)",
+        "toast": {
+            "saved": "Modifications enregistrées.",
+            "deleted": "Supprimé avec succès.",
+            "created": "Créé avec succès.",
+            "updated": "Mis à jour avec succès."
+        },
+        "clearSelection": "Effacer la sélection",
+        "send": "Envoyer",
+        "sendMessage": "Envoyer un message",
+        "message": "Message",
+        "discard": "Annuler",
+        "print": "Imprimer",
+        "back": "Retour",
+        "reopen": "Rouvrir"
+    },
+    "wo": {
+        "pageTitle": "Bons de travaux",
+        "new": "Nouveau bon de travaux",
+        "myWos": "Mes BT",
+        "allWos": "Tous les BT",
+        "archived": "Archivé",
+        "overdue": "En retard",
+        "dueSoon": "Dans {{hours}}h",
+        "searchPlaceholder": "Rechercher par titre, code, équipement...",
+        "columns": {
+            "title": "Titre",
+            "code": "Code",
+            "status": "Statut",
+            "priority": "Priorité",
+            "asset": "Équipement",
+            "due": "Échéance",
+            "assigned": "Assigné"
+        },
+        "status": {
+            "open": "Ouvert",
+            "in_progress": "En cours",
+            "on_hold": "En attente",
+            "completed": "Terminé",
+            "cancelled": "Annulé",
+            "all": "Tous les statuts"
+        },
+        "priority": {
+            "low": "Faible",
+            "medium": "Moyen",
+            "high": "Élevé",
+            "critical": "Critique",
+            "all": "Toutes les priorités"
+        },
+        "filter": { "title": "Filtrer les bons de travaux", "status": "Statut", "priority": "Priorité" },
+        "delete": { "title": "Supprimer le bon de travaux", "confirm": "Êtes-vous sûr de vouloir supprimer ce bon de travaux ? Cette action est irréversible." },
+        "selected": {
+            "item": "bon de travaux",
+            "items": "bons de travaux",
+            "Item": "Bon de travaux",
+            "Items": "Bons de travaux",
+            "setStatus": "Définir le statut…",
+            "setPriority": "Définir la priorité…",
+            "deleteTitle": "Supprimer les bons de travaux",
+            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer {{count}} bon(s) de travaux ? Cette action est irréversible."
+        },
+        "toast": {
+            "deleted": "Bon de travaux supprimé.",
+            "deleteFailed": "Échec de la suppression.",
+            "bulkDeleted": "{{count}} bon(s) de travaux supprimé(s).",
+            "bulkDeleteFailed": "Échec de la suppression de certains bons de travaux.",
+            "bulkStatusUpdated": "Statut mis à jour.",
+            "bulkStatusFailed": "Échec de la mise à jour du statut.",
+            "bulkPriorityUpdated": "Priorité mise à jour.",
+            "bulkPriorityFailed": "Échec de la mise à jour de la priorité.",
+            "saved": "Modifications enregistrées.",
+            "archived": "Bon de travaux archivé.",
+            "unarchived": "Bon de travaux désarchivé.",
+            "archiveFailed": "Échec de la mise à jour de l'archivage.",
+            "updateFailed": "Échec de la mise à jour.",
+            "partRecorded": "Pièce enregistrée.",
+            "partFailed": "Échec de l'enregistrement de la pièce.",
+            "commentFailed": "Échec de l'ajout du commentaire.",
+            "uploadFailed": "Échec de l'envoi du fichier.",
+            "attachDeleteFailed": "Échec de la suppression.",
+            "worklogDurationRequired": "La durée (minutes) est requise.",
+            "worklogFailed": "Échec de l'enregistrement du journal de travail."
+        }
+    },
+    "assets": {
+        "pageTitle": "Équipements",
+        "new": "Ajouter un équipement",
+        "scan": "Scanner QR",
+        "searchPlaceholder": "Rechercher par nom, code, type...",
+        "columns": {
+            "asset": "Équipement",
+            "type": "Type",
+            "status": "Statut",
+            "manufacturerModel": "Fabricant / Modèle",
+            "location": "Emplacement"
+        },
+        "status": {
+            "active": "Actif",
+            "inactive": "Inactif",
+            "under_maintenance": "En maintenance",
+            "decommissioned": "Désaffecté",
+            "all": "Tous les statuts"
+        },
+        "selected": {
+            "item": "équipement",
+            "items": "équipements",
+            "Item": "Équipement",
+            "Items": "Équipements",
+            "deleteTitle": "Supprimer les équipements",
+            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer {{count}} équipement(s) ?"
+        },
+        "delete": { "title": "Supprimer l'équipement", "confirm": "Supprimer {{name}} ? Cette action est irréversible." },
+        "toast": {
+            "deleted": "Équipement supprimé.",
+            "deleteFailed": "Échec de la suppression.",
+            "bulkDeleted": "{{count}} équipement(s) supprimé(s).",
+            "bulkDeleteFailed": "Échec de la suppression de certains équipements.",
+            "scanFailed": "Recherche échouée.",
+            "saved": "Modifications enregistrées."
+        }
+    },
+    "inventory": {
+        "pageTitle": "Articles",
+        "new": "Ajouter un article",
+        "scan": "Scanner",
+        "searchPlaceholder": "Rechercher par nom, code, code-barres…",
+        "columns": { "item": "Article", "unit": "Unité", "unitCost": "Coût unitaire", "stock": "Stock" },
+        "delete": { "title": "Supprimer l'article", "confirm": "Supprimer {{name}} ? Cette action est irréversible." },
+        "toast": {
+            "deleted": "Article supprimé.",
+            "deleteFailed": "Échec de la suppression.",
+            "updated": "Article mis à jour.",
+            "created": "Article créé.",
+            "scanFailed": "Recherche échouée."
+        }
+    },
+    "pm": {
+        "pageTitle": "Plans de maintenance préventive",
+        "new": "Nouveau plan de MP",
+        "searchPlaceholder": "Rechercher des plans...",
+        "columns": {
+            "name": "Nom",
+            "status": "Statut",
+            "priority": "Priorité",
+            "asset": "Équipement",
+            "frequency": "Fréquence",
+            "nextRun": "Prochaine exécution",
+            "assignedTo": "Assigné à"
+        },
+        "status": { "active": "Actif", "inactive": "Inactif", "draft": "Brouillon", "all": "Tous les statuts" },
+        "priority": { "low": "Faible", "medium": "Moyen", "high": "Élevé", "critical": "Critique", "all": "Toutes les priorités" },
+        "frequency": "Tous les {{value}} {{unit}}",
+        "selected": {
+            "item": "plan de MP",
+            "items": "plans de MP",
+            "Item": "Plan de MP",
+            "Items": "Plans de MP",
+            "deleteTitle": "Supprimer les plans de MP",
+            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer {{count}} plan(s) de MP ?"
+        },
+        "delete": { "title": "Supprimer le plan de MP", "confirm": "Êtes-vous sûr de vouloir supprimer ce plan ? Cette action est irréversible." },
+        "toast": {
+            "deleted": "Plan de MP supprimé.",
+            "deleteFailed": "Échec de la suppression.",
+            "bulkDeleted": "{{count}} plan(s) de MP supprimé(s).",
+            "bulkDeleteFailed": "Échec de la suppression de certains plans.",
+            "saved": "Plan de MP enregistré."
+        }
+    },
+    "purchasing": {
+        "ordersTitle": "Bons de commande",
+        "suppliersTitle": "Fournisseurs",
+        "receiptsTitle": "Réceptions",
+        "new": "Ajouter",
+        "searchOrders": "Rechercher",
+        "searchSuppliers": "Rechercher par nom, e-mail ou contact...",
+        "searchReceipts": "Rechercher par code BC ou fournisseur...",
+        "filterLabels": {
+            "orderDate": "Date de commande",
+            "orderStatus": "Statut commande",
+            "paymentStatus": "Statut paiement",
+            "receivedDate": "Date de réception",
+            "totalValue": "Valeur totale",
+            "hasEmail": "A un e-mail",
+            "hasPhone": "A un téléphone"
+        },
+        "columns": {
+            "order": "Commande",
+            "date": "Date",
+            "supplier": "Fournisseur",
+            "status": "Statut",
+            "expectedDelivery": "Livraison prévue",
+            "total": "Total",
+            "payment": "Paiement",
+            "email": "E-mail",
+            "phone": "Téléphone",
+            "taxNumber": "N° fiscal",
+            "receipt": "Réception",
+            "po": "BC",
+            "itemsReceived": "Articles reçus",
+            "totalValue": "Valeur totale",
+            "receivedAt": "Reçu le"
+        },
+        "orderStatuses": {
+            "all": "Tous",
+            "draft": "Brouillon",
+            "ordered": "Commandé",
+            "partially_received": "Partiel",
+            "received": "Reçu",
+            "cancelled": "Annulé"
+        },
+        "paymentStatuses": {
+            "all": "Tous",
+            "none": "Sans facture",
+            "pending": "En attente",
+            "paid": "Payé",
+            "disputed": "Contesté"
+        },
+        "yesNo": { "all": "Tous", "yes": "Oui", "no": "Non" },
+        "supplier": {
+            "editTitle": "Modifier le fournisseur",
+            "createTitle": "Nouveau fournisseur",
+            "nameLabel": "Nom",
+            "namePlaceholder": "Nom de la société fournisseur",
+            "emailPlaceholder": "contact@fournisseur.com",
+            "phonePlaceholder": "+33 1 23 45 67 89",
+            "contactPerson": "Personne de contact",
+            "contactPlaceholder": "Jean Dupont",
+            "addressLabel": "Adresse",
+            "addressPlaceholder": "123 rue Principale, Ville, Pays",
+            "taxLabel": "Numéro fiscal / TVA",
+            "taxPlaceholder": "Optionnel",
+            "updated": "Fournisseur mis à jour.",
+            "created": "Fournisseur créé.",
+            "saveFailed": "Échec de l'enregistrement.",
+            "deleted": "Fournisseur supprimé.",
+            "deleteTitle": "Supprimer le fournisseur",
+            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer {{name}} ? Cette action est irréversible."
+        },
+        "receipt": { "viewPO": "Voir le BC" },
+        "order": {
+            "deleted": "Commande supprimée.",
+            "deleteOnlyDraft": "Seules les commandes en brouillon peuvent être supprimées.",
+            "deleteTitle": "Supprimer le bon de commande",
+            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer la commande {{code}} ? Cette action est irréversible.",
+            "updated": "Commande mise à jour.",
+            "created": "Bon de commande créé !",
+            "discarded": "Commande annulée !",
+            "selectSupplier": "Veuillez sélectionner un fournisseur.",
+            "addItem": "Ajoutez au moins un article.",
+            "discardTitle": "Annuler les modifications",
+            "discardConfirm": "Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible."
+        },
+        "receive": {
+            "title": "Réceptionner les articles",
+            "warehouse": "Entrepôt de destination",
+            "selectWarehouse": "Sélectionner un entrepôt...",
+            "selectWarehouseRequired": "Veuillez sélectionner un entrepôt.",
+            "enterQtyRequired": "Saisissez au moins une quantité.",
+            "pending": "En attente : {{qty}} {{unit}}",
+            "confirmReceipt": "Confirmer la réception",
+            "received": "Articles reçus et stock mis à jour.",
+            "receiveFailed": "Échec de la réception."
+        },
+        "cancel": {
+            "title": "Annuler la commande",
+            "confirm": "Êtes-vous sûr de vouloir annuler la commande #{{code}} ? Cette action est irréversible.",
+            "yesCancel": "Oui, annuler",
+            "success": "Commande annulée.",
+            "failed": "Échec de l'annulation."
+        },
+        "reopen": {
+            "title": "Rouvrir la commande",
+            "subtitle": "La commande sera remise en brouillon.",
+            "description": "La commande #{{code}} sera rouverte en brouillon pour modification et resoumission.",
+            "yesReopen": "Oui, rouvrir",
+            "success": "Commande rouverte en brouillon.",
+            "failed": "Échec de la réouverture."
+        },
+        "email": {
+            "send": "Envoyer au fournisseur",
+            "success": "Bon de commande envoyé au fournisseur.",
+            "failed": "Échec de l'envoi de l'e-mail."
+        },
+        "details": {
+            "invoiceRecorded": "Facture enregistrée.",
+            "markedAsPaid": "Commande marquée comme payée.",
+            "downloadFailed": "Échec du téléchargement du justificatif.",
+            "disputed": "Facture marquée comme contestée."
+        }
+    },
+    "members": {
+        "pageTitle": "Membres",
+        "new": "Ajouter",
+        "searchPlaceholder": "Rechercher par nom, e-mail...",
+        "columns": { "name": "Nom", "email": "E-mail", "phone": "Téléphone", "role": "Rôle", "status": "Statut" },
+        "status": { "active": "Actif", "inactive": "Inactif", "blocked": "Inactif" },
+        "modal": {
+            "close": "Fermer",
+            "edit": "Modifier",
+            "email": "E-mail",
+            "phone": "Téléphone",
+            "employeeCode": "Code employé",
+            "jobTitle": "Poste",
+            "roles": "Rôles",
+            "locale": "Langue",
+            "lastLogin": "Dernière connexion",
+            "superadmin": "Super administrateur"
+        },
+        "selected": {
+            "item": "membre",
+            "items": "membres",
+            "Item": "Membre",
+            "Items": "Membres",
+            "deleteTitle": "Supprimer les membres",
+            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ces membres ? Cette action est irréversible.",
+            "sendMessage": "Envoyer un message",
+            "sendMessageTo": "Envoyer un message aux membres suivants"
+        },
+        "delete": { "title": "Supprimer le membre", "confirm": "Supprimer {{name}} ? Cette action est irréversible." },
+        "toast": {
+            "deleted": "Membre supprimé.",
+            "deleteFailed": "Échec de la suppression.",
+            "messageSent": "Message envoyé !"
+        }
+    },
+    "departments": {
+        "pageTitle": "Départements",
+        "searchPlaceholder": "Rechercher des départements...",
+        "columns": { "name": "Nom", "code": "Code", "parent": "Parent", "members": "Membres", "subDepts": "Sous-depts", "description": "Description" },
+        "selected": {
+            "item": "département",
+            "items": "départements",
+            "Item": "Département",
+            "Items": "Départements",
+            "deleteTitle": "Supprimer les départements",
+            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer {{count}} département(s) ? Les membres seront désaffectés."
+        },
+        "toast": {
+            "deleted": "Département supprimé.",
+            "deleteFailed": "Échec de la suppression.",
+            "bulkDeleted": "{{count}} département(s) supprimé(s).",
+            "bulkDeleteFailed": "Échec de la suppression de certains départements.",
+            "saved": "Modifications enregistrées."
+        }
+    },
+    "requests": {
+        "pageTitle": "Demandes de maintenance",
+        "managerSubtitle": "Examiner et convertir les demandes en bons de travaux",
+        "userSubtitle": "Soumettre et suivre vos demandes de maintenance",
+        "new": "Nouvelle demande",
+        "submit": "Soumettre une demande",
+        "searchPlaceholder": "Rechercher par titre ou code…",
+        "pendingReview": "En attente d'examen",
+        "convertedToWO": "Converti en BT",
+        "noRequests": "Aucune demande trouvée",
+        "noRequestsHint": "Soumettez une demande et elle apparaîtra ici",
+        "tabs": { "all": "Tout", "pending": "En attente", "converted": "Converti", "rejected": "Rejeté" },
+        "columns": {
+            "code": "Code",
+            "title": "Titre",
+            "assetLocation": "Équipement / Emplacement",
+            "priority": "Priorité",
+            "status": "Statut",
+            "requestedBy": "Demandé par",
+            "date": "Date"
+        },
+        "status": { "pending": "En attente", "converted": "Converti", "rejected": "Rejeté" },
+        "priority": { "low": "Faible", "medium": "Moyen", "high": "Élevé", "critical": "Critique" },
+        "create": {
+            "titleRequired": "Le titre est requis.",
+            "submitted": "Demande soumise avec succès."
+        },
+        "details": {
+            "back": "Retour aux demandes",
+            "reject": "Rejeter",
+            "convertToWO": "Convertir en bon de travaux",
+            "asset": "Équipement",
+            "location": "Emplacement",
+            "submittedBy": "Soumis par",
+            "date": "Date",
+            "prioritySuffix": "priorité",
+            "workOrderCreated": "Bon de travaux créé",
+            "viewWorkOrder": "Voir le bon de travaux",
+            "rejectedBy": "Rejeté par",
+            "noReason": "Aucune raison fournie.",
+            "rejectTitle": "Rejeter la demande",
+            "rejectDescription": "Expliquez optionnellement pourquoi cette demande est rejetée.",
+            "rejectPlaceholder": "Raison du rejet (optionnel)…",
+            "confirmReject": "Confirmer le rejet",
+            "woCreated": "Bon de travaux {{code}} créé avec succès.",
+            "rejected": "Demande rejetée."
+        }
+    }
+}

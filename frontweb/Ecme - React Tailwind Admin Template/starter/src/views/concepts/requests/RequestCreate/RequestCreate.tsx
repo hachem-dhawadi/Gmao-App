@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -22,6 +23,7 @@ const PRIORITIES = [
 
 const RequestCreate = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [submitting, setSubmitting] = useState(false)
 
     const [title, setTitle]       = useState('')
@@ -44,7 +46,7 @@ const RequestCreate = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!title.trim()) {
-            toast.push(<Notification type="warning">Title is required.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="warning">{t('requests.create.titleRequired')}</Notification>, { placement: 'top-center' })
             return
         }
         try {
@@ -58,7 +60,7 @@ const RequestCreate = () => {
             })
             await globalMutate((key) => Array.isArray(key) && key[0] === '/requests')
             toast.push(
-                <Notification type="success">Request submitted successfully.</Notification>,
+                <Notification type="success">{t('requests.create.submitted')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/requests/request-list')

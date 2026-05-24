@@ -9,35 +9,34 @@ import { apiDeleteAsset } from '@/services/AssetsService'
 import { TbChecks } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
+import { useTranslation } from 'react-i18next'
 
 const AssetListSelected = () => {
     const { selectedAsset, setSelectAllAsset, mutate } = useAssetList()
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const { t } = useTranslation()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canDelete = useAuthority(userAuthority, ['assets.delete', 'admin'])
 
     if (selectedAsset.length === 0) return null
 
+    const count = selectedAsset.length
+
     const handleConfirmDelete = async () => {
         setDeleting(true)
         try {
             await Promise.all(selectedAsset.map((a) => apiDeleteAsset(a.id)))
             toast.push(
-                <Notification type="success">
-                    {selectedAsset.length}{' '}
-                    {selectedAsset.length === 1 ? 'asset' : 'assets'} deleted.
-                </Notification>,
+                <Notification type="success">{t('assets.toast.bulkDeleted', { count })}</Notification>,
                 { placement: 'top-center' },
             )
             setSelectAllAsset([])
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">
-                    Failed to delete some assets.
-                </Notification>,
+                <Notification type="danger">{t('assets.toast.bulkDeleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -61,12 +60,10 @@ const AssetListSelected = () => {
                             </span>
                             <span className="font-semibold flex items-center gap-1">
                                 <span className="heading-text">
-                                    {selectedAsset.length}{' '}
-                                    {selectedAsset.length === 1
-                                        ? 'Asset'
-                                        : 'Assets'}
+                                    {count}{' '}
+                                    {count === 1 ? t('assets.selected.Item') : t('assets.selected.Items')}
                                 </span>
-                                <span>selected</span>
+                                <span>{t('common.selected')}</span>
                             </span>
                         </span>
 
@@ -79,14 +76,14 @@ const AssetListSelected = () => {
                                     }
                                     onClick={() => setDeleteOpen(true)}
                                 >
-                                    Delete
+                                    {t('common.delete')}
                                 </Button>
                             )}
                             <Button
                                 size="sm"
                                 onClick={() => setSelectAllAsset([])}
                             >
-                                Clear selection
+                                {t('common.clearSelection')}
                             </Button>
                         </div>
                     </div>
@@ -96,18 +93,14 @@ const AssetListSelected = () => {
             <ConfirmDialog
                 isOpen={deleteOpen}
                 type="danger"
-                title="Delete Assets"
+                title={t('assets.selected.deleteTitle')}
                 onClose={() => setDeleteOpen(false)}
                 onRequestClose={() => setDeleteOpen(false)}
                 onCancel={() => setDeleteOpen(false)}
                 onConfirm={handleConfirmDelete}
                 confirmButtonProps={{ loading: deleting }}
             >
-                <p>
-                    Are you sure you want to delete{' '}
-                    <strong>{selectedAsset.length}</strong>{' '}
-                    {selectedAsset.length === 1 ? 'asset' : 'assets'}?
-                </p>
+                <p>{t('assets.selected.deleteConfirm', { count })}</p>
             </ConfirmDialog>
         </>
     )

@@ -1,0 +1,451 @@
+{
+    "nav": {
+        "dashboard": { "dashboard": "لوحة التحكم" },
+        "requests": "الطلبات",
+        "reports": "التقارير",
+        "gmao": "GMAO",
+        "assets": { "assets": "الأصول", "assetList": "قائمة الأصول", "assetCreate": "إضافة أصل" },
+        "workOrders": { "workOrders": "أوامر العمل", "workOrderList": "قائمة الأوامر", "workOrderBoard": "اللوحة", "workOrderCreate": "أمر عمل جديد" },
+        "pm": { "pm": "الصيانة الوقائية", "pmList": "خطط الصيانة", "pmCreate": "خطة جديدة" },
+        "inventory": { "inventory": "المخزون", "items": "المواد", "warehouses": "المستودعات", "stockMoves": "حركات المخزون" },
+        "purchasing": { "purchasing": "المشتريات", "suppliers": "الموردون", "purchaseOrders": "أوامر الشراء", "receipts": "الاستلامات" },
+        "people": "الموارد البشرية",
+        "members": { "members": "الأعضاء", "memberList": "قائمة الأعضاء", "memberCreate": "إضافة عضو" },
+        "departments": { "departments": "الأقسام", "departmentList": "قائمة الأقسام", "departmentCreate": "إضافة قسم" },
+        "rolesPermissions": "الأدوار والصلاحيات",
+        "workspace": "مساحة العمل",
+        "calendar": "التقويم",
+        "fileManager": "مدير الملفات",
+        "notifications": "الإشعارات",
+        "account": { "account": "الحساب", "settings": "الإعدادات" }
+    },
+    "common": {
+        "search": "بحث",
+        "filter": "تصفية",
+        "edit": "تعديل",
+        "delete": "حذف",
+        "view": "عرض التفاصيل",
+        "save": "حفظ",
+        "cancel": "إلغاء",
+        "reset": "إعادة تعيين",
+        "apply": "تطبيق",
+        "add": "إضافة",
+        "close": "إغلاق",
+        "confirm": "تأكيد",
+        "create": "إنشاء",
+        "download": "تنزيل",
+        "addNew": "إضافة جديد",
+        "boardView": "عرض اللوحة",
+        "query": "استعلام",
+        "all": "الكل",
+        "yes": "نعم",
+        "no": "لا",
+        "loading": "جارٍ التحميل...",
+        "noData": "لا توجد بيانات",
+        "scan": "مسح",
+        "name": "الاسم",
+        "code": "الرمز",
+        "status": "الحالة",
+        "priority": "الأولوية",
+        "date": "التاريخ",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "location": "الموقع",
+        "description": "الوصف",
+        "active": "نشط",
+        "inactive": "غير نشط",
+        "selected": "محدد",
+        "toast": {
+            "saved": "تم حفظ التغييرات.",
+            "deleted": "تم الحذف بنجاح.",
+            "created": "تم الإنشاء بنجاح.",
+            "updated": "تم التحديث بنجاح."
+        },
+        "clearSelection": "إلغاء التحديد",
+        "send": "إرسال",
+        "sendMessage": "إرسال رسالة",
+        "message": "رسالة",
+        "discard": "تجاهل",
+        "print": "طباعة",
+        "back": "رجوع",
+        "reopen": "إعادة فتح"
+    },
+    "wo": {
+        "pageTitle": "أوامر العمل",
+        "new": "أمر عمل جديد",
+        "myWos": "أوامري",
+        "allWos": "كل الأوامر",
+        "archived": "مؤرشف",
+        "overdue": "متأخر",
+        "dueSoon": "خلال {{hours}} ساعة",
+        "searchPlaceholder": "البحث بالعنوان أو الرمز أو الأصل...",
+        "columns": {
+            "title": "العنوان",
+            "code": "الرمز",
+            "status": "الحالة",
+            "priority": "الأولوية",
+            "asset": "الأصل",
+            "due": "الموعد",
+            "assigned": "المعين"
+        },
+        "status": {
+            "open": "مفتوح",
+            "in_progress": "قيد التنفيذ",
+            "on_hold": "معلق",
+            "completed": "مكتمل",
+            "cancelled": "ملغي",
+            "all": "كل الحالات"
+        },
+        "priority": {
+            "low": "منخفض",
+            "medium": "متوسط",
+            "high": "مرتفع",
+            "critical": "حرج",
+            "all": "كل الأولويات"
+        },
+        "filter": { "title": "تصفية أوامر العمل", "status": "الحالة", "priority": "الأولوية" },
+        "delete": { "title": "حذف أمر العمل", "confirm": "هل أنت متأكد من حذف هذا الأمر؟ لا يمكن التراجع عن هذا الإجراء." },
+        "selected": {
+            "item": "أمر عمل",
+            "items": "أوامر عمل",
+            "Item": "أمر العمل",
+            "Items": "أوامر العمل",
+            "setStatus": "تعيين الحالة…",
+            "setPriority": "تعيين الأولوية…",
+            "deleteTitle": "حذف أوامر العمل",
+            "deleteConfirm": "هل أنت متأكد من حذف {{count}} أمر/أوامر عمل؟ لا يمكن التراجع عن هذا الإجراء."
+        },
+        "toast": {
+            "deleted": "تم حذف أمر العمل.",
+            "deleteFailed": "فشل حذف أمر العمل.",
+            "bulkDeleted": "تم حذف {{count}} أمر/أوامر عمل.",
+            "bulkDeleteFailed": "فشل حذف بعض أوامر العمل.",
+            "bulkStatusUpdated": "تم تحديث الحالة.",
+            "bulkStatusFailed": "فشل تحديث الحالة.",
+            "bulkPriorityUpdated": "تم تحديث الأولوية.",
+            "bulkPriorityFailed": "فشل تحديث الأولوية.",
+            "saved": "تم حفظ التغييرات.",
+            "archived": "تم أرشفة أمر العمل.",
+            "unarchived": "تم إلغاء أرشفة أمر العمل.",
+            "archiveFailed": "فشل تحديث حالة الأرشفة.",
+            "updateFailed": "فشل التحديث.",
+            "partRecorded": "تم تسجيل القطعة.",
+            "partFailed": "فشل تسجيل القطعة.",
+            "commentFailed": "فشل إضافة التعليق.",
+            "uploadFailed": "فشل رفع الملف.",
+            "attachDeleteFailed": "فشل الحذف.",
+            "worklogDurationRequired": "المدة (بالدقائق) مطلوبة.",
+            "worklogFailed": "فشل حفظ سجل العمل."
+        }
+    },
+    "assets": {
+        "pageTitle": "الأصول",
+        "new": "إضافة أصل",
+        "scan": "مسح QR",
+        "searchPlaceholder": "البحث بالاسم أو الرمز أو النوع...",
+        "columns": {
+            "asset": "الأصل",
+            "type": "النوع",
+            "status": "الحالة",
+            "manufacturerModel": "الشركة / الطراز",
+            "location": "الموقع"
+        },
+        "status": {
+            "active": "نشط",
+            "inactive": "غير نشط",
+            "under_maintenance": "تحت الصيانة",
+            "decommissioned": "خارج الخدمة",
+            "all": "كل الحالات"
+        },
+        "selected": {
+            "item": "أصل",
+            "items": "أصول",
+            "Item": "الأصل",
+            "Items": "الأصول",
+            "deleteTitle": "حذف الأصول",
+            "deleteConfirm": "هل أنت متأكد من حذف {{count}} أصل/أصول؟"
+        },
+        "delete": { "title": "حذف الأصل", "confirm": "حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء." },
+        "toast": {
+            "deleted": "تم حذف الأصل.",
+            "deleteFailed": "فشل حذف الأصل.",
+            "bulkDeleted": "تم حذف {{count}} أصل/أصول.",
+            "bulkDeleteFailed": "فشل حذف بعض الأصول.",
+            "scanFailed": "فشل البحث.",
+            "saved": "تم حفظ التغييرات."
+        }
+    },
+    "inventory": {
+        "pageTitle": "المواد",
+        "new": "إضافة مادة",
+        "scan": "مسح",
+        "searchPlaceholder": "البحث بالاسم أو الرمز أو الباركود…",
+        "columns": { "item": "المادة", "unit": "الوحدة", "unitCost": "تكلفة الوحدة", "stock": "المخزون" },
+        "delete": { "title": "حذف المادة", "confirm": "حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء." },
+        "toast": {
+            "deleted": "تم حذف المادة.",
+            "deleteFailed": "فشل حذف المادة.",
+            "updated": "تم تحديث المادة.",
+            "created": "تم إنشاء المادة.",
+            "scanFailed": "فشل البحث."
+        }
+    },
+    "pm": {
+        "pageTitle": "خطط الصيانة الوقائية",
+        "new": "خطة صيانة جديدة",
+        "searchPlaceholder": "البحث في خطط الصيانة...",
+        "columns": {
+            "name": "الاسم",
+            "status": "الحالة",
+            "priority": "الأولوية",
+            "asset": "الأصل",
+            "frequency": "التكرار",
+            "nextRun": "التشغيل التالي",
+            "assignedTo": "معين إلى"
+        },
+        "status": { "active": "نشط", "inactive": "غير نشط", "draft": "مسودة", "all": "كل الحالات" },
+        "priority": { "low": "منخفض", "medium": "متوسط", "high": "مرتفع", "critical": "حرج", "all": "كل الأولويات" },
+        "frequency": "كل {{value}} {{unit}}",
+        "selected": {
+            "item": "خطة صيانة",
+            "items": "خطط صيانة",
+            "Item": "خطة الصيانة",
+            "Items": "خطط الصيانة",
+            "deleteTitle": "حذف خطط الصيانة",
+            "deleteConfirm": "هل أنت متأكد من حذف {{count}} خطة/خطط صيانة؟"
+        },
+        "delete": { "title": "حذف خطة الصيانة", "confirm": "هل أنت متأكد من حذف هذه الخطة؟ لا يمكن التراجع عن هذا الإجراء." },
+        "toast": {
+            "deleted": "تم حذف خطة الصيانة.",
+            "deleteFailed": "فشل حذف الخطة.",
+            "bulkDeleted": "تم حذف {{count}} خطة/خطط صيانة.",
+            "bulkDeleteFailed": "فشل حذف بعض الخطط.",
+            "saved": "تم حفظ خطة الصيانة."
+        }
+    },
+    "purchasing": {
+        "ordersTitle": "أوامر الشراء",
+        "suppliersTitle": "الموردون",
+        "receiptsTitle": "الاستلامات",
+        "new": "إضافة",
+        "searchOrders": "بحث",
+        "searchSuppliers": "البحث بالاسم أو البريد أو جهة الاتصال...",
+        "searchReceipts": "البحث برمز الأمر أو المورد...",
+        "filterLabels": {
+            "orderDate": "تاريخ الطلب",
+            "orderStatus": "حالة الطلب",
+            "paymentStatus": "حالة الدفع",
+            "receivedDate": "تاريخ الاستلام",
+            "totalValue": "القيمة الإجمالية",
+            "hasEmail": "لديه بريد إلكتروني",
+            "hasPhone": "لديه هاتف"
+        },
+        "columns": {
+            "order": "الطلب",
+            "date": "التاريخ",
+            "supplier": "المورد",
+            "status": "الحالة",
+            "expectedDelivery": "التسليم المتوقع",
+            "total": "الإجمالي",
+            "payment": "الدفع",
+            "email": "البريد الإلكتروني",
+            "phone": "الهاتف",
+            "taxNumber": "الرقم الضريبي",
+            "receipt": "الاستلام",
+            "po": "أمر الشراء",
+            "itemsReceived": "المواد المستلمة",
+            "totalValue": "القيمة الإجمالية",
+            "receivedAt": "تاريخ الاستلام"
+        },
+        "orderStatuses": {
+            "all": "الكل",
+            "draft": "مسودة",
+            "ordered": "مطلوب",
+            "partially_received": "مستلم جزئياً",
+            "received": "مستلم",
+            "cancelled": "ملغي"
+        },
+        "paymentStatuses": {
+            "all": "الكل",
+            "none": "بدون فاتورة",
+            "pending": "قيد الانتظار",
+            "paid": "مدفوع",
+            "disputed": "متنازع عليه"
+        },
+        "yesNo": { "all": "الكل", "yes": "نعم", "no": "لا" },
+        "supplier": {
+            "editTitle": "تعديل المورد",
+            "createTitle": "مورد جديد",
+            "nameLabel": "الاسم",
+            "namePlaceholder": "اسم الشركة المورّدة",
+            "emailPlaceholder": "contact@supplier.com",
+            "phonePlaceholder": "+966 5X XXX XXXX",
+            "contactPerson": "جهة الاتصال",
+            "contactPlaceholder": "محمد أحمد",
+            "addressLabel": "العنوان",
+            "addressPlaceholder": "123 الشارع الرئيسي، المدينة، الدولة",
+            "taxLabel": "الرقم الضريبي / رقم التسجيل",
+            "taxPlaceholder": "اختياري",
+            "updated": "تم تحديث بيانات المورد.",
+            "created": "تم إنشاء المورد.",
+            "saveFailed": "فشل حفظ بيانات المورد.",
+            "deleted": "تم حذف المورد.",
+            "deleteTitle": "حذف المورد",
+            "deleteConfirm": "هل أنت متأكد من حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء."
+        },
+        "receipt": { "viewPO": "عرض أمر الشراء" },
+        "order": {
+            "deleted": "تم حذف الطلب.",
+            "deleteOnlyDraft": "يمكن حذف الطلبات في مرحلة المسودة فقط.",
+            "deleteTitle": "حذف أمر الشراء",
+            "deleteConfirm": "هل أنت متأكد من حذف الطلب {{code}}؟ لا يمكن التراجع عن هذا الإجراء.",
+            "updated": "تم تحديث الطلب.",
+            "created": "تم إنشاء أمر الشراء!",
+            "discarded": "تم إلغاء الطلب!",
+            "selectSupplier": "الرجاء اختيار مورد.",
+            "addItem": "أضف مادة واحدة على الأقل.",
+            "discardTitle": "إلغاء التغييرات",
+            "discardConfirm": "هل أنت متأكد من إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء."
+        },
+        "receive": {
+            "title": "استلام المواد",
+            "warehouse": "المستودع الوجهة",
+            "selectWarehouse": "اختر مستودعاً...",
+            "selectWarehouseRequired": "الرجاء اختيار مستودع.",
+            "enterQtyRequired": "أدخل كمية واحدة على الأقل.",
+            "pending": "قيد الانتظار: {{qty}} {{unit}}",
+            "confirmReceipt": "تأكيد الاستلام",
+            "received": "تم استلام المواد وتحديث المخزون.",
+            "receiveFailed": "فشل الاستلام."
+        },
+        "cancel": {
+            "title": "إلغاء الطلب",
+            "confirm": "هل أنت متأكد من إلغاء الطلب #{{code}}؟ لا يمكن التراجع عن هذا الإجراء.",
+            "yesCancel": "نعم، إلغاء",
+            "success": "تم إلغاء الطلب.",
+            "failed": "فشل إلغاء الطلب."
+        },
+        "reopen": {
+            "title": "إعادة فتح الطلب",
+            "subtitle": "سيُعاد الطلب إلى مرحلة المسودة.",
+            "description": "سيُعاد فتح الطلب #{{code}} كمسودة للتعديل وإعادة الإرسال.",
+            "yesReopen": "نعم، إعادة الفتح",
+            "success": "تم إعادة فتح الطلب كمسودة.",
+            "failed": "فشل إعادة فتح الطلب."
+        },
+        "email": {
+            "send": "إرسال بريد للمورد",
+            "success": "تم إرسال أمر الشراء للمورد.",
+            "failed": "فشل إرسال البريد الإلكتروني."
+        },
+        "details": {
+            "invoiceRecorded": "تم تسجيل الفاتورة.",
+            "markedAsPaid": "تم تحديد الطلب كمدفوع.",
+            "downloadFailed": "فشل تنزيل ملف الإثبات.",
+            "disputed": "تم وضع علامة خلاف على الفاتورة."
+        }
+    },
+    "members": {
+        "pageTitle": "الأعضاء",
+        "new": "إضافة",
+        "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+        "columns": { "name": "الاسم", "email": "البريد الإلكتروني", "phone": "الهاتف", "role": "الدور", "status": "الحالة" },
+        "status": { "active": "نشط", "inactive": "غير نشط", "blocked": "غير نشط" },
+        "modal": {
+            "close": "إغلاق",
+            "edit": "تعديل",
+            "email": "البريد الإلكتروني",
+            "phone": "الهاتف",
+            "employeeCode": "رمز الموظف",
+            "jobTitle": "المسمى الوظيفي",
+            "roles": "الأدوار",
+            "locale": "اللغة",
+            "lastLogin": "آخر تسجيل دخول",
+            "superadmin": "مدير عام"
+        },
+        "selected": {
+            "item": "عضو",
+            "items": "أعضاء",
+            "Item": "العضو",
+            "Items": "الأعضاء",
+            "deleteTitle": "حذف الأعضاء",
+            "deleteConfirm": "هل أنت متأكد من حذف هؤلاء الأعضاء؟ لا يمكن التراجع عن هذا الإجراء.",
+            "sendMessage": "إرسال رسالة",
+            "sendMessageTo": "إرسال رسالة إلى الأعضاء التاليين"
+        },
+        "delete": { "title": "حذف العضو", "confirm": "حذف {{name}}؟ لا يمكن التراجع عن هذا الإجراء." },
+        "toast": {
+            "deleted": "تم حذف العضو.",
+            "deleteFailed": "فشل حذف العضو.",
+            "messageSent": "تم إرسال الرسالة!"
+        }
+    },
+    "departments": {
+        "pageTitle": "الأقسام",
+        "searchPlaceholder": "البحث في الأقسام...",
+        "columns": { "name": "الاسم", "code": "الرمز", "parent": "القسم الرئيسي", "members": "الأعضاء", "subDepts": "الأقسام الفرعية", "description": "الوصف" },
+        "selected": {
+            "item": "قسم",
+            "items": "أقسام",
+            "Item": "القسم",
+            "Items": "الأقسام",
+            "deleteTitle": "حذف الأقسام",
+            "deleteConfirm": "هل أنت متأكد من حذف {{count}} قسم/أقسام؟ سيتم إلغاء تعيين الأعضاء."
+        },
+        "toast": {
+            "deleted": "تم حذف القسم.",
+            "deleteFailed": "فشل حذف القسم.",
+            "bulkDeleted": "تم حذف {{count}} قسم/أقسام.",
+            "bulkDeleteFailed": "فشل حذف بعض الأقسام.",
+            "saved": "تم حفظ التغييرات."
+        }
+    },
+    "requests": {
+        "pageTitle": "طلبات الصيانة",
+        "managerSubtitle": "مراجعة طلبات الموظفين وتحويلها إلى أوامر عمل",
+        "userSubtitle": "تقديم ومتابعة طلبات الصيانة الخاصة بك",
+        "new": "طلب جديد",
+        "submit": "تقديم طلب",
+        "searchPlaceholder": "البحث بالعنوان أو الرمز…",
+        "pendingReview": "بانتظار المراجعة",
+        "convertedToWO": "تم التحويل لأمر عمل",
+        "noRequests": "لا توجد طلبات",
+        "noRequestsHint": "قدّم طلباً وسيظهر هنا",
+        "tabs": { "all": "الكل", "pending": "قيد الانتظار", "converted": "محوّل", "rejected": "مرفوض" },
+        "columns": {
+            "code": "الرمز",
+            "title": "العنوان",
+            "assetLocation": "الأصل / الموقع",
+            "priority": "الأولوية",
+            "status": "الحالة",
+            "requestedBy": "مقدّم من",
+            "date": "التاريخ"
+        },
+        "status": { "pending": "قيد الانتظار", "converted": "محوّل", "rejected": "مرفوض" },
+        "priority": { "low": "منخفض", "medium": "متوسط", "high": "مرتفع", "critical": "حرج" },
+        "create": {
+            "titleRequired": "العنوان مطلوب.",
+            "submitted": "تم تقديم الطلب بنجاح."
+        },
+        "details": {
+            "back": "العودة إلى الطلبات",
+            "reject": "رفض",
+            "convertToWO": "تحويل إلى أمر عمل",
+            "asset": "الأصل",
+            "location": "الموقع",
+            "submittedBy": "مقدّم من",
+            "date": "التاريخ",
+            "prioritySuffix": "أولوية",
+            "workOrderCreated": "تم إنشاء أمر العمل",
+            "viewWorkOrder": "عرض أمر العمل",
+            "rejectedBy": "رُفض بواسطة",
+            "noReason": "لم يتم تقديم سبب.",
+            "rejectTitle": "رفض الطلب",
+            "rejectDescription": "يمكنك اختيارياً توضيح سبب رفض هذا الطلب.",
+            "rejectPlaceholder": "سبب الرفض (اختياري)…",
+            "confirmReject": "تأكيد الرفض",
+            "woCreated": "تم إنشاء أمر العمل {{code}} بنجاح.",
+            "rejected": "تم رفض الطلب."
+        }
+    }
+}

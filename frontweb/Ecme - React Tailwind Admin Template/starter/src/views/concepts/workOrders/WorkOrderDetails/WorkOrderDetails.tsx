@@ -31,6 +31,7 @@ import useAuthority from '@/utils/hooks/useAuthority'
 import { mutate as globalMutate } from 'swr'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
+import { useTranslation } from 'react-i18next'
 import {
     TbArrowNarrowLeft,
     TbPencil,
@@ -76,6 +77,7 @@ const statusTagClass: Record<WorkOrder['status'], string> = {
 
 const WorkOrderDetails = () => {
     const { id } = useParams()
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const currentMemberId = useSessionUser((state) => state.user.memberId)
@@ -129,7 +131,7 @@ const WorkOrderDetails = () => {
             )
         } catch {
             toast.push(
-                <Notification type="danger">Failed to update.</Notification>,
+                <Notification type="danger">{t('wo.toast.updateFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         }
@@ -178,15 +180,15 @@ const WorkOrderDetails = () => {
             if (wo.archived_at) {
                 await apiUnarchiveWorkOrder(id)
                 setWo({ ...wo, archived_at: null })
-                toast.push(<Notification type="success">Work order unarchived.</Notification>, { placement: 'top-center' })
+                toast.push(<Notification type="success">{t('wo.toast.unarchived')}</Notification>, { placement: 'top-center' })
             } else {
                 await apiArchiveWorkOrder(id)
                 setWo({ ...wo, archived_at: new Date().toISOString() })
-                toast.push(<Notification type="success">Work order archived.</Notification>, { placement: 'top-center' })
+                toast.push(<Notification type="success">{t('wo.toast.archived')}</Notification>, { placement: 'top-center' })
             }
             await globalMutate((key) => Array.isArray(key) && key[0] === '/work-orders')
         } catch {
-            toast.push(<Notification type="danger">Failed to update archive status.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="danger">{t('wo.toast.archiveFailed')}</Notification>, { placement: 'top-center' })
         } finally {
             setArchiving(false)
         }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -13,6 +14,7 @@ import type { ItemFormSchema } from '../ItemForm/ItemForm'
 
 const ItemCreate = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [discardOpen, setDiscardOpen] = useState(false)
 
@@ -43,7 +45,7 @@ const ItemCreate = () => {
             )
 
             toast.push(
-                <Notification type="success">Item created successfully.</Notification>,
+                <Notification type="success">{t('inventory.toast.created')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/inventory/items')

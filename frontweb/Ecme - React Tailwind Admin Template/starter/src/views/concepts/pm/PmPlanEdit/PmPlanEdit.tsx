@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -22,6 +23,7 @@ import type { PmPlan, PmPlanResponse } from '@/services/PmService'
 const PmPlanEdit = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
@@ -69,7 +71,7 @@ const PmPlanEdit = () => {
             )
 
             toast.push(
-                <Notification type="success">PM plan saved.</Notification>,
+                <Notification type="success">{t('pm.toast.saved')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/pm/pm-list')
@@ -99,7 +101,7 @@ const PmPlanEdit = () => {
             )
 
             toast.push(
-                <Notification type="success">PM plan deleted.</Notification>,
+                <Notification type="success">{t('pm.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/pm/pm-list')

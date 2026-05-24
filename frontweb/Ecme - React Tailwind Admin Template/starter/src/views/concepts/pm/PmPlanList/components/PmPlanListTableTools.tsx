@@ -2,25 +2,27 @@ import Select from '@/components/ui/Select'
 import cloneDeep from 'lodash/cloneDeep'
 import usePmPlanList from '../hooks/usePmPlanList'
 import PmPlanListSearch from './PmPlanListSearch'
+import { useTranslation } from 'react-i18next'
 import type { PmPlanFilter } from '../store/pmPlanListStore'
 
 type Option = { value: string; label: string }
 
-const statusOptions: Option[] = [
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'draft', label: 'Draft' },
-]
-
-const priorityOptions: Option[] = [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
-    { value: 'critical', label: 'Critical' },
-]
-
 const PmPlanListTableTools = () => {
     const { tableData, filterData, setTableData, setFilterData } = usePmPlanList()
+    const { t } = useTranslation()
+
+    const statusOptions: Option[] = [
+        { value: 'active',   label: t('pm.status.active') },
+        { value: 'inactive', label: t('pm.status.inactive') },
+        { value: 'draft',    label: t('pm.status.draft') },
+    ]
+
+    const priorityOptions: Option[] = [
+        { value: 'low',      label: t('pm.priority.low') },
+        { value: 'medium',   label: t('pm.priority.medium') },
+        { value: 'high',     label: t('pm.priority.high') },
+        { value: 'critical', label: t('pm.priority.critical') },
+    ]
 
     const handleInputChange = (val: string) => {
         const newTableData = cloneDeep(tableData)
@@ -54,7 +56,7 @@ const PmPlanListTableTools = () => {
             <div className="w-full md:w-40">
                 <Select
                     isClearable
-                    placeholder="Status"
+                    placeholder={t('common.status')}
                     options={statusOptions}
                     value={selectedStatus}
                     onChange={(opt) => handleStatusChange(opt as Option | null)}
@@ -63,7 +65,7 @@ const PmPlanListTableTools = () => {
             <div className="w-full md:w-40">
                 <Select
                     isClearable
-                    placeholder="Priority"
+                    placeholder={t('common.priority')}
                     options={priorityOptions}
                     value={selectedPriority}
                     onChange={(opt) => handlePriorityChange(opt as Option | null)}

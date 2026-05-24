@@ -5,9 +5,11 @@ import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { CSVLink } from 'react-csv'
 import useWorkOrderList from '../hooks/useWorkOrderList'
+import { useTranslation } from 'react-i18next'
 
 const WorkOrderListActionTools = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canCreate = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
 
@@ -31,7 +33,7 @@ const WorkOrderListActionTools = () => {
                     icon={<TbCloudDownload className="text-xl" />}
                     className="w-full"
                 >
-                    Download
+                    {t('common.download')}
                 </Button>
             </CSVLink>
             <Button
@@ -40,7 +42,7 @@ const WorkOrderListActionTools = () => {
                     navigate('/concepts/work-orders/work-order-board')
                 }
             >
-                Board view
+                {t('common.boardView')}
             </Button>
             {canCreate && (
                 <Button
@@ -50,7 +52,7 @@ const WorkOrderListActionTools = () => {
                         navigate('/concepts/work-orders/work-order-create')
                     }
                 >
-                    Add Work Order
+                    {t('wo.new')}
                 </Button>
             )}
         </div>

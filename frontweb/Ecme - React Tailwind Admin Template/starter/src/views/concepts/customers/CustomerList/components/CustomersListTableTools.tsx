@@ -2,17 +2,19 @@ import Select from '@/components/ui/Select'
 import useCustomerList from '../hooks/useCustomerList'
 import CustomerListSearch from './CustomerListSearch'
 import cloneDeep from 'lodash/cloneDeep'
+import { useTranslation } from 'react-i18next'
 import type { Filter } from '../types'
 
 type Option = { value: string; label: string }
 
-const statusOptions: Option[] = [
-    { value: 'active', label: 'Active' },
-    { value: 'blocked', label: 'Inactive' },
-]
-
 const CustomersListTableTools = () => {
     const { tableData, filterData, setTableData, setFilterData } = useCustomerList()
+    const { t } = useTranslation()
+
+    const statusOptions: Option[] = [
+        { value: 'active',  label: t('members.status.active') },
+        { value: 'blocked', label: t('members.status.blocked') },
+    ]
 
     const handleInputChange = (val: string) => {
         const newTableData = cloneDeep(tableData)
@@ -38,7 +40,7 @@ const CustomersListTableTools = () => {
             <div className="w-full md:w-40">
                 <Select
                     isClearable
-                    placeholder="Status"
+                    placeholder={t('common.status')}
                     options={statusOptions}
                     value={selectedStatus}
                     onChange={(opt) => handleStatusChange(opt as Option | null)}

@@ -16,6 +16,7 @@ import useAuthority from '@/utils/hooks/useAuthority'
 import { mutate as globalMutate } from 'swr'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
+import { useTranslation } from 'react-i18next'
 import {
     TbArrowNarrowLeft,
     TbArrowRight,
@@ -28,21 +29,22 @@ import {
 import type { MaintenanceRequest, RequestResponse } from '@/services/RequestsService'
 
 const STATUS_CONFIG = {
-    pending:   { label: 'Pending',   bg: 'bg-amber-100 dark:bg-amber-500/20',    text: 'text-amber-600 dark:text-amber-400',    dot: 'bg-amber-500' },
-    converted: { label: 'Converted', bg: 'bg-emerald-100 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
-    rejected:  { label: 'Rejected',  bg: 'bg-red-100 dark:bg-red-500/20',        text: 'text-red-600 dark:text-red-400',        dot: 'bg-red-400' },
+    pending:   { bg: 'bg-amber-100 dark:bg-amber-500/20',    text: 'text-amber-600 dark:text-amber-400',    dot: 'bg-amber-500' },
+    converted: { bg: 'bg-emerald-100 dark:bg-emerald-500/20', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
+    rejected:  { bg: 'bg-red-100 dark:bg-red-500/20',        text: 'text-red-600 dark:text-red-400',        dot: 'bg-red-400' },
 }
 
 const PRIORITY_CONFIG = {
-    low:      { label: 'Low',      text: 'text-gray-400' },
-    medium:   { label: 'Medium',   text: 'text-blue-500' },
-    high:     { label: 'High',     text: 'text-amber-500' },
-    critical: { label: 'Critical', text: 'text-red-500 font-bold' },
+    low:      { text: 'text-gray-400' },
+    medium:   { text: 'text-blue-500' },
+    high:     { text: 'text-amber-500' },
+    critical: { text: 'text-red-500 font-bold' },
 }
 
 const RequestDetails = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const isManager = useAuthority(userAuthority, ['admin', 'manager'])
 
@@ -69,12 +71,12 @@ const RequestDetails = () => {
             await globalMutate((key) => Array.isArray(key) && key[0] === '/requests')
             toast.push(
                 <Notification type="success">
-                    Work order <strong>{resp.data.work_order.code}</strong> created successfully.
+                    {t('requests.details.woCreated', { code: resp.data.work_order.code })}
                 </Notification>,
                 { placement: 'top-center' },
             )
         } catch (err: unknown) {
-            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to convert.'
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || t('requests.details.woCreated')
             toast.push(<Notification type="danger">{msg}</Notification>, { placement: 'top-center' })
         } finally {
             setConverting(false)
@@ -90,7 +92,7 @@ const RequestDetails = () => {
             await globalMutate((key) => Array.isArray(key) && key[0] === '/requests')
             setRejectOpen(false)
             setRejectNote('')
-            toast.push(<Notification type="success">Request rejected.</Notification>, { placement: 'top-center' })
+            toast.push(<Notification type="success">{t('requests.details.rejected')}</Notification>, { placement: 'top-center' })
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to reject.'
             toast.push(<Notification type="danger">{msg}</Notification>, { placement: 'top-center' })
@@ -103,7 +105,7 @@ const RequestDetails = () => {
         return (
             <div className="flex items-center justify-center py-20 text-gray-400 text-sm gap-2">
                 <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-                Loading…
+                {t('common.loading')}
             </div>
         )
     }
@@ -117,7 +119,7 @@ const RequestDetails = () => {
                 {/* Toolbar */}
                 <div className="flex items-center justify-between">
                     <Button variant="plain" icon={<TbArrowNarrowLeft />} onClick={() => navigate('/concepts/requests/request-list')}>
-                        Back to Requests
+                        {t('requests.details.back')}
                     </Button>
 
                     {isManager && req.status === 'pending' && (
@@ -128,7 +130,7 @@ const RequestDetails = () => {
                                 customColorClass={() => 'border-error ring-1 ring-error text-error hover:border-error hover:ring-error hover:text-error bg-transparent'}
                                 onClick={() => setRejectOpen(true)}
                             >
-                                Reject
+                                {t('requests.details.reject')}
                             </Button>
                             <Button
                                 variant="solid"
@@ -136,7 +138,7 @@ const RequestDetails = () => {
                                 loading={converting}
                                 onClick={handleConvert}
                             >
-                                Convert to Work Order
+                                {t('requests.details.convertToWO')}
                             </Button>
                         </div>
                     )}
@@ -152,10 +154,10 @@ const RequestDetails = () => {
                                 <Tag className={`border-0 text-xs ${sc.bg}`}>
                                     <span className="flex items-center gap-1.5">
                                         <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
-                                        <span className={`font-semibold ${sc.text}`}>{sc.label}</span>
+                                        <span className={`font-semibold ${sc.text}`}>{t(`requests.status.${req.status}`)}</span>
                                     </span>
                                 </Tag>
-                                <span className={`text-xs font-semibold ${pc.text}`}>{pc.label} priority</span>
+                                <span className={`text-xs font-semibold ${pc.text}`}>{t(`requests.priority.${req.priority}`)} {t('requests.details.prioritySuffix')}</span>
                             </div>
                             <h4 className="leading-snug">{req.title}</h4>
                         </div>
@@ -167,23 +169,23 @@ const RequestDetails = () => {
                         {req.asset && (
                             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                 <TbEngine className="text-base text-gray-400 shrink-0" />
-                                <span className="font-semibold text-gray-400 w-24 shrink-0">Asset</span>
+                                <span className="font-semibold text-gray-400 w-24 shrink-0">{t('requests.details.asset')}</span>
                                 <span>{req.asset.name} <span className="font-mono text-xs text-gray-400">({req.asset.code})</span></span>
                             </div>
                         )}
                         {!req.asset && req.location && (
                             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                                 <TbMapPin className="text-base text-gray-400 shrink-0" />
-                                <span className="font-semibold text-gray-400 w-24 shrink-0">Location</span>
+                                <span className="font-semibold text-gray-400 w-24 shrink-0">{t('requests.details.location')}</span>
                                 <span>{req.location}</span>
                             </div>
                         )}
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                            <span className="font-semibold text-gray-400 w-24 shrink-0 ml-5">Submitted by</span>
+                            <span className="font-semibold text-gray-400 w-24 shrink-0 ml-5">{t('requests.details.submittedBy')}</span>
                             <span>{req.requested_by?.name ?? '—'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                            <span className="font-semibold text-gray-400 w-24 shrink-0 ml-5">Date</span>
+                            <span className="font-semibold text-gray-400 w-24 shrink-0 ml-5">{t('requests.details.date')}</span>
                             <span>{req.created_at ? dayjs(req.created_at).format('DD MMM YYYY, HH:mm') : '—'}</span>
                         </div>
                     </div>
@@ -199,7 +201,7 @@ const RequestDetails = () => {
                     {req.status === 'converted' && req.work_order && (
                         <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20">
                             <div>
-                                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Work Order Created</p>
+                                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{t('requests.details.workOrderCreated')}</p>
                                 <p className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-300">{req.work_order.code}</p>
                             </div>
                             <Button
@@ -208,7 +210,7 @@ const RequestDetails = () => {
                                 icon={<TbArrowRight />}
                                 onClick={() => navigate(`/concepts/work-orders/work-order-details/${req.work_order!.id}`)}
                             >
-                                View Work Order
+                                {t('requests.details.viewWorkOrder')}
                             </Button>
                         </div>
                     )}
@@ -217,10 +219,10 @@ const RequestDetails = () => {
                     {req.status === 'rejected' && (
                         <div className="p-3 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20">
                             <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1">
-                                Rejected by {req.reviewed_by?.name ?? 'Manager'}
+                                {t('requests.details.rejectedBy')} {req.reviewed_by?.name ?? 'Manager'}
                             </p>
                             <p className="text-sm text-red-600 dark:text-red-300">
-                                {req.review_note ?? 'No reason provided.'}
+                                {req.review_note ?? t('requests.details.noReason')}
                             </p>
                         </div>
                     )}
@@ -234,25 +236,25 @@ const RequestDetails = () => {
                 onRequestClose={() => setRejectOpen(false)}
                 width={480}
             >
-                <h5 className="mb-4">Reject Request</h5>
+                <h5 className="mb-4">{t('requests.details.rejectTitle')}</h5>
                 <p className="text-sm text-gray-500 mb-4">
-                    Optionally explain why this request is being rejected.
+                    {t('requests.details.rejectDescription')}
                 </p>
                 <textarea
                     className="w-full min-h-[100px] p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:ring-2 focus:ring-primary/30 resize-none mb-4"
-                    placeholder="Reason for rejection (optional)…"
+                    placeholder={t('requests.details.rejectPlaceholder')}
                     value={rejectNote}
                     onChange={(e) => setRejectNote(e.target.value)}
                 />
                 <div className="flex justify-end gap-3">
-                    <Button onClick={() => setRejectOpen(false)}>Cancel</Button>
+                    <Button onClick={() => setRejectOpen(false)}>{t('common.cancel')}</Button>
                     <Button
                         variant="solid"
                         customColorClass={() => 'bg-red-500 hover:bg-red-600 text-white border-red-500'}
                         loading={rejecting}
                         onClick={handleReject}
                     >
-                        Confirm Reject
+                        {t('requests.details.confirmReject')}
                     </Button>
                 </div>
             </Dialog>

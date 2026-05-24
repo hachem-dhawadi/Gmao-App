@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -23,6 +24,7 @@ import type { DepartmentResponse } from '@/services/DepartmentsService'
 const DepartmentEdit = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
     const [deleteOpen, setDeleteOpen] = useState(false)
@@ -58,7 +60,7 @@ const DepartmentEdit = () => {
             )
 
             toast.push(
-                <Notification type="success">Changes saved.</Notification>,
+                <Notification type="success">{t('departments.toast.saved')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/departments')
@@ -88,7 +90,7 @@ const DepartmentEdit = () => {
             )
 
             toast.push(
-                <Notification type="success">Department deleted.</Notification>,
+                <Notification type="success">{t('departments.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
             navigate('/concepts/departments')

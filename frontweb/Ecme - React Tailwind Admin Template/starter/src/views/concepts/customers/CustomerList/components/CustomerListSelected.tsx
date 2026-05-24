@@ -10,6 +10,7 @@ import RichTextEditor from '@/components/shared/RichTextEditor'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import useCustomerList from '../hooks/useCustomerList'
 import { TbChecks } from 'react-icons/tb'
+import { useTranslation } from 'react-i18next'
 
 const CustomerListSelected = () => {
     const {
@@ -17,10 +18,13 @@ const CustomerListSelected = () => {
         mutate,
         setSelectAllCustomer,
     } = useCustomerList()
+    const { t } = useTranslation()
 
     const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false)
     const [sendMessageDialogOpen, setSendMessageDialogOpen] = useState(false)
     const [sendMessageLoading, setSendMessageLoading] = useState(false)
+
+    const count = selectedCustomer.length
 
     const handleDelete = () => {
         setDeleteConfirmationOpen(true)
@@ -40,7 +44,7 @@ const CustomerListSelected = () => {
         setSendMessageLoading(true)
         setTimeout(() => {
             toast.push(
-                <Notification type="success">Message sent!</Notification>,
+                <Notification type="success">{t('members.toast.messageSent')}</Notification>,
                 { placement: 'top-center' },
             )
             setSendMessageLoading(false)
@@ -51,7 +55,7 @@ const CustomerListSelected = () => {
 
     return (
         <>
-            {selectedCustomer.length > 0 && (
+            {count > 0 && (
                 <StickyFooter
                     className=" flex items-center justify-between py-4 bg-white dark:bg-gray-800"
                     stickyClass="-mx-4 sm:-mx-8 border-t border-gray-200 dark:border-gray-700 px-8"
@@ -60,17 +64,17 @@ const CustomerListSelected = () => {
                     <div className="container mx-auto">
                         <div className="flex items-center justify-between">
                             <span>
-                                {selectedCustomer.length > 0 && (
+                                {count > 0 && (
                                     <span className="flex items-center gap-2">
                                         <span className="text-lg text-primary">
                                             <TbChecks />
                                         </span>
                                         <span className="font-semibold flex items-center gap-1">
                                             <span className="heading-text">
-                                                {selectedCustomer.length}{' '}
-                                                {selectedCustomer.length === 1 ? 'Member' : 'Members'}
+                                                {count}{' '}
+                                                {count === 1 ? t('members.selected.Item') : t('members.selected.Items')}
                                             </span>
-                                            <span>selected</span>
+                                            <span>{t('common.selected')}</span>
                                         </span>
                                     </span>
                                 )}
@@ -85,7 +89,7 @@ const CustomerListSelected = () => {
                                     }
                                     onClick={handleDelete}
                                 >
-                                    Delete
+                                    {t('common.delete')}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -94,13 +98,13 @@ const CustomerListSelected = () => {
                                         setSendMessageDialogOpen(true)
                                     }
                                 >
-                                    Message
+                                    {t('common.message')}
                                 </Button>
                                 <Button
                                     size="sm"
                                     onClick={() => setSelectAllCustomer([])}
                                 >
-                                    Clear selection
+                                    {t('common.clearSelection')}
                                 </Button>
                             </div>
                         </div>
@@ -110,24 +114,21 @@ const CustomerListSelected = () => {
             <ConfirmDialog
                 isOpen={deleteConfirmationOpen}
                 type="danger"
-                title="Remove members"
+                title={t('members.selected.deleteTitle')}
                 onClose={handleCancel}
                 onRequestClose={handleCancel}
                 onCancel={handleCancel}
                 onConfirm={handleConfirmDelete}
             >
-                <p>
-                    {' '}
-                    Are you sure you want to remove these members? This action cannot be undone.{' '}
-                </p>
+                <p>{t('members.selected.deleteConfirm')}</p>
             </ConfirmDialog>
             <Dialog
                 isOpen={sendMessageDialogOpen}
                 onRequestClose={() => setSendMessageDialogOpen(false)}
                 onClose={() => setSendMessageDialogOpen(false)}
             >
-                <h5 className="mb-2">Send Message</h5>
-                <p>Send message to the following members</p>
+                <h5 className="mb-2">{t('members.selected.sendMessage')}</h5>
+                <p>{t('members.selected.sendMessageTo')}</p>
                 <Avatar.Group
                     chained
                     omittedAvatarTooltip
@@ -149,7 +150,7 @@ const CustomerListSelected = () => {
                         size="sm"
                         onClick={() => setSendMessageDialogOpen(false)}
                     >
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         size="sm"
@@ -157,7 +158,7 @@ const CustomerListSelected = () => {
                         loading={sendMessageLoading}
                         onClick={handleSend}
                     >
-                        Send
+                        {t('common.send')}
                     </Button>
                 </div>
             </Dialog>

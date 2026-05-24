@@ -1,20 +1,451 @@
 {
     "nav": {
-        "home": "Home",
-        "singleMenuItem": "Single menu item",
-        "collapseMenu": {
-            "collapseMenu": "Collapse menu item",
-            "item1": "Collapse menu item 1",
-            "item2": "Collapse menu item 2"
+        "dashboard": { "dashboard": "Dashboard" },
+        "requests": "Requests",
+        "reports": "Reports",
+        "gmao": "GMAO",
+        "assets": { "assets": "Assets", "assetList": "Asset List", "assetCreate": "Add Asset" },
+        "workOrders": { "workOrders": "Work Orders", "workOrderList": "Work Order List", "workOrderBoard": "Board", "workOrderCreate": "New Work Order" },
+        "pm": { "pm": "Preventive Maintenance", "pmList": "PM Plans", "pmCreate": "New PM Plan" },
+        "inventory": { "inventory": "Inventory", "items": "Items", "warehouses": "Warehouses", "stockMoves": "Stock Moves" },
+        "purchasing": { "purchasing": "Purchasing", "suppliers": "Suppliers", "purchaseOrders": "Purchase Orders", "receipts": "Receipts" },
+        "people": "People",
+        "members": { "members": "Members", "memberList": "Member List", "memberCreate": "Add Member" },
+        "departments": { "departments": "Departments", "departmentList": "Department List", "departmentCreate": "Add Department" },
+        "rolesPermissions": "Roles & Permissions",
+        "workspace": "Workspace",
+        "calendar": "Calendar",
+        "fileManager": "File Manager",
+        "notifications": "Notifications",
+        "account": { "account": "Account", "settings": "Settings" }
+    },
+    "common": {
+        "search": "Search",
+        "filter": "Filter",
+        "edit": "Edit",
+        "delete": "Delete",
+        "view": "View details",
+        "save": "Save",
+        "cancel": "Cancel",
+        "reset": "Reset",
+        "apply": "Apply",
+        "add": "Add",
+        "close": "Close",
+        "confirm": "Confirm",
+        "create": "Create",
+        "download": "Download",
+        "addNew": "Add new",
+        "boardView": "Board view",
+        "query": "Query",
+        "all": "All",
+        "yes": "Yes",
+        "no": "No",
+        "loading": "Loading...",
+        "noData": "No data found",
+        "scan": "Scan",
+        "name": "Name",
+        "code": "Code",
+        "status": "Status",
+        "priority": "Priority",
+        "date": "Date",
+        "email": "Email",
+        "phone": "Phone",
+        "location": "Location",
+        "description": "Description",
+        "active": "Active",
+        "inactive": "Inactive",
+        "selected": "selected",
+        "toast": {
+            "saved": "Changes saved.",
+            "deleted": "Deleted successfully.",
+            "created": "Created successfully.",
+            "updated": "Updated successfully."
         },
-        "groupMenu": {
-            "groupMenu": "Group menu",
-            "single": "Group single menu item",
-            "collapse": {
-                "collapse": "Group collapse menu",
-                "item1": "Group collapse menu item 1",
-                "item2": "Group collapse menu item 2"
-            }
+        "clearSelection": "Clear selection",
+        "send": "Send",
+        "sendMessage": "Send Message",
+        "message": "Message",
+        "discard": "Discard",
+        "print": "Print",
+        "back": "Back",
+        "reopen": "Reopen"
+    },
+    "wo": {
+        "pageTitle": "Work Orders",
+        "new": "New Work Order",
+        "myWos": "My WOs",
+        "allWos": "All WOs",
+        "archived": "Archived",
+        "overdue": "Overdue",
+        "dueSoon": "Due in {{hours}}h",
+        "searchPlaceholder": "Search by title, code, asset...",
+        "columns": {
+            "title": "Title",
+            "code": "Code",
+            "status": "Status",
+            "priority": "Priority",
+            "asset": "Asset",
+            "due": "Due",
+            "assigned": "Assigned"
+        },
+        "status": {
+            "open": "Open",
+            "in_progress": "In Progress",
+            "on_hold": "On Hold",
+            "completed": "Completed",
+            "cancelled": "Cancelled",
+            "all": "All statuses"
+        },
+        "priority": {
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High",
+            "critical": "Critical",
+            "all": "All priorities"
+        },
+        "filter": { "title": "Filter Work Orders", "status": "Status", "priority": "Priority" },
+        "delete": { "title": "Delete Work Order", "confirm": "Are you sure you want to delete this work order? This action cannot be undone." },
+        "selected": {
+            "item": "work order",
+            "items": "work orders",
+            "Item": "Work order",
+            "Items": "Work orders",
+            "setStatus": "Set status…",
+            "setPriority": "Set priority…",
+            "deleteTitle": "Delete Work Orders",
+            "deleteConfirm": "Are you sure you want to delete {{count}} work order(s)? This action cannot be undone."
+        },
+        "toast": {
+            "deleted": "Work order deleted.",
+            "deleteFailed": "Failed to delete work order.",
+            "bulkDeleted": "{{count}} work order(s) deleted.",
+            "bulkDeleteFailed": "Failed to delete some work orders.",
+            "bulkStatusUpdated": "Status updated.",
+            "bulkStatusFailed": "Failed to update status.",
+            "bulkPriorityUpdated": "Priority updated.",
+            "bulkPriorityFailed": "Failed to update priority.",
+            "saved": "Changes saved.",
+            "archived": "Work order archived.",
+            "unarchived": "Work order unarchived.",
+            "archiveFailed": "Failed to update archive status.",
+            "updateFailed": "Failed to update.",
+            "partRecorded": "Part recorded.",
+            "partFailed": "Failed to record part.",
+            "commentFailed": "Failed to add comment.",
+            "uploadFailed": "Failed to upload file.",
+            "attachDeleteFailed": "Failed to delete.",
+            "worklogDurationRequired": "Duration (minutes) is required.",
+            "worklogFailed": "Failed to save work log."
+        }
+    },
+    "assets": {
+        "pageTitle": "Assets",
+        "new": "Add Asset",
+        "scan": "Scan QR",
+        "searchPlaceholder": "Search by name, code, type...",
+        "columns": {
+            "asset": "Asset",
+            "type": "Type",
+            "status": "Status",
+            "manufacturerModel": "Manufacturer / Model",
+            "location": "Location"
+        },
+        "status": {
+            "active": "Active",
+            "inactive": "Inactive",
+            "under_maintenance": "Maintenance",
+            "decommissioned": "Decommissioned",
+            "all": "All statuses"
+        },
+        "selected": {
+            "item": "asset",
+            "items": "assets",
+            "Item": "Asset",
+            "Items": "Assets",
+            "deleteTitle": "Delete Assets",
+            "deleteConfirm": "Are you sure you want to delete {{count}} asset(s)?"
+        },
+        "delete": { "title": "Delete asset", "confirm": "Delete {{name}}? This cannot be undone." },
+        "toast": {
+            "deleted": "Asset deleted.",
+            "deleteFailed": "Failed to delete asset.",
+            "bulkDeleted": "{{count}} asset(s) deleted.",
+            "bulkDeleteFailed": "Failed to delete some assets.",
+            "scanFailed": "Search failed.",
+            "saved": "Changes saved."
+        }
+    },
+    "inventory": {
+        "pageTitle": "Items",
+        "new": "Add Item",
+        "scan": "Scan",
+        "searchPlaceholder": "Search by name, code, barcode…",
+        "columns": { "item": "Item", "unit": "Unit", "unitCost": "Unit Cost", "stock": "Stock" },
+        "delete": { "title": "Delete item", "confirm": "Delete {{name}}? This cannot be undone." },
+        "toast": {
+            "deleted": "Item deleted.",
+            "deleteFailed": "Failed to delete item.",
+            "updated": "Item updated successfully.",
+            "created": "Item created successfully.",
+            "scanFailed": "Search failed."
+        }
+    },
+    "pm": {
+        "pageTitle": "Preventive Maintenance Plans",
+        "new": "New PM Plan",
+        "searchPlaceholder": "Search PM plans...",
+        "columns": {
+            "name": "Name",
+            "status": "Status",
+            "priority": "Priority",
+            "asset": "Asset",
+            "frequency": "Frequency",
+            "nextRun": "Next Run",
+            "assignedTo": "Assigned To"
+        },
+        "status": { "active": "Active", "inactive": "Inactive", "draft": "Draft", "all": "All statuses" },
+        "priority": { "low": "Low", "medium": "Medium", "high": "High", "critical": "Critical", "all": "All priorities" },
+        "frequency": "Every {{value}} {{unit}}",
+        "selected": {
+            "item": "PM plan",
+            "items": "PM plans",
+            "Item": "PM Plan",
+            "Items": "PM Plans",
+            "deleteTitle": "Delete PM Plans",
+            "deleteConfirm": "Are you sure you want to delete {{count}} PM plan(s)?"
+        },
+        "delete": { "title": "Delete PM Plan", "confirm": "Are you sure you want to delete this PM plan? This action cannot be undone." },
+        "toast": {
+            "deleted": "PM plan deleted.",
+            "deleteFailed": "Failed to delete PM plan.",
+            "bulkDeleted": "{{count}} PM plan(s) deleted.",
+            "bulkDeleteFailed": "Failed to delete some PM plans.",
+            "saved": "PM plan saved."
+        }
+    },
+    "purchasing": {
+        "ordersTitle": "Purchase Orders",
+        "suppliersTitle": "Suppliers",
+        "receiptsTitle": "Receipts",
+        "new": "Add new",
+        "searchOrders": "Search",
+        "searchSuppliers": "Search by name, email or contact...",
+        "searchReceipts": "Search by PO code or supplier...",
+        "filterLabels": {
+            "orderDate": "Order date",
+            "orderStatus": "Order status",
+            "paymentStatus": "Payment status",
+            "receivedDate": "Received date",
+            "totalValue": "Total value",
+            "hasEmail": "Has email",
+            "hasPhone": "Has phone"
+        },
+        "columns": {
+            "order": "Order",
+            "date": "Date",
+            "supplier": "Supplier",
+            "status": "Status",
+            "expectedDelivery": "Expected Delivery",
+            "total": "Total",
+            "payment": "Payment",
+            "email": "Email",
+            "phone": "Phone",
+            "taxNumber": "Tax Number",
+            "receipt": "Receipt",
+            "po": "PO",
+            "itemsReceived": "Items Received",
+            "totalValue": "Total Value",
+            "receivedAt": "Received At"
+        },
+        "orderStatuses": {
+            "all": "All",
+            "draft": "Draft",
+            "ordered": "Ordered",
+            "partially_received": "Partial",
+            "received": "Received",
+            "cancelled": "Cancelled"
+        },
+        "paymentStatuses": {
+            "all": "All",
+            "none": "No invoice",
+            "pending": "Pending",
+            "paid": "Paid",
+            "disputed": "Disputed"
+        },
+        "yesNo": { "all": "All", "yes": "Yes", "no": "No" },
+        "supplier": {
+            "editTitle": "Edit Supplier",
+            "createTitle": "New Supplier",
+            "nameLabel": "Name",
+            "namePlaceholder": "Supplier company name",
+            "emailPlaceholder": "contact@supplier.com",
+            "phonePlaceholder": "+1 234 567 890",
+            "contactPerson": "Contact Person",
+            "contactPlaceholder": "John Smith",
+            "addressLabel": "Address",
+            "addressPlaceholder": "123 Main St, City, Country",
+            "taxLabel": "Tax / VAT Number",
+            "taxPlaceholder": "Optional",
+            "updated": "Supplier updated.",
+            "created": "Supplier created.",
+            "saveFailed": "Failed to save supplier.",
+            "deleted": "Supplier deleted.",
+            "deleteTitle": "Delete Supplier",
+            "deleteConfirm": "Are you sure you want to delete {{name}}? This action cannot be undone."
+        },
+        "receipt": { "viewPO": "View PO" },
+        "order": {
+            "deleted": "Order deleted.",
+            "deleteOnlyDraft": "Only draft orders can be deleted.",
+            "deleteTitle": "Delete Purchase Order",
+            "deleteConfirm": "Are you sure you want to delete order {{code}}? This action cannot be undone.",
+            "updated": "Order updated.",
+            "created": "Purchase order created!",
+            "discarded": "Order discarded!",
+            "selectSupplier": "Please select a supplier.",
+            "addItem": "Add at least one item.",
+            "discardTitle": "Discard changes",
+            "discardConfirm": "Are you sure you want to discard this order? This action can't be undone."
+        },
+        "receive": {
+            "title": "Receive Items",
+            "warehouse": "Destination Warehouse",
+            "selectWarehouse": "Select warehouse...",
+            "selectWarehouseRequired": "Please select a warehouse.",
+            "enterQtyRequired": "Enter at least one quantity.",
+            "pending": "Pending: {{qty}} {{unit}}",
+            "confirmReceipt": "Confirm Receipt",
+            "received": "Items received and stock updated.",
+            "receiveFailed": "Failed to receive."
+        },
+        "cancel": {
+            "title": "Cancel Order",
+            "confirm": "Are you sure you want to cancel #{{code}}? This cannot be undone.",
+            "yesCancel": "Yes, Cancel",
+            "success": "Order cancelled.",
+            "failed": "Failed to cancel order."
+        },
+        "reopen": {
+            "title": "Reopen Order",
+            "subtitle": "The order will be moved back to draft.",
+            "description": "#{{code}} will be reopened as a draft so you can edit it and re-submit.",
+            "yesReopen": "Yes, Reopen",
+            "success": "Order reopened as draft.",
+            "failed": "Failed to reopen order."
+        },
+        "email": {
+            "send": "Email to Supplier",
+            "success": "Purchase order emailed to supplier.",
+            "failed": "Failed to send email."
+        },
+        "details": {
+            "invoiceRecorded": "Invoice recorded.",
+            "markedAsPaid": "Order marked as paid.",
+            "downloadFailed": "Failed to download proof file.",
+            "disputed": "Invoice marked as disputed."
+        }
+    },
+    "members": {
+        "pageTitle": "Members",
+        "new": "Add new",
+        "searchPlaceholder": "Search by name, email...",
+        "columns": { "name": "Name", "email": "Email", "phone": "Phone", "role": "Role", "status": "Status" },
+        "status": { "active": "Active", "inactive": "Inactive", "blocked": "Inactive" },
+        "modal": {
+            "close": "Close",
+            "edit": "Edit",
+            "email": "Email",
+            "phone": "Phone",
+            "employeeCode": "Employee Code",
+            "jobTitle": "Job Title",
+            "roles": "Roles",
+            "locale": "Locale",
+            "lastLogin": "Last Login",
+            "superadmin": "Superadmin"
+        },
+        "selected": {
+            "item": "member",
+            "items": "members",
+            "Item": "Member",
+            "Items": "Members",
+            "deleteTitle": "Remove members",
+            "deleteConfirm": "Are you sure you want to remove these members? This action cannot be undone.",
+            "sendMessage": "Send Message",
+            "sendMessageTo": "Send message to the following members"
+        },
+        "delete": { "title": "Delete Member", "confirm": "Delete {{name}}? This cannot be undone." },
+        "toast": {
+            "deleted": "Member deleted.",
+            "deleteFailed": "Failed to delete member.",
+            "messageSent": "Message sent!"
+        }
+    },
+    "departments": {
+        "pageTitle": "Departments",
+        "searchPlaceholder": "Search departments...",
+        "columns": { "name": "Name", "code": "Code", "parent": "Parent", "members": "Members", "subDepts": "Sub-depts", "description": "Description" },
+        "selected": {
+            "item": "department",
+            "items": "departments",
+            "Item": "Department",
+            "Items": "Departments",
+            "deleteTitle": "Delete Departments",
+            "deleteConfirm": "Are you sure you want to delete {{count}} department(s)? Members will be unassigned."
+        },
+        "toast": {
+            "deleted": "Department deleted.",
+            "deleteFailed": "Failed to delete department.",
+            "bulkDeleted": "{{count}} department(s) deleted.",
+            "bulkDeleteFailed": "Failed to delete some departments.",
+            "saved": "Changes saved."
+        }
+    },
+    "requests": {
+        "pageTitle": "Maintenance Requests",
+        "managerSubtitle": "Review and convert employee requests into work orders",
+        "userSubtitle": "Submit and track your maintenance requests",
+        "new": "New Request",
+        "submit": "Submit a request",
+        "searchPlaceholder": "Search by title or code…",
+        "pendingReview": "Pending review",
+        "convertedToWO": "Converted to WO",
+        "noRequests": "No requests found",
+        "noRequestsHint": "Submit a request and it will appear here",
+        "tabs": { "all": "All", "pending": "Pending", "converted": "Converted", "rejected": "Rejected" },
+        "columns": {
+            "code": "Code",
+            "title": "Title",
+            "assetLocation": "Asset / Location",
+            "priority": "Priority",
+            "status": "Status",
+            "requestedBy": "Requested by",
+            "date": "Date"
+        },
+        "status": { "pending": "Pending", "converted": "Converted", "rejected": "Rejected" },
+        "priority": { "low": "Low", "medium": "Medium", "high": "High", "critical": "Critical" },
+        "create": {
+            "titleRequired": "Title is required.",
+            "submitted": "Request submitted successfully."
+        },
+        "details": {
+            "back": "Back to Requests",
+            "reject": "Reject",
+            "convertToWO": "Convert to Work Order",
+            "asset": "Asset",
+            "location": "Location",
+            "submittedBy": "Submitted by",
+            "date": "Date",
+            "prioritySuffix": "priority",
+            "workOrderCreated": "Work Order Created",
+            "viewWorkOrder": "View Work Order",
+            "rejectedBy": "Rejected by",
+            "noReason": "No reason provided.",
+            "rejectTitle": "Reject Request",
+            "rejectDescription": "Optionally explain why this request is being rejected.",
+            "rejectPlaceholder": "Reason for rejection (optional)…",
+            "confirmReject": "Confirm Reject",
+            "woCreated": "Work order {{code}} created successfully.",
+            "rejected": "Request rejected."
         }
     }
 }

@@ -12,47 +12,32 @@ import { TbPencil, TbTrash } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { apiDeletePmPlan } from '@/services/PmService'
+import { useTranslation } from 'react-i18next'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { PmPlan } from '@/services/PmService'
 import type { TableQueries } from '@/@types/common'
 
-const statusConfig: Record<PmPlan['status'], { label: string; className: string }> = {
-    active: {
-        label: 'Active',
-        className: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
-    },
-    inactive: {
-        label: 'Inactive',
-        className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
-    },
-    draft: {
-        label: 'Draft',
-        className: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
-    },
+const statusColor: Record<PmPlan['status'], string> = {
+    active:   'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
+    inactive: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
+    draft:    'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
 }
 
-const priorityConfig: Record<PmPlan['priority'], { label: string; className: string }> = {
-    low: {
-        label: 'Low',
-        className: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
-    },
-    medium: {
-        label: 'Medium',
-        className: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
-    },
-    high: {
-        label: 'High',
-        className: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
-    },
-    critical: {
-        label: 'Critical',
-        className: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
-    },
+const priorityColor: Record<PmPlan['priority'], string> = {
+    low:      'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
+    medium:   'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
+    high:     'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+    critical: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
 }
 
-const formatFrequency = (trigger: PmPlan['trigger']) => {
-    if (!trigger) return '—'
-    return `Every ${trigger.interval_value} ${trigger.interval_unit}`
+const StatusBadge = ({ status }: { status: PmPlan['status'] }) => {
+    const { t } = useTranslation()
+    return <Tag className={`text-xs ${statusColor[status]}`}>{t(`pm.status.${status}`)}</Tag>
+}
+
+const PriorityBadge = ({ priority }: { priority: PmPlan['priority'] }) => {
+    const { t } = useTranslation()
+    return <Tag className={`text-xs ${priorityColor[priority]}`}>{t(`pm.priority.${priority}`)}</Tag>
 }
 
 const NameCell = ({ plan }: { plan: PmPlan }) => {
@@ -77,10 +62,11 @@ type ActionColumnProps = {
 
 const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     return (
         <div className="flex items-center justify-end gap-3">
             {canEdit && (
-                <Tooltip title="Edit">
+                <Tooltip title={t('common.edit')}>
                     <div
                         className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                         role="button"
@@ -91,7 +77,7 @@ const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) =
                 </Tooltip>
             )}
             {canDelete && (
-                <Tooltip title="Delete">
+                <Tooltip title={t('common.delete')}>
                     <div
                         className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
                         role="button"
@@ -106,6 +92,7 @@ const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) =
 }
 
 const PmPlanListTable = () => {
+    const { t } = useTranslation()
     const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
     const [deleting, setDeleting] = useState(false)
 
@@ -131,13 +118,13 @@ const PmPlanListTable = () => {
         try {
             await apiDeletePmPlan(deleteTargetId)
             toast.push(
-                <Notification type="success">PM plan deleted.</Notification>,
+                <Notification type="success">{t('pm.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
             mutate()
         } catch {
             toast.push(
-                <Notification type="danger">Failed to delete PM plan.</Notification>,
+                <Notification type="danger">{t('pm.toast.deleteFailed')}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -149,28 +136,22 @@ const PmPlanListTable = () => {
     const columns: ColumnDef<PmPlan>[] = useMemo(
         () => [
             {
-                header: 'Name',
+                header: t('pm.columns.name'),
                 accessorKey: 'name',
                 cell: (props) => <NameCell plan={props.row.original} />,
             },
             {
-                header: 'Status',
+                header: t('pm.columns.status'),
                 accessorKey: 'status',
-                cell: (props) => {
-                    const cfg = statusConfig[props.row.original.status]
-                    return <Tag className={`text-xs ${cfg.className}`}>{cfg.label}</Tag>
-                },
+                cell: (props) => <StatusBadge status={props.row.original.status} />,
             },
             {
-                header: 'Priority',
+                header: t('pm.columns.priority'),
                 accessorKey: 'priority',
-                cell: (props) => {
-                    const cfg = priorityConfig[props.row.original.priority]
-                    return <Tag className={`text-xs ${cfg.className}`}>{cfg.label}</Tag>
-                },
+                cell: (props) => <PriorityBadge priority={props.row.original.priority} />,
             },
             {
-                header: 'Asset',
+                header: t('pm.columns.asset'),
                 accessorKey: 'asset',
                 cell: (props) =>
                     props.row.original.asset ? (
@@ -182,16 +163,20 @@ const PmPlanListTable = () => {
                     ),
             },
             {
-                header: 'Frequency',
+                header: t('pm.columns.frequency'),
                 accessorKey: 'trigger',
-                cell: (props) => (
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {formatFrequency(props.row.original.trigger)}
-                    </span>
-                ),
+                cell: (props) => {
+                    const trigger = props.row.original.trigger
+                    if (!trigger) return <span className="text-gray-400">—</span>
+                    return (
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {t('pm.frequency', { value: trigger.interval_value, unit: trigger.interval_unit })}
+                        </span>
+                    )
+                },
             },
             {
-                header: 'Next Run',
+                header: t('pm.columns.nextRun'),
                 accessorKey: 'next_run_at',
                 cell: (props) => {
                     const next = props.row.original.trigger?.next_run_at
@@ -204,7 +189,7 @@ const PmPlanListTable = () => {
                 },
             },
             {
-                header: 'Assigned To',
+                header: t('pm.columns.assignedTo'),
                 accessorKey: 'assigned_to',
                 cell: (props) =>
                     props.row.original.assigned_to?.name ? (
@@ -228,7 +213,7 @@ const PmPlanListTable = () => {
                 ),
             },
         ],
-        [canEdit, canDelete],
+        [canEdit, canDelete, t],
     )
 
     const handleSetTableData = (data: TableQueries) => {
@@ -279,14 +264,14 @@ const PmPlanListTable = () => {
             <ConfirmDialog
                 isOpen={deleteTargetId !== null}
                 type="danger"
-                title="Delete PM Plan"
+                title={t('pm.delete.title')}
                 onClose={() => setDeleteTargetId(null)}
                 onRequestClose={() => setDeleteTargetId(null)}
                 onCancel={() => setDeleteTargetId(null)}
                 onConfirm={handleDeleteConfirm}
                 confirmButtonProps={{ loading: deleting }}
             >
-                <p>Are you sure you want to delete this PM plan? This action cannot be undone.</p>
+                <p>{t('pm.delete.confirm')}</p>
             </ConfirmDialog>
         </>
     )
