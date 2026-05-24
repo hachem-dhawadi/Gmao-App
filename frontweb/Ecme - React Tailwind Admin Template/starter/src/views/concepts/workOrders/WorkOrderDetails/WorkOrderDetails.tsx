@@ -20,6 +20,8 @@ import {
     apiGetWorkOrderById,
     apiUpdateWorkOrder,
     apiGetWoParts,
+    apiArchiveWorkOrder,
+    apiUnarchiveWorkOrder,
 } from '@/services/WorkOrdersService'
 import { printWorkOrder } from './utils/printWorkOrder'
 import { apiGetMembersList } from '@/services/MembersService'
@@ -42,6 +44,8 @@ import {
     TbEngine,
     TbCheck,
     TbCalendar,
+    TbArchive,
+    TbArchiveOff,
 } from 'react-icons/tb'
 import type { WorkOrder } from '@/services/WorkOrdersService'
 import type { WorkOrderResponse } from '@/services/WorkOrdersService'
@@ -82,6 +86,7 @@ const WorkOrderDetails = () => {
     const [descriptionDraft, setDescriptionDraft] = useState('')
     const [printOpen, setPrintOpen]       = useState(false)
     const [printingWo, setPrintingWo]     = useState(false)
+    const [archiving, setArchiving]       = useState(false)
 
     const isAssignedToWo = wo?.assigned_members.some((m) => m.id === currentMemberId) ?? false
     const canEdit = canAssign || isAssignedToWo
@@ -166,6 +171,27 @@ const WorkOrderDetails = () => {
         }
     }
 
+    const handleArchiveToggle = async () => {
+        if (!wo || !id) return
+        setArchiving(true)
+        try {
+            if (wo.archived_at) {
+                await apiUnarchiveWorkOrder(id)
+                setWo({ ...wo, archived_at: null })
+                toast.push(<Notification type="success">Work order unarchived.</Notification>, { placement: 'top-center' })
+            } else {
+                await apiArchiveWorkOrder(id)
+                setWo({ ...wo, archived_at: new Date().toISOString() })
+                toast.push(<Notification type="success">Work order archived.</Notification>, { placement: 'top-center' })
+            }
+            await globalMutate((key) => Array.isArray(key) && key[0] === '/work-orders')
+        } catch {
+            toast.push(<Notification type="danger">Failed to update archive status.</Notification>, { placement: 'top-center' })
+        } finally {
+            setArchiving(false)
+        }
+    }
+
     const handleDescriptionBlur = () => {
         setEditingDescription(false)
         if (descriptionDraft !== (wo?.description || '')) {
@@ -187,6 +213,14 @@ const WorkOrderDetails = () => {
             <Loading loading={isLoading}>
                 {wo && (
                     <>
+                        {/* Archived banner */}
+                        {wo.archived_at && (
+                            <div className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 text-sm font-medium">
+                                <TbArchive className="text-base shrink-0" />
+                                This work order is archived. It is read-only until unarchived.
+                            </div>
+                        )}
+
                         {/* Back button */}
                         <div className="flex items-center justify-between mb-6">
                             <Button
@@ -217,16 +251,26 @@ const WorkOrderDetails = () => {
                                     Print WO
                                 </Button>
                                 {canManage && (
-                                    <Button
-                                        icon={<TbPencil />}
-                                        onClick={() =>
-                                            navigate(
-                                                `/concepts/work-orders/work-order-edit/${wo.id}`,
-                                            )
-                                        }
-                                    >
-                                        Edit form
-                                    </Button>
+                                    <>
+                                        <Button
+                                            variant="default"
+                                            icon={wo.archived_at ? <TbArchiveOff /> : <TbArchive />}
+                                            loading={archiving}
+                                            onClick={handleArchiveToggle}
+                                        >
+                                            {wo.archived_at ? 'Unarchive' : 'Archive'}
+                                        </Button>
+                                        <Button
+                                            icon={<TbPencil />}
+                                            onClick={() =>
+                                                navigate(
+                                                    `/concepts/work-orders/work-order-edit/${wo.id}`,
+                                                )
+                                            }
+                                        >
+                                            Edit form
+                                        </Button>
+                                    </>
                                 )}
                             </div>
                         </div>

@@ -28,12 +28,13 @@ class WorkOrderController extends Controller
 
         $currentMember = $request->attributes->get('currentMember');
 
-        $perPage  = max(1, min((int) $request->query('per_page', 15), 100));
-        $status   = $request->query('status');
-        $priority = $request->query('priority');
-        $search   = $request->query('search');
-        $myOnly   = $request->boolean('my_only');
-        $assetId  = $request->query('asset_id');
+        $perPage      = max(1, min((int) $request->query('per_page', 15), 100));
+        $status       = $request->query('status');
+        $priority     = $request->query('priority');
+        $search       = $request->query('search');
+        $myOnly       = $request->boolean('my_only');
+        $assetId      = $request->query('asset_id');
+        $showArchived = $request->boolean('archived');
 
         $with = ['asset', 'createdBy.user', 'assignedMembers.user'];
         if ($assetId) {
@@ -44,6 +45,12 @@ class WorkOrderController extends Controller
             ->with($with)
             ->where('company_id', $currentCompany->id)
             ->orderByDesc('id');
+
+        if ($showArchived) {
+            $query->whereNotNull('archived_at');
+        } else {
+            $query->whereNull('archived_at');
+        }
 
         if ($assetId) {
             $query->where('asset_id', $assetId);
@@ -423,6 +430,52 @@ class WorkOrderController extends Controller
         $attachment->delete();
 
         return response()->json(['success' => true, 'message' => 'Attachment deleted.']);
+    }
+
+    public function archive(Request $request, WorkOrder $workOrder): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
+
+        if (! $currentCompany || ! $currentMember) {
+            return response()->json(['success' => false, 'message' => 'Context missing.'], 400);
+        }
+
+        if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager) {
+            return response()->json(['success' => false, 'message' => 'Only admins and managers can archive work orders.'], 403);
+        }
+
+        $workOrder->update(['archived_at' => now()]);
+
+        return response()->json(['success' => true, 'message' => 'Work order archived.']);
+    }
+
+    public function unarchive(Request $request, WorkOrder $workOrder): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
+
+        if (! $currentCompany || ! $currentMember) {
+            return response()->json(['success' => false, 'message' => 'Context missing.'], 400);
+        }
+
+        if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager) {
+            return response()->json(['success' => false, 'message' => 'Only admins and managers can unarchive work orders.'], 403);
+        }
+
+        $workOrder->update(['archived_at' => null]);
+
+        return response()->json(['success' => true, 'message' => 'Work order unarchived.']);
     }
 
     private function canModifyWorkOrder(mixed $member, WorkOrder $workOrder): bool

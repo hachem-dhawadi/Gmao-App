@@ -103,6 +103,7 @@ export type WorkOrder = {
     resolution_notes: string | null
     created_at: string | null
     updated_at: string | null
+    archived_at: string | null
     asset: WorkOrderAsset | null
     created_by: WorkOrderCreatedBy | null
     assigned_members: WorkOrderMember[]
@@ -330,6 +331,20 @@ export async function apiRecordWoPart(
         url: `/work-orders/${workOrderId}/parts`,
         method: 'post',
         data,
+    })
+}
+
+export async function apiArchiveWorkOrder(id: string | number) {
+    return ApiService.fetchDataWithAxios<{ success: boolean; message: string }>({
+        url: `/work-orders/${id}/archive`,
+        method: 'post',
+    })
+}
+
+export async function apiUnarchiveWorkOrder(id: string | number) {
+    return ApiService.fetchDataWithAxios<{ success: boolean; message: string }>({
+        url: `/work-orders/${id}/unarchive`,
+        method: 'post',
     })
 }
 

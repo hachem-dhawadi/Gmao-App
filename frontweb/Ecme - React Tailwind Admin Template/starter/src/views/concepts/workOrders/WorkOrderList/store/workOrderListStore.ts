@@ -13,12 +13,14 @@ export type WorkOrderFilter = {
     status: 'all' | 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
     priority: 'all' | 'low' | 'medium' | 'high' | 'critical'
     myOnly: boolean
+    showArchived: boolean
 }
 
 export const initialFilterData: WorkOrderFilter = {
     status: 'all',
     priority: 'all',
     myOnly: false,
+    showArchived: false,
 }
 
 type WorkOrderListState = {

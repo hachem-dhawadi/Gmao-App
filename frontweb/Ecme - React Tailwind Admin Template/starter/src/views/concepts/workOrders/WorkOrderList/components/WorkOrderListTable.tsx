@@ -8,7 +8,7 @@ import toast from '@/components/ui/toast'
 import useWorkOrderList from '../hooks/useWorkOrderList'
 import { useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPencil, TbEye, TbTrash } from 'react-icons/tb'
+import { TbPencil, TbEye, TbTrash, TbArchive } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { apiDeleteWorkOrder } from '@/services/WorkOrdersService'
@@ -177,18 +177,27 @@ const WorkOrderListTable = () => {
             {
                 header: 'Title',
                 accessorKey: 'title',
-                cell: (props) => (
-                    <div
-                        className="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-primary"
-                        onClick={() =>
-                            navigate(
-                                `/concepts/work-orders/work-order-details/${props.row.original.id}`,
-                            )
-                        }
-                    >
-                        {props.row.original.title}
-                    </div>
-                ),
+                cell: (props) => {
+                    const wo = props.row.original
+                    return (
+                        <div className="flex items-center gap-2">
+                            <span
+                                className="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-primary"
+                                onClick={() =>
+                                    navigate(`/concepts/work-orders/work-order-details/${wo.id}`)
+                                }
+                            >
+                                {wo.title}
+                            </span>
+                            {wo.archived_at && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                                    <TbArchive className="text-xs" />
+                                    Archived
+                                </span>
+                            )}
+                        </div>
+                    )
+                },
             },
             {
                 header: 'Code',

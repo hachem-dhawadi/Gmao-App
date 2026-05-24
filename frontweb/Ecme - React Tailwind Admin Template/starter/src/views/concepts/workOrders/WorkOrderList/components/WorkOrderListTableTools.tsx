@@ -3,7 +3,7 @@ import useWorkOrderList from '../hooks/useWorkOrderList'
 import WorkOrderListSearch from './WorkOrderListSearch'
 import WorkOrderListTableFilter from './WorkOrderListTableFilter'
 import Button from '@/components/ui/Button'
-import { TbUser } from 'react-icons/tb'
+import { TbUser, TbArchive } from 'react-icons/tb'
 
 const WorkOrderListTableTools = () => {
     const { tableData, setTableData, filterData, setFilterData } = useWorkOrderList()
@@ -19,6 +19,10 @@ const WorkOrderListTableTools = () => {
         setFilterData({ ...filterData, myOnly: !filterData.myOnly })
     }
 
+    const toggleArchived = () => {
+        setFilterData({ ...filterData, showArchived: !filterData.showArchived })
+    }
+
     return (
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <WorkOrderListSearch onInputChange={handleInputChange} />
@@ -29,6 +33,13 @@ const WorkOrderListTableTools = () => {
                     className={filterData.myOnly ? 'border-primary ring-1 ring-primary text-primary' : ''}
                 >
                     {filterData.myOnly ? 'My WOs' : 'All WOs'}
+                </Button>
+                <Button
+                    icon={<TbArchive />}
+                    onClick={toggleArchived}
+                    className={filterData.showArchived ? 'border-amber-500 ring-1 ring-amber-500 text-amber-600' : ''}
+                >
+                    {filterData.showArchived ? 'Archived' : 'Archived'}
                 </Button>
                 <WorkOrderListTableFilter />
             </div>

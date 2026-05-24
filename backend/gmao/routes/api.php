@@ -119,6 +119,10 @@ Route::prefix('v1')->group(function (): void {
 
         // Checklist
         Route::post('/{workOrder}/checklist/{item}/toggle', [WorkOrderChecklistController::class, 'toggle'])->middleware('permission:work_orders.write');
+
+        // Archive
+        Route::post('/{workOrder}/archive', [WorkOrderController::class, 'archive'])->middleware('permission:work_orders.write');
+        Route::post('/{workOrder}/unarchive', [WorkOrderController::class, 'unarchive'])->middleware('permission:work_orders.write');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('inventory/items')->group(function (): void {

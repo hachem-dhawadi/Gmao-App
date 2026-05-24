@@ -33,6 +33,7 @@ class WorkOrderResource extends JsonResource
             'resolution_notes'     => $this->resolution_notes,
             'created_at'           => $this->created_at?->toISOString(),
             'updated_at'           => $this->updated_at?->toISOString(),
+            'archived_at'          => $this->archived_at?->toISOString(),
             'asset'                => $this->relationLoaded('asset') && $this->asset
                 ? ['id' => $this->asset->id, 'code' => $this->asset->code, 'name' => $this->asset->name]
                 : null,

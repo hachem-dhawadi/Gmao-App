@@ -26,6 +26,7 @@ export default function useWorkOrderList() {
     if (filterData.status !== 'all') queryParams.status = filterData.status
     if (filterData.priority !== 'all') queryParams.priority = filterData.priority
     if (filterData.myOnly) queryParams.my_only = true
+    if (filterData.showArchived) queryParams.archived = true
 
     const { data, error, isLoading, mutate } = useSWR(
         [
@@ -36,6 +37,7 @@ export default function useWorkOrderList() {
             filterData.status,
             filterData.priority,
             filterData.myOnly,
+            filterData.showArchived,
         ],
         () => apiGetWorkOrdersList<WorkOrdersListResponse>(queryParams),
         { revalidateOnFocus: false },
