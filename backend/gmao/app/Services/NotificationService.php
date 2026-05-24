@@ -2,15 +2,21 @@
 
 namespace App\Services;
 
+use App\Mail\LowStockAlert;
+use App\Mail\WorkOrderAssigned as WorkOrderAssignedMail;
+use App\Mail\WorkOrderOverdue as WorkOrderOverdueMail;
+use App\Mail\PmPlanDue as PmPlanDueMail;
 use App\Models\Item;
 use App\Models\MaintenanceRequest;
 use App\Models\Member;
 use App\Models\Notification;
 use App\Models\PmPlan;
+use App\Models\PmTrigger;
 use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class NotificationService
 {
@@ -35,6 +41,17 @@ class NotificationService
                 'body'  => "{$fromName} assigned you to \"{$wo->title}\" ({$wo->code})",
                 'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title],
             ]);
+
+            // Email
+            $email = $member->user?->email;
+            $name  = $member->user?->name ?? 'Technician';
+            if ($email) {
+                try {
+                    Mail::to($email)->send(new WorkOrderAssignedMail($wo, $name));
+                } catch (\Throwable $e) {
+                    Log::warning("Email failed (wo_assigned) to {$email}: " . $e->getMessage());
+                }
+            }
         }
     }
 
@@ -121,6 +138,17 @@ class NotificationService
                     'item_code' => $item->code,
                 ],
             ]);
+
+            // Email
+            $email = $member->user?->email;
+            $name  = $member->user?->name ?? 'Manager';
+            if ($email) {
+                try {
+                    Mail::to($email)->send(new LowStockAlert($item, $totalStock, (float) $item->min_stock, $name));
+                } catch (\Throwable $e) {
+                    Log::warning("Email failed (low_stock) to {$email}: " . $e->getMessage());
+                }
+            }
         }
     }
 
@@ -229,12 +257,29 @@ class NotificationService
             if ($manager->user_id) $recipientIds[] = $manager->user_id;
         }
 
+        // Build user-id → member map for email sending
+        $allMembers = $wo->assignedMembers()->with('user')->get()
+            ->concat($managers)
+            ->keyBy('user_id');
+
         foreach (array_unique($recipientIds) as $userId) {
             self::create($userId, 'wo_overdue', [
                 'title' => 'Work order overdue',
                 'body'  => "Work order \"{$wo->title}\" ({$wo->code}) is past its due date.",
                 'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title],
             ]);
+
+            // Email
+            $member = $allMembers->get($userId);
+            $email  = $member?->user?->email;
+            $name   = $member?->user?->name ?? 'Team Member';
+            if ($email) {
+                try {
+                    Mail::to($email)->send(new WorkOrderOverdueMail($wo, $name));
+                } catch (\Throwable $e) {
+                    Log::warning("Email failed (wo_overdue) to {$email}: " . $e->getMessage());
+                }
+            }
         }
     }
 
@@ -298,6 +343,33 @@ class NotificationService
                     'request_code' => $req->code,
                 ],
             ]);
+        }
+    }
+
+    // ── PM Plan: overdue (called by daily scheduler) ──────────────────────────
+
+    public static function notifyPmOverdue(PmPlan $plan, PmTrigger $trigger): void
+    {
+        if (! $plan->assigned_member_id) return;
+
+        $member = Member::query()->with('user')->find($plan->assigned_member_id);
+        if (! $member?->user_id) return;
+
+        $name  = $member->user?->name ?? 'Team Member';
+        $email = $member->user?->email;
+
+        self::create($member->user_id, 'pm_overdue', [
+            'title' => "PM plan overdue: {$plan->name}",
+            'body'  => "PM plan \"{$plan->name}\" ({$plan->code}) is overdue and has not been executed.",
+            'data'  => ['pm_id' => $plan->id, 'pm_code' => $plan->code],
+        ]);
+
+        if ($email) {
+            try {
+                Mail::to($email)->send(new PmPlanDueMail($plan, $trigger, $name, true));
+            } catch (\Throwable $e) {
+                Log::warning("Email failed (pm_overdue) to {$email}: " . $e->getMessage());
+            }
         }
     }
 
