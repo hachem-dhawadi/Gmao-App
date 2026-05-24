@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as XLSX from 'xlsx'
 import useSWR from 'swr'
 import Container from '@/components/shared/Container'
 import Card from '@/components/ui/Card'
@@ -19,7 +20,7 @@ import {
     TbClipboardList, TbEngine, TbCalendarStats, TbPackage,
     TbAlertTriangle, TbCircleCheck, TbClock,
     TbProgressBolt, TbChecks, TbCurrencyDollar, TbBox, TbChartBar,
-    TbDownload, TbPrinter, TbCalendar, TbX,
+    TbDownload, TbPrinter, TbCalendar, TbX, TbFileSpreadsheet,
 } from 'react-icons/tb'
 import { COLORS } from '@/constants/chart.constant'
 import classNames from '@/utils/classNames'
@@ -40,6 +41,30 @@ const downloadCsv = (headers: string[], rows: (string | number)[][], filename: s
     a.href = url; a.download = filename
     document.body.appendChild(a); a.click()
     document.body.removeChild(a); URL.revokeObjectURL(url)
+}
+
+// ── Excel helper ──────────────────────────────────────────────────────────────
+
+const downloadXlsx = (
+    sheets: { name: string; headers: string[]; rows: (string | number)[][] }[],
+    filename: string,
+) => {
+    const wb = XLSX.utils.book_new()
+    sheets.forEach(({ name, headers, rows }) => {
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+        // Bold header row
+        const range = XLSX.utils.decode_range(ws['!ref'] ?? 'A1')
+        for (let c = range.s.c; c <= range.e.c; c++) {
+            const cell = ws[XLSX.utils.encode_cell({ r: 0, c })]
+            if (cell) cell.s = { font: { bold: true } }
+        }
+        // Auto column widths
+        ws['!cols'] = headers.map((h, i) => ({
+            wch: Math.max(h.length, ...rows.map(r => String(r[i] ?? '').length), 10),
+        }))
+        XLSX.utils.book_append_sheet(wb, ws, name.slice(0, 31))
+    })
+    XLSX.writeFile(wb, filename)
 }
 
 // ── Date range presets ────────────────────────────────────────────────────────
@@ -89,14 +114,29 @@ const KpiCard = ({ label, value, sub, icon, bg }: { label: string; value: string
     </div>
 )
 
-const SectionHeader = ({ label, onExport }: { label: string; onExport?: () => void }) => (
+const SectionHeader = ({
+    label,
+    onExportCsv,
+    onExportXlsx,
+}: {
+    label: string
+    onExportCsv?: () => void
+    onExportXlsx?: () => void
+}) => (
     <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
-        {onExport && (
-            <Button size="sm" variant="default" icon={<TbDownload />} onClick={onExport}>
-                Export CSV
-            </Button>
-        )}
+        <div className="flex items-center gap-2">
+            {onExportCsv && (
+                <Button size="sm" variant="default" icon={<TbDownload />} onClick={onExportCsv}>
+                    CSV
+                </Button>
+            )}
+            {onExportXlsx && (
+                <Button size="sm" variant="solid" icon={<TbFileSpreadsheet />} onClick={onExportXlsx}>
+                    Excel
+                </Button>
+            )}
+        </div>
     </div>
 )
 
@@ -294,7 +334,9 @@ const WoReport = ({ range }: { range: DateRange }) => {
 
     const total = Object.values(d.by_status).reduce((a, b) => a + b, 0)
 
-    const handleExport = () => {
+    const filename = `wo-report-${dayjs().format('YYYY-MM-DD')}`
+
+    const handleExportCsv = () => {
         const rows: (string | number)[][] = [
             ['--- Monthly ---', '', ''], ['Month', 'Created', 'Completed'],
             ...d.monthly.map(m => [m.month, m.created, m.completed]),
@@ -307,12 +349,37 @@ const WoReport = ({ range }: { range: DateRange }) => {
                 ...d.top_technicians.map(t => [t.name, t.completed, '']),
             ] : []),
         ]
-        downloadCsv(['Field', 'Value', 'Extra'], rows, `wo-report-${dayjs().format('YYYY-MM-DD')}.csv`)
+        downloadCsv(['Field', 'Value', 'Extra'], rows, `${filename}.csv`)
+    }
+
+    const handleExportXlsx = () => {
+        downloadXlsx([
+            {
+                name: 'Monthly',
+                headers: ['Month', 'Created', 'Completed'],
+                rows: d.monthly.map(m => [m.month, m.created, m.completed]),
+            },
+            {
+                name: 'By Status',
+                headers: ['Status', 'Count'],
+                rows: Object.entries(d.by_status).map(([k, v]) => [statusLabels[k] ?? k, v]),
+            },
+            {
+                name: 'By Priority',
+                headers: ['Priority', 'Count'],
+                rows: Object.entries(d.by_priority).map(([k, v]) => [priorityLabels[k] ?? k, v]),
+            },
+            ...(d.top_technicians.length > 0 ? [{
+                name: 'Top Technicians',
+                headers: ['Technician', 'Completed'],
+                rows: d.top_technicians.map(t => [t.name, t.completed]),
+            }] : []),
+        ], `${filename}.xlsx`)
     }
 
     return (
         <div className="flex flex-col gap-5">
-            <SectionHeader label="Work Order Metrics" onExport={handleExport} />
+            <SectionHeader label="Work Order Metrics" onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <KpiCard label="Total WOs" value={total} sub={range.from ? 'Selected period' : 'All time'} icon={<TbClipboardList />} bg="bg-sky-100 dark:bg-sky-500/20" />
                 <KpiCard label="Completed" value={d.by_status.completed} sub={range.from ? 'Selected period' : 'All time'} icon={<TbChecks />} bg="bg-emerald-100 dark:bg-emerald-500/20" />
@@ -414,15 +481,16 @@ const AssetReport = ({ range }: { range: DateRange }) => {
     const maxWo = Math.max(...d.assets.map(a => a.wo_count), 1)
     const totalDowntime = d.assets.reduce((s, a) => s + a.total_downtime_h, 0)
 
-    const handleExport = () => downloadCsv(
-        ['#', 'Code', 'Name', 'Location', 'WO Count', 'Downtime (h)', 'Last Maintenance'],
-        d.assets.map((a, i) => [i + 1, a.code, a.name, a.location ?? '', a.wo_count, a.total_downtime_h.toFixed(0), a.last_maintenance_at ? dayjs(a.last_maintenance_at).format('YYYY-MM-DD') : '']),
-        `asset-report-${dayjs().format('YYYY-MM-DD')}.csv`,
-    )
+    const assetFilename = `asset-report-${dayjs().format('YYYY-MM-DD')}`
+    const assetHeaders = ['#', 'Code', 'Name', 'Location', 'WO Count', 'Downtime (h)', 'Last Maintenance']
+    const assetRows = d.assets.map((a, i) => [i + 1, a.code, a.name, a.location ?? '', a.wo_count, Number(a.total_downtime_h.toFixed(0)), a.last_maintenance_at ? dayjs(a.last_maintenance_at).format('YYYY-MM-DD') : ''] as (string | number)[])
+
+    const handleExportCsv = () => downloadCsv(assetHeaders, assetRows, `${assetFilename}.csv`)
+    const handleExportXlsx = () => downloadXlsx([{ name: 'Assets', headers: assetHeaders, rows: assetRows }], `${assetFilename}.xlsx`)
 
     return (
         <div className="flex flex-col gap-5">
-            <SectionHeader label="Asset Health Overview" onExport={handleExport} />
+            <SectionHeader label="Asset Health Overview" onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <KpiCard label="Assets Tracked" value={d.assets.length} sub="With work orders" icon={<TbEngine />} bg="bg-indigo-100 dark:bg-indigo-500/20" />
                 <KpiCard label="Most Failures" value={d.assets[0]?.name ?? '—'} sub={`${d.assets[0]?.wo_count ?? 0} work orders`} icon={<TbAlertTriangle />} bg="bg-red-100 dark:bg-red-500/20" />
@@ -492,15 +560,19 @@ const PmReport = ({ range }: { range: DateRange }) => {
     const neverRun = d.plans.filter(p => p.compliance_status === 'never_run').length
     const complianceBg = avgCompliance >= 80 ? 'bg-emerald-100 dark:bg-emerald-500/20' : avgCompliance >= 50 ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-red-100 dark:bg-red-500/20'
 
-    const handleExport = () => downloadCsv(
-        ['Code', 'Name', 'Assigned To', 'Last Run', 'Next Run', 'Status'],
-        d.plans.map(p => [p.code, p.name, p.assigned_to ?? '', p.last_run_at ? dayjs(p.last_run_at).format('YYYY-MM-DD') : '', p.next_run_at ? dayjs(p.next_run_at).format('YYYY-MM-DD') : '', p.compliance_status]),
-        `pm-report-${dayjs().format('YYYY-MM-DD')}.csv`,
-    )
+    const pmFilename = `pm-report-${dayjs().format('YYYY-MM-DD')}`
+    const pmHeaders = ['Code', 'Name', 'Assigned To', 'Last Run', 'Next Run', 'Status']
+    const pmRows = d.plans.map(p => [p.code, p.name, p.assigned_to ?? '', p.last_run_at ? dayjs(p.last_run_at).format('YYYY-MM-DD') : '', p.next_run_at ? dayjs(p.next_run_at).format('YYYY-MM-DD') : '', p.compliance_status] as (string | number)[])
+
+    const handleExportCsv = () => downloadCsv(pmHeaders, pmRows, `${pmFilename}.csv`)
+    const handleExportXlsx = () => downloadXlsx([
+        { name: 'PM Plans', headers: pmHeaders, rows: pmRows },
+        { name: 'Monthly Compliance', headers: ['Month', 'Compliance %'], rows: d.monthly.map(m => [m.month, m.compliance ?? 0]) },
+    ], `${pmFilename}.xlsx`)
 
     return (
         <div className="flex flex-col gap-5">
-            <SectionHeader label="PM Compliance Summary" onExport={handleExport} />
+            <SectionHeader label="PM Compliance Summary" onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <KpiCard label="Avg Compliance" value={`${avgCompliance}%`} sub={range.from ? 'Selected period' : 'Last 6 months'} icon={<TbCalendarStats />} bg={complianceBg} />
                 <KpiCard label="On Time" value={onTime} sub="Active plans" icon={<TbCircleCheck />} bg="bg-emerald-100 dark:bg-emerald-500/20" />
@@ -571,15 +643,31 @@ const InventoryReport = ({ range }: { range: DateRange }) => {
     const fmt = (n: number) => `$${n.toLocaleString('en', { minimumFractionDigits: 2 })}`
     const hasRange = !!(range.from || range.to)
 
-    const handleExport = () => downloadCsv(
-        ['#', 'Code', 'Name', 'Unit', 'Qty Used', 'Total Cost ($)'],
-        d.top_items.map((item, i) => [i + 1, item.code, item.name, item.unit ?? '', item.total_used, item.total_cost.toFixed(2)]),
-        `inventory-report-${dayjs().format('YYYY-MM-DD')}.csv`,
-    )
+    const invFilename = `inventory-report-${dayjs().format('YYYY-MM-DD')}`
+    const invHeaders = ['#', 'Code', 'Name', 'Unit', 'Qty Used', 'Total Cost ($)']
+    const invRows = d.top_items.map((item, i) => [i + 1, item.code, item.name, item.unit ?? '', item.total_used, Number(item.total_cost.toFixed(2))] as (string | number)[])
+
+    const handleExportCsv = () => downloadCsv(invHeaders, invRows, `${invFilename}.csv`)
+    const handleExportXlsx = () => downloadXlsx([
+        {
+            name: 'Top Parts Used',
+            headers: invHeaders,
+            rows: invRows,
+        },
+        {
+            name: 'Cost Summary',
+            headers: ['Metric', 'Value ($)'],
+            rows: [
+                ['Parts Cost (Period)', Number(d.cost_month.toFixed(2))],
+                ['Parts Cost (Year)', Number(d.cost_year.toFixed(2))],
+                ['Current Stock Value', Number(d.stock_value.toFixed(2))],
+            ],
+        },
+    ], `${invFilename}.xlsx`)
 
     return (
         <div className="flex flex-col gap-5">
-            <SectionHeader label="Inventory & Cost Summary" onExport={handleExport} />
+            <SectionHeader label="Inventory & Cost Summary" onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <KpiCard
                     label={hasRange ? 'Parts Cost (Period)' : 'Parts Cost This Month'}

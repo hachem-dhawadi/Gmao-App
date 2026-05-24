@@ -40,6 +40,7 @@
     "framer-motion": "11.15.0",
     "gantt-task-react": "^0.3.9",
     "html-react-parser": "^5.2.1",
+    "html5-qrcode": "^2.3.8",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
     "marked": "^15.0.3",
@@ -64,6 +65,7 @@
     "simplebar-react": "^3.3.0",
     "swr": "^2.3.0",
     "tailwind-merge": "^2.5.2",
+    "xlsx": "^0.18.5",
     "yet-another-react-lightbox": "^3.21.7",
     "zod": "^3.23.8",
     "zustand": "^5.0.2"

@@ -83,7 +83,17 @@ module.exports = {
 					'gray-900': 'var(--gray-900)',
 					'gray-950': 'var(--gray-950)',
 				},
-				typography: (theme) => ({
+				keyframes: {
+					'scan-line': {
+						'0%':   { top: '0%' },
+						'50%':  { top: '100%' },
+						'100%': { top: '0%' },
+					},
+				},
+				animation: {
+					'scan-line': 'scan-line 2s ease-in-out infinite',
+				},
+			typography: (theme) => ({
 					DEFAULT: {
 						css: {
 							color: theme('colors.gray.500'),

@@ -447,21 +447,35 @@ const WorkOrderDetails = () => {
                                         {/* Due date */}
                                         <WoField title="Due Date" icon={<TbCalendar />}>
                                             <div className="flex items-center gap-1 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer w-full min-h-[46px] relative">
-                                                <span
-                                                    className={`text-sm font-semibold ${
-                                                        wo.due_at &&
-                                                        new Date(wo.due_at) <
-                                                            new Date() &&
-                                                        wo.status !==
-                                                            'completed'
-                                                            ? 'text-red-500'
-                                                            : ''
-                                                    }`}
-                                                >
-                                                    {wo.due_at
-                                                        ? dayjs(wo.due_at).format('MMM D, YYYY')
-                                                        : 'No due date'}
-                                                </span>
+                                                <div className="flex flex-col gap-0.5">
+                                                {(() => {
+                                                    if (!wo.due_at) return <span className="text-sm font-semibold">No due date</span>
+                                                    const dueDate  = new Date(wo.due_at)
+                                                    const now      = new Date()
+                                                    const msLeft   = dueDate.getTime() - now.getTime()
+                                                    const hoursLeft = msLeft / (1000 * 60 * 60)
+                                                    const isActive  = wo.status !== 'completed' && wo.status !== 'cancelled'
+                                                    const isOverdue = isActive && dueDate < now
+                                                    const isDueSoon = isActive && !isOverdue && hoursLeft <= 48
+                                                    return (
+                                                        <>
+                                                            <span className={`text-sm font-semibold ${isOverdue ? 'text-red-500' : isDueSoon ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                                                                {dayjs(wo.due_at).format('MMM D, YYYY')}
+                                                            </span>
+                                                            {isDueSoon && (
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 w-fit">
+                                                                    ⏰ Due in {Math.ceil(hoursLeft)}h
+                                                                </span>
+                                                            )}
+                                                            {isOverdue && (
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-red-100 dark:bg-red-500/20 text-red-500 w-fit">
+                                                                    Overdue
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    )
+                                                })()}
+                                                </div>
                                                 {canManage && (
                                                     <DatePicker
                                                         className="opacity-0 cursor-pointer absolute inset-0"

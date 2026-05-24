@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\LowStockAlert;
 use App\Mail\WorkOrderAssigned as WorkOrderAssignedMail;
+use App\Mail\WorkOrderDueSoon as WorkOrderDueSoonMail;
 use App\Mail\WorkOrderOverdue as WorkOrderOverdueMail;
 use App\Mail\PmPlanDue as PmPlanDueMail;
 use App\Models\Item;
@@ -233,6 +234,50 @@ class NotificationService
             'body'  => "PO {$po->code} has been submitted to the supplier.",
             'data'  => ['po_id' => $po->id, 'po_code' => $po->code],
         ]);
+    }
+
+    // ── Work Order: due soon ──────────────────────────────────────────────────
+
+    public static function notifyWoDueSoon(WorkOrder $wo, int $hoursLeft): void
+    {
+        $recipientIds = [];
+
+        foreach ($wo->assignedMembers()->with('user')->get() as $member) {
+            if ($member->user_id) $recipientIds[] = $member->user_id;
+        }
+
+        $managers = Member::query()
+            ->where('company_id', $wo->company_id)
+            ->whereHas('roles', fn ($q) => $q->whereIn('code', ['admin', 'manager']))
+            ->with('user')
+            ->get();
+
+        foreach ($managers as $manager) {
+            if ($manager->user_id) $recipientIds[] = $manager->user_id;
+        }
+
+        $allMembers = $wo->assignedMembers()->with('user')->get()
+            ->concat($managers)
+            ->keyBy('user_id');
+
+        foreach (array_unique($recipientIds) as $userId) {
+            self::create($userId, 'wo_due_soon', [
+                'title' => "Work order due in {$hoursLeft}h",
+                'body'  => "Work order \"{$wo->title}\" ({$wo->code}) is due in approximately {$hoursLeft} hours.",
+                'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title, 'hours_left' => $hoursLeft],
+            ]);
+
+            $member = $allMembers->get($userId);
+            $email  = $member?->user?->email;
+            $name   = $member?->user?->name ?? 'Team Member';
+            if ($email) {
+                try {
+                    Mail::to($email)->send(new WorkOrderDueSoonMail($wo, $name, $hoursLeft));
+                } catch (\Throwable $e) {
+                    Log::warning("Email failed (wo_due_soon) to {$email}: " . $e->getMessage());
+                }
+            }
+        }
     }
 
     // ── Work Order: overdue ───────────────────────────────────────────────────

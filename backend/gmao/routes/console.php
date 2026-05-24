@@ -11,5 +11,8 @@ Artisan::command('inspire', function () {
 // Run PM trigger check every hour
 Schedule::command('pm:trigger')->hourly();
 
+// Send due-soon WO notifications daily at 7am (48h early warning)
+Schedule::command('wo:notify-due-soon')->dailyAt('07:00');
+
 // Send overdue WO notifications daily at 8am
 Schedule::command('wo:notify-overdue')->dailyAt('08:00');

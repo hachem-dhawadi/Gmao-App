@@ -234,14 +234,32 @@ const WorkOrderListTable = () => {
                 header: 'Due',
                 accessorKey: 'due_at',
                 cell: (props) => {
-                    const due = props.row.original.due_at
+                    const due    = props.row.original.due_at
+                    const status = props.row.original.status
                     if (!due) return <span className="text-gray-400">—</span>
-                    const date = new Date(due)
-                    const isPast = date < new Date() && props.row.original.status !== 'completed'
+                    const date     = new Date(due)
+                    const now      = new Date()
+                    const msLeft   = date.getTime() - now.getTime()
+                    const hoursLeft = msLeft / (1000 * 60 * 60)
+                    const isActive  = status !== 'completed' && status !== 'cancelled'
+                    const isOverdue  = isActive && date < now
+                    const isDueSoon  = isActive && !isOverdue && hoursLeft <= 48
                     return (
-                        <span className={`text-sm ${isPast ? 'text-red-500 font-semibold' : 'text-gray-600 dark:text-gray-400'}`}>
-                            {date.toLocaleDateString()}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                            <span className={`text-sm ${isOverdue ? 'text-red-500 font-semibold' : isDueSoon ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-gray-600 dark:text-gray-400'}`}>
+                                {date.toLocaleDateString()}
+                            </span>
+                            {isDueSoon && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 w-fit">
+                                    ⏰ Due in {Math.ceil(hoursLeft)}h
+                                </span>
+                            )}
+                            {isOverdue && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-red-100 dark:bg-red-500/20 text-red-500 dark:text-red-400 w-fit">
+                                    Overdue
+                                </span>
+                            )}
+                        </div>
                     )
                 },
             },

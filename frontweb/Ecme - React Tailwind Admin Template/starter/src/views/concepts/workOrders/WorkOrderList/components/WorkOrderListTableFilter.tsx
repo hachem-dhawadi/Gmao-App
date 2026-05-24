@@ -22,8 +22,8 @@ const WorkOrderListTableFilter = () => {
     }
 
     const handleReset = () => {
-        reset({ status: 'all', priority: 'all', myOnly: false })
-        setFilterData({ status: 'all', priority: 'all', myOnly: false })
+        reset({ status: 'all', priority: 'all', myOnly: false, showArchived: false })
+        setFilterData({ status: 'all', priority: 'all', myOnly: false, showArchived: false })
         setDialogOpen(false)
     }
 
