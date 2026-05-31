@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Input from '@/components/ui/Input'
@@ -19,16 +20,17 @@ type FormSchema = {
     title?: string
 }
 
-const validationSchema: ZodType<FormSchema> = z.object({
-    to: z.string().min(1, { message: 'Please enter recipient' }),
-    title: z.string(),
-    content: z.string().min(1, { message: 'Please enter message' }),
-})
-
 const MailEditor = () => {
+    const { t } = useTranslation()
     const { mail, messageDialog, toggleMessageDialog } = useMailStore()
 
     const [formSubmiting, setFormSubmiting] = useState(false)
+
+    const validationSchema: ZodType<FormSchema> = z.object({
+        to: z.string().min(1, { message: t('mail.editor.validation.to') }),
+        title: z.string(),
+        content: z.string().min(1, { message: t('mail.editor.validation.message') }),
+    })
 
     const {
         handleSubmit,
@@ -65,7 +67,7 @@ const MailEditor = () => {
         console.log('values', value)
         setFormSubmiting(true)
         await sleep(500)
-        toast.push(<Notification type="success">Mail send!</Notification>, {
+        toast.push(<Notification type="success">{t('mail.editor.sent')}</Notification>, {
             placement: 'top-center',
         })
         setFormSubmiting(false)
@@ -79,12 +81,12 @@ const MailEditor = () => {
             onRequestClose={handleDialogClose}
         >
             <h4 className="mb-4">
-                {messageDialog.mode === 'new' && 'New Message'}
-                {messageDialog.mode === 'reply' && 'Reply'}
+                {messageDialog.mode === 'new' && t('mail.editor.newMessage')}
+                {messageDialog.mode === 'reply' && t('mail.editor.reply')}
             </h4>
             <Form onSubmit={handleSubmit(onSubmit)}>
                 <FormItem
-                    label="Title:"
+                    label={t('mail.editor.titleLabel')}
                     invalid={Boolean(errors.title)}
                     errorMessage={errors.title?.message}
                 >
@@ -94,14 +96,14 @@ const MailEditor = () => {
                         render={({ field }) => (
                             <Input
                                 autoComplete="off"
-                                placeholder="Add a subject"
+                                placeholder={t('mail.editor.titlePlaceholder')}
                                 {...field}
                             />
                         )}
                     />
                 </FormItem>
                 <FormItem
-                    label="To:"
+                    label={t('mail.editor.toLabel')}
                     invalid={Boolean(errors.to)}
                     errorMessage={errors.to?.message}
                 >
@@ -114,7 +116,7 @@ const MailEditor = () => {
                     />
                 </FormItem>
                 <FormItem
-                    label="Message"
+                    label={t('mail.editor.messageLabel')}
                     invalid={Boolean(errors.content)}
                     errorMessage={errors.content?.message}
                 >
@@ -139,14 +141,14 @@ const MailEditor = () => {
                         type="button"
                         onClick={handleDialogClose}
                     >
-                        Discard
+                        {t('mail.editor.discard')}
                     </Button>
                     <Button
                         variant="solid"
                         loading={formSubmiting}
                         type="submit"
                     >
-                        Send
+                        {t('mail.editor.send')}
                     </Button>
                 </div>
             </Form>

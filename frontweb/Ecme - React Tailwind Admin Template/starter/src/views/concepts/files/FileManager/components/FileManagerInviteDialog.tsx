@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
@@ -21,8 +22,8 @@ type Props = {
 }
 
 const FileManagerInviteDialog = ({ onShared }: Props) => {
-    const { inviteDialog, setInviteDialog, fileList } =
-        useFileManagerStore()
+    const { t } = useTranslation()
+    const { inviteDialog, setInviteDialog, fileList } = useFileManagerStore()
 
     const [selected, setSelected] = useState<MemberOption[]>([])
     const [saving, setSaving] = useState(false)
@@ -81,7 +82,7 @@ const FileManagerInviteDialog = ({ onShared }: Props) => {
             toast.push(
                 <Notification
                     type="success"
-                    title={isDirectory ? 'Folder shared successfully' : 'File shared successfully'}
+                    title={isDirectory ? t('fileManager.share.toastFolderSuccess') : t('fileManager.share.toastFileSuccess')}
                 />,
                 { placement: 'top-end' },
             )
@@ -90,7 +91,7 @@ const FileManagerInviteDialog = ({ onShared }: Props) => {
             toast.push(
                 <Notification
                     type="danger"
-                    title={isDirectory ? 'Failed to share folder' : 'Failed to share file'}
+                    title={isDirectory ? t('fileManager.share.toastFolderFailed') : t('fileManager.share.toastFileFailed')}
                 />,
                 { placement: 'top-end' },
             )
@@ -106,7 +107,7 @@ const FileManagerInviteDialog = ({ onShared }: Props) => {
             onClose={handleClose}
             onRequestClose={handleClose}
         >
-            <h4>{isDirectory ? 'Share this folder' : 'Share this file'}</h4>
+            <h4>{isDirectory ? t('fileManager.share.titleFolder') : t('fileManager.share.titleFile')}</h4>
             {currentFile && (
                 <p className="mt-1 text-sm text-gray-500">
                     {currentFile.name}
@@ -115,7 +116,7 @@ const FileManagerInviteDialog = ({ onShared }: Props) => {
             <div className="mt-6">
                 <Select
                     isMulti
-                    placeholder="Select members to share with..."
+                    placeholder={t('fileManager.share.placeholder')}
                     options={memberOptions}
                     value={selected}
                     onChange={(val) => setSelected(val as MemberOption[])}
@@ -135,7 +136,7 @@ const FileManagerInviteDialog = ({ onShared }: Props) => {
             {currentFile && currentFile.permissions.length > 0 && (
                 <div className="mt-4">
                     <p className="text-xs text-gray-500 font-semibold mb-2">
-                        Currently shared with:
+                        {t('fileManager.share.currentlyShared')}
                     </p>
                     <div className="flex flex-col gap-2">
                         {currentFile.permissions.map((p) => (
@@ -154,7 +155,7 @@ const FileManagerInviteDialog = ({ onShared }: Props) => {
             )}
             <div className="mt-6 flex justify-end items-center gap-2">
                 <Button type="button" size="sm" onClick={handleClose}>
-                    Cancel
+                    {t('common.cancel')}
                 </Button>
                 <Button
                     type="button"
@@ -164,7 +165,7 @@ const FileManagerInviteDialog = ({ onShared }: Props) => {
                     disabled={selected.length === 0}
                     onClick={handleSave}
                 >
-                    Share
+                    {t('fileManager.share.shareBtn')}
                 </Button>
             </div>
         </Dialog>

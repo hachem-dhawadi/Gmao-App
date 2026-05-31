@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import Avatar from '@/components/ui/Avatar'
 import Tag from '@/components/ui/Tag'
 import Badge from '@/components/ui/Badge'
@@ -30,12 +31,6 @@ type RoleOption = { label: string; value: string }
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const { Control } = components
-
-const statusOptions: StatusOption[] = [
-    { label: 'All', value: '', dotBackground: 'bg-gray-200' },
-    { label: 'Active', value: 'active', dotBackground: 'bg-success' },
-    { label: 'Inactive', value: 'inactive', dotBackground: 'bg-error' },
-]
 
 const statusColor: Record<string, string> = {
     active: 'bg-emerald-200 dark:bg-emerald-200 text-gray-900 dark:text-gray-900',
@@ -87,6 +82,12 @@ const MembersSection = ({
     isLoading,
     mutate,
 }: MembersSectionProps) => {
+    const { t } = useTranslation()
+    const statusOptions: StatusOption[] = useMemo(() => [
+        { label: t('rolesPermissions.filter.all'), value: '', dotBackground: 'bg-gray-200' },
+        { label: t('rolesPermissions.filter.active'), value: 'active', dotBackground: 'bg-success' },
+        { label: t('rolesPermissions.filter.inactive'), value: 'inactive', dotBackground: 'bg-error' },
+    ], [t])
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
     const [roleFilter, setRoleFilter] = useState('')
@@ -97,7 +98,7 @@ const MembersSection = ({
     const [deleting, setDeleting] = useState(false)
 
     const roleOptions: RoleOption[] = [
-        { label: 'All', value: '' },
+        { label: t('rolesPermissions.filter.all'), value: '' },
         ...roles.map((r) => ({ label: r.label, value: r.code })),
     ]
 
@@ -130,7 +131,7 @@ const MembersSection = ({
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to update role. Please try again.
+                    {t('rolesPermissions.toast.roleUpdateError')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -144,8 +145,7 @@ const MembersSection = ({
             await mutate()
             toast.push(
                 <Notification type="success">
-                    {selected.length} member{selected.length > 1 ? 's' : ''}{' '}
-                    removed.
+                    {t('rolesPermissions.toast.membersRemoved')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -154,7 +154,7 @@ const MembersSection = ({
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to remove one or more members.
+                    {t('rolesPermissions.toast.membersRemoveFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -166,7 +166,7 @@ const MembersSection = ({
     const columns: ColumnDef<Member>[] = useMemo(
         () => [
             {
-                header: 'Name',
+                header: t('rolesPermissions.col.name'),
                 accessorKey: 'user.name',
                 cell: (props) => {
                     const row = props.row.original
@@ -186,7 +186,7 @@ const MembersSection = ({
                 },
             },
             {
-                header: 'Status',
+                header: t('rolesPermissions.col.status'),
                 accessorKey: 'status',
                 cell: (props) => {
                     const { status } = props.row.original
@@ -203,12 +203,12 @@ const MembersSection = ({
                 },
             },
             {
-                header: 'Last online',
+                header: t('rolesPermissions.col.lastOnline'),
                 accessorKey: 'user.last_login_at',
                 cell: (props) => {
                     const lastLogin = props.row.original.user?.last_login_at
                     if (!lastLogin) {
-                        return <span className="text-gray-400">Never</span>
+                        return <span className="text-gray-400">{t('rolesPermissions.never')}</span>
                     }
                     return (
                         <div className="flex flex-col">
@@ -221,7 +221,7 @@ const MembersSection = ({
                 },
             },
             {
-                header: 'Role',
+                header: t('rolesPermissions.col.role'),
                 accessorKey: 'roles',
                 size: 160,
                 cell: (props) => {
@@ -259,7 +259,7 @@ const MembersSection = ({
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [roles, members],
+        [roles, members, t],
     )
 
     const handleRowSelect = (checked: boolean, row: Member) => {
@@ -278,7 +278,7 @@ const MembersSection = ({
             <div className="flex items-center justify-between mb-4">
                 <DebouceInput
                     className="max-w-[300px]"
-                    placeholder="Search..."
+                    placeholder={t('rolesPermissions.filter.search')}
                     type="text"
                     size="sm"
                     prefix={<TbSearch className="text-lg" />}
@@ -296,7 +296,7 @@ const MembersSection = ({
                         }}
                         options={statusOptions}
                         size="sm"
-                        placeholder="Status"
+                        placeholder={t('rolesPermissions.filter.status')}
                         defaultValue={statusOptions[0]}
                         onChange={(option) => {
                             setStatusFilter(option?.value || '')
@@ -307,7 +307,7 @@ const MembersSection = ({
                         className="min-w-[150px] w-full"
                         options={roleOptions}
                         size="sm"
-                        placeholder="Role"
+                        placeholder={t('rolesPermissions.col.role')}
                         defaultValue={roleOptions[0]}
                         onChange={(option) => {
                             setRoleFilter(
@@ -361,9 +361,9 @@ const MembersSection = ({
                                 </span>
                                 <span className="font-semibold flex items-center gap-1">
                                     <span className="heading-text">
-                                        {selected.length} Members
+                                        {t('rolesPermissions.footer.membersSelected', { count: selected.length })}
                                     </span>
-                                    <span>selected</span>
+                                    <span>{t('rolesPermissions.footer.selected')}</span>
                                 </span>
                             </span>
                             <Button
@@ -374,7 +374,7 @@ const MembersSection = ({
                                 }
                                 onClick={() => setDeleteOpen(true)}
                             >
-                                Delete
+                                {t('common.delete')}
                             </Button>
                         </div>
                     </div>
@@ -384,22 +384,14 @@ const MembersSection = ({
             <ConfirmDialog
                 isOpen={deleteOpen}
                 type="danger"
-                title="Remove members"
+                title={t('rolesPermissions.confirmDelete.title')}
                 onClose={() => setDeleteOpen(false)}
                 onRequestClose={() => setDeleteOpen(false)}
                 onCancel={() => setDeleteOpen(false)}
                 onConfirm={handleConfirmDelete}
                 confirmButtonProps={{ loading: deleting }}
             >
-                <p>
-                    Remove{' '}
-                    <strong>
-                        {selected.length} member
-                        {selected.length > 1 ? 's' : ''}
-                    </strong>
-                    ? This will deactivate their access. This action
-                    can&apos;t be undone.
-                </p>
+                <p>{t('rolesPermissions.confirmDelete.body', { count: selected.length })}</p>
             </ConfirmDialog>
         </>
     )

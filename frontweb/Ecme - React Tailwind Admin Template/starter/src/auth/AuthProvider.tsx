@@ -2,6 +2,7 @@ import { useRef, useImperativeHandle } from 'react'
 import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
+import { useLocaleStore } from '@/store/localeStore'
 import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
 import {
     CURRENT_COMPANY_ID_KEY,
@@ -186,6 +187,10 @@ function AuthProvider({ children }: AuthProviderProps) {
             const mappedUser = mapBackendUser(resp.data.user, resp.data)
 
             handleSignIn({ accessToken: resp.data.token }, mappedUser)
+
+            if (resp.data.user.locale) {
+                useLocaleStore.getState().setLang(resp.data.user.locale)
+            }
 
             if (mappedUser.isSuperadmin) {
                 localStorage.removeItem(CURRENT_COMPANY_ID_KEY)

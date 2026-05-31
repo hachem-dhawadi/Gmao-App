@@ -1,6 +1,6 @@
+import { useTranslation } from 'react-i18next'
 import { Droppable, Draggable } from '@hello-pangea/dnd'
 import WoBoardCard from './WoBoardCard'
-import { STATUS_LABELS } from '../store/workOrderBoardStore'
 import type { WorkOrder } from '@/services/WorkOrdersService'
 
 const statusDotClass: Record<string, string> = {
@@ -17,6 +17,8 @@ type Props = {
 }
 
 const WoBoardColumn = ({ status, cards }: Props) => {
+    const { t } = useTranslation()
+
     return (
         <div className="board-column flex flex-col mb-3 min-w-[300px] w-[300px] max-w-[300px] bg-gray-50 dark:bg-gray-900 rounded-2xl">
             <div className="flex items-center gap-2 px-5 py-4">
@@ -24,7 +26,7 @@ const WoBoardColumn = ({ status, cards }: Props) => {
                     className={`inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusDotClass[status]}`}
                 />
                 <h6 className="font-semibold text-sm">
-                    {STATUS_LABELS[status]}
+                    {t(`wo.status.${status}`)}
                 </h6>
                 <span className="text-xs text-gray-400 font-medium">
                     ({cards.length})
@@ -67,7 +69,7 @@ const WoBoardColumn = ({ status, cards }: Props) => {
 
                         {cards.length === 0 && !snapshot.isDraggingOver && (
                             <div className="text-center text-xs text-gray-300 dark:text-gray-600 py-8">
-                                No work orders
+                                {t('workOrderBoard.emptyColumn')}
                             </div>
                         )}
                     </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import ScrollBar from '@/components/ui/ScrollBar'
 import Loading from '@/components/shared/Loading'
 import Tag from '@/components/ui/Tag'
@@ -14,6 +15,7 @@ import type { AppNotification } from '../types'
 dayjs.extend(relativeTime)
 
 const MailList = () => {
+    const { t } = useTranslation()
     const { notifications, selectedCategory, setActiveNotification } = useMailStore()
     const { isLoading, handleMarkRead } = useNotifications()
 
@@ -41,7 +43,7 @@ const MailList = () => {
                     {filtered.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                             <TbBell className="text-5xl mb-3" />
-                            <p>No notifications</p>
+                            <p>{t('mail.noNotifications')}</p>
                         </div>
                     )}
                     {filtered.map((n, index) => {
@@ -73,7 +75,7 @@ const MailList = () => {
                                                 categoryColorMap[category],
                                             )}
                                         >
-                                            {typeLabelMap[n.type] ?? n.type}
+                                            {t(`mail.typeLabel.${n.type}`, { defaultValue: n.type })}
                                         </Tag>
                                         <span className="text-xs text-gray-400 ml-auto flex-shrink-0">
                                             {dayjs(n.created_at).fromNow()}

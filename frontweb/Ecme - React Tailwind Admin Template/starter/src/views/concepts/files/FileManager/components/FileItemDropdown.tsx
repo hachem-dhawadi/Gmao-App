@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import Dropdown from '@/components/ui/Dropdown'
 import EllipsisButton from '@/components/shared/EllipsisButton'
 import {
@@ -15,6 +16,7 @@ import type { MouseEvent, SyntheticEvent } from 'react'
 type FileItemDropdownProps = DropdownItemCallbackProps
 
 const FileItemDropdown = (props: FileItemDropdownProps) => {
+    const { t } = useTranslation()
     const { onDelete, onShare, onRename, onDownload, onOpen } = props
 
     const dropdownRef = useRef<DropdownRef>(null)
@@ -44,7 +46,7 @@ const FileItemDropdown = (props: FileItemDropdownProps) => {
                     onClick={(e) => handleDropdownItemClick(e, onOpen)}
                 >
                     <TbFolderSymlink className="text-xl" />
-                    <span>Open</span>
+                    <span>{t('fileManager.dropdown.open')}</span>
                 </Dropdown.Item>
             )}
             {onDownload && (
@@ -53,7 +55,7 @@ const FileItemDropdown = (props: FileItemDropdownProps) => {
                     onClick={(e) => handleDropdownItemClick(e, onDownload)}
                 >
                     <TbCloudDownload className="text-xl" />
-                    <span>Download</span>
+                    <span>{t('fileManager.dropdown.download')}</span>
                 </Dropdown.Item>
             )}
             <Dropdown.Item
@@ -61,7 +63,7 @@ const FileItemDropdown = (props: FileItemDropdownProps) => {
                 onClick={(e) => handleDropdownItemClick(e, onRename)}
             >
                 <TbPencil className="text-xl" />
-                <span>Rename</span>
+                <span>{t('fileManager.dropdown.rename')}</span>
             </Dropdown.Item>
             {onShare && (
                 <Dropdown.Item
@@ -69,7 +71,7 @@ const FileItemDropdown = (props: FileItemDropdownProps) => {
                     onClick={(e) => handleDropdownItemClick(e, onShare)}
                 >
                     <TbUserPlus className="text-xl" />
-                    <span>Share</span>
+                    <span>{t('fileManager.dropdown.share')}</span>
                 </Dropdown.Item>
             )}
             <Dropdown.Item
@@ -78,7 +80,7 @@ const FileItemDropdown = (props: FileItemDropdownProps) => {
             >
                 <span className="flex items-center gap-2 text-error">
                     <TbTrash className="text-xl" />
-                    <span>Delete</span>
+                    <span>{t('fileManager.dropdown.delete')}</span>
                 </span>
             </Dropdown.Item>
         </Dropdown>

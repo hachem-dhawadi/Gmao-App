@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import Container from '@/components/shared/Container'
 import Skeleton from '@/components/ui/Skeleton'
@@ -15,6 +16,7 @@ import type { RolesResponse, Role } from '@/services/RolesService'
 import type { MembersListResponse } from '@/services/MembersService'
 
 const RolesPermissions = () => {
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canManage = useAuthority(userAuthority, ['roles.write', 'admin'])
 
@@ -55,13 +57,13 @@ const RolesPermissions = () => {
             <Container>
                 <div className="mb-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h3>Roles & Permissions</h3>
+                        <h3>{t('rolesPermissions.title')}</h3>
                         {canManage && (
                             <Button
                                 variant="solid"
                                 onClick={() => setCreateOpen(true)}
                             >
-                                Create role
+                                {t('rolesPermissions.createRole')}
                             </Button>
                         )}
                     </div>
@@ -75,7 +77,7 @@ const RolesPermissions = () => {
                     </div>
                 </div>
                 <div>
-                    <h3 className="mb-6">All accounts</h3>
+                    <h3 className="mb-6">{t('rolesPermissions.allAccounts')}</h3>
                     <MembersSection
                         members={members}
                         roles={roles}

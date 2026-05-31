@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import CalendarView from '@/components/shared/CalendarView'
 import Container from '@/components/shared/Container'
 import EventDialog from './components/EventDialog'
@@ -36,6 +37,7 @@ const woColorMap = (base: EventColors): EventColors => ({
 
 const Calendar = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const currentMemberId = useSessionUser((state) => state.user.memberId)
     const isPrivileged = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
@@ -140,7 +142,7 @@ const Calendar = () => {
             arg.revert()
             toast.push(
                 <Notification type="danger">
-                    Failed to move event. Please try again.
+                    {t('calendar.toast.moveFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -168,7 +170,7 @@ const Calendar = () => {
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to save event. Please try again.
+                    {t('calendar.toast.saveFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -180,13 +182,13 @@ const Calendar = () => {
             await apiDeleteCalendarEvent(db_id)
             mutate()
             toast.push(
-                <Notification type="success">Event deleted.</Notification>,
+                <Notification type="success">{t('calendar.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to delete event.
+                    {t('calendar.toast.deleteFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -198,21 +200,21 @@ const Calendar = () => {
             {isPrivileged && (
                 <div className="flex items-center gap-2 mb-4">
                     <span className="text-sm text-gray-500 font-semibold mr-1">
-                        Show:
+                        {t('calendar.show')}
                     </span>
                     <Button
                         size="sm"
                         variant={!filterMine ? 'solid' : 'default'}
                         onClick={() => setFilterMine(false)}
                     >
-                        All
+                        {t('calendar.all')}
                     </Button>
                     <Button
                         size="sm"
                         variant={filterMine ? 'solid' : 'default'}
                         onClick={() => setFilterMine(true)}
                     >
-                        Mine
+                        {t('calendar.mine')}
                     </Button>
                 </div>
             )}

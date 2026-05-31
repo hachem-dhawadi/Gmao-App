@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import Table from '@/components/ui/Table'
 import TableRowSkeleton from '@/components/shared/loaders/TableRowSkeleton'
 import Notification from '@/components/ui/Notification'
@@ -20,16 +21,20 @@ import { TbBuilding } from 'react-icons/tb'
 
 const { THead, Th, Tr } = Table
 
-const NoCompanyPrompt = () => (
-    <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-        <TbBuilding className="text-6xl mb-4 text-gray-300" />
-        <p className="text-lg font-semibold text-gray-500">No company selected</p>
-        <p className="text-sm mt-1">Enter a company context from the company list to access the file manager.</p>
-    </div>
-)
+const NoCompanyPrompt = () => {
+    const { t } = useTranslation()
+    return (
+        <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+            <TbBuilding className="text-6xl mb-4 text-gray-300" />
+            <p className="text-lg font-semibold text-gray-500">{t('fileManager.noCompany.title')}</p>
+            <p className="text-sm mt-1">{t('fileManager.noCompany.desc')}</p>
+        </div>
+    )
+}
 
 const FileManager = () => {
     // These hooks must be called first (before any conditional return) to satisfy React's rules of hooks.
+    const { t } = useTranslation()
     const isSuperadmin = useSessionUser((s) => s.user.authority?.includes('superadmin'))
     const activeCompany = useCompanySwitchStore((s) => s.activeCompany)
 
@@ -69,7 +74,7 @@ const FileManager = () => {
             } catch {
                 if (!silent) {
                     toast.push(
-                        <Notification type="danger" title="Failed to load files" />,
+                        <Notification type="danger" title={t('fileManager.toast.loadFailed')} />,
                         { placement: 'top-end' },
                     )
                 }
@@ -145,7 +150,7 @@ const FileManager = () => {
             URL.revokeObjectURL(url)
         } catch {
             toast.push(
-                <Notification type="danger" title="Download failed" />,
+                <Notification type="danger" title={t('fileManager.toast.downloadFailed')} />,
                 { placement: 'top-end' },
             )
         }
@@ -172,9 +177,9 @@ const FileManager = () => {
                             <Table>
                                 <THead>
                                     <Tr>
-                                        <Th>File</Th>
-                                        <Th>Size</Th>
-                                        <Th>Type</Th>
+                                        <Th>{t('fileManager.columns.file')}</Th>
+                                        <Th>{t('fileManager.columns.size')}</Th>
+                                        <Th>{t('fileManager.columns.type')}</Th>
                                         <Th></Th>
                                     </Tr>
                                 </THead>
@@ -189,10 +194,10 @@ const FileManager = () => {
                     ) : fileList.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                             <p className="text-lg font-semibold">
-                                This folder is empty
+                                {t('fileManager.empty.title')}
                             </p>
                             <p className="text-sm mt-1">
-                                Upload a file or create a folder to get started
+                                {t('fileManager.empty.desc')}
                             </p>
                         </div>
                     ) : (

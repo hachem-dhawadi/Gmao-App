@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Container from '@/components/shared/Container'
 import DataTable from '@/components/shared/DataTable'
@@ -63,12 +64,6 @@ const moveTypeConfig: Record<string, { label: string; className: string }> = {
     },
 }
 
-const MOVE_TYPE_OPTIONS = [
-    { value: 'in' as const, label: 'IN — Stock received' },
-    { value: 'out' as const, label: 'OUT — Stock consumed / used' },
-    { value: 'adjustment' as const, label: 'ADJUSTMENT — Manual correction' },
-]
-
 const StockMoveList = () => {
     const {
         moveList,
@@ -80,6 +75,14 @@ const StockMoveList = () => {
         setTableData,
         setFilterData,
     } = useStockMoveList()
+
+    const { t } = useTranslation()
+
+    const MOVE_TYPE_OPTIONS = useMemo(() => [
+        { value: 'in' as const, label: t('stockMove.moveType.in') },
+        { value: 'out' as const, label: t('stockMove.moveType.out') },
+        { value: 'adjustment' as const, label: t('stockMove.moveType.adjustment') },
+    ], [t])
 
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canCreate = useAuthority(userAuthority, ['inventory.write', 'admin', 'manager'])
@@ -119,20 +122,20 @@ const StockMoveList = () => {
 
     // ── Filter selects (list page) ─────────────────────────────────────────
     const filterItemOptions = [
-        { value: '', label: 'All items' },
+        { value: '', label: t('stockMove.filter.allItems') },
         ...itemOptions,
     ]
 
     const filterWarehouseOptions = [
-        { value: '', label: 'All warehouses' },
+        { value: '', label: t('stockMove.filter.allWarehouses') },
         ...allWarehouseOptions,
     ]
 
     const filterMoveTypeOptions = [
-        { value: '', label: 'All types' },
+        { value: '', label: t('stockMove.filter.allTypes') },
         { value: 'in', label: 'IN' },
         { value: 'out', label: 'OUT' },
-        { value: 'adjustment', label: 'Adjustment' },
+        { value: 'adjustment', label: t('stockMove.filter.adjustment') },
     ]
 
     // ── Dialog form ────────────────────────────────────────────────────────
@@ -234,7 +237,7 @@ const StockMoveList = () => {
             await mutate()
             toast.push(
                 <Notification type="success">
-                    Stock move recorded.
+                    {t('stockMove.toast.recorded')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -243,7 +246,7 @@ const StockMoveList = () => {
         } catch (error: unknown) {
             const message =
                 (error as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message || 'Failed to record move.'
+                    ?.response?.data?.message || t('stockMove.toast.recordFailed')
             toast.push(<Notification type="danger">{message}</Notification>, {
                 placement: 'top-center',
             })
@@ -258,13 +261,13 @@ const StockMoveList = () => {
             await apiDeleteStockMove(deleteTarget.id)
             await mutate()
             toast.push(
-                <Notification type="success">Stock move deleted.</Notification>,
+                <Notification type="success">{t('stockMove.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to delete stock move.
+                    {t('stockMove.toast.deleteFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -273,9 +276,9 @@ const StockMoveList = () => {
         }
     }
 
-    const columns: ColumnDef<StockMove>[] = [
+    const columns: ColumnDef<StockMove>[] = useMemo(() => [
         {
-            header: 'Date',
+            header: t('stockMove.col.date'),
             accessorKey: 'moved_at',
             cell: (props) => (
                 <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -288,7 +291,7 @@ const StockMoveList = () => {
             ),
         },
         {
-            header: 'Type',
+            header: t('stockMove.col.type'),
             accessorKey: 'move_type',
             cell: (props) => {
                 const cfg = moveTypeConfig[props.row.original.move_type] ?? {
@@ -303,7 +306,7 @@ const StockMoveList = () => {
             },
         },
         {
-            header: 'Item',
+            header: t('stockMove.col.item'),
             accessorKey: 'item',
             cell: (props) => {
                 const item = props.row.original.item
@@ -322,7 +325,7 @@ const StockMoveList = () => {
             },
         },
         {
-            header: 'Warehouse',
+            header: t('stockMove.col.warehouse'),
             accessorKey: 'warehouse',
             cell: (props) => {
                 const wh = props.row.original.warehouse
@@ -336,7 +339,7 @@ const StockMoveList = () => {
             },
         },
         {
-            header: 'Qty',
+            header: t('stockMove.col.qty'),
             accessorKey: 'quantity',
             cell: (props) => {
                 const qty = props.row.original.quantity
@@ -361,7 +364,7 @@ const StockMoveList = () => {
             },
         },
         {
-            header: 'Reference',
+            header: t('stockMove.col.reference'),
             accessorKey: 'reference',
             cell: (props) => (
                 <span className="text-sm text-gray-500">
@@ -370,7 +373,7 @@ const StockMoveList = () => {
             ),
         },
         {
-            header: 'By',
+            header: t('stockMove.col.by'),
             accessorKey: 'created_by',
             cell: (props) => (
                 <span className="text-sm text-gray-500">
@@ -385,7 +388,7 @@ const StockMoveList = () => {
                       id: 'action',
                       cell: (props) => (
                           <div className="flex items-center justify-end">
-                              <Tooltip title="Delete">
+                              <Tooltip title={t('common.delete')}>
                                   <div
                                       className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
                                       role="button"
@@ -401,14 +404,15 @@ const StockMoveList = () => {
                   },
               ] as ColumnDef<StockMove>[])
             : []),
-    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    ], [t, isAdmin])
 
     return (
         <Container>
             <AdaptiveCard>
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                        <h3>Stock Moves</h3>
+                        <h3>{t('stockMove.title')}</h3>
                         {canCreate && (
                             <Button
                                 variant="solid"
@@ -418,7 +422,7 @@ const StockMoveList = () => {
                                     setDialogOpen(true)
                                 }}
                             >
-                                Record Move
+                                {t('stockMove.dialog.recordMove')}
                             </Button>
                         )}
                     </div>
@@ -531,17 +535,17 @@ const StockMoveList = () => {
                 onClose={() => setDialogOpen(false)}
                 onRequestClose={() => setDialogOpen(false)}
             >
-                <h5 className="mb-4">Record Stock Move</h5>
+                <h5 className="mb-4">{t('stockMove.dialog.title')}</h5>
                 <Form onSubmit={handleSubmit(handleRecordMove)} className="flex flex-col">
                     <div className="flex flex-col gap-3 overflow-y-auto max-h-[60vh] pr-1">
                         {/* Item */}
                         <Controller
                             name="item_id"
                             control={control}
-                            rules={{ required: 'Item is required' }}
+                            rules={{ required: t('stockMove.validation.itemRequired') }}
                             render={({ field }) => (
                                 <FormItem
-                                    label="Item"
+                                    label={t('stockMove.col.item')}
                                     invalid={!!errors.item_id}
                                     errorMessage={
                                         errors.item_id?.message as string
@@ -562,7 +566,7 @@ const StockMoveList = () => {
                             name="move_type"
                             control={control}
                             render={({ field }) => (
-                                <FormItem label="Move type">
+                                <FormItem label={t('stockMove.dialog.moveType')}>
                                     <Select
                                         options={MOVE_TYPE_OPTIONS}
                                         value={field.value}
@@ -576,10 +580,10 @@ const StockMoveList = () => {
                         <Controller
                             name="warehouse_id"
                             control={control}
-                            rules={{ required: 'Warehouse is required' }}
+                            rules={{ required: t('stockMove.validation.warehouseRequired') }}
                             render={({ field }) => (
                                 <FormItem
-                                    label="Warehouse"
+                                    label={t('stockMove.col.warehouse')}
                                     invalid={!!errors.warehouse_id}
                                     errorMessage={
                                         errors.warehouse_id
@@ -591,8 +595,7 @@ const StockMoveList = () => {
                                         dialogWarehouseOptions.length <
                                             allWarehouseOptions.length ? (
                                             <span className="text-xs text-gray-400">
-                                                Showing only warehouses with
-                                                stock of this item
+                                                {t('stockMove.dialog.warehouseHint')}
                                             </span>
                                         ) : null
                                     }
@@ -617,16 +620,16 @@ const StockMoveList = () => {
                             name="quantity"
                             control={control}
                             rules={{
-                                required: 'Quantity is required',
+                                required: t('stockMove.validation.qtyRequired'),
                                 validate: (v) => {
                                     const n = parseFloat(v)
-                                    if (isNaN(n) || n <= 0) return 'Must be a positive number'
+                                    if (isNaN(n) || n <= 0) return t('stockMove.validation.qtyPositive')
                                     if (
                                         watchedMoveType?.value !== 'in' &&
                                         availableStock !== null &&
                                         n > availableStock
                                     ) {
-                                        return `Maximum available is ${availableStock}`
+                                        return t('stockMove.validation.qtyMax', { max: availableStock })
                                     }
                                     return true
                                 },
@@ -650,7 +653,7 @@ const StockMoveList = () => {
                                 return (
                                     <div className="flex flex-col gap-2">
                                         <FormItem
-                                            label="Quantity"
+                                            label={t('stockMove.col.qty')}
                                             invalid={!!errors.quantity}
                                             errorMessage={errors.quantity?.message}
                                         >
@@ -670,7 +673,7 @@ const StockMoveList = () => {
                                             <div className="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/40 px-4 py-3 flex flex-col gap-2">
                                                 <div className="flex items-center justify-between">
                                                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                        Current stock (this warehouse)
+                                                        {t('stockMove.dialog.currentStock')}
                                                     </span>
                                                     <span className={`text-sm font-bold ${currentWarehouseStock === 0 ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
                                                         {currentWarehouseStock} {unit}
@@ -682,16 +685,16 @@ const StockMoveList = () => {
                                                         <div className="border-t border-gray-200 dark:border-gray-600" />
                                                         <div className="flex items-center justify-between">
                                                             <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                                After this move
+                                                                {t('stockMove.dialog.afterMove')}
                                                             </span>
                                                             {remaining !== null && (
                                                                 <span className={`text-sm font-bold ${remaining === 0 ? 'text-red-500' : 'text-amber-500'}`}>
-                                                                    {remaining} {unit} remaining
+                                                                    {remaining} {unit} {t('stockMove.dialog.remaining')}
                                                                 </span>
                                                             )}
                                                             {afterIn !== null && (
                                                                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                                                                    {afterIn} {unit} in stock
+                                                                    {afterIn} {unit} {t('stockMove.dialog.inStock')}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -709,10 +712,10 @@ const StockMoveList = () => {
                             name="reference"
                             control={control}
                             render={({ field }) => (
-                                <FormItem label="Reference">
+                                <FormItem label={t('stockMove.col.reference')}>
                                     <Input
                                         {...field}
-                                        placeholder="PO number, WO code…"
+                                        placeholder={t('stockMove.dialog.referencePlaceholder')}
                                     />
                                 </FormItem>
                             )}
@@ -723,12 +726,12 @@ const StockMoveList = () => {
                             name="notes"
                             control={control}
                             render={({ field }) => (
-                                <FormItem label="Notes">
+                                <FormItem label={t('stockMove.dialog.notes')}>
                                     <Input
                                         {...field}
                                         textArea
                                         rows={2}
-                                        placeholder="Optional notes"
+                                        placeholder={t('stockMove.dialog.notesPlaceholder')}
                                     />
                                 </FormItem>
                             )}
@@ -743,14 +746,14 @@ const StockMoveList = () => {
                                 reset()
                             }}
                         >
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             variant="solid"
                             type="submit"
                             loading={submitting}
                         >
-                            Record
+                            {t('common.record')}
                         </Button>
                     </div>
                 </Form>
@@ -759,17 +762,13 @@ const StockMoveList = () => {
             <ConfirmDialog
                 isOpen={!!deleteTarget}
                 type="danger"
-                title="Delete stock move"
+                title={t('stockMove.confirmDelete.title')}
                 onClose={() => setDeleteTarget(null)}
                 onRequestClose={() => setDeleteTarget(null)}
                 onCancel={() => setDeleteTarget(null)}
                 onConfirm={handleDeleteMove}
             >
-                <p>
-                    Delete this{' '}
-                    <strong>{deleteTarget?.move_type?.toUpperCase()}</strong>{' '}
-                    move? This cannot be undone and will affect stock levels.
-                </p>
+                <p>{t('stockMove.confirmDelete.body', { type: deleteTarget?.move_type?.toUpperCase() })}</p>
             </ConfirmDialog>
         </Container>
     )

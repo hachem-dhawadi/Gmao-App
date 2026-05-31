@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -17,28 +18,29 @@ type PasswordSchema = {
     confirmNewPassword: string
 }
 
-const validationSchema: ZodType<PasswordSchema> = z
-    .object({
-        currentPassword: z
-            .string()
-            .min(1, { message: 'Please enter your current password!' }),
-        newPassword: z
-            .string()
-            .min(8, { message: 'New password must be at least 8 characters.' }),
-        confirmNewPassword: z
-            .string()
-            .min(1, { message: 'Please confirm your new password!' }),
-    })
-    .refine((data) => data.confirmNewPassword === data.newPassword, {
-        message: 'Password not match',
-        path: ['confirmNewPassword'],
-    })
-
 const SettingsSecurity = () => {
+    const { t } = useTranslation()
     const [confirmationOpen, setConfirmationOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     const formRef = useRef<HTMLFormElement>(null)
+
+    const validationSchema: ZodType<PasswordSchema> = z
+        .object({
+            currentPassword: z
+                .string()
+                .min(1, { message: t('settingsSecurity.validation.currentPassword') }),
+            newPassword: z
+                .string()
+                .min(8, { message: t('settingsSecurity.validation.newPassword') }),
+            confirmNewPassword: z
+                .string()
+                .min(1, { message: t('settingsSecurity.validation.confirmNewPassword') }),
+        })
+        .refine((data) => data.confirmNewPassword === data.newPassword, {
+            message: t('settingsSecurity.validation.passwordMatch'),
+            path: ['confirmNewPassword'],
+        })
 
     const {
         getValues,
@@ -70,13 +72,13 @@ const SettingsSecurity = () => {
             })
 
             toast.push(
-                <Notification type="success">Password updated successfully.</Notification>,
+                <Notification type="success">{t('settingsSecurity.toast.success')}</Notification>,
                 { placement: 'top-center' },
             )
         } catch (error: unknown) {
             const message =
                 (error as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message || 'Failed to update password.'
+                    ?.response?.data?.message || t('settingsSecurity.toast.failed')
 
             toast.push(<Notification type="danger">{message}</Notification>, {
                 placement: 'top-center',
@@ -93,11 +95,8 @@ const SettingsSecurity = () => {
     return (
         <div>
             <div className="mb-8">
-                <h4>Password</h4>
-                <p>
-                    Remember, your password is your digital key to your account.
-                    Keep it safe, keep it secure!
-                </p>
+                <h4>{t('settingsSecurity.title')}</h4>
+                <p>{t('settingsSecurity.description')}</p>
             </div>
             <Form
                 ref={formRef}
@@ -105,7 +104,7 @@ const SettingsSecurity = () => {
                 onSubmit={handleSubmit(onSubmit)}
             >
                 <FormItem
-                    label="Current password"
+                    label={t('settingsSecurity.currentPassword')}
                     invalid={Boolean(errors.currentPassword)}
                     errorMessage={errors.currentPassword?.message}
                 >
@@ -123,7 +122,7 @@ const SettingsSecurity = () => {
                     />
                 </FormItem>
                 <FormItem
-                    label="New password"
+                    label={t('settingsSecurity.newPassword')}
                     invalid={Boolean(errors.newPassword)}
                     errorMessage={errors.newPassword?.message}
                 >
@@ -141,7 +140,7 @@ const SettingsSecurity = () => {
                     />
                 </FormItem>
                 <FormItem
-                    label="Confirm new password"
+                    label={t('settingsSecurity.confirmNewPassword')}
                     invalid={Boolean(errors.confirmNewPassword)}
                     errorMessage={errors.confirmNewPassword?.message}
                 >
@@ -160,14 +159,14 @@ const SettingsSecurity = () => {
                 </FormItem>
                 <div className="flex justify-end">
                     <Button variant="solid" type="submit">
-                        Update
+                        {t('settingsSecurity.updateBtn')}
                     </Button>
                 </div>
             </Form>
             <ConfirmDialog
                 isOpen={confirmationOpen}
                 type="warning"
-                title="Update password"
+                title={t('settingsSecurity.confirmTitle')}
                 confirmButtonProps={{
                     loading: isSubmitting,
                     onClick: handlePostSubmit,
@@ -176,7 +175,7 @@ const SettingsSecurity = () => {
                 onRequestClose={() => setConfirmationOpen(false)}
                 onCancel={() => setConfirmationOpen(false)}
             >
-                <p>Are you sure you want to change your password?</p>
+                <p>{t('settingsSecurity.confirmBody')}</p>
             </ConfirmDialog>
         </div>
     )

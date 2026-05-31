@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -12,6 +13,7 @@ import { TbTrash } from 'react-icons/tb'
 import type { DepartmentFormSchema } from '../DepartmentForm'
 
 const DepartmentCreate = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [discardOpen, setDiscardOpen] = useState(false)
@@ -35,7 +37,7 @@ const DepartmentCreate = () => {
 
             toast.push(
                 <Notification type="success">
-                    Department created successfully.
+                    {t('departmentCreate.toast.success')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -43,7 +45,7 @@ const DepartmentCreate = () => {
         } catch (error: unknown) {
             const message =
                 (error as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message || 'Failed to create department.'
+                    ?.response?.data?.message || t('departmentCreate.toast.error')
             toast.push(<Notification type="danger">{message}</Notification>, {
                 placement: 'top-center',
             })
@@ -67,14 +69,14 @@ const DepartmentCreate = () => {
                                 icon={<TbTrash />}
                                 onClick={() => setDiscardOpen(true)}
                             >
-                                Discard
+                                {t('common.discard')}
                             </Button>
                             <Button
                                 variant="solid"
                                 type="submit"
                                 loading={isSubmitting}
                             >
-                                Create
+                                {t('common.create')}
                             </Button>
                         </div>
                     </div>
@@ -84,7 +86,7 @@ const DepartmentCreate = () => {
             <ConfirmDialog
                 isOpen={discardOpen}
                 type="danger"
-                title="Discard changes"
+                title={t('common.discardConfirm.title')}
                 onClose={() => setDiscardOpen(false)}
                 onRequestClose={() => setDiscardOpen(false)}
                 onCancel={() => setDiscardOpen(false)}
@@ -93,7 +95,7 @@ const DepartmentCreate = () => {
                     navigate('/concepts/departments')
                 }}
             >
-                <p>Are you sure you want to discard this? This action can&apos;t be undone.</p>
+                <p>{t('common.discardConfirm.body')}</p>
             </ConfirmDialog>
         </>
     )

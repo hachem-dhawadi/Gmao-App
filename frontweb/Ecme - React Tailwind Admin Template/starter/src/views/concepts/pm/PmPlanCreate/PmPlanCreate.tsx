@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -12,6 +13,7 @@ import { TbTrash } from 'react-icons/tb'
 import type { PmPlanFormSchema } from '../PmPlanForm'
 
 const PmPlanCreate = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [discardOpen, setDiscardOpen] = useState(false)
@@ -47,7 +49,7 @@ const PmPlanCreate = () => {
 
             toast.push(
                 <Notification type="success">
-                    PM plan created successfully.
+                    {t('pmCreate.toast.success')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -55,7 +57,7 @@ const PmPlanCreate = () => {
         } catch (error: unknown) {
             const message =
                 (error as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message || 'Failed to create PM plan.'
+                    ?.response?.data?.message || t('pmCreate.toast.error')
             toast.push(<Notification type="danger">{message}</Notification>, {
                 placement: 'top-center',
             })
@@ -79,14 +81,14 @@ const PmPlanCreate = () => {
                                 icon={<TbTrash />}
                                 onClick={() => setDiscardOpen(true)}
                             >
-                                Discard
+                                {t('common.discard')}
                             </Button>
                             <Button
                                 variant="solid"
                                 type="submit"
                                 loading={isSubmitting}
                             >
-                                Create PM Plan
+                                {t('pmCreate.createButton')}
                             </Button>
                         </div>
                     </div>
@@ -96,7 +98,7 @@ const PmPlanCreate = () => {
             <ConfirmDialog
                 isOpen={discardOpen}
                 type="danger"
-                title="Discard changes"
+                title={t('common.discardConfirm.title')}
                 onClose={() => setDiscardOpen(false)}
                 onRequestClose={() => setDiscardOpen(false)}
                 onCancel={() => setDiscardOpen(false)}
@@ -105,10 +107,7 @@ const PmPlanCreate = () => {
                     navigate('/concepts/pm/pm-list')
                 }}
             >
-                <p>
-                    Are you sure you want to discard this? This action
-                    can&apos;t be undone.
-                </p>
+                <p>{t('common.discardConfirm.body')}</p>
             </ConfirmDialog>
         </>
     )

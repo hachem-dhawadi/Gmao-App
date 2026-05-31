@@ -8,10 +8,10 @@ import toast from '@/components/ui/toast'
 import useWorkOrderList from '../hooks/useWorkOrderList'
 import { useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPencil, TbEye, TbTrash, TbArchive } from 'react-icons/tb'
+import { TbPencil, TbEye, TbTrash, TbArchive, TbArchiveOff } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
-import { apiDeleteWorkOrder } from '@/services/WorkOrdersService'
+import { apiDeleteWorkOrder, apiArchiveWorkOrder, apiUnarchiveWorkOrder } from '@/services/WorkOrdersService'
 import { useTranslation } from 'react-i18next'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { WorkOrder } from '../types'
@@ -52,15 +52,18 @@ type ActionColumnProps = {
     id: number
     canEdit: boolean
     canDelete: boolean
+    canArchive: boolean
+    isArchived: boolean
     onDelete: (id: number) => void
+    onArchive: (id: number, isArchived: boolean) => void
 }
 
-const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) => {
+const ActionColumn = ({ id, canEdit, canDelete, canArchive, isArchived, onDelete, onArchive }: ActionColumnProps) => {
     const navigate = useNavigate()
     const { t } = useTranslation()
     return (
         <div className="flex items-center justify-end gap-3">
-            {canEdit && (
+            {canEdit && !isArchived && (
                 <Tooltip title={t('common.edit')}>
                     <div
                         className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
@@ -80,6 +83,17 @@ const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) =
                     <TbEye />
                 </div>
             </Tooltip>
+            {canArchive && (
+                <Tooltip title={isArchived ? t('wo.details.unarchive') : t('wo.details.archive')}>
+                    <div
+                        className={`text-xl cursor-pointer select-none ${isArchived ? 'text-amber-500 hover:text-amber-600' : 'text-gray-500 hover:text-amber-500'}`}
+                        role="button"
+                        onClick={() => onArchive(id, isArchived)}
+                    >
+                        {isArchived ? <TbArchiveOff /> : <TbArchive />}
+                    </div>
+                </Tooltip>
+            )}
             {canDelete && (
                 <Tooltip title={t('common.delete')}>
                     <div
@@ -114,8 +128,33 @@ const WorkOrderListTable = () => {
     } = useWorkOrderList()
 
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canEdit   = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
-    const canDelete = useAuthority(userAuthority, ['work_orders.delete', 'admin'])
+    const canEdit    = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
+    const canDelete  = useAuthority(userAuthority, ['work_orders.delete', 'admin'])
+    const canArchive = useAuthority(userAuthority, ['admin', 'manager'])
+
+    const handleArchive = async (id: number, isArchived: boolean) => {
+        try {
+            if (isArchived) {
+                await apiUnarchiveWorkOrder(id)
+                toast.push(
+                    <Notification type="success">{t('wo.toast.unarchived')}</Notification>,
+                    { placement: 'top-center' },
+                )
+            } else {
+                await apiArchiveWorkOrder(id)
+                toast.push(
+                    <Notification type="success">{t('wo.toast.archived')}</Notification>,
+                    { placement: 'top-center' },
+                )
+            }
+            mutate()
+        } catch {
+            toast.push(
+                <Notification type="danger">{t('wo.toast.archiveFailed')}</Notification>,
+                { placement: 'top-center' },
+            )
+        }
+    }
 
     const handleDeleteConfirm = async () => {
         if (!deleteTargetId) return
@@ -245,13 +284,16 @@ const WorkOrderListTable = () => {
                         id={props.row.original.id}
                         canEdit={canEdit}
                         canDelete={canDelete}
+                        canArchive={canArchive}
+                        isArchived={Boolean(props.row.original.archived_at)}
                         onDelete={setDeleteTargetId}
+                        onArchive={handleArchive}
                     />
                 ),
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [canEdit, canDelete, t],
+        [canEdit, canDelete, canArchive, t],
     )
 
     const handleSetTableData = (data: TableQueries) => {

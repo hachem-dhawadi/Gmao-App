@@ -569,7 +569,7 @@ export const protectedRoutes: Routes = [
         authority: [],
         meta: {
             header: {
-                title: 'Settings',
+                title: 'nav.account.settings',
             },
             pageContainerType: 'contained',
         },

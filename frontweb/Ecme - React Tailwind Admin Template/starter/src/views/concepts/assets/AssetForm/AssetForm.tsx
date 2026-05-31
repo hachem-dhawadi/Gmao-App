@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ReactNode } from 'react'
 import { Form, FormItem } from '@/components/ui/Form'
 import Container from '@/components/shared/Container'
@@ -45,13 +46,6 @@ function generateAssetCode(): string {
 type StatusOption = { value: AssetFormSchema['status']; label: string; dotClass: string }
 type TypeOption = { value: number; label: string }
 
-const statusOptions: StatusOption[] = [
-    { value: 'active', label: 'Active', dotClass: 'bg-emerald-500' },
-    { value: 'inactive', label: 'Inactive', dotClass: 'bg-gray-400' },
-    { value: 'under_maintenance', label: 'Under Maintenance', dotClass: 'bg-amber-500' },
-    { value: 'decommissioned', label: 'Decommissioned', dotClass: 'bg-red-500' },
-]
-
 const StatusLabel = ({ label, dotClass }: { label: string; dotClass: string }) => (
     <div className="flex items-center gap-2">
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
@@ -59,36 +53,17 @@ const StatusLabel = ({ label, dotClass }: { label: string; dotClass: string }) =
     </div>
 )
 
-// ── Zod schema ────────────────────────────────────────────────────────────────
-const validationSchema = z.object({
-    name: z.string().min(1, { message: 'Name is required' }),
-    code: z.string().min(1, { message: 'Code is required' }).max(100),
-    asset_type_id: z
-        .number({ required_error: 'Asset type is required' })
-        .nullable()
-        .refine((v) => v !== null, { message: 'Asset type is required' }),
-    status: z.enum(['active', 'inactive', 'under_maintenance', 'decommissioned'], {
-        required_error: 'Status is required',
-    }),
-    serial_number: z.string().optional().default(''),
-    manufacturer: z.string().optional().default(''),
-    model: z.string().optional().default(''),
-    location: z.string().optional().default(''),
-    address_label: z.string().optional().default(''),
-    notes: z.string().optional().default(''),
-    purchase_date: z.string().optional().default(''),
-    warranty_end_at: z.string().optional().default(''),
-    installed_at: z.string().optional().default(''),
-    imgList: z.array(z.any()).default([]),
-})
-
 // ── Image gallery sub-component ───────────────────────────────────────────────
 const ImageList = ({
     imgList,
     onDelete,
+    removeTitle,
+    removeBody,
 }: {
     imgList: ImageItem[]
     onDelete: (img: ImageItem) => void
+    removeTitle: string
+    removeBody: string
 }) => {
     const [viewImg, setViewImg] = useState<ImageItem | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<ImageItem | null>(null)
@@ -130,7 +105,7 @@ const ImageList = ({
             <ConfirmDialog
                 isOpen={!!deleteTarget}
                 type="danger"
-                title="Remove image"
+                title={removeTitle}
                 onClose={() => setDeleteTarget(null)}
                 onRequestClose={() => setDeleteTarget(null)}
                 onCancel={() => setDeleteTarget(null)}
@@ -139,7 +114,7 @@ const ImageList = ({
                     setDeleteTarget(null)
                 }}
             >
-                <p>Remove this image? This cannot be undone.</p>
+                <p>{removeBody}</p>
             </ConfirmDialog>
         </>
     )
@@ -175,6 +150,37 @@ type AssetFormProps = {
 } & CommonProps
 
 const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProps) => {
+    const { t } = useTranslation()
+
+    const validationSchema = useMemo(() => z.object({
+        name: z.string().min(1, { message: t('assetForm.validation.nameRequired') }),
+        code: z.string().min(1, { message: t('assetForm.validation.codeRequired') }).max(100),
+        asset_type_id: z
+            .number({ required_error: t('assetForm.validation.typeRequired') })
+            .nullable()
+            .refine((v) => v !== null, { message: t('assetForm.validation.typeRequired') }),
+        status: z.enum(['active', 'inactive', 'under_maintenance', 'decommissioned'], {
+            required_error: t('assetForm.validation.statusRequired'),
+        }),
+        serial_number: z.string().optional().default(''),
+        manufacturer: z.string().optional().default(''),
+        model: z.string().optional().default(''),
+        location: z.string().optional().default(''),
+        address_label: z.string().optional().default(''),
+        notes: z.string().optional().default(''),
+        purchase_date: z.string().optional().default(''),
+        warranty_end_at: z.string().optional().default(''),
+        installed_at: z.string().optional().default(''),
+        imgList: z.array(z.any()).default([]),
+    }), [t])
+
+    const statusOptions: StatusOption[] = useMemo(() => [
+        { value: 'active', label: t('assetForm.status.active'), dotClass: 'bg-emerald-500' },
+        { value: 'inactive', label: t('assetForm.status.inactive'), dotClass: 'bg-gray-400' },
+        { value: 'under_maintenance', label: t('assetForm.status.under_maintenance'), dotClass: 'bg-amber-500' },
+        { value: 'decommissioned', label: t('assetForm.status.decommissioned'), dotClass: 'bg-red-500' },
+    ], [t])
+
     const {
         handleSubmit,
         reset,
@@ -208,7 +214,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
         { revalidateOnFocus: false },
     )
     const typeOptions: TypeOption[] = (typesData?.data?.asset_types || []).map(
-        (t) => ({ value: t.id, label: t.name }),
+        (tp) => ({ value: tp.id, label: tp.name }),
     )
 
     useEffect(() => {
@@ -265,21 +271,19 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
             <Container>
                 <div className="flex flex-col xl:flex-row gap-4">
 
-                    {/* ══════════════════════════════════════════════════════
-                        LEFT COLUMN — main content
-                    ══════════════════════════════════════════════════════ */}
+                    {/* LEFT COLUMN */}
                     <div className="flex-auto flex flex-col gap-4">
 
-                        {/* ── Card 1: Basic Information ─────────────────── */}
+                        {/* Card 1: Basic Information */}
                         <Card>
                             <SectionLabel
                                 icon={<TbInfoCircle />}
-                                title="Basic Information"
-                                subtitle="Identity and operational status of the asset"
+                                title={t('assetForm.section.basicInfo')}
+                                subtitle={t('assetForm.section.basicInfoSub')}
                             />
 
                             <FormItem
-                                label="Asset Name"
+                                label={t('assetForm.field.assetName')}
                                 invalid={!!errors.name}
                                 errorMessage={errors.name?.message}
                             >
@@ -290,7 +294,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                         <Input
                                             {...field}
                                             autoComplete="off"
-                                            placeholder="e.g. Main Air Compressor"
+                                            placeholder={t('assetForm.placeholder.assetName')}
                                         />
                                     )}
                                 />
@@ -298,7 +302,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                                 <FormItem
-                                    label="Asset Code"
+                                    label={t('assetForm.field.assetCode')}
                                     invalid={!!errors.code}
                                     errorMessage={errors.code?.message}
                                 >
@@ -310,7 +314,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                                 <Input
                                                     {...field}
                                                     autoComplete="off"
-                                                    placeholder="e.g. COMP-001"
+                                                    placeholder={t('assetForm.placeholder.assetCode')}
                                                     className="font-mono"
                                                     onChange={(e) =>
                                                         field.onChange(e.target.value.toUpperCase())
@@ -318,7 +322,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                                 />
                                                 <button
                                                     type="button"
-                                                    title="Generate code"
+                                                    title={t('assetForm.generateCode')}
                                                     className="flex-shrink-0 px-3 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-primary hover:border-primary transition-colors"
                                                     onClick={() => setValue('code', generateAssetCode())}
                                                 >
@@ -330,7 +334,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                 </FormItem>
 
                                 <FormItem
-                                    label="Status"
+                                    label={t('common.status')}
                                     invalid={!!errors.status}
                                     errorMessage={errors.status?.message}
                                 >
@@ -339,7 +343,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                         control={control}
                                         render={({ field }) => (
                                             <Select<StatusOption>
-                                                placeholder="Select status"
+                                                placeholder={t('assetForm.selectStatus')}
                                                 options={statusOptions}
                                                 value={statusOptions.find((o) => o.value === field.value) || null}
                                                 onChange={(opt) => field.onChange(opt?.value)}
@@ -353,16 +357,16 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                             </div>
                         </Card>
 
-                        {/* ── Card 2: Equipment Details ─────────────────── */}
+                        {/* Card 2: Equipment Details */}
                         <Card>
                             <SectionLabel
                                 icon={<TbEngine />}
-                                title="Equipment Details"
-                                subtitle="Technical specifications of the machine"
+                                title={t('assetForm.section.equipDetails')}
+                                subtitle={t('assetForm.section.equipDetailsSub')}
                             />
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                                <FormItem label="Manufacturer">
+                                <FormItem label={t('assetForm.field.manufacturer')}>
                                     <Controller
                                         name="manufacturer"
                                         control={control}
@@ -370,13 +374,13 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                             <Input
                                                 {...field}
                                                 autoComplete="off"
-                                                placeholder="e.g. Siemens"
+                                                placeholder={t('assetForm.placeholder.manufacturer')}
                                             />
                                         )}
                                     />
                                 </FormItem>
 
-                                <FormItem label="Model">
+                                <FormItem label={t('assetForm.field.model')}>
                                     <Controller
                                         name="model"
                                         control={control}
@@ -384,13 +388,13 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                             <Input
                                                 {...field}
                                                 autoComplete="off"
-                                                placeholder="e.g. SIRIUS 3RW40"
+                                                placeholder={t('assetForm.placeholder.model')}
                                             />
                                         )}
                                     />
                                 </FormItem>
 
-                                <FormItem label="Serial Number" className="md:col-span-2">
+                                <FormItem label={t('assetForm.field.serialNumber')} className="md:col-span-2">
                                     <Controller
                                         name="serial_number"
                                         control={control}
@@ -398,14 +402,14 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                             <Input
                                                 {...field}
                                                 autoComplete="off"
-                                                placeholder="e.g. SN-2024-123456"
+                                                placeholder={t('assetForm.placeholder.serialNumber')}
                                             />
                                         )}
                                     />
                                 </FormItem>
                             </div>
 
-                            <FormItem label="Notes">
+                            <FormItem label={t('common.description')}>
                                 <Controller
                                     name="notes"
                                     control={control}
@@ -414,7 +418,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                             {...field}
                                             textArea
                                             rows={4}
-                                            placeholder="Additional information, maintenance history, special instructions..."
+                                            placeholder={t('assetForm.placeholder.notes')}
                                         />
                                     )}
                                 />
@@ -422,17 +426,15 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                         </Card>
                     </div>
 
-                    {/* ══════════════════════════════════════════════════════
-                        RIGHT COLUMN — sidebar
-                    ══════════════════════════════════════════════════════ */}
+                    {/* RIGHT COLUMN */}
                     <div className="lg:min-w-[360px] 2xl:w-[400px] flex flex-col gap-4">
 
-                        {/* ── Card 3: Photos ────────────────────────────── */}
+                        {/* Card 3: Photos */}
                         <Card>
                             <SectionLabel
                                 icon={<PiImagesThin />}
-                                title="Asset Photos"
-                                subtitle="Up to 5 photos of the machine or equipment"
+                                title={t('assetForm.section.photos')}
+                                subtitle={t('assetForm.section.photosSub')}
                             />
 
                             <Controller
@@ -444,6 +446,8 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                                 <ImageList
                                                     imgList={field.value}
+                                                    removeTitle={t('assetForm.photo.removeTitle')}
+                                                    removeBody={t('assetForm.photo.removeBody')}
                                                     onDelete={(img) =>
                                                         handleDelete(field.onChange, field.value, img)
                                                     }
@@ -460,7 +464,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                                     >
                                                         <div className="flex flex-col items-center justify-center min-h-[130px] px-2">
                                                             <PiImagesThin className="text-4xl text-gray-300" />
-                                                            <p className="text-xs text-primary mt-1">Add more</p>
+                                                            <p className="text-xs text-primary mt-1">{t('assetForm.photo.addMore')}</p>
                                                         </div>
                                                     </Upload>
                                                 )}
@@ -478,10 +482,10 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                                     <PiImagesThin className="text-6xl text-gray-300" />
                                                     <p className="flex flex-col items-center mt-2 text-sm">
                                                         <span className="text-gray-500 dark:text-gray-400">
-                                                            Drop photos here, or
+                                                            {t('assetForm.photo.dropHere')}
                                                         </span>
                                                         <span className="text-primary font-semibold">
-                                                            Click to browse
+                                                            {t('assetForm.photo.browse')}
                                                         </span>
                                                     </p>
                                                 </div>
@@ -491,20 +495,20 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                 )}
                             />
                             <p className="text-xs text-gray-400 mt-3">
-                                .jpg · .jpeg · .png · .webp — max 2 MB each
+                                {t('assetForm.photo.maxSize')}
                             </p>
                         </Card>
 
-                        {/* ── Card 4: Classification ────────────────────── */}
+                        {/* Card 4: Classification */}
                         <Card>
                             <SectionLabel
                                 icon={<TbTag />}
-                                title="Classification"
-                                subtitle="Category and physical location"
+                                title={t('assetForm.section.classification')}
+                                subtitle={t('assetForm.section.classificationSub')}
                             />
 
                             <FormItem
-                                label="Asset Type"
+                                label={t('assetForm.field.assetType')}
                                 invalid={!!errors.asset_type_id}
                                 errorMessage={errors.asset_type_id?.message}
                             >
@@ -513,7 +517,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                     control={control}
                                     render={({ field }) => (
                                         <Select<TypeOption>
-                                            placeholder="Select type"
+                                            placeholder={t('assetForm.selectType')}
                                             options={typeOptions}
                                             value={typeOptions.find((o) => o.value === field.value) || null}
                                             onChange={(opt) => field.onChange(opt?.value ?? null)}
@@ -522,7 +526,7 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                 />
                             </FormItem>
 
-                            <FormItem label="Location">
+                            <FormItem label={t('common.location')}>
                                 <Controller
                                     name="location"
                                     control={control}
@@ -531,13 +535,13 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                             {...field}
                                             autoComplete="off"
                                             prefix={<TbMapPin className="text-gray-400" />}
-                                            placeholder="e.g. Building A, Floor 2"
+                                            placeholder={t('assetForm.placeholder.location')}
                                         />
                                     )}
                                 />
                             </FormItem>
 
-                            <FormItem label="Address / Zone">
+                            <FormItem label={t('assetForm.field.addressZone')}>
                                 <Controller
                                     name="address_label"
                                     control={control}
@@ -545,28 +549,28 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                         <Input
                                             {...field}
                                             autoComplete="off"
-                                            placeholder="e.g. Zone B – Room 12"
+                                            placeholder={t('assetForm.placeholder.addressZone')}
                                         />
                                     )}
                                 />
                             </FormItem>
                         </Card>
 
-                        {/* ── Card 5: Lifecycle ─────────────────────────── */}
+                        {/* Card 5: Lifecycle */}
                         <Card>
                             <SectionLabel
                                 icon={<TbCalendar />}
-                                title="Lifecycle"
-                                subtitle="Dates for purchase, warranty, and installation"
+                                title={t('assetForm.section.lifecycle')}
+                                subtitle={t('assetForm.section.lifecycleSub')}
                             />
 
-                            <FormItem label="Purchase Date">
+                            <FormItem label={t('assetForm.field.purchaseDate')}>
                                 <Controller
                                     name="purchase_date"
                                     control={control}
                                     render={({ field }) => (
                                         <DatePicker
-                                            placeholder="Pick a date"
+                                            placeholder={t('assetForm.placeholder.pickDate')}
                                             value={field.value ? new Date(field.value) : null}
                                             onChange={(date) =>
                                                 field.onChange(date ? dayjs(date).format('YYYY-MM-DD') : '')
@@ -576,13 +580,13 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                 />
                             </FormItem>
 
-                            <FormItem label="Warranty Expires">
+                            <FormItem label={t('assetForm.field.warrantyExpires')}>
                                 <Controller
                                     name="warranty_end_at"
                                     control={control}
                                     render={({ field }) => (
                                         <DatePicker
-                                            placeholder="Pick a date"
+                                            placeholder={t('assetForm.placeholder.pickDate')}
                                             value={field.value ? new Date(field.value) : null}
                                             onChange={(date) =>
                                                 field.onChange(date ? dayjs(date).format('YYYY-MM-DD') : '')
@@ -592,13 +596,13 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                 />
                             </FormItem>
 
-                            <FormItem label="Installed At">
+                            <FormItem label={t('assetForm.field.installedAt')}>
                                 <Controller
                                     name="installed_at"
                                     control={control}
                                     render={({ field }) => (
                                         <DatePicker.DateTimepicker
-                                            placeholder="Pick date & time"
+                                            placeholder={t('assetForm.placeholder.pickDateTime')}
                                             value={field.value ? new Date(field.value) : null}
                                             onChange={(date) =>
                                                 field.onChange(

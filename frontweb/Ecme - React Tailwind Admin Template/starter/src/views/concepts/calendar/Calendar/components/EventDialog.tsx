@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
@@ -96,21 +97,22 @@ const CustomControl = ({ children, ...props }: ControlProps<ColorOption>) => {
     )
 }
 
-const validationSchema = z.object({
-    title: z.string().min(1, { message: 'Event title required' }),
-    startDate: z.date({
-        required_error: 'Please select a date',
-        invalid_type_error: "That's not a date!",
-    }),
-    endDate: z.date({
-        required_error: 'Please select a date',
-        invalid_type_error: "That's not a date!",
-    }),
-    color: z.string().min(1, { message: 'Color required' }),
-})
-
 const EventDialog = (props: EventDialogProps) => {
     const { submit, open, selected, onDialogOpen, onDelete } = props
+    const { t } = useTranslation()
+
+    const validationSchema = z.object({
+        title: z.string().min(1, { message: t('calendar.validation.titleRequired') }),
+        startDate: z.date({
+            required_error: t('calendar.validation.selectDate'),
+            invalid_type_error: t('calendar.validation.selectDate'),
+        }),
+        endDate: z.date({
+            required_error: t('calendar.validation.selectDate'),
+            invalid_type_error: t('calendar.validation.selectDate'),
+        }),
+        color: z.string().min(1, { message: t('calendar.validation.colorRequired') }),
+    })
 
     const newId = useUniqueId('event-')
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
@@ -171,14 +173,14 @@ const EventDialog = (props: EventDialogProps) => {
                 onRequestClose={handleDialogClose}
             >
                 <h5 className="mb-4">
-                    {selected.type === 'NEW' ? 'Add New Event' : 'Edit Event'}
+                    {selected.type === 'NEW' ? t('calendar.dialog.newEvent') : t('calendar.dialog.editEvent')}
                 </h5>
                 <Form
                     className="flex-1 flex flex-col"
                     onSubmit={handleSubmit(onSubmit)}
                 >
                     <FormItem
-                        label="Event title"
+                        label={t('calendar.dialog.titleLabel')}
                         invalid={Boolean(errors.title)}
                         errorMessage={errors.title?.message}
                     >
@@ -189,14 +191,14 @@ const EventDialog = (props: EventDialogProps) => {
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="Event title"
+                                    placeholder={t('calendar.dialog.titlePlaceholder')}
                                     {...field}
                                 />
                             )}
                         />
                     </FormItem>
                     <FormItem
-                        label="Start date"
+                        label={t('calendar.dialog.startDate')}
                         invalid={Boolean(errors.startDate)}
                         errorMessage={errors.startDate?.message}
                     >
@@ -212,7 +214,7 @@ const EventDialog = (props: EventDialogProps) => {
                         />
                     </FormItem>
                     <FormItem
-                        label="End date"
+                        label={t('calendar.dialog.endDate')}
                         invalid={Boolean(errors.endDate)}
                         errorMessage={errors.endDate?.message}
                     >
@@ -228,7 +230,7 @@ const EventDialog = (props: EventDialogProps) => {
                         />
                     </FormItem>
                     <FormItem
-                        label="Event color"
+                        label={t('calendar.dialog.eventColor')}
                         asterisk={true}
                         invalid={Boolean(errors.color)}
                         errorMessage={errors.color?.message}
@@ -263,16 +265,16 @@ const EventDialog = (props: EventDialogProps) => {
                                 className="text-red-500 border-red-200 hover:border-red-400"
                                 onClick={() => setConfirmDeleteOpen(true)}
                             >
-                                Delete
+                                {t('calendar.dialog.delete')}
                             </Button>
                             <Button block variant="solid" type="submit">
-                                Update
+                                {t('calendar.dialog.update')}
                             </Button>
                         </div>
                     ) : (
                         <FormItem className="mb-0 text-right rtl:text-left">
                             <Button block variant="solid" type="submit">
-                                Create
+                                {t('calendar.dialog.create')}
                             </Button>
                         </FormItem>
                     )}
@@ -282,15 +284,14 @@ const EventDialog = (props: EventDialogProps) => {
             <ConfirmDialog
                 isOpen={confirmDeleteOpen}
                 type="danger"
-                title="Delete event"
+                title={t('calendar.dialog.deleteTitle')}
                 onClose={() => setConfirmDeleteOpen(false)}
                 onRequestClose={() => setConfirmDeleteOpen(false)}
                 onCancel={() => setConfirmDeleteOpen(false)}
                 onConfirm={handleConfirmDelete}
             >
                 <p>
-                    Delete <strong>{selected.title}</strong>? This cannot be
-                    undone.
+                    {t('calendar.dialog.deleteConfirm', { title: selected.title })}
                 </p>
             </ConfirmDialog>
         </>

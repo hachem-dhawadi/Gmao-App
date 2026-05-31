@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -12,8 +13,8 @@ type Props = {
 }
 
 const CreateFolderDialog = ({ onCreated }: Props) => {
-    const { createDirDialog, setCreateDirDialog } =
-        useFileManagerStore()
+    const { t } = useTranslation()
+    const { createDirDialog, setCreateDirDialog } = useFileManagerStore()
 
     const [name, setName] = useState('')
     const [loading, setLoading] = useState(false)
@@ -33,13 +34,13 @@ const CreateFolderDialog = ({ onCreated }: Props) => {
             })
             onCreated?.()
             toast.push(
-                <Notification type="success" title="Folder created!" />,
+                <Notification type="success" title={t('fileManager.createFolder.toastSuccess')} />,
                 { placement: 'top-end' },
             )
             handleClose()
         } catch {
             toast.push(
-                <Notification type="danger" title="Failed to create folder" />,
+                <Notification type="danger" title={t('fileManager.createFolder.toastFailed')} />,
                 { placement: 'top-end' },
             )
         } finally {
@@ -54,10 +55,10 @@ const CreateFolderDialog = ({ onCreated }: Props) => {
             onClose={handleClose}
             onRequestClose={handleClose}
         >
-            <h4>New Folder</h4>
+            <h4>{t('fileManager.createFolder.title')}</h4>
             <div className="mt-6">
                 <Input
-                    placeholder="Folder name"
+                    placeholder={t('fileManager.createFolder.placeholder')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
@@ -66,7 +67,7 @@ const CreateFolderDialog = ({ onCreated }: Props) => {
             </div>
             <div className="mt-6 flex justify-end items-center gap-2">
                 <Button type="button" size="sm" onClick={handleClose}>
-                    Cancel
+                    {t('common.cancel')}
                 </Button>
                 <Button
                     type="button"
@@ -76,7 +77,7 @@ const CreateFolderDialog = ({ onCreated }: Props) => {
                     disabled={!name.trim()}
                     onClick={handleSubmit}
                 >
-                    Create
+                    {t('common.create')}
                 </Button>
             </div>
         </Dialog>

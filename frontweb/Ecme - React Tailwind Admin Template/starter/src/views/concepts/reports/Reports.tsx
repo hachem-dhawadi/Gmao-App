@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import * as XLSX from 'xlsx'
 import useSWR from 'swr'
 import Container from '@/components/shared/Container'
@@ -25,6 +26,7 @@ import {
 import { COLORS } from '@/constants/chart.constant'
 import classNames from '@/utils/classNames'
 import type { ReactNode } from 'react'
+import type { TFunction } from 'i18next'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,15 +68,6 @@ const downloadXlsx = (
     })
     XLSX.writeFile(wb, filename)
 }
-
-// ── Date range presets ────────────────────────────────────────────────────────
-
-const PRESETS = [
-    { label: 'This Month',   from: () => dayjs().startOf('month').toDate(),  to: () => dayjs().endOf('month').toDate() },
-    { label: 'Last 3M',      from: () => dayjs().subtract(3, 'month').startOf('month').toDate(), to: () => dayjs().toDate() },
-    { label: 'Last 6M',      from: () => dayjs().subtract(6, 'month').startOf('month').toDate(), to: () => dayjs().toDate() },
-    { label: 'This Year',    from: () => dayjs().startOf('year').toDate(),   to: () => dayjs().toDate() },
-]
 
 const toParam = (d: Date | null) => d ? dayjs(d).format('YYYY-MM-DD') : undefined
 
@@ -148,7 +141,15 @@ const FilterBar = ({
     range: DateRange
     onChange: (r: DateRange) => void
 }) => {
+    const { t } = useTranslation()
     const hasFilter = !!(range.from || range.to)
+
+    const PRESETS = [
+        { label: t('reports.filter.presets.thisMonth'), from: () => dayjs().startOf('month').toDate(),  to: () => dayjs().endOf('month').toDate() },
+        { label: t('reports.filter.presets.last3m'),    from: () => dayjs().subtract(3, 'month').startOf('month').toDate(), to: () => dayjs().toDate() },
+        { label: t('reports.filter.presets.last6m'),    from: () => dayjs().subtract(6, 'month').startOf('month').toDate(), to: () => dayjs().toDate() },
+        { label: t('reports.filter.presets.thisYear'),  from: () => dayjs().startOf('year').toDate(),   to: () => dayjs().toDate() },
+    ]
 
     return (
         <Card bodyClass="!py-3 !px-4">
@@ -184,7 +185,7 @@ const FilterBar = ({
                 <div className="flex flex-wrap items-center gap-2">
                     <DatePicker
                         value={range.from}
-                        placeholder="From date"
+                        placeholder={t('reports.filter.from')}
                         inputFormat="DD/MM/YYYY"
                         onChange={(d) => onChange({ ...range, from: d })}
                         clearable
@@ -192,7 +193,7 @@ const FilterBar = ({
                     <span className="text-gray-400 text-sm">—</span>
                     <DatePicker
                         value={range.to}
-                        placeholder="To date"
+                        placeholder={t('reports.filter.to')}
                         inputFormat="DD/MM/YYYY"
                         onChange={(d) => onChange({ ...range, to: d })}
                         clearable
@@ -207,7 +208,7 @@ const FilterBar = ({
                         icon={<TbX />}
                         onClick={() => onChange({ from: null, to: null })}
                     >
-                        Clear
+                        {t('reports.filter.clear')}
                     </Button>
                 )}
 
@@ -216,7 +217,7 @@ const FilterBar = ({
                     <span className="text-xs text-primary font-semibold ml-auto">
                         {range.from ? dayjs(range.from).format('DD MMM YYYY') : '…'}
                         {' – '}
-                        {range.to ? dayjs(range.to).format('DD MMM YYYY') : 'today'}
+                        {range.to ? dayjs(range.to).format('DD MMM YYYY') : t('reports.filter.today')}
                     </span>
                 )}
             </div>
@@ -311,17 +312,12 @@ const DonutStatCard = ({
 const statusColors: Record<string, string> = {
     open: '#3b82f6', in_progress: '#f59e0b', on_hold: '#94a3b8', completed: '#10b981', cancelled: '#ef4444',
 }
-const statusLabels: Record<string, string> = {
-    open: 'Open', in_progress: 'In Progress', on_hold: 'On Hold', completed: 'Completed', cancelled: 'Cancelled',
-}
 const priorityColors: Record<string, string> = {
     critical: '#ef4444', high: '#f97316', medium: '#3b82f6', low: '#94a3b8',
 }
-const priorityLabels: Record<string, string> = {
-    critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low',
-}
 
 const WoReport = ({ range }: { range: DateRange }) => {
+    const { t } = useTranslation()
     const params = { from: toParam(range.from), to: toParam(range.to) }
     const { data, isLoading } = useSWR(
         ['/reports/work-orders', params.from, params.to],
@@ -330,7 +326,7 @@ const WoReport = ({ range }: { range: DateRange }) => {
     )
     if (isLoading) return <LoadingSkeleton />
     const d = data?.data
-    if (!d) return <EmptySection label="No work order data available" />
+    if (!d) return <EmptySection label={t('reports.wo.noData')} />
 
     const total = Object.values(d.by_status).reduce((a, b) => a + b, 0)
 
@@ -346,7 +342,7 @@ const WoReport = ({ range }: { range: DateRange }) => {
             ...Object.entries(d.by_priority).map(([k, v]) => [k, v, '']),
             ...(d.top_technicians.length > 0 ? [
                 ['', '', ''], ['--- Top Technicians ---', '', ''], ['Name', 'Completed', ''],
-                ...d.top_technicians.map(t => [t.name, t.completed, '']),
+                ...d.top_technicians.map(tech => [tech.name, tech.completed, '']),
             ] : []),
         ]
         downloadCsv(['Field', 'Value', 'Extra'], rows, `${filename}.csv`)
@@ -362,32 +358,32 @@ const WoReport = ({ range }: { range: DateRange }) => {
             {
                 name: 'By Status',
                 headers: ['Status', 'Count'],
-                rows: Object.entries(d.by_status).map(([k, v]) => [statusLabels[k] ?? k, v]),
+                rows: Object.entries(d.by_status).map(([k, v]) => [t(`wo.status.${k}`, { defaultValue: k }), v]),
             },
             {
                 name: 'By Priority',
                 headers: ['Priority', 'Count'],
-                rows: Object.entries(d.by_priority).map(([k, v]) => [priorityLabels[k] ?? k, v]),
+                rows: Object.entries(d.by_priority).map(([k, v]) => [t(`wo.priority.${k}`, { defaultValue: k }), v]),
             },
             ...(d.top_technicians.length > 0 ? [{
                 name: 'Top Technicians',
-                headers: ['Technician', 'Completed'],
-                rows: d.top_technicians.map(t => [t.name, t.completed]),
+                headers: [t('reports.wo.technician'), t('reports.wo.completed')],
+                rows: d.top_technicians.map(tech => [tech.name, tech.completed]),
             }] : []),
         ], `${filename}.xlsx`)
     }
 
     return (
         <div className="flex flex-col gap-5">
-            <SectionHeader label="Work Order Metrics" onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
+            <SectionHeader label={t('reports.wo.sectionTitle')} onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <KpiCard label="Total WOs" value={total} sub={range.from ? 'Selected period' : 'All time'} icon={<TbClipboardList />} bg="bg-sky-100 dark:bg-sky-500/20" />
-                <KpiCard label="Completed" value={d.by_status.completed} sub={range.from ? 'Selected period' : 'All time'} icon={<TbChecks />} bg="bg-emerald-100 dark:bg-emerald-500/20" />
-                <KpiCard label="On Hold" value={d.by_status.on_hold} sub="Blocked" icon={<TbProgressBolt />} bg="bg-amber-100 dark:bg-amber-500/20" />
+                <KpiCard label={t('reports.wo.totalWos')} value={total} sub={range.from ? t('reports.wo.selectedPeriod') : t('reports.wo.allTime')} icon={<TbClipboardList />} bg="bg-sky-100 dark:bg-sky-500/20" />
+                <KpiCard label={t('reports.wo.completed')} value={d.by_status.completed} sub={range.from ? t('reports.wo.selectedPeriod') : t('reports.wo.allTime')} icon={<TbChecks />} bg="bg-emerald-100 dark:bg-emerald-500/20" />
+                <KpiCard label={t('reports.wo.onHold')} value={d.by_status.on_hold} sub={t('reports.wo.blocked')} icon={<TbProgressBolt />} bg="bg-amber-100 dark:bg-amber-500/20" />
                 <KpiCard
-                    label="Avg Resolution"
+                    label={t('reports.wo.avgResolution')}
                     value={d.avg_resolution_h != null ? `${d.avg_resolution_h}h` : '—'}
-                    sub={range.from ? 'Selected period' : 'This month'}
+                    sub={range.from ? t('reports.wo.selectedPeriod') : t('reports.wo.thisMonth')}
                     icon={<TbClock />}
                     bg={d.avg_resolution_h != null && d.avg_resolution_h <= 8 ? 'bg-purple-100 dark:bg-purple-500/20' : 'bg-red-100 dark:bg-red-500/20'}
                 />
@@ -395,16 +391,16 @@ const WoReport = ({ range }: { range: DateRange }) => {
 
             <Card>
                 <h4 className="mb-4">
-                    Created vs Completed
+                    {t('reports.wo.chartTitle')}
                     {range.from
-                        ? ` — ${dayjs(range.from).format('DD MMM YYYY')} to ${range.to ? dayjs(range.to).format('DD MMM YYYY') : 'today'}`
-                        : ' — Last 6 Months'}
+                        ? ` — ${dayjs(range.from).format('DD MMM YYYY')} to ${range.to ? dayjs(range.to).format('DD MMM YYYY') : t('reports.filter.today')}`
+                        : ` — ${t('reports.wo.last6months')}`}
                 </h4>
                 {d.monthly.some(m => m.created > 0 || m.completed > 0) ? (
                     <Chart
                         series={[
-                            { name: 'Created',   data: d.monthly.map(m => m.created) },
-                            { name: 'Completed', data: d.monthly.map(m => m.completed) },
+                            { name: t('reports.wo.totalWos'),   data: d.monthly.map(m => m.created) },
+                            { name: t('reports.wo.completed'), data: d.monthly.map(m => m.completed) },
                         ]}
                         xAxis={d.monthly.map(m => m.month)}
                         type="bar"
@@ -414,22 +410,22 @@ const WoReport = ({ range }: { range: DateRange }) => {
                             legend: { show: true, position: 'top' },
                         }}
                     />
-                ) : <EmptySection label="No work orders in this period" />}
+                ) : <EmptySection label={t('reports.wo.empty')} />}
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <DonutStatCard
-                    title="By Status"
+                    title={t('reports.wo.byStatus')}
                     items={Object.entries(d.by_status).map(([k, v]) => ({
-                        label: statusLabels[k] ?? k,
+                        label: t(`wo.status.${k}`, { defaultValue: k }),
                         value: v,
                         color: statusColors[k],
                     }))}
                 />
                 <DonutStatCard
-                    title="By Priority"
+                    title={t('reports.wo.byPriority')}
                     items={Object.entries(d.by_priority).map(([k, v]) => ({
-                        label: priorityLabels[k] ?? k,
+                        label: t(`wo.priority.${k}`, { defaultValue: k }),
                         value: v,
                         color: priorityColors[k],
                     }))}
@@ -438,22 +434,22 @@ const WoReport = ({ range }: { range: DateRange }) => {
 
             {d.top_technicians.length > 0 && (
                 <Card>
-                    <h4 className="mb-4">Top Technicians by WOs Completed</h4>
+                    <h4 className="mb-4">{t('reports.wo.topTechnicians')}</h4>
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-gray-100 dark:border-gray-700">
                                 <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide w-8">#</th>
-                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Technician</th>
-                                <th className="pb-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wide">Completed</th>
+                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.wo.technician')}</th>
+                                <th className="pb-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.wo.completed')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {d.top_technicians.map((t, i) => (
+                            {d.top_technicians.map((tech, i) => (
                                 <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                                     <td className="py-3 text-gray-400 text-xs">{i + 1}</td>
-                                    <td className="py-3 font-medium heading-text">{t.name}</td>
+                                    <td className="py-3 font-medium heading-text">{tech.name}</td>
                                     <td className="py-3 text-right">
-                                        <Tag className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0 font-bold">{t.completed}</Tag>
+                                        <Tag className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0 font-bold">{tech.completed}</Tag>
                                     </td>
                                 </tr>
                             ))}
@@ -468,6 +464,7 @@ const WoReport = ({ range }: { range: DateRange }) => {
 // ── Tab 2: Assets ─────────────────────────────────────────────────────────────
 
 const AssetReport = ({ range }: { range: DateRange }) => {
+    const { t } = useTranslation()
     const params = { from: toParam(range.from), to: toParam(range.to) }
     const { data, isLoading } = useSWR(
         ['/reports/assets', params.from, params.to],
@@ -476,7 +473,7 @@ const AssetReport = ({ range }: { range: DateRange }) => {
     )
     if (isLoading) return <LoadingSkeleton />
     const d = data?.data
-    if (!d || d.assets.length === 0) return <EmptySection label="No assets with work orders found in this period" />
+    if (!d || d.assets.length === 0) return <EmptySection label={t('reports.asset.empty')} />
 
     const maxWo = Math.max(...d.assets.map(a => a.wo_count), 1)
     const totalDowntime = d.assets.reduce((s, a) => s + a.total_downtime_h, 0)
@@ -490,23 +487,23 @@ const AssetReport = ({ range }: { range: DateRange }) => {
 
     return (
         <div className="flex flex-col gap-5">
-            <SectionHeader label="Asset Health Overview" onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
+            <SectionHeader label={t('reports.asset.sectionTitle')} onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <KpiCard label="Assets Tracked" value={d.assets.length} sub="With work orders" icon={<TbEngine />} bg="bg-indigo-100 dark:bg-indigo-500/20" />
-                <KpiCard label="Most Failures" value={d.assets[0]?.name ?? '—'} sub={`${d.assets[0]?.wo_count ?? 0} work orders`} icon={<TbAlertTriangle />} bg="bg-red-100 dark:bg-red-500/20" />
-                <KpiCard label="Total Downtime" value={`${totalDowntime.toFixed(0)}h`} sub="All assets combined" icon={<TbClock />} bg="bg-amber-100 dark:bg-amber-500/20" />
+                <KpiCard label={t('reports.asset.assetsTracked')} value={d.assets.length} sub={t('reports.asset.withWo')} icon={<TbEngine />} bg="bg-indigo-100 dark:bg-indigo-500/20" />
+                <KpiCard label={t('reports.asset.mostFailures')} value={d.assets[0]?.name ?? '—'} sub={`${d.assets[0]?.wo_count ?? 0} ${t('reports.tabs.wo')}`} icon={<TbAlertTriangle />} bg="bg-red-100 dark:bg-red-500/20" />
+                <KpiCard label={t('reports.asset.totalDowntime')} value={`${totalDowntime.toFixed(0)}h`} sub={t('reports.asset.allAssets')} icon={<TbClock />} bg="bg-amber-100 dark:bg-amber-500/20" />
             </div>
             <Card>
-                <h4 className="mb-4">Assets by Work Order Count</h4>
+                <h4 className="mb-4">{t('reports.asset.tableTitle')}</h4>
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-gray-100 dark:border-gray-700">
                             <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide w-8">#</th>
-                            <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Asset</th>
-                            <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Location</th>
-                            <th className="pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">WOs</th>
-                            <th className="pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">Downtime</th>
-                            <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Last Maintenance</th>
+                            <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.asset.asset')}</th>
+                            <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.asset.location')}</th>
+                            <th className="pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.asset.wos')}</th>
+                            <th className="pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.asset.downtime')}</th>
+                            <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.asset.lastMaintenance')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -536,13 +533,14 @@ const AssetReport = ({ range }: { range: DateRange }) => {
 
 // ── Tab 3: PM Compliance ──────────────────────────────────────────────────────
 
-const complianceTagEl = (status: string) => {
-    if (status === 'on_time') return <Tag className="bg-emerald-100 dark:bg-emerald-500/20 border-0 text-xs"><span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><TbCircleCheck /> On Time</span></Tag>
-    if (status === 'overdue') return <Tag className="bg-red-100 dark:bg-red-500/20 border-0 text-xs"><span className="flex items-center gap-1 text-red-500"><TbAlertTriangle /> Overdue</span></Tag>
-    return <Tag className="bg-gray-100 dark:bg-gray-700 border-0 text-xs"><span className="flex items-center gap-1 text-gray-400"><TbClock /> Never Run</span></Tag>
+const complianceTagEl = (status: string, t: TFunction) => {
+    if (status === 'on_time') return <Tag className="bg-emerald-100 dark:bg-emerald-500/20 border-0 text-xs"><span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><TbCircleCheck /> {t('reports.pm.tag.onTime')}</span></Tag>
+    if (status === 'overdue') return <Tag className="bg-red-100 dark:bg-red-500/20 border-0 text-xs"><span className="flex items-center gap-1 text-red-500"><TbAlertTriangle /> {t('reports.pm.tag.overdue')}</span></Tag>
+    return <Tag className="bg-gray-100 dark:bg-gray-700 border-0 text-xs"><span className="flex items-center gap-1 text-gray-400"><TbClock /> {t('reports.pm.tag.neverRun')}</span></Tag>
 }
 
 const PmReport = ({ range }: { range: DateRange }) => {
+    const { t } = useTranslation()
     const params = { from: toParam(range.from), to: toParam(range.to) }
     const { data, isLoading } = useSWR(
         ['/reports/pm', params.from, params.to],
@@ -551,7 +549,7 @@ const PmReport = ({ range }: { range: DateRange }) => {
     )
     if (isLoading) return <LoadingSkeleton />
     const d = data?.data
-    if (!d) return <EmptySection label="No PM data available" />
+    if (!d) return <EmptySection label={t('reports.pm.noData')} />
 
     const validMonths = d.monthly.filter(m => m.compliance !== null)
     const avgCompliance = validMonths.length > 0 ? Math.round(validMonths.reduce((s, m) => s + (m.compliance ?? 0), 0) / validMonths.length) : 100
@@ -572,15 +570,15 @@ const PmReport = ({ range }: { range: DateRange }) => {
 
     return (
         <div className="flex flex-col gap-5">
-            <SectionHeader label="PM Compliance Summary" onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
+            <SectionHeader label={t('reports.pm.sectionTitle')} onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <KpiCard label="Avg Compliance" value={`${avgCompliance}%`} sub={range.from ? 'Selected period' : 'Last 6 months'} icon={<TbCalendarStats />} bg={complianceBg} />
-                <KpiCard label="On Time" value={onTime} sub="Active plans" icon={<TbCircleCheck />} bg="bg-emerald-100 dark:bg-emerald-500/20" />
-                <KpiCard label="Overdue" value={overdue} sub="Need attention" icon={<TbAlertTriangle />} bg="bg-red-100 dark:bg-red-500/20" />
-                <KpiCard label="Never Run" value={neverRun} sub="Not started yet" icon={<TbClock />} bg="bg-gray-100 dark:bg-gray-700" />
+                <KpiCard label={t('reports.pm.avgCompliance')} value={`${avgCompliance}%`} sub={range.from ? t('reports.wo.selectedPeriod') : t('reports.pm.last6months')} icon={<TbCalendarStats />} bg={complianceBg} />
+                <KpiCard label={t('reports.pm.onTime')} value={onTime} sub={t('reports.pm.activePlans')} icon={<TbCircleCheck />} bg="bg-emerald-100 dark:bg-emerald-500/20" />
+                <KpiCard label={t('reports.pm.overdue')} value={overdue} sub={t('reports.pm.needAttention')} icon={<TbAlertTriangle />} bg="bg-red-100 dark:bg-red-500/20" />
+                <KpiCard label={t('reports.pm.neverRun')} value={neverRun} sub={t('reports.pm.notStarted')} icon={<TbClock />} bg="bg-gray-100 dark:bg-gray-700" />
             </div>
             <Card>
-                <h4 className="mb-4">Compliance Trend</h4>
+                <h4 className="mb-4">{t('reports.pm.complianceTrend')}</h4>
                 {validMonths.length > 0 ? (
                     <Chart
                         series={[{ name: 'Compliance %', data: d.monthly.map(m => m.compliance ?? 0) }]}
@@ -593,19 +591,19 @@ const PmReport = ({ range }: { range: DateRange }) => {
                             markers: { size: 5 },
                         }}
                     />
-                ) : <EmptySection label="No PM plans have run in this period" />}
+                ) : <EmptySection label={t('reports.pm.noRun')} />}
             </Card>
             {d.plans.length > 0 && (
                 <Card>
-                    <h4 className="mb-4">PM Plan Status</h4>
+                    <h4 className="mb-4">{t('reports.pm.planStatus')}</h4>
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-gray-100 dark:border-gray-700">
-                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Plan</th>
-                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Assigned To</th>
-                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Last Run</th>
-                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Next Run</th>
-                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Status</th>
+                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.pm.plan')}</th>
+                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.pm.assignedTo')}</th>
+                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.pm.lastRun')}</th>
+                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.pm.nextRun')}</th>
+                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.pm.status')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -615,7 +613,7 @@ const PmReport = ({ range }: { range: DateRange }) => {
                                     <td className="py-3 text-gray-500 text-xs">{p.assigned_to ?? '—'}</td>
                                     <td className="py-3 text-xs text-gray-500">{p.last_run_at ? dayjs(p.last_run_at).format('DD MMM YYYY') : '—'}</td>
                                     <td className="py-3 text-xs text-gray-500">{p.next_run_at ? dayjs(p.next_run_at).format('DD MMM YYYY') : '—'}</td>
-                                    <td className="py-3">{complianceTagEl(p.compliance_status)}</td>
+                                    <td className="py-3">{complianceTagEl(p.compliance_status, t)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -629,6 +627,7 @@ const PmReport = ({ range }: { range: DateRange }) => {
 // ── Tab 4: Inventory ──────────────────────────────────────────────────────────
 
 const InventoryReport = ({ range }: { range: DateRange }) => {
+    const { t } = useTranslation()
     const params = { from: toParam(range.from), to: toParam(range.to) }
     const { data, isLoading } = useSWR(
         ['/reports/inventory', params.from, params.to],
@@ -637,7 +636,7 @@ const InventoryReport = ({ range }: { range: DateRange }) => {
     )
     if (isLoading) return <LoadingSkeleton />
     const d = data?.data
-    if (!d) return <EmptySection label="No inventory data available" />
+    if (!d) return <EmptySection label={t('reports.inv.noData')} />
 
     const maxUsed = Math.max(...(d.top_items.map(i => i.total_used)), 1)
     const fmt = (n: number) => `$${n.toLocaleString('en', { minimumFractionDigits: 2 })}`
@@ -667,34 +666,34 @@ const InventoryReport = ({ range }: { range: DateRange }) => {
 
     return (
         <div className="flex flex-col gap-5">
-            <SectionHeader label="Inventory & Cost Summary" onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
+            <SectionHeader label={t('reports.inv.sectionTitle')} onExportCsv={handleExportCsv} onExportXlsx={handleExportXlsx} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <KpiCard
-                    label={hasRange ? 'Parts Cost (Period)' : 'Parts Cost This Month'}
+                    label={hasRange ? t('reports.inv.partsCostPeriod') : t('reports.inv.partsCostMonth')}
                     value={fmt(d.cost_month)}
-                    sub={hasRange && range.from ? `${dayjs(range.from).format('DD MMM')} – ${range.to ? dayjs(range.to).format('DD MMM YYYY') : 'today'}` : undefined}
+                    sub={hasRange && range.from ? `${dayjs(range.from).format('DD MMM')} – ${range.to ? dayjs(range.to).format('DD MMM YYYY') : t('reports.filter.today')}` : undefined}
                     icon={<TbCurrencyDollar />}
                     bg="bg-sky-100 dark:bg-sky-500/20"
                 />
                 <KpiCard
-                    label={hasRange ? 'Parts Cost (Period)' : 'Parts Cost This Year'}
+                    label={hasRange ? t('reports.inv.partsCostPeriod') : t('reports.inv.partsCostYear')}
                     value={fmt(d.cost_year)}
                     icon={<TbChartBar />}
                     bg="bg-amber-100 dark:bg-amber-500/20"
                 />
-                <KpiCard label="Stock Value" value={fmt(d.stock_value)} sub="Current inventory value" icon={<TbBox />} bg="bg-emerald-100 dark:bg-emerald-500/20" />
+                <KpiCard label={t('reports.inv.stockValue')} value={fmt(d.stock_value)} sub={t('reports.inv.currentInventory')} icon={<TbBox />} bg="bg-emerald-100 dark:bg-emerald-500/20" />
             </div>
 
             {d.top_items.length > 0 ? (
                 <Card>
-                    <h4 className="mb-4">Top 10 Most Used Parts</h4>
+                    <h4 className="mb-4">{t('reports.inv.topParts')}</h4>
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-gray-100 dark:border-gray-700">
                                 <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide w-8">#</th>
-                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">Item</th>
-                                <th className="pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">Qty Used</th>
-                                <th className="pb-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Cost</th>
+                                <th className="pb-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.inv.item')}</th>
+                                <th className="pb-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.inv.qtyUsed')}</th>
+                                <th className="pb-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wide">{t('reports.inv.totalCost')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -717,7 +716,7 @@ const InventoryReport = ({ range }: { range: DateRange }) => {
                     </table>
                 </Card>
             ) : (
-                <Card><EmptySection label="No parts used on work orders yet in this period" /></Card>
+                <Card><EmptySection label={t('reports.inv.emptyParts')} /></Card>
             )}
         </div>
     )
@@ -726,6 +725,7 @@ const InventoryReport = ({ range }: { range: DateRange }) => {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 const Reports = () => {
+    const { t } = useTranslation()
     const [activeTab, setActiveTab] = useState('wo')
     const [range, setRange] = useState<DateRange>({ from: null, to: null })
 
@@ -735,22 +735,22 @@ const Reports = () => {
                 {/* Page header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div>
-                        <h3>Reports</h3>
+                        <h3>{t('reports.title')}</h3>
                         <p className="text-sm text-gray-500">
-                            Maintenance performance, asset health, PM compliance and inventory costs
+                            {t('reports.description')}
                         </p>
                     </div>
                     <Button variant="default" icon={<TbPrinter />} onClick={() => window.print()}>
-                        Print / PDF
+                        {t('reports.print')}
                     </Button>
                 </div>
 
                 {/* Tab navigation */}
                 <Segment value={activeTab} onChange={(val) => setActiveTab(val as string)}>
-                    <Segment.Item value="wo"><span className="flex items-center gap-1.5"><TbClipboardList className="text-base" /> Work Orders</span></Segment.Item>
-                    <Segment.Item value="asset"><span className="flex items-center gap-1.5"><TbEngine className="text-base" /> Assets</span></Segment.Item>
-                    <Segment.Item value="pm"><span className="flex items-center gap-1.5"><TbCalendarStats className="text-base" /> PM Compliance</span></Segment.Item>
-                    <Segment.Item value="inv"><span className="flex items-center gap-1.5"><TbPackage className="text-base" /> Inventory</span></Segment.Item>
+                    <Segment.Item value="wo"><span className="flex items-center gap-1.5"><TbClipboardList className="text-base" /> {t('reports.tabs.wo')}</span></Segment.Item>
+                    <Segment.Item value="asset"><span className="flex items-center gap-1.5"><TbEngine className="text-base" /> {t('reports.tabs.asset')}</span></Segment.Item>
+                    <Segment.Item value="pm"><span className="flex items-center gap-1.5"><TbCalendarStats className="text-base" /> {t('reports.tabs.pm')}</span></Segment.Item>
+                    <Segment.Item value="inv"><span className="flex items-center gap-1.5"><TbPackage className="text-base" /> {t('reports.tabs.inv')}</span></Segment.Item>
                 </Segment>
 
                 {/* Date range filter */}

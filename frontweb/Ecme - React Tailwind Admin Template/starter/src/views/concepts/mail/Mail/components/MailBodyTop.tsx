@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import { useMailStore } from '../store/mailStore'
 import useNotifications from '../hooks/useMail'
@@ -5,6 +6,7 @@ import useResponsive from '@/utils/hooks/useResponsive'
 import { TbChecks, TbMenu2 } from 'react-icons/tb'
 
 const MailBodyTop = () => {
+    const { t } = useTranslation()
     const { notifications, toggleMobileSidebar } = useMailStore()
     const { handleMarkAllRead } = useNotifications()
     const { smaller } = useResponsive()
@@ -31,7 +33,7 @@ const MailBodyTop = () => {
                     icon={<TbChecks />}
                     onClick={handleMarkAllRead}
                 >
-                    Mark all read
+                    {t('mail.markAllRead')}
                 </Button>
             )}
         </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import DataTable from '@/components/shared/DataTable'
 import Tooltip from '@/components/ui/Tooltip'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -16,6 +17,7 @@ import type { ColumnDef, OnSortParam } from '@/components/shared/DataTable'
 import type { Warehouse } from '@/services/InventoryService'
 
 const WarehouseListTable = () => {
+    const { t } = useTranslation()
     const {
         warehouseList,
         warehouseListTotal,
@@ -44,13 +46,13 @@ const WarehouseListTable = () => {
                     key[0] === '/inventory/warehouses',
             )
             toast.push(
-                <Notification type="success">Warehouse deleted.</Notification>,
+                <Notification type="success">{t('warehouse.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to delete warehouse.
+                    {t('warehouse.toast.deleteFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -62,7 +64,7 @@ const WarehouseListTable = () => {
     const columns: ColumnDef<Warehouse>[] = useMemo(
         () => [
             {
-                header: 'Name',
+                header: t('warehouse.col.name'),
                 accessorKey: 'name',
                 cell: (props) => (
                     <span className="font-semibold text-gray-900 dark:text-gray-100">
@@ -71,7 +73,7 @@ const WarehouseListTable = () => {
                 ),
             },
             {
-                header: 'Code',
+                header: t('warehouse.col.code'),
                 accessorKey: 'code',
                 cell: (props) => (
                     <span className="font-mono text-sm font-bold">
@@ -80,7 +82,7 @@ const WarehouseListTable = () => {
                 ),
             },
             {
-                header: 'Location',
+                header: t('warehouse.col.location'),
                 accessorKey: 'location',
                 cell: (props) => (
                     <span className="text-gray-500 dark:text-gray-400 text-sm">
@@ -93,7 +95,7 @@ const WarehouseListTable = () => {
                 id: 'action',
                 cell: (props) => (
                     <div className="flex items-center justify-end gap-3">
-                        <Tooltip title="View details">
+                        <Tooltip title={t('warehouse.tooltip.view')}>
                             <div
                                 className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                                 role="button"
@@ -107,7 +109,7 @@ const WarehouseListTable = () => {
                             </div>
                         </Tooltip>
                         {canEdit && (
-                            <Tooltip title="Edit">
+                            <Tooltip title={t('warehouse.tooltip.edit')}>
                                 <div
                                     className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                                     role="button"
@@ -122,7 +124,7 @@ const WarehouseListTable = () => {
                             </Tooltip>
                         )}
                         {canDelete && (
-                            <Tooltip title="Delete">
+                            <Tooltip title={t('warehouse.tooltip.delete')}>
                                 <div
                                     className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
                                     role="button"
@@ -138,7 +140,7 @@ const WarehouseListTable = () => {
                 ),
             },
         ],
-        [canEdit, navigate],
+        [canEdit, canDelete, navigate, t],
     )
 
     return (
@@ -174,16 +176,13 @@ const WarehouseListTable = () => {
             <ConfirmDialog
                 isOpen={!!deleteTarget}
                 type="danger"
-                title="Delete warehouse"
+                title={t('warehouse.confirmDelete.title')}
                 onClose={() => setDeleteTarget(null)}
                 onRequestClose={() => setDeleteTarget(null)}
                 onCancel={() => setDeleteTarget(null)}
                 onConfirm={handleDelete}
             >
-                <p>
-                    Delete <strong>{deleteTarget?.name}</strong>? This cannot be
-                    undone.
-                </p>
+                <p>{t('warehouse.confirmDelete.body', { name: deleteTarget?.name })}</p>
             </ConfirmDialog>
         </>
     )

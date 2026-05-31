@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import { useMailStore } from '../store/mailStore'
 import useNotifications from '../hooks/useMail'
 import { TbMailOpened } from 'react-icons/tb'
 
 const MailDetailAction = () => {
+    const { t } = useTranslation()
     const { activeNotification } = useMailStore()
     const { handleMarkRead } = useNotifications()
 
@@ -15,7 +17,7 @@ const MailDetailAction = () => {
             icon={<TbMailOpened />}
             onClick={() => handleMarkRead(activeNotification.id)}
         >
-            Mark read
+            {t('mail.markRead')}
         </Button>
     )
 }

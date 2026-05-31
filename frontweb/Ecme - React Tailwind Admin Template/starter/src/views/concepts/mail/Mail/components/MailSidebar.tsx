@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Menu from '@/components/ui/Menu'
 import ScrollBar from '@/components/ui/ScrollBar'
 import Drawer from '@/components/ui/Drawer'
@@ -10,6 +11,7 @@ import classNames from '@/utils/classNames'
 const { MenuItem } = Menu
 
 const MailSideBarContent = ({ title }: { title?: string }) => {
+    const { t } = useTranslation()
     const { selectedCategory, setSelectedCategory, setActiveNotification, notifications, toggleMobileSidebar } =
         useMailStore()
 
@@ -45,7 +47,7 @@ const MailSideBarContent = ({ title }: { title?: string }) => {
                             <span className="text-2xl ltr:mr-2 rtl:ml-2">
                                 {cat.icon}
                             </span>
-                            <span className="flex-1">{cat.label}</span>
+                            <span className="flex-1">{t(`mail.category.${cat.value}`)}</span>
                             {cat.value === 'unread' && unreadCount > 0 && (
                                 <Badge
                                     className="ltr:ml-2 rtl:mr-2"
@@ -62,13 +64,14 @@ const MailSideBarContent = ({ title }: { title?: string }) => {
 }
 
 const MailSidebar = () => {
+    const { t } = useTranslation()
     const { mobileSideBarExpand, toggleMobileSidebar } = useMailStore()
     const { smaller } = useResponsive()
 
     return smaller.xl ? (
         <Drawer
             bodyClass="p-0"
-            title="Notifications"
+            title={t('mail.title')}
             isOpen={mobileSideBarExpand}
             placement="left"
             width={280}
@@ -81,7 +84,7 @@ const MailSidebar = () => {
         </Drawer>
     ) : (
         <div className="w-[240px]">
-            <MailSideBarContent title="Notifications" />
+            <MailSideBarContent title={t('mail.title')} />
         </div>
     )
 }

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type React from 'react'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -90,6 +91,8 @@ const OverviewSection = ({
     selectedCompanyId = null,
     onCompanyChange,
 }: OverviewSectionProps) => {
+    const { t } = useTranslation()
+
     const dialCodeList = useMemo(() => {
         const newCountryList: Array<CountryOption> = JSON.parse(
             JSON.stringify(countryList),
@@ -102,10 +105,10 @@ const OverviewSection = ({
 
     return (
         <Card>
-            <h4 className="mb-6">Overview</h4>
+            <h4 className="mb-6">{t('memberForm.overviewTitle')}</h4>
             <div className="grid md:grid-cols-2 gap-4">
                 <FormItem
-                    label="First Name"
+                    label={t('memberForm.field.firstName')}
                     invalid={Boolean(errors.firstName)}
                     errorMessage={errors.firstName?.message}
                 >
@@ -116,14 +119,14 @@ const OverviewSection = ({
                             <Input
                                 type="text"
                                 autoComplete="off"
-                                placeholder="First Name"
+                                placeholder={t('memberForm.placeholder.firstName')}
                                 {...field}
                             />
                         )}
                     />
                 </FormItem>
                 <FormItem
-                    label="Last Name"
+                    label={t('memberForm.field.lastName')}
                     invalid={Boolean(errors.lastName)}
                     errorMessage={errors.lastName?.message}
                 >
@@ -134,7 +137,7 @@ const OverviewSection = ({
                             <Input
                                 type="text"
                                 autoComplete="off"
-                                placeholder="Last Name"
+                                placeholder={t('memberForm.placeholder.lastName')}
                                 {...field}
                             />
                         )}
@@ -143,7 +146,7 @@ const OverviewSection = ({
             </div>
 
             <FormItem
-                label="Email"
+                label={t('common.email')}
                 invalid={Boolean(errors.email)}
                 errorMessage={errors.email?.message}
             >
@@ -154,7 +157,7 @@ const OverviewSection = ({
                         <Input
                             type="email"
                             autoComplete="off"
-                            placeholder="Email"
+                            placeholder={t('memberForm.placeholder.email')}
                             {...field}
                         />
                     )}
@@ -162,7 +165,7 @@ const OverviewSection = ({
             </FormItem>
 
             <FormItem
-                label="Location"
+                label={t('common.location')}
                 invalid={Boolean(errors.locale)}
                 errorMessage={errors.locale?.message}
             >
@@ -176,7 +179,7 @@ const OverviewSection = ({
                                 Option: LocaleSelectOption,
                                 Control: ControlBase,
                             }}
-                            placeholder="Select location"
+                            placeholder={t('memberForm.placeholder.location')}
                             value={
                                 countryList.find(
                                     (option) => option.value === field.value,
@@ -194,7 +197,7 @@ const OverviewSection = ({
                         Boolean(errors.phoneNumber) || Boolean(errors.dialCode)
                     }
                 >
-                    <label className="form-label mb-2">Phone number</label>
+                    <label className="form-label mb-2">{t('memberForm.field.phoneNumber')}</label>
                     <Controller
                         name="dialCode"
                         control={control}
@@ -231,7 +234,7 @@ const OverviewSection = ({
                         render={({ field }) => (
                             <NumericInput
                                 autoComplete="off"
-                                placeholder="Phone Number"
+                                placeholder={t('memberForm.placeholder.phoneNumber')}
                                 value={field.value}
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
@@ -245,7 +248,7 @@ const OverviewSection = ({
                 <>
                     <div className="grid md:grid-cols-2 gap-4 mt-2">
                         <FormItem
-                            label="Password"
+                            label={t('memberForm.field.password')}
                             invalid={Boolean(errors.password)}
                             errorMessage={errors.password?.message}
                         >
@@ -256,7 +259,7 @@ const OverviewSection = ({
                                     <Input
                                         type="password"
                                         autoComplete="new-password"
-                                        placeholder="Password"
+                                        placeholder={t('memberForm.placeholder.password')}
                                         {...field}
                                         value={field.value || ''}
                                     />
@@ -264,7 +267,7 @@ const OverviewSection = ({
                             />
                         </FormItem>
                         <FormItem
-                            label="Confirm Password"
+                            label={t('memberForm.field.confirmPassword')}
                             invalid={Boolean(errors.passwordConfirmation)}
                             errorMessage={errors.passwordConfirmation?.message}
                         >
@@ -275,7 +278,7 @@ const OverviewSection = ({
                                     <Input
                                         type="password"
                                         autoComplete="new-password"
-                                        placeholder="Confirm Password"
+                                        placeholder={t('memberForm.placeholder.confirmPassword')}
                                         {...field}
                                         value={field.value || ''}
                                     />
@@ -285,9 +288,9 @@ const OverviewSection = ({
                     </div>
 
                     {companyOptions.length > 0 && (
-                        <FormItem label="Assign to Company" className="mt-2">
+                        <FormItem label={t('memberForm.field.assignCompany')} className="mt-2">
                             <Select<CompanyOption>
-                                placeholder="Select a company..."
+                                placeholder={t('memberForm.placeholder.company')}
                                 options={companyOptions}
                                 value={
                                     companyOptions.find(

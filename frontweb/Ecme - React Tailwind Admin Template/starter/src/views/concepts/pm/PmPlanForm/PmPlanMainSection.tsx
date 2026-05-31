@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -10,6 +11,7 @@ import type { Control, FieldErrors } from 'react-hook-form'
 import type { PmPlanFormSchema } from './types'
 
 const EstimatedTimePicker = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
 
@@ -44,10 +46,10 @@ const EstimatedTimePicker = ({ value, onChange }: { value: string; onChange: (v:
             </div>
             {open && (
                 <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4">
-                    <p className="text-xs text-gray-500 mb-3 font-medium">Select estimated duration</p>
+                    <p className="text-xs text-gray-500 mb-3 font-medium">{t('pmForm.timePicker.label')}</p>
                     <div className="flex items-center gap-3">
                         <div className="flex-1">
-                            <label className="text-xs text-gray-500 mb-1 block">Hours</label>
+                            <label className="text-xs text-gray-500 mb-1 block">{t('pmForm.timePicker.hours')}</label>
                             <Input
                                 type="number"
                                 min={0}
@@ -59,7 +61,7 @@ const EstimatedTimePicker = ({ value, onChange }: { value: string; onChange: (v:
                         </div>
                         <span className="text-gray-400 text-lg mt-4">:</span>
                         <div className="flex-1">
-                            <label className="text-xs text-gray-500 mb-1 block">Minutes</label>
+                            <label className="text-xs text-gray-500 mb-1 block">{t('pmForm.timePicker.minutes')}</label>
                             <Input
                                 type="number"
                                 min={0}
@@ -80,7 +82,7 @@ const EstimatedTimePicker = ({ value, onChange }: { value: string; onChange: (v:
                         className="mt-3 w-full"
                         onClick={() => setOpen(false)}
                     >
-                        Done
+                        {t('pmForm.timePicker.done')}
                     </Button>
                 </div>
             )}
@@ -95,19 +97,6 @@ type Props = {
 
 type ColorOption = { value: string; label: string; color: string }
 
-const statusOptions: ColorOption[] = [
-    { value: 'active',   label: 'Active',   color: 'bg-emerald-500' },
-    { value: 'inactive', label: 'Inactive', color: 'bg-gray-400' },
-    { value: 'draft',    label: 'Draft',    color: 'bg-amber-400' },
-]
-
-const priorityOptions: ColorOption[] = [
-    { value: 'low',      label: 'Low',      color: 'bg-gray-400' },
-    { value: 'medium',   label: 'Medium',   color: 'bg-blue-500' },
-    { value: 'high',     label: 'High',     color: 'bg-amber-500' },
-    { value: 'critical', label: 'Critical', color: 'bg-red-500' },
-]
-
 const ColorDotOption = ({ option }: { option: ColorOption }) => (
     <div className="flex items-center gap-2">
         <span className={`inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 ${option.color}`} />
@@ -115,94 +104,111 @@ const ColorDotOption = ({ option }: { option: ColorOption }) => (
     </div>
 )
 
-const PmPlanMainSection = ({ control, errors }: Props) => (
-    <Card>
-        <h4 className="mb-6">Plan Details</h4>
+const PmPlanMainSection = ({ control, errors }: Props) => {
+    const { t } = useTranslation()
 
-        <FormItem
-            label="Plan Name"
-            asterisk
-            invalid={Boolean(errors.name)}
-            errorMessage={errors.name?.message}
-        >
-            <Controller
-                name="name"
-                control={control}
-                render={({ field }) => (
-                    <Input placeholder="e.g. Monthly HVAC Inspection" {...field} />
-                )}
-            />
-        </FormItem>
+    const statusOptions: ColorOption[] = useMemo(() => [
+        { value: 'active',   label: t('pmForm.status.active'),   color: 'bg-emerald-500' },
+        { value: 'inactive', label: t('pmForm.status.inactive'), color: 'bg-gray-400' },
+        { value: 'draft',    label: t('pmForm.status.draft'),    color: 'bg-amber-400' },
+    ], [t])
 
-        <FormItem label="Description">
-            <Controller
-                name="description"
-                control={control}
-                render={({ field }) => (
-                    <Input
-                        textArea
-                        placeholder="Describe what this PM plan involves..."
-                        rows={4}
-                        {...field}
+    const priorityOptions: ColorOption[] = useMemo(() => [
+        { value: 'low',      label: t('pmForm.priority.low'),      color: 'bg-gray-400' },
+        { value: 'medium',   label: t('pmForm.priority.medium'),   color: 'bg-blue-500' },
+        { value: 'high',     label: t('pmForm.priority.high'),     color: 'bg-amber-500' },
+        { value: 'critical', label: t('pmForm.priority.critical'), color: 'bg-red-500' },
+    ], [t])
+
+    return (
+        <Card>
+            <h4 className="mb-6">{t('pmForm.planDetailsTitle')}</h4>
+
+            <FormItem
+                label={t('pmForm.field.planName')}
+                asterisk
+                invalid={Boolean(errors.name)}
+                errorMessage={errors.name?.message}
+            >
+                <Controller
+                    name="name"
+                    control={control}
+                    render={({ field }) => (
+                        <Input placeholder={t('pmForm.placeholder.planName')} {...field} />
+                    )}
+                />
+            </FormItem>
+
+            <FormItem label={t('common.description')}>
+                <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                        <Input
+                            textArea
+                            placeholder={t('pmForm.placeholder.description')}
+                            rows={4}
+                            {...field}
+                        />
+                    )}
+                />
+            </FormItem>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormItem
+                    label={t('common.status')}
+                    asterisk
+                    invalid={Boolean(errors.status)}
+                    errorMessage={errors.status?.message}
+                >
+                    <Controller
+                        name="status"
+                        control={control}
+                        render={({ field }) => (
+                            <Select<ColorOption>
+                                placeholder={t('pmForm.selectStatus')}
+                                options={statusOptions}
+                                value={statusOptions.find((o) => o.value === field.value) || null}
+                                onChange={(opt) => field.onChange(opt?.value)}
+                                formatOptionLabel={(opt) => <ColorDotOption option={opt} />}
+                            />
+                        )}
                     />
-                )}
-            />
-        </FormItem>
+                </FormItem>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormItem
-                label="Status"
-                asterisk
-                invalid={Boolean(errors.status)}
-                errorMessage={errors.status?.message}
-            >
+                <FormItem
+                    label={t('common.priority')}
+                    asterisk
+                    invalid={Boolean(errors.priority)}
+                    errorMessage={errors.priority?.message}
+                >
+                    <Controller
+                        name="priority"
+                        control={control}
+                        render={({ field }) => (
+                            <Select<ColorOption>
+                                placeholder={t('pmForm.selectPriority')}
+                                options={priorityOptions}
+                                value={priorityOptions.find((o) => o.value === field.value) || null}
+                                onChange={(opt) => field.onChange(opt?.value)}
+                                formatOptionLabel={(opt) => <ColorDotOption option={opt} />}
+                            />
+                        )}
+                    />
+                </FormItem>
+            </div>
+
+            <FormItem label={t('woForm.field.estimatedTime')}>
                 <Controller
-                    name="status"
+                    name="estimated_minutes"
                     control={control}
                     render={({ field }) => (
-                        <Select<ColorOption>
-                            placeholder="Select status"
-                            options={statusOptions}
-                            value={statusOptions.find((o) => o.value === field.value) || null}
-                            onChange={(opt) => field.onChange(opt?.value)}
-                            formatOptionLabel={(opt) => <ColorDotOption option={opt} />}
-                        />
+                        <EstimatedTimePicker value={field.value} onChange={field.onChange} />
                     )}
                 />
             </FormItem>
-
-            <FormItem
-                label="Priority"
-                asterisk
-                invalid={Boolean(errors.priority)}
-                errorMessage={errors.priority?.message}
-            >
-                <Controller
-                    name="priority"
-                    control={control}
-                    render={({ field }) => (
-                        <Select<ColorOption>
-                            placeholder="Select priority"
-                            options={priorityOptions}
-                            value={priorityOptions.find((o) => o.value === field.value) || null}
-                            onChange={(opt) => field.onChange(opt?.value)}
-                            formatOptionLabel={(opt) => <ColorDotOption option={opt} />}
-                        />
-                    )}
-                />
-            </FormItem>
-        </div>
-
-        <FormItem label="Estimated Time">
-            <Controller
-                name="estimated_minutes"
-                control={control}
-                render={({ field }) => (
-                    <EstimatedTimePicker value={field.value} onChange={field.onChange} />
-                )}
-            />
-        </FormItem>
-    </Card>
-)
+        </Card>
+    )
+}
 
 export default PmPlanMainSection

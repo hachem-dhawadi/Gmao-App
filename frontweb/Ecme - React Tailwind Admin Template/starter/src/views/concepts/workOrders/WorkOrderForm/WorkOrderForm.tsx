@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Form } from '@/components/ui/Form'
 import Container from '@/components/shared/Container'
 import BottomStickyBar from '@/components/template/BottomStickyBar'
@@ -13,25 +14,6 @@ import useAuthority from '@/utils/hooks/useAuthority'
 import type { CommonProps } from '@/@types/common'
 import type { WorkOrderFormSchema } from './types'
 
-const validationSchema = z.object({
-    title: z.string().min(1, { message: 'Title is required' }),
-    asset_id: z
-        .number({ required_error: 'Asset is required' })
-        .nullable()
-        .refine((v) => v !== null, { message: 'Asset is required' }),
-    code: z.string().optional().default(''),
-    status: z.enum(['open', 'in_progress', 'on_hold', 'completed', 'cancelled'], {
-        required_error: 'Status is required',
-    }),
-    priority: z.enum(['low', 'medium', 'high', 'critical'], {
-        required_error: 'Priority is required',
-    }),
-    description: z.string().optional().default(''),
-    due_at: z.string().optional().default(''),
-    estimated_minutes: z.string().optional().default(''),
-    assigned_member_ids: z.array(z.number()).optional().default([]),
-})
-
 type WorkOrderFormProps = {
     onFormSubmit: (values: WorkOrderFormSchema) => void
     defaultValues?: Partial<WorkOrderFormSchema>
@@ -42,8 +24,28 @@ const WorkOrderForm = ({
     defaultValues = {},
     children,
 }: WorkOrderFormProps) => {
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canAssign = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
+
+    const validationSchema = useMemo(() => z.object({
+        title: z.string().min(1, { message: t('woForm.validation.titleRequired') }),
+        asset_id: z
+            .number({ required_error: t('woForm.validation.assetRequired') })
+            .nullable()
+            .refine((v) => v !== null, { message: t('woForm.validation.assetRequired') }),
+        code: z.string().optional().default(''),
+        status: z.enum(['open', 'in_progress', 'on_hold', 'completed', 'cancelled'], {
+            required_error: t('woForm.validation.statusRequired'),
+        }),
+        priority: z.enum(['low', 'medium', 'high', 'critical'], {
+            required_error: t('woForm.validation.priorityRequired'),
+        }),
+        description: z.string().optional().default(''),
+        due_at: z.string().optional().default(''),
+        estimated_minutes: z.string().optional().default(''),
+        assigned_member_ids: z.array(z.number()).optional().default([]),
+    }), [t])
 
     const {
         handleSubmit,

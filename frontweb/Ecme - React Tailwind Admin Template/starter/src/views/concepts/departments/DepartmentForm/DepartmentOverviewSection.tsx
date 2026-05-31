@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import { FormItem } from '@/components/ui/Form'
@@ -11,12 +12,14 @@ type Props = {
 }
 
 const DepartmentOverviewSection = ({ control, errors }: Props) => {
+    const { t } = useTranslation()
+
     return (
         <Card>
-            <h4 className="mb-6">Overview</h4>
+            <h4 className="mb-6">{t('deptForm.overviewTitle')}</h4>
 
             <FormItem
-                label="Department Name"
+                label={t('deptForm.field.deptName')}
                 invalid={Boolean(errors.name)}
                 errorMessage={errors.name?.message}
             >
@@ -27,7 +30,7 @@ const DepartmentOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. Maintenance"
+                            placeholder={t('deptForm.placeholder.deptName')}
                             {...field}
                         />
                     )}
@@ -35,12 +38,12 @@ const DepartmentOverviewSection = ({ control, errors }: Props) => {
             </FormItem>
 
             <FormItem
-                label="Code"
+                label={t('common.code')}
                 invalid={Boolean(errors.code)}
                 errorMessage={errors.code?.message}
                 extra={
                     <span className="text-xs text-gray-400">
-                        Unique identifier, uppercase
+                        {t('deptForm.codeHint')}
                     </span>
                 }
             >
@@ -51,7 +54,7 @@ const DepartmentOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. MAINT"
+                            placeholder={t('deptForm.placeholder.code')}
                             {...field}
                             onChange={(e) =>
                                 field.onChange(e.target.value.toUpperCase())
@@ -62,7 +65,7 @@ const DepartmentOverviewSection = ({ control, errors }: Props) => {
             </FormItem>
 
             <FormItem
-                label="Description"
+                label={t('common.description')}
                 invalid={Boolean(errors.description)}
                 errorMessage={errors.description?.message}
             >
@@ -73,7 +76,7 @@ const DepartmentOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             textArea
                             rows={5}
-                            placeholder="Describe the purpose of this department..."
+                            placeholder={t('deptForm.placeholder.description')}
                             {...field}
                         />
                     )}

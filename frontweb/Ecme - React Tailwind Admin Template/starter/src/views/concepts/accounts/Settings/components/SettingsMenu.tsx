@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Menu from '@/components/ui/Menu'
 import ScrollBar from '@/components/ui/ScrollBar'
@@ -16,6 +17,7 @@ import type { View } from '../types'
 const { MenuItem } = Menu
 
 export const SettingsMenu = ({ onChange }: { onChange?: () => void }) => {
+    const { t } = useTranslation()
     const query = useQuery()
     const navigate = useNavigate()
     const location = useLocation()
@@ -34,19 +36,19 @@ export const SettingsMenu = ({ onChange }: { onChange?: () => void }) => {
 
     const menuList = useMemo(
         () => [
-            { label: 'Profile', value: 'profile' as View, icon: <TbUserSquare /> },
+            { label: t('settingsMenu.profile'), value: 'profile' as View, icon: <TbUserSquare /> },
             ...(showCompanyTab
                 ? [
                       {
-                          label: 'Company',
+                          label: t('settingsMenu.company'),
                           value: 'company' as View,
                           icon: <TbBuilding />,
                       },
                   ]
                 : []),
-            { label: 'Security', value: 'security' as View, icon: <TbLock /> },
+            { label: t('settingsMenu.security'), value: 'security' as View, icon: <TbLock /> },
         ],
-        [showCompanyTab],
+        [showCompanyTab, t],
     )
 
     const availableViews = useMemo(

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Checkbox from '@/components/ui/Checkbox'
 import Radio from '@/components/ui/Radio'
 import Switcher from '@/components/ui/Switcher'
@@ -13,56 +14,58 @@ type EmailNotificationFields =
     | 'offerAndPromotion'
     | 'followUpReminder'
 
-const emailNotificationOption: {
-    label: string
-    value: EmailNotificationFields
-    desc: string
-}[] = [
-    {
-        label: 'News & updates',
-        value: 'newsAndUpdate',
-        desc: 'New about product and features update',
-    },
-    {
-        label: 'Tips & tutorials',
-        value: 'tipsAndTutorial',
-        desc: 'Tips & trick in order to increase your performance efficiency',
-    },
-    {
-        label: 'Offer & promotions',
-        value: 'offerAndPromotion',
-        desc: 'Promotion about product price & lastest discount',
-    },
-    {
-        label: 'Follow up remider',
-        value: 'followUpReminder',
-        desc: 'Receive notification all the reminder that have been made',
-    },
-]
-
-const notifyMeOption: {
-    label: string
-    value: string
-    desc: string
-}[] = [
-    {
-        label: 'All new messages',
-        value: 'allNewMessage',
-        desc: 'Broadcast notifications to the channel for each new message',
-    },
-    {
-        label: 'Mentions only',
-        value: 'mentionsOnly',
-        desc: 'Only alert me in the channel if someone mentions me in a message',
-    },
-    {
-        label: 'Nothing',
-        value: 'nothing',
-        desc: `Don't notify me anything`,
-    },
-]
-
 const SettingsNotification = () => {
+    const { t } = useTranslation()
+
+    const emailNotificationOption: {
+        label: string
+        value: EmailNotificationFields
+        desc: string
+    }[] = [
+        {
+            label: t('notificationSettings.options.newsAndUpdate.label'),
+            value: 'newsAndUpdate',
+            desc: t('notificationSettings.options.newsAndUpdate.desc'),
+        },
+        {
+            label: t('notificationSettings.options.tipsAndTutorial.label'),
+            value: 'tipsAndTutorial',
+            desc: t('notificationSettings.options.tipsAndTutorial.desc'),
+        },
+        {
+            label: t('notificationSettings.options.offerAndPromotion.label'),
+            value: 'offerAndPromotion',
+            desc: t('notificationSettings.options.offerAndPromotion.desc'),
+        },
+        {
+            label: t('notificationSettings.options.followUpReminder.label'),
+            value: 'followUpReminder',
+            desc: t('notificationSettings.options.followUpReminder.desc'),
+        },
+    ]
+
+    const notifyMeOption: {
+        label: string
+        value: string
+        desc: string
+    }[] = [
+        {
+            label: t('notificationSettings.notifyMe.allNewMessage.label'),
+            value: 'allNewMessage',
+            desc: t('notificationSettings.notifyMe.allNewMessage.desc'),
+        },
+        {
+            label: t('notificationSettings.notifyMe.mentionsOnly.label'),
+            value: 'mentionsOnly',
+            desc: t('notificationSettings.notifyMe.mentionsOnly.desc'),
+        },
+        {
+            label: t('notificationSettings.notifyMe.nothing.label'),
+            value: 'nothing',
+            desc: t('notificationSettings.notifyMe.nothing.desc'),
+        },
+    ]
+
     const {
         data = {
             email: [],
@@ -123,15 +126,12 @@ const SettingsNotification = () => {
 
     return (
         <div>
-            <h4>Notification</h4>
+            <h4>{t('notificationSettings.title')}</h4>
             <div className="mt-2">
                 <div className="flex items-center justify-between py-6 border-b border-gray-200 dark:border-gray-600">
                     <div>
-                        <h5>Enable desktop notification</h5>
-                        <p>
-                            Decide whether you want to be notified of new
-                            message & updates
-                        </p>
+                        <h5>{t('notificationSettings.desktop.title')}</h5>
+                        <p>{t('notificationSettings.desktop.desc')}</p>
                     </div>
                     <div>
                         <Switcher
@@ -142,11 +142,8 @@ const SettingsNotification = () => {
                 </div>
                 <div className="flex items-center justify-between py-6 border-b border-gray-200 dark:border-gray-600">
                     <div>
-                        <h5>Enable unread notification badge</h5>
-                        <p>
-                            Display a red indicator on of the notification icon
-                            when you have unread message
-                        </p>
+                        <h5>{t('notificationSettings.badge.title')}</h5>
+                        <p>{t('notificationSettings.badge.desc')}</p>
                     </div>
                     <div>
                         <Switcher
@@ -156,7 +153,7 @@ const SettingsNotification = () => {
                     </div>
                 </div>
                 <div className="py-6 border-b border-gray-200 dark:border-gray-600">
-                    <h5>Enable unread notification badge</h5>
+                    <h5>{t('notificationSettings.badge.title')}</h5>
                     <div className="mt-4">
                         <Radio.Group
                             vertical
@@ -185,11 +182,8 @@ const SettingsNotification = () => {
                 </div>
                 <div className="flex items-center justify-between py-6">
                     <div>
-                        <h5>Email notification</h5>
-                        <p>
-                            Substance can send you email notification for any
-                            new direct message
-                        </p>
+                        <h5>{t('notificationSettings.email.title')}</h5>
+                        <p>{t('notificationSettings.email.desc')}</p>
                     </div>
                     <div>
                         <Switcher

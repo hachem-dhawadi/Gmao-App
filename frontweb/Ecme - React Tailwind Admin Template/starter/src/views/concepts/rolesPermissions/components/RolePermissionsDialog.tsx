@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
@@ -25,6 +26,7 @@ const RolePermissionsDialog = ({
     onClose,
     mutate,
 }: RolePermissionsDialogProps) => {
+    const { t } = useTranslation()
     const [selectedPerms, setSelectedPerms] = useState<Record<string, string[]>>({})
     const [submitting, setSubmitting] = useState(false)
 
@@ -53,7 +55,7 @@ const RolePermissionsDialog = ({
             await mutate()
             toast.push(
                 <Notification type="success">
-                    Role &quot;{role.label}&quot; updated successfully.
+                    {t('rolesPermissions.toast.roleUpdated', { label: role.label })}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -61,7 +63,7 @@ const RolePermissionsDialog = ({
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to update role permissions.
+                    {t('rolesPermissions.toast.roleUpdateFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -162,14 +164,14 @@ const RolePermissionsDialog = ({
                             variant="plain"
                             onClick={handleClose}
                         >
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             variant="solid"
                             loading={submitting}
                             onClick={handleUpdate}
                         >
-                            Update
+                            {t('common.update')}
                         </Button>
                     </div>
                 </div>

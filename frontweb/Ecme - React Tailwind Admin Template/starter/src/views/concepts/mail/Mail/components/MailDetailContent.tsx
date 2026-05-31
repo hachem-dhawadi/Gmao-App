@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Tag from '@/components/ui/Tag'
 import Button from '@/components/ui/Button'
 import ScrollBar from '@/components/ui/ScrollBar'
@@ -5,7 +6,7 @@ import classNames from '@/utils/classNames'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import { useMailStore } from '../store/mailStore'
-import { typeIconMap, typeLabelMap, typeCategoryMap, categoryColorMap } from '../constants'
+import { typeIconMap, typeCategoryMap, categoryColorMap } from '../constants'
 import { TbBell, TbClock, TbArrowRight } from 'react-icons/tb'
 
 const resolveRoute = (type: string, data: Record<string, unknown>): string | null => {
@@ -18,6 +19,7 @@ const resolveRoute = (type: string, data: Record<string, unknown>): string | nul
 }
 
 const MailDetailContent = () => {
+    const { t, i18n } = useTranslation()
     const { activeNotification } = useMailStore()
     const navigate = useNavigate()
 
@@ -26,6 +28,11 @@ const MailDetailContent = () => {
     const n = activeNotification
     const category = typeCategoryMap[n.type] ?? 'system'
     const route = resolveRoute(n.type, n.data)
+
+    const bodyKey = `mail.body.${n.type}`
+    const body = i18n.exists(bodyKey)
+        ? t(bodyKey, n.data as Record<string, string>)
+        : n.body
 
     const dataEntries = Object.entries(n.data || {}).filter(
         ([, v]) => v !== null && v !== undefined && v !== '',
@@ -45,7 +52,7 @@ const MailDetailContent = () => {
                             <span className="text-sm">
                                 {typeIconMap[n.type] ?? <TbBell />}
                             </span>
-                            {typeLabelMap[n.type] ?? n.type}
+                            {t(`mail.typeLabel.${n.type}`, { defaultValue: n.type })}
                         </Tag>
                         <span className="flex items-center gap-1 text-xs text-gray-400">
                             <TbClock className="text-sm" />
@@ -53,13 +60,13 @@ const MailDetailContent = () => {
                         </span>
                         {!n.read && (
                             <span className="text-xs font-semibold text-primary">
-                                Unread
+                                {t('mail.unread')}
                             </span>
                         )}
                     </div>
 
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-sm whitespace-pre-wrap">
-                        {n.body}
+                        {body}
                     </p>
 
                     {route && (
@@ -70,7 +77,7 @@ const MailDetailContent = () => {
                                 icon={<TbArrowRight />}
                                 onClick={() => navigate(route)}
                             >
-                                View in App
+                                {t('mail.viewInApp')}
                             </Button>
                         </div>
                     )}
@@ -78,13 +85,13 @@ const MailDetailContent = () => {
                     {dataEntries.length > 0 && (
                         <div className="mt-8 border-t border-gray-100 dark:border-gray-700 pt-6">
                             <h6 className="text-xs uppercase text-gray-400 mb-3">
-                                Details
+                                {t('mail.details')}
                             </h6>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {dataEntries.map(([key, value]) => (
                                     <div key={key}>
                                         <p className="text-xs text-gray-400 capitalize">
-                                            {key.replace(/_/g, ' ')}
+                                            {t(`mail.dataField.${key}`, { defaultValue: key.replace(/_/g, ' ') })}
                                         </p>
                                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 break-words">
                                             {String(value)}

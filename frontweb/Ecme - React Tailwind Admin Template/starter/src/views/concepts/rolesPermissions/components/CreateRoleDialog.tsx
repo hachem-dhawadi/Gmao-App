@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
@@ -23,6 +24,7 @@ type CreateRoleDialogProps = {
 }
 
 const CreateRoleDialog = ({ isOpen, onClose, mutate }: CreateRoleDialogProps) => {
+    const { t } = useTranslation()
     const roleNameRef = useRef<HTMLInputElement>(null)
     const descriptionRef = useRef<HTMLTextAreaElement>(null)
     const [selectedPerms, setSelectedPerms] = useState<Record<string, string[]>>({})
@@ -41,7 +43,7 @@ const CreateRoleDialog = ({ isOpen, onClose, mutate }: CreateRoleDialogProps) =>
         const label = roleNameRef.current?.value?.trim()
         if (!label) {
             toast.push(
-                <Notification type="danger">Role name is required.</Notification>,
+                <Notification type="danger">{t('rolesPermissions.toast.roleNameRequired')}</Notification>,
                 { placement: 'top-center' },
             )
             return
@@ -51,7 +53,7 @@ const CreateRoleDialog = ({ isOpen, onClose, mutate }: CreateRoleDialogProps) =>
         if (permissions.length === 0) {
             toast.push(
                 <Notification type="danger">
-                    Select at least one permission.
+                    {t('rolesPermissions.toast.permRequired')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -68,7 +70,7 @@ const CreateRoleDialog = ({ isOpen, onClose, mutate }: CreateRoleDialogProps) =>
             await mutate()
             toast.push(
                 <Notification type="success">
-                    Role &quot;{label}&quot; created successfully.
+                    {t('rolesPermissions.toast.roleCreated', { label })}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -76,7 +78,7 @@ const CreateRoleDialog = ({ isOpen, onClose, mutate }: CreateRoleDialogProps) =>
         } catch {
             toast.push(
                 <Notification type="danger">
-                    Failed to create role. The name may already exist.
+                    {t('rolesPermissions.toast.roleCreateFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -92,21 +94,21 @@ const CreateRoleDialog = ({ isOpen, onClose, mutate }: CreateRoleDialogProps) =>
             onClose={handleClose}
             onRequestClose={handleClose}
         >
-            <h4>Create role</h4>
+            <h4>{t('rolesPermissions.dialog.createTitle')}</h4>
             <ScrollBar className="mt-6 max-h-[600px] overflow-y-auto">
                 <div className="px-4">
-                    <FormItem label="Role name">
-                        <Input ref={roleNameRef} placeholder="e.g. Supervisor" />
+                    <FormItem label={t('rolesPermissions.dialog.roleName')}>
+                        <Input ref={roleNameRef} placeholder={t('rolesPermissions.dialog.roleNamePlaceholder')} />
                     </FormItem>
-                    <FormItem label="Description">
+                    <FormItem label={t('rolesPermissions.dialog.description')}>
                         <Input
                             ref={descriptionRef}
                             textArea
-                            placeholder="Describe what this role can do..."
+                            placeholder={t('rolesPermissions.dialog.descriptionPlaceholder')}
                             rows={2}
                         />
                     </FormItem>
-                    <span className="font-semibold">Permission</span>
+                    <span className="font-semibold">{t('rolesPermissions.dialog.permission')}</span>
 
                     {accessModules.map((module, index) => (
                         <div
@@ -180,14 +182,14 @@ const CreateRoleDialog = ({ isOpen, onClose, mutate }: CreateRoleDialogProps) =>
                             variant="plain"
                             onClick={handleClose}
                         >
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             variant="solid"
                             loading={submitting}
                             onClick={handleSubmit}
                         >
-                            Create
+                            {t('common.create')}
                         </Button>
                     </div>
                 </div>

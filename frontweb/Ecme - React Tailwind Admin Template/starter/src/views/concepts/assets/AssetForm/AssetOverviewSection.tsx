@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -17,21 +19,6 @@ type StatusOption = {
     dotClass: string
 }
 
-const statusOptions: StatusOption[] = [
-    { value: 'active', label: 'Active', dotClass: 'bg-emerald-500' },
-    { value: 'inactive', label: 'Inactive', dotClass: 'bg-gray-400' },
-    {
-        value: 'under_maintenance',
-        label: 'Under Maintenance',
-        dotClass: 'bg-amber-500',
-    },
-    {
-        value: 'decommissioned',
-        label: 'Decommissioned',
-        dotClass: 'bg-red-500',
-    },
-]
-
 const StatusLabel = ({ label, dotClass }: { label: string; dotClass: string }) => (
     <div className="flex items-center gap-2">
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
@@ -40,12 +27,21 @@ const StatusLabel = ({ label, dotClass }: { label: string; dotClass: string }) =
 )
 
 const AssetOverviewSection = ({ control, errors }: Props) => {
+    const { t } = useTranslation()
+
+    const statusOptions: StatusOption[] = useMemo(() => [
+        { value: 'active', label: t('assetForm.status.active'), dotClass: 'bg-emerald-500' },
+        { value: 'inactive', label: t('assetForm.status.inactive'), dotClass: 'bg-gray-400' },
+        { value: 'under_maintenance', label: t('assetForm.status.under_maintenance'), dotClass: 'bg-amber-500' },
+        { value: 'decommissioned', label: t('assetForm.status.decommissioned'), dotClass: 'bg-red-500' },
+    ], [t])
+
     return (
         <Card>
-            <h4 className="mb-6">Overview</h4>
+            <h4 className="mb-6">{t('assetForm.overview')}</h4>
 
             <FormItem
-                label="Asset Name"
+                label={t('assetForm.field.assetName')}
                 invalid={Boolean(errors.name)}
                 errorMessage={errors.name?.message}
             >
@@ -56,7 +52,7 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. Main Compressor"
+                            placeholder={t('assetForm.placeholder.assetName')}
                             {...field}
                         />
                     )}
@@ -64,7 +60,7 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
             </FormItem>
 
             <FormItem
-                label="Code"
+                label={t('common.code')}
                 invalid={Boolean(errors.code)}
                 errorMessage={errors.code?.message}
             >
@@ -75,7 +71,7 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. COMP-001"
+                            placeholder={t('assetForm.placeholder.assetCode')}
                             {...field}
                             onChange={(e) =>
                                 field.onChange(e.target.value.toUpperCase())
@@ -86,7 +82,7 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
             </FormItem>
 
             <FormItem
-                label="Status"
+                label={t('common.status')}
                 invalid={Boolean(errors.status)}
                 errorMessage={errors.status?.message}
             >
@@ -95,7 +91,7 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                     control={control}
                     render={({ field }) => (
                         <Select<StatusOption>
-                            placeholder="Select status"
+                            placeholder={t('assetForm.selectStatus')}
                             options={statusOptions}
                             value={
                                 statusOptions.find(
@@ -116,7 +112,7 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                 />
             </FormItem>
 
-            <FormItem label="Serial Number">
+            <FormItem label={t('assetForm.field.serialNumber')}>
                 <Controller
                     name="serial_number"
                     control={control}
@@ -124,14 +120,14 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. SN-123456"
+                            placeholder={t('assetForm.placeholder.serialNumber')}
                             {...field}
                         />
                     )}
                 />
             </FormItem>
 
-            <FormItem label="Manufacturer">
+            <FormItem label={t('assetForm.field.manufacturer')}>
                 <Controller
                     name="manufacturer"
                     control={control}
@@ -139,14 +135,14 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. Siemens"
+                            placeholder={t('assetForm.placeholder.manufacturer')}
                             {...field}
                         />
                     )}
                 />
             </FormItem>
 
-            <FormItem label="Model">
+            <FormItem label={t('assetForm.field.model')}>
                 <Controller
                     name="model"
                     control={control}
@@ -154,14 +150,14 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. SIRIUS 3RW40"
+                            placeholder={t('assetForm.placeholder.model')}
                             {...field}
                         />
                     )}
                 />
             </FormItem>
 
-            <FormItem label="Notes">
+            <FormItem label={t('common.description')}>
                 <Controller
                     name="notes"
                     control={control}
@@ -169,7 +165,7 @@ const AssetOverviewSection = ({ control, errors }: Props) => {
                         <Input
                             textArea
                             rows={4}
-                            placeholder="Any additional information about this asset..."
+                            placeholder={t('assetForm.placeholder.notes')}
                             {...field}
                         />
                     )}

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -28,11 +29,12 @@ type MemberOption = { value: number; label: string }
 // ── Time Picker ───────────────────────────────────────────────────────────────
 
 type TimePickerProps = {
-    value: string       // total minutes as string e.g. "150"
+    value: string
     onChange: (minutes: string) => void
 }
 
 const EstimatedTimePicker = ({ value, onChange }: TimePickerProps) => {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
 
@@ -49,7 +51,6 @@ const EstimatedTimePicker = ({ value, onChange }: TimePickerProps) => {
         onChange(total > 0 ? String(total) : '')
     }
 
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -74,10 +75,10 @@ const EstimatedTimePicker = ({ value, onChange }: TimePickerProps) => {
 
             {open && (
                 <div className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4">
-                    <p className="text-xs text-gray-500 mb-3 font-medium">Select estimated duration</p>
+                    <p className="text-xs text-gray-500 mb-3 font-medium">{t('woForm.timePicker.label')}</p>
                     <div className="flex items-center gap-3">
                         <div className="flex-1">
-                            <label className="text-xs text-gray-500 mb-1 block">Hours</label>
+                            <label className="text-xs text-gray-500 mb-1 block">{t('woForm.timePicker.hours')}</label>
                             <Input
                                 type="number"
                                 min={0}
@@ -91,7 +92,7 @@ const EstimatedTimePicker = ({ value, onChange }: TimePickerProps) => {
                         </div>
                         <span className="text-gray-400 text-lg mt-4">:</span>
                         <div className="flex-1">
-                            <label className="text-xs text-gray-500 mb-1 block">Minutes</label>
+                            <label className="text-xs text-gray-500 mb-1 block">{t('woForm.timePicker.minutes')}</label>
                             <Input
                                 type="number"
                                 min={0}
@@ -112,7 +113,7 @@ const EstimatedTimePicker = ({ value, onChange }: TimePickerProps) => {
                         className="mt-3 w-full"
                         onClick={() => setOpen(false)}
                     >
-                        Done
+                        {t('woForm.timePicker.done')}
                     </Button>
                 </div>
             )}
@@ -123,6 +124,8 @@ const EstimatedTimePicker = ({ value, onChange }: TimePickerProps) => {
 // ── Main component ────────────────────────────────────────────────────────────
 
 const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => {
+    const { t } = useTranslation()
+
     const { data: assetsData } = useSWR(
         '/assets-all',
         () => apiGetAssetsList<AssetsListResponse>({ per_page: 100 }),
@@ -148,13 +151,12 @@ const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => 
             label: m.user?.name ?? m.employee_code,
         })) || []
 
-
     return (
         <Card>
-            <h4 className="mb-6">Details</h4>
+            <h4 className="mb-6">{t('woForm.detailsTitle')}</h4>
 
             <FormItem
-                label="Asset"
+                label={t('woForm.field.asset')}
                 asterisk
                 invalid={Boolean(errors.asset_id)}
                 errorMessage={errors.asset_id?.message}
@@ -164,7 +166,7 @@ const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => 
                     control={control}
                     render={({ field }) => (
                         <Select<AssetOption>
-                            placeholder="Select asset"
+                            placeholder={t('woForm.placeholder.selectAsset')}
                             options={assetOptions}
                             value={
                                 assetOptions.find(
@@ -189,13 +191,13 @@ const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => 
                 />
             </FormItem>
 
-            <FormItem label="Due Date">
+            <FormItem label={t('woForm.field.dueDate')}>
                 <Controller
                     name="due_at"
                     control={control}
                     render={({ field }) => (
                         <DatePicker
-                            placeholder="Select due date"
+                            placeholder={t('woForm.placeholder.dueDate')}
                             value={
                                 field.value
                                     ? dayjs(field.value).toDate()
@@ -214,7 +216,7 @@ const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => 
                 />
             </FormItem>
 
-            <FormItem label="Estimated Time">
+            <FormItem label={t('woForm.field.estimatedTime')}>
                 <Controller
                     name="estimated_minutes"
                     control={control}
@@ -228,14 +230,14 @@ const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => 
             </FormItem>
 
             {canAssign && (
-                <FormItem label="Assign Members">
+                <FormItem label={t('woForm.field.assignMembers')}>
                     <Controller
                         name="assigned_member_ids"
                         control={control}
                         render={({ field }) => (
                             <Select<MemberOption, true>
                                 isMulti
-                                placeholder="Select members"
+                                placeholder={t('woForm.placeholder.selectMembers')}
                                 options={memberOptions}
                                 value={memberOptions.filter((o) =>
                                     field.value?.includes(o.value),

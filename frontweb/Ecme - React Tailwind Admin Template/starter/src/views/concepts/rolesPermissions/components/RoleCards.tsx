@@ -1,15 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
 import { TbArrowRight } from 'react-icons/tb'
 import type { Role } from '@/services/RolesService'
 import type { Member } from '@/services/MembersService'
-
-const roleDescriptions: Record<string, string> = {
-    admin: 'Full access to all features, settings and company management.',
-    hr: 'Manage members, departments and human resources operations.',
-    manager: 'Oversee work orders, assets and team assignments.',
-    technician: 'Execute work orders and log maintenance activities.',
-}
 
 type RoleCardsProps = {
     roles: Role[]
@@ -19,6 +13,13 @@ type RoleCardsProps = {
 }
 
 const RoleCards = ({ roles, members, canManage, onEditRole }: RoleCardsProps) => {
+    const { t } = useTranslation()
+    const roleDescriptions: Record<string, string> = {
+        admin: t('rolesPermissions.roleDesc.admin'),
+        hr: t('rolesPermissions.roleDesc.hr'),
+        manager: t('rolesPermissions.roleDesc.manager'),
+        technician: t('rolesPermissions.roleDesc.technician'),
+    }
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {roles.map((role) => {
@@ -35,7 +36,7 @@ const RoleCards = ({ roles, members, canManage, onEditRole }: RoleCardsProps) =>
                             <h6 className="font-bold">{role.label}</h6>
                         </div>
                         <p className="mt-2">
-                            {role.description || roleDescriptions[role.code] || `${role.permissions.length} permissions assigned`}
+                            {role.description || roleDescriptions[role.code] || t('rolesPermissions.roleDesc.default', { count: role.permissions.length, defaultValue: `${role.permissions.length} permissions assigned` })}
                         </p>
                         <div className="flex items-center justify-between mt-4">
                             <div className="flex flex-col">
@@ -61,7 +62,7 @@ const RoleCards = ({ roles, members, canManage, onEditRole }: RoleCardsProps) =>
                                     iconAlignment="end"
                                     onClick={() => onEditRole(role)}
                                 >
-                                    Edit role
+                                    {t('rolesPermissions.editRole')}
                                 </Button>
                             )}
                         </div>

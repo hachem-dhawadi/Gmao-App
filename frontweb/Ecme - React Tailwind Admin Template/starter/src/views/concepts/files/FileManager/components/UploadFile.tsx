@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Upload from '@/components/ui/Upload'
@@ -10,6 +11,7 @@ import { apiUploadFiles, apiGetFileList } from '@/services/FileService'
 import type { File as FmFile } from '../types'
 
 const UploadFile = () => {
+    const { t } = useTranslation()
     const { openedDirectoryId, setFileList, setDirectories } = useFileManagerStore()
 
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
@@ -60,7 +62,7 @@ const UploadFile = () => {
 
             toast.push(
                 <Notification
-                    title={`${selectedFiles.length} file(s) uploaded`}
+                    title={t('fileManager.uploadDialog.toastSuccess', { count: selectedFiles.length })}
                     type="success"
                 />,
                 { placement: 'top-center' },
@@ -68,7 +70,7 @@ const UploadFile = () => {
             handleClose()
         } catch {
             toast.push(
-                <Notification title="Upload failed" type="danger" />,
+                <Notification title={t('fileManager.uploadDialog.toastFailed')} type="danger" />,
                 { placement: 'top-center' },
             )
         } finally {
@@ -79,14 +81,14 @@ const UploadFile = () => {
     return (
         <>
             <Button type="button" variant="solid" onClick={() => setUploadDialogOpen(true)}>
-                Upload
+                {t('fileManager.upload')}
             </Button>
             <Dialog
                 isOpen={uploadDialogOpen}
                 onClose={handleClose}
                 onRequestClose={handleClose}
             >
-                <h4>Upload Files</h4>
+                <h4>{t('fileManager.uploadDialog.title')}</h4>
                 <Upload
                     draggable
                     className="mt-6 bg-gray-100 dark:bg-transparent"
@@ -99,12 +101,12 @@ const UploadFile = () => {
                         </div>
                         <p className="font-semibold">
                             <span className="text-gray-800 dark:text-white">
-                                Drop your files here, or{' '}
+                                {t('fileManager.uploadDialog.dropHint')}{' '}
                             </span>
-                            <span className="text-blue-500">browse</span>
+                            <span className="text-blue-500">{t('fileManager.uploadDialog.browse')}</span>
                         </p>
                         <p className="mt-1 font-semibold opacity-60 dark:text-white">
-                            through your machine
+                            {t('fileManager.uploadDialog.through')}
                         </p>
                     </div>
                 </Upload>
@@ -117,7 +119,7 @@ const UploadFile = () => {
                         disabled={selectedFiles.length === 0 || isUploading}
                         onClick={handleUpload}
                     >
-                        Upload
+                        {t('fileManager.uploadDialog.uploadBtn')}
                     </Button>
                 </div>
             </Dialog>

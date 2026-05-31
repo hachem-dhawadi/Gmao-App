@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Loading from '@/components/shared/Loading'
 import PrintLabelDialog from '@/components/shared/PrintLabelDialog'
@@ -52,21 +52,6 @@ import type { WorkOrder } from '@/services/WorkOrdersService'
 import type { WorkOrderResponse } from '@/services/WorkOrdersService'
 import type { MembersListResponse } from '@/services/MembersService'
 
-const STATUS_OPTIONS: { value: WorkOrder['status']; label: string; color: string }[] = [
-    { value: 'open', label: 'Open', color: 'bg-blue-500' },
-    { value: 'in_progress', label: 'In Progress', color: 'bg-amber-500' },
-    { value: 'on_hold', label: 'On Hold', color: 'bg-gray-400' },
-    { value: 'completed', label: 'Completed', color: 'bg-emerald-500' },
-    { value: 'cancelled', label: 'Cancelled', color: 'bg-red-500' },
-]
-
-const PRIORITY_OPTIONS: { value: WorkOrder['priority']; label: string; flagClass: string; bgClass: string }[] = [
-    { value: 'low', label: 'Low', flagClass: 'text-success', bgClass: 'bg-success' },
-    { value: 'medium', label: 'Medium', flagClass: 'text-warning', bgClass: 'bg-warning' },
-    { value: 'high', label: 'High', flagClass: 'text-error', bgClass: 'bg-error' },
-    { value: 'critical', label: 'Critical', flagClass: 'text-red-700', bgClass: 'bg-red-700' },
-]
-
 const statusTagClass: Record<WorkOrder['status'], string> = {
     open: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
     in_progress: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
@@ -79,6 +64,22 @@ const WorkOrderDetails = () => {
     const { id } = useParams()
     const { t } = useTranslation()
     const navigate = useNavigate()
+
+    const STATUS_OPTIONS = useMemo(() => [
+        { value: 'open' as WorkOrder['status'], label: t('wo.status.open'), color: 'bg-blue-500' },
+        { value: 'in_progress' as WorkOrder['status'], label: t('wo.status.in_progress'), color: 'bg-amber-500' },
+        { value: 'on_hold' as WorkOrder['status'], label: t('wo.status.on_hold'), color: 'bg-gray-400' },
+        { value: 'completed' as WorkOrder['status'], label: t('wo.status.completed'), color: 'bg-emerald-500' },
+        { value: 'cancelled' as WorkOrder['status'], label: t('wo.status.cancelled'), color: 'bg-red-500' },
+    ], [t])
+
+    const PRIORITY_OPTIONS = useMemo(() => [
+        { value: 'low' as WorkOrder['priority'], label: t('wo.priority.low'), flagClass: 'text-success', bgClass: 'bg-success' },
+        { value: 'medium' as WorkOrder['priority'], label: t('wo.priority.medium'), flagClass: 'text-warning', bgClass: 'bg-warning' },
+        { value: 'high' as WorkOrder['priority'], label: t('wo.priority.high'), flagClass: 'text-error', bgClass: 'bg-error' },
+        { value: 'critical' as WorkOrder['priority'], label: t('wo.priority.critical'), flagClass: 'text-red-700', bgClass: 'bg-red-700' },
+    ], [t])
+
     const userAuthority = useSessionUser((state) => state.user.authority)
     const currentMemberId = useSessionUser((state) => state.user.memberId)
     const canAssign = useAuthority(userAuthority, ['work_orders.assign', 'admin', 'manager'])
@@ -219,7 +220,7 @@ const WorkOrderDetails = () => {
                         {wo.archived_at && (
                             <div className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 text-sm font-medium">
                                 <TbArchive className="text-base shrink-0" />
-                                This work order is archived. It is read-only until unarchived.
+                                {t('wo.details.archivedBanner')}
                             </div>
                         )}
 
@@ -234,7 +235,7 @@ const WorkOrderDetails = () => {
                                     )
                                 }
                             >
-                                Back to Work Orders
+                                {t('wo.details.backToList')}
                             </Button>
                             <div className="flex items-center gap-2">
                                 <Button
@@ -242,7 +243,7 @@ const WorkOrderDetails = () => {
                                     icon={<TbQrcode />}
                                     onClick={() => setPrintOpen(true)}
                                 >
-                                    Print Label
+                                    {t('wo.details.printLabel')}
                                 </Button>
                                 <Button
                                     variant="default"
@@ -250,7 +251,7 @@ const WorkOrderDetails = () => {
                                     loading={printingWo}
                                     onClick={handlePrintWo}
                                 >
-                                    Print WO
+                                    {t('wo.details.printWo')}
                                 </Button>
                                 {canManage && (
                                     <>
@@ -260,7 +261,7 @@ const WorkOrderDetails = () => {
                                             loading={archiving}
                                             onClick={handleArchiveToggle}
                                         >
-                                            {wo.archived_at ? 'Unarchive' : 'Archive'}
+                                            {wo.archived_at ? t('wo.details.unarchive') : t('wo.details.archive')}
                                         </Button>
                                         <Button
                                             icon={<TbPencil />}
@@ -270,7 +271,7 @@ const WorkOrderDetails = () => {
                                                 )
                                             }
                                         >
-                                            Edit form
+                                            {t('wo.details.editForm')}
                                         </Button>
                                     </>
                                 )}
@@ -302,7 +303,7 @@ const WorkOrderDetails = () => {
                                     <div className="flex flex-col">
                                         {/* Status */}
                                         <WoFieldDropdown
-                                            title="Status"
+                                            title={t('wo.details.statusField')}
                                             icon={<TbCircle />}
                                             disabled={!canEdit}
                                             trigger={
@@ -336,7 +337,7 @@ const WorkOrderDetails = () => {
 
                                         {/* Priority */}
                                         <WoFieldDropdown
-                                            title="Priority"
+                                            title={t('wo.details.priorityField')}
                                             icon={<TbFlag />}
                                             disabled={!canManage}
                                             trigger={
@@ -374,7 +375,7 @@ const WorkOrderDetails = () => {
                                         </WoFieldDropdown>
 
                                         {/* Asset */}
-                                        <WoField title="Asset" icon={<TbEngine />}>
+                                        <WoField title={t('wo.details.assetField')} icon={<TbEngine />}>
                                             <div className="flex px-3 items-center min-h-[46px] text-sm text-gray-600 dark:text-gray-300">
                                                 {wo.asset?.name || '—'}
                                                 {wo.asset && (
@@ -389,7 +390,7 @@ const WorkOrderDetails = () => {
                                     <div className="flex flex-col">
                                         {/* Assigned members — Admin / Manager only can edit */}
                                         <WoFieldDropdown
-                                            title="Assigned to"
+                                            title={t('wo.details.assignedTo')}
                                             icon={<TbUser />}
                                             disabled={!canAssign}
                                             trigger={
@@ -408,7 +409,7 @@ const WorkOrderDetails = () => {
                                                     </div>
                                                 ) : (
                                                     <span className="text-sm text-gray-400">
-                                                        No assignees
+                                                        {t('wo.details.noAssignees')}
                                                     </span>
                                                 )
                                             }
@@ -447,11 +448,11 @@ const WorkOrderDetails = () => {
                                         </WoFieldDropdown>
 
                                         {/* Due date */}
-                                        <WoField title="Due Date" icon={<TbCalendar />}>
+                                        <WoField title={t('wo.details.dueDate')} icon={<TbCalendar />}>
                                             <div className="flex items-center gap-1 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer w-full min-h-[46px] relative">
                                                 <div className="flex flex-col gap-0.5">
                                                 {(() => {
-                                                    if (!wo.due_at) return <span className="text-sm font-semibold">No due date</span>
+                                                    if (!wo.due_at) return <span className="text-sm font-semibold">{t('wo.details.noDueDate')}</span>
                                                     const dueDate  = new Date(wo.due_at)
                                                     const now      = new Date()
                                                     const msLeft   = dueDate.getTime() - now.getTime()
@@ -466,12 +467,12 @@ const WorkOrderDetails = () => {
                                                             </span>
                                                             {isDueSoon && (
                                                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 w-fit">
-                                                                    ⏰ Due in {Math.ceil(hoursLeft)}h
+                                                                    ⏰ {t('wo.dueSoon', { hours: Math.ceil(hoursLeft) })}
                                                                 </span>
                                                             )}
                                                             {isOverdue && (
                                                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-red-100 dark:bg-red-500/20 text-red-500 w-fit">
-                                                                    Overdue
+                                                                    {t('wo.overdue')}
                                                                 </span>
                                                             )}
                                                         </>
@@ -499,18 +500,18 @@ const WorkOrderDetails = () => {
                                         </WoField>
 
                                         {/* Estimated time + actual logged */}
-                                        <WoField title="Est. / Logged Time" icon={<TbClock />}>
+                                        <WoField title={t('wo.details.estLogged')} icon={<TbClock />}>
                                             <div className="flex px-3 items-center min-h-[46px] text-sm text-gray-600 dark:text-gray-300 gap-2">
                                                 <span>
                                                     {wo.estimated_minutes != null
-                                                        ? `${wo.estimated_minutes} min est.`
-                                                        : '— est.'}
+                                                        ? t('wo.details.estMin', { min: wo.estimated_minutes })
+                                                        : t('wo.details.noEst')}
                                                 </span>
                                                 {wo.work_logs_summary && wo.work_logs_summary.total_minutes > 0 && (
                                                     <>
                                                         <span className="text-gray-300 dark:text-gray-600">/</span>
                                                         <span className="font-semibold text-primary">
-                                                            {wo.work_logs_summary.total_minutes} min logged
+                                                            {t('wo.details.loggedMin', { min: wo.work_logs_summary.total_minutes })}
                                                         </span>
                                                     </>
                                                 )}
@@ -521,7 +522,7 @@ const WorkOrderDetails = () => {
 
                                 {/* Description */}
                                 <div className="mt-4">
-                                    <h5 className="mb-3">Description</h5>
+                                    <h5 className="mb-3">{t('wo.details.description')}</h5>
                                     {editingDescription ? (
                                         <textarea
                                             autoFocus
@@ -549,8 +550,8 @@ const WorkOrderDetails = () => {
                                         >
                                             {wo.description ||
                                                 (canEdit
-                                                    ? 'Click to add a description...'
-                                                    : 'No description.')}
+                                                    ? t('wo.details.clickToAdd')
+                                                    : t('wo.details.noDescription'))}
                                         </div>
                                     )}
                                 </div>

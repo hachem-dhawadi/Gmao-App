@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -21,13 +23,15 @@ type Props = {
 type AssetOption = { value: number; label: string; code: string }
 type MemberOption = { value: number; label: string }
 
-const intervalUnitOptions = [
-    { value: 'days', label: 'Days' },
-    { value: 'weeks', label: 'Weeks' },
-    { value: 'months', label: 'Months' },
-]
-
 const PmPlanSideSection = ({ control, errors }: Props) => {
+    const { t } = useTranslation()
+
+    const intervalUnitOptions = useMemo(() => [
+        { value: 'days',   label: t('pmForm.intervalUnit.days') },
+        { value: 'weeks',  label: t('pmForm.intervalUnit.weeks') },
+        { value: 'months', label: t('pmForm.intervalUnit.months') },
+    ], [t])
+
     const { data: assetsData } = useSWR(
         '/assets-all',
         () => apiGetAssetsList<AssetsListResponse>({ per_page: 100 }),
@@ -58,13 +62,13 @@ const PmPlanSideSection = ({ control, errors }: Props) => {
     return (
         <>
             <Card>
-                <h4 className="mb-2">Trigger Schedule</h4>
+                <h4 className="mb-2">{t('pmForm.triggerTitle')}</h4>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                    How often should a work order be automatically generated?
+                    {t('pmForm.triggerSubtitle')}
                 </p>
 
                 <FormItem
-                    label="Repeat every"
+                    label={t('pmForm.field.repeatEvery')}
                     asterisk
                     invalid={
                         Boolean(errors.trigger_interval_value) ||
@@ -108,20 +112,20 @@ const PmPlanSideSection = ({ control, errors }: Props) => {
                         />
                     </div>
                     <p className="text-xs text-gray-400 mt-1">
-                        Example: <span className="font-medium">3 months</span> = a work order is created every 3 months
+                        {t('pmForm.intervalExample')}
                     </p>
                 </FormItem>
 
                 <FormItem
-                    label="First run date"
-                    extra={<span className="text-xs text-gray-400">Optional — leave blank to start immediately</span>}
+                    label={t('pmForm.field.firstRun')}
+                    extra={<span className="text-xs text-gray-400">{t('pmForm.firstRunHint')}</span>}
                 >
                     <Controller
                         name="trigger_next_run_at"
                         control={control}
                         render={({ field }) => (
                             <DatePicker
-                                placeholder="Pick a date"
+                                placeholder={t('pmForm.placeholder.pickDate')}
                                 value={
                                     field.value
                                         ? dayjs(field.value).toDate()
@@ -141,15 +145,15 @@ const PmPlanSideSection = ({ control, errors }: Props) => {
             </Card>
 
             <Card>
-                <h4 className="mb-6">Assignment</h4>
+                <h4 className="mb-6">{t('pmForm.assignmentTitle')}</h4>
 
-                <FormItem label="Asset">
+                <FormItem label={t('pmForm.field.asset')}>
                     <Controller
                         name="asset_id"
                         control={control}
                         render={({ field }) => (
                             <Select<AssetOption>
-                                placeholder="Select asset"
+                                placeholder={t('pmForm.placeholder.selectAsset')}
                                 options={assetOptions}
                                 value={
                                     assetOptions.find(
@@ -175,10 +179,10 @@ const PmPlanSideSection = ({ control, errors }: Props) => {
                 </FormItem>
 
                 <FormItem
-                    label="Assign To"
+                    label={t('pmForm.field.assignTo')}
                     extra={
                         <span className="text-xs text-gray-400">
-                            Technicians only
+                            {t('pmForm.technicianOnly')}
                         </span>
                     }
                 >
@@ -187,9 +191,9 @@ const PmPlanSideSection = ({ control, errors }: Props) => {
                         control={control}
                         render={({ field }) => (
                             <Select<MemberOption>
-                                placeholder="Select technician"
+                                placeholder={t('pmForm.placeholder.selectTechnician')}
                                 options={memberOptions}
-                                noOptionsMessage={() => 'No technicians found'}
+                                noOptionsMessage={() => t('pmForm.noTechnicians')}
                                 value={
                                     memberOptions.find(
                                         (o) => o.value === field.value,

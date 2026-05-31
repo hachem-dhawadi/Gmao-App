@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import { useNavigate } from 'react-router-dom'
 import Container from '@/components/shared/Container'
@@ -55,40 +56,43 @@ const SummarySegment = ({
     icon,
     iconClass,
     className,
-}: SummarySegmentProps) => (
-    <div className={classNames('flex flex-col gap-2 py-4 px-6', className)}>
-        <div
-            className={classNames(
-                'flex items-center justify-center min-h-12 min-w-12 max-h-12 max-w-12 text-gray-900 rounded-full text-2xl',
-                iconClass,
-            )}
-        >
-            {icon}
-        </div>
-        <div className="mt-4">
-            <div className="mb-1">{title}</div>
-            <h3 className="mb-1">{value}</h3>
-            <div className="inline-flex items-center flex-wrap gap-1">
-                <GrowShrinkValue
-                    className="font-bold"
-                    value={growShrink}
-                    suffix="%"
-                    positiveIcon="+"
-                    negativeIcon=""
-                />
-                <span>vs last month</span>
+}: SummarySegmentProps) => {
+    const { t } = useTranslation()
+    return (
+        <div className={classNames('flex flex-col gap-2 py-4 px-6', className)}>
+            <div
+                className={classNames(
+                    'flex items-center justify-center min-h-12 min-w-12 max-h-12 max-w-12 text-gray-900 rounded-full text-2xl',
+                    iconClass,
+                )}
+            >
+                {icon}
+            </div>
+            <div className="mt-4">
+                <div className="mb-1">{title}</div>
+                <h3 className="mb-1">{value}</h3>
+                <div className="inline-flex items-center flex-wrap gap-1">
+                    <GrowShrinkValue
+                        className="font-bold"
+                        value={growShrink}
+                        suffix="%"
+                        positiveIcon="+"
+                        negativeIcon=""
+                    />
+                    <span>{t('dashboard.technician.summary.vsLastMonth')}</span>
+                </div>
             </div>
         </div>
-    </div>
-)
+    )
+}
 
 // ─── Status / Priority maps ───────────────────────────────────────────────────
 
-const woStatus: Record<string, { label: string; className: string }> = {
-    open:        { label: 'Open',        className: 'bg-sky-200' },
-    in_progress: { label: 'In Progress', className: 'bg-amber-200' },
-    on_hold:     { label: 'On Hold',     className: 'bg-gray-200' },
-    completed:   { label: 'Completed',   className: 'bg-emerald-200' },
+const woStatus: Record<string, string> = {
+    open:        'bg-sky-200',
+    in_progress: 'bg-amber-200',
+    on_hold:     'bg-gray-200',
+    completed:   'bg-emerald-200',
 }
 
 const priorityIcon: Record<string, ReactNode> = {
@@ -112,15 +116,22 @@ const priorityIconColor: Record<string, string> = {
     low:      'text-gray-500',
 }
 
-const RADAR_LABELS = ['Completion', 'On Time', 'Response', 'Workload', 'Efficiency']
-
 const { Tr, Td, TBody, THead, Th } = Table
 
 // ─── TechnicianDashboard ──────────────────────────────────────────────────────
 
 const TechnicianDashboard = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const [woView, setWoView] = useState<'all' | 'active' | 'completed'>('all')
+
+    const radarLabels = [
+        t('dashboard.technician.performance.radar.completion'),
+        t('dashboard.technician.performance.radar.onTime'),
+        t('dashboard.technician.performance.radar.response'),
+        t('dashboard.technician.performance.radar.workload'),
+        t('dashboard.technician.performance.radar.efficiency'),
+    ]
 
     const { data, isLoading, error, mutate } = useSWR(
         '/dashboard/my',
@@ -144,13 +155,13 @@ const TechnicianDashboard = () => {
 
     const chartSeries = (() => {
         const activeBar = {
-            name: 'Active WOs',
+            name: t('dashboard.technician.performance.activeSeries'),
             type: 'column',
             data: activeSeries,
             color: COLORS[9],
         }
         const completedLine = {
-            name: 'Completed',
+            name: t('dashboard.technician.performance.completedSeries'),
             type: 'line',
             data: completedSeries,
             color: COLORS[0],
@@ -211,7 +222,7 @@ const TechnicianDashboard = () => {
                 { revalidate: false },
             )
             toast.push(
-                <Notification type="danger" title="Failed to update status" />,
+                <Notification type="danger" title={t('dashboard.technician.recentWo.updateFailed')} />,
                 { placement: 'top-center' },
             )
         }
@@ -225,7 +236,7 @@ const TechnicianDashboard = () => {
         return (
             <Container>
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <p className="text-lg font-semibold text-red-500">Dashboard failed to load</p>
+                    <p className="text-lg font-semibold text-red-500">{t('dashboard.error')}</p>
                     <p className="text-sm text-gray-500">{error?.response?.data?.message || error?.message || 'Unknown error'}</p>
                 </div>
             </Container>
@@ -241,11 +252,11 @@ const TechnicianDashboard = () => {
                         {/* ── KPI Summary Card ───────────────────────────────── */}
                         <Card>
                             <div className="flex items-center justify-between">
-                                <h4>My Work Order Summary</h4>
+                                <h4>{t('dashboard.technician.summary.title')}</h4>
                             </div>
                             <div className="grid md:grid-cols-2 xl:grid-cols-4 mt-6">
                                 <SummarySegment
-                                    title="My Open WOs"
+                                    title={t('dashboard.technician.summary.myOpenWos')}
                                     value={open}
                                     growShrink={d.my_work_orders.open_grow_shrink}
                                     icon={<TbClipboardList />}
@@ -253,7 +264,7 @@ const TechnicianDashboard = () => {
                                     className="border-b border-r-0 md:border-b-0 md:ltr:border-r md:rtl:border-l border-gray-200 dark:border-gray-700"
                                 />
                                 <SummarySegment
-                                    title="In Progress"
+                                    title={t('dashboard.technician.summary.inProgress')}
                                     value={inProg}
                                     growShrink={d.my_work_orders.in_progress_grow_shrink}
                                     icon={<TbLoader />}
@@ -261,7 +272,7 @@ const TechnicianDashboard = () => {
                                     className="border-b md:border-b-0 xl:ltr:border-r xl:rtl:border-l border-gray-200 dark:border-gray-700"
                                 />
                                 <SummarySegment
-                                    title="Completion Rate"
+                                    title={t('dashboard.technician.summary.completionRate')}
                                     value={`${scores?.completion ?? 0}%`}
                                     growShrink={d.my_work_orders.completion_grow_shrink}
                                     icon={<TbRefreshAlert />}
@@ -269,7 +280,7 @@ const TechnicianDashboard = () => {
                                     className="border-b border-r-0 md:border-b-0 md:ltr:border-r md:rtl:border-l border-gray-200 dark:border-gray-700"
                                 />
                                 <SummarySegment
-                                    title="Done This Week"
+                                    title={t('dashboard.technician.summary.doneThisWeek')}
                                     value={completedWeek}
                                     growShrink={d.my_work_orders.done_week_grow_shrink}
                                     icon={<TbCircleCheck />}
@@ -281,9 +292,9 @@ const TechnicianDashboard = () => {
                         {/* ── PM Summary Card ────────────────────────────────── */}
                         <Card>
                             <div className="flex items-center justify-between mb-4">
-                                <h4>My Preventive Maintenance</h4>
+                                <h4>{t('dashboard.technician.pm.title')}</h4>
                                 <Button size="sm" variant="solid" onClick={() => navigate('/concepts/pm/pm-list')}>
-                                    View all
+                                    {t('dashboard.technician.pm.viewAll')}
                                 </Button>
                             </div>
                             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -292,7 +303,7 @@ const TechnicianDashboard = () => {
                                         <TbCalendarTime />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-gray-500">Due This Week</p>
+                                        <p className="text-sm font-semibold text-gray-500">{t('dashboard.technician.pm.dueThisWeek')}</p>
                                         <h3 className="text-gray-900 dark:text-white">{d.my_pm?.due_week ?? 0}</h3>
                                     </div>
                                 </div>
@@ -301,14 +312,14 @@ const TechnicianDashboard = () => {
                                         <TbCalendarStats />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-semibold text-gray-500">Due This Month</p>
+                                        <p className="text-sm font-semibold text-gray-500">{t('dashboard.technician.pm.dueThisMonth')}</p>
                                         <h3 className="text-gray-900 dark:text-white">{d.my_pm?.due_month ?? 0}</h3>
                                     </div>
                                 </div>
                             </div>
                             {d.my_pm_due_soon && d.my_pm_due_soon.length > 0 ? (
                                 <div className="flex flex-col gap-3">
-                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Upcoming</p>
+                                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('dashboard.technician.pm.upcoming')}</p>
                                     {d.my_pm_due_soon.map((pm) => (
                                         <div key={pm.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
                                             <div className="flex items-center gap-3">
@@ -332,7 +343,7 @@ const TechnicianDashboard = () => {
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-sm text-gray-400 text-center py-4">No PM plans due soon</p>
+                                <p className="text-sm text-gray-400 text-center py-4">{t('dashboard.technician.pm.empty')}</p>
                             )}
                         </Card>
 
@@ -343,7 +354,7 @@ const TechnicianDashboard = () => {
                             <div className="col-span-2">
                                 <Card>
                                     <div className="flex items-center justify-between">
-                                        <h4>WO Performance</h4>
+                                        <h4>{t('dashboard.technician.performance.title')}</h4>
                                         <Segment
                                             className="gap-1"
                                             value={woView}
@@ -352,15 +363,15 @@ const TechnicianDashboard = () => {
                                                 setWoView(val as 'all' | 'active' | 'completed')
                                             }
                                         >
-                                            <Segment.Item value="all">All</Segment.Item>
-                                            <Segment.Item value="active">Active</Segment.Item>
-                                            <Segment.Item value="completed">Completed</Segment.Item>
+                                            <Segment.Item value="all">{t('dashboard.technician.performance.all')}</Segment.Item>
+                                            <Segment.Item value="active">{t('dashboard.technician.performance.active')}</Segment.Item>
+                                            <Segment.Item value="completed">{t('dashboard.technician.performance.completed')}</Segment.Item>
                                         </Segment>
                                     </div>
                                     <div className="mt-6">
                                         {!hasChartData ? (
                                             <div className="flex items-center justify-center h-[450px] text-gray-400 text-sm">
-                                                No performance data yet
+                                                {t('dashboard.technician.performance.empty')}
                                             </div>
                                         ) : (
                                         <ApexChart
@@ -437,17 +448,17 @@ const TechnicianDashboard = () => {
                             {/* Performance Score radar — col-span-1 */}
                             <Card>
                                 <div className="flex items-center justify-between">
-                                    <h4>Performance Score</h4>
+                                    <h4>{t('dashboard.technician.performance.scoreTitle')}</h4>
                                 </div>
                                 <div className="mt-6">
                                     <Chart
                                         type="radar"
                                         customOptions={{
                                             xaxis: {
-                                                categories: RADAR_LABELS,
+                                                categories: radarLabels,
                                                 labels: {
                                                     formatter: (val: string) =>
-                                                        `${RADAR_LABELS.indexOf(val) + 1}`,
+                                                        `${radarLabels.indexOf(val) + 1}`,
                                                 },
                                             },
                                             yaxis: { show: false },
@@ -461,17 +472,17 @@ const TechnicianDashboard = () => {
                                                         <div class="py-2 px-4 rounded-xl">
                                                             <div class="flex items-center gap-2">
                                                                 <div class="h-[10px] w-[10px] rounded-full" style="background-color: ${COLORS[0]}"></div>
-                                                                <div class="flex gap-2">${RADAR_LABELS[dataPointIndex]}: <span class="font-bold">${radarSeries[dataPointIndex]}%</span></div>
+                                                                <div class="flex gap-2">${radarLabels[dataPointIndex]}: <span class="font-bold">${radarSeries[dataPointIndex]}%</span></div>
                                                             </div>
                                                         </div>`
                                                 },
                                             },
                                         }}
-                                        series={[{ name: 'Performance Score', data: radarSeries }]}
+                                        series={[{ name: t('dashboard.technician.performance.scoreTitle'), data: radarSeries }]}
                                         height={250}
                                     />
                                     <div className="flex flex-col gap-4 mt-4">
-                                        {RADAR_LABELS.map((label, index) => (
+                                        {radarLabels.map((label, index) => (
                                             <div key={label} className="flex items-center gap-4">
                                                 <div className="flex items-center gap-2">
                                                     <div className="rounded-full h-8 w-8 border-2 border-gray-200 dark:border-gray-600 font-bold heading-text flex items-center justify-center shrink-0">
@@ -502,7 +513,7 @@ const TechnicianDashboard = () => {
                         {/* ── Recent Work Orders table ───────────────────────── */}
                         <Card>
                             <div className="flex items-center justify-between">
-                                <h4>Recent Work Orders</h4>
+                                <h4>{t('dashboard.technician.recentWo.title')}</h4>
                                 <Button
                                     size="sm"
                                     variant="solid"
@@ -510,19 +521,19 @@ const TechnicianDashboard = () => {
                                         navigate('/concepts/work-orders/work-order-list')
                                     }
                                 >
-                                    View all
+                                    {t('dashboard.technician.recentWo.viewAll')}
                                 </Button>
                             </div>
                             <div className="mt-6">
                                 <Table hoverable={false}>
                                     <THead>
                                         <Tr>
-                                            <Th>Active</Th>
-                                            <Th>Work Order</Th>
-                                            <Th>Status</Th>
-                                            <Th>Priority</Th>
-                                            <Th>Asset</Th>
-                                            <Th>Due Date</Th>
+                                            <Th>{t('dashboard.technician.recentWo.colActive')}</Th>
+                                            <Th>{t('dashboard.technician.recentWo.colWo')}</Th>
+                                            <Th>{t('dashboard.technician.recentWo.colStatus')}</Th>
+                                            <Th>{t('dashboard.technician.recentWo.colPriority')}</Th>
+                                            <Th>{t('dashboard.technician.recentWo.colAsset')}</Th>
+                                            <Th>{t('dashboard.technician.recentWo.colDueDate')}</Th>
                                         </Tr>
                                     </THead>
                                     <TBody>
@@ -530,7 +541,7 @@ const TechnicianDashboard = () => {
                                             <Tr>
                                                 <Td colSpan={6}>
                                                     <p className="text-center text-gray-400 py-6">
-                                                        No work orders assigned to you
+                                                        {t('dashboard.technician.recentWo.empty')}
                                                     </p>
                                                 </Td>
                                             </Tr>
@@ -594,12 +605,10 @@ const TechnicianDashboard = () => {
                                                     <Td>
                                                         <Tag
                                                             className={classNames(
-                                                                woStatus[wo.status]?.className ??
-                                                                    '',
+                                                                woStatus[wo.status] ?? '',
                                                             )}
                                                         >
-                                                            {woStatus[wo.status]?.label ??
-                                                                wo.status}
+                                                            {t(`wo.status.${wo.status}`)}
                                                         </Tag>
                                                     </Td>
                                                     <Td>
@@ -608,8 +617,7 @@ const TechnicianDashboard = () => {
                                                                 priorityTagClass[wo.priority] ?? '',
                                                             )}
                                                         >
-                                                            {wo.priority.charAt(0).toUpperCase() +
-                                                                wo.priority.slice(1)}
+                                                            {t(`wo.priority.${wo.priority}`)}
                                                         </Tag>
                                                     </Td>
                                                     <Td>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import dayjs from 'dayjs'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -19,6 +20,8 @@ type Props = {
 type TypeOption = { value: number; label: string }
 
 const AssetDetailsSection = ({ control, errors }: Props) => {
+    const { t } = useTranslation()
+
     const { data } = useSWR(
         '/asset-types',
         () => apiGetAssetTypes<AssetTypesResponse>(),
@@ -26,15 +29,15 @@ const AssetDetailsSection = ({ control, errors }: Props) => {
     )
 
     const typeOptions: TypeOption[] = (data?.data?.asset_types || []).map(
-        (t) => ({ value: t.id, label: t.name }),
+        (tp) => ({ value: tp.id, label: tp.name }),
     )
 
     return (
         <Card>
-            <h4 className="mb-6">Details</h4>
+            <h4 className="mb-6">{t('assetForm.details')}</h4>
 
             <FormItem
-                label="Asset Type"
+                label={t('assetForm.field.assetType')}
                 invalid={Boolean(errors.asset_type_id)}
                 errorMessage={errors.asset_type_id?.message}
             >
@@ -43,7 +46,7 @@ const AssetDetailsSection = ({ control, errors }: Props) => {
                     control={control}
                     render={({ field }) => (
                         <Select<TypeOption>
-                            placeholder="Select type"
+                            placeholder={t('assetForm.selectType')}
                             options={typeOptions}
                             value={
                                 typeOptions.find(
@@ -58,7 +61,7 @@ const AssetDetailsSection = ({ control, errors }: Props) => {
                 />
             </FormItem>
 
-            <FormItem label="Location">
+            <FormItem label={t('common.location')}>
                 <Controller
                     name="location"
                     control={control}
@@ -66,14 +69,14 @@ const AssetDetailsSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. Building A, Floor 2"
+                            placeholder={t('assetForm.placeholder.location')}
                             {...field}
                         />
                     )}
                 />
             </FormItem>
 
-            <FormItem label="Address Label">
+            <FormItem label={t('assetForm.field.addressZone')}>
                 <Controller
                     name="address_label"
                     control={control}
@@ -81,20 +84,20 @@ const AssetDetailsSection = ({ control, errors }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. Zone B – Room 12"
+                            placeholder={t('assetForm.placeholder.addressZone')}
                             {...field}
                         />
                     )}
                 />
             </FormItem>
 
-            <FormItem label="Purchase Date">
+            <FormItem label={t('assetForm.field.purchaseDate')}>
                 <Controller
                     name="purchase_date"
                     control={control}
                     render={({ field }) => (
                         <DatePicker
-                            placeholder="Pick a date"
+                            placeholder={t('assetForm.placeholder.pickDate')}
                             value={field.value ? new Date(field.value) : null}
                             onChange={(date) =>
                                 field.onChange(
@@ -106,13 +109,13 @@ const AssetDetailsSection = ({ control, errors }: Props) => {
                 />
             </FormItem>
 
-            <FormItem label="Warranty End">
+            <FormItem label={t('assetForm.field.warrantyExpires')}>
                 <Controller
                     name="warranty_end_at"
                     control={control}
                     render={({ field }) => (
                         <DatePicker
-                            placeholder="Pick a date"
+                            placeholder={t('assetForm.placeholder.pickDate')}
                             value={field.value ? new Date(field.value) : null}
                             onChange={(date) =>
                                 field.onChange(
@@ -124,13 +127,13 @@ const AssetDetailsSection = ({ control, errors }: Props) => {
                 />
             </FormItem>
 
-            <FormItem label="Installed At">
+            <FormItem label={t('assetForm.field.installedAt')}>
                 <Controller
                     name="installed_at"
                     control={control}
                     render={({ field }) => (
                         <DatePicker.DateTimepicker
-                            placeholder="Pick date & time"
+                            placeholder={t('assetForm.placeholder.pickDateTime')}
                             value={field.value ? new Date(field.value) : null}
                             onChange={(date) =>
                                 field.onChange(

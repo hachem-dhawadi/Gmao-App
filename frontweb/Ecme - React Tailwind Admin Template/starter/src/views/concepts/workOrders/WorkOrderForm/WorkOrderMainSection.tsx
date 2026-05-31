@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
@@ -26,21 +28,6 @@ type PriorityOption = {
     dotClass: string
 }
 
-const statusOptions: StatusOption[] = [
-    { value: 'open', label: 'Open', dotClass: 'bg-blue-500' },
-    { value: 'in_progress', label: 'In Progress', dotClass: 'bg-amber-500' },
-    { value: 'on_hold', label: 'On Hold', dotClass: 'bg-gray-400' },
-    { value: 'completed', label: 'Completed', dotClass: 'bg-emerald-500' },
-    { value: 'cancelled', label: 'Cancelled', dotClass: 'bg-red-500' },
-]
-
-const priorityOptions: PriorityOption[] = [
-    { value: 'low', label: 'Low', dotClass: 'bg-gray-400' },
-    { value: 'medium', label: 'Medium', dotClass: 'bg-blue-500' },
-    { value: 'high', label: 'High', dotClass: 'bg-amber-500' },
-    { value: 'critical', label: 'Critical', dotClass: 'bg-red-500' },
-]
-
 const DotLabel = ({ label, dotClass }: { label: string; dotClass: string }) => (
     <div className="flex items-center gap-2">
         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
@@ -56,12 +43,29 @@ function generateWorkOrderCode(): string {
 }
 
 const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
+    const { t } = useTranslation()
+
+    const statusOptions: StatusOption[] = useMemo(() => [
+        { value: 'open', label: t('wo.status.open'), dotClass: 'bg-blue-500' },
+        { value: 'in_progress', label: t('wo.status.in_progress'), dotClass: 'bg-amber-500' },
+        { value: 'on_hold', label: t('wo.status.on_hold'), dotClass: 'bg-gray-400' },
+        { value: 'completed', label: t('wo.status.completed'), dotClass: 'bg-emerald-500' },
+        { value: 'cancelled', label: t('wo.status.cancelled'), dotClass: 'bg-red-500' },
+    ], [t])
+
+    const priorityOptions: PriorityOption[] = useMemo(() => [
+        { value: 'low', label: t('wo.priority.low'), dotClass: 'bg-gray-400' },
+        { value: 'medium', label: t('wo.priority.medium'), dotClass: 'bg-blue-500' },
+        { value: 'high', label: t('wo.priority.high'), dotClass: 'bg-amber-500' },
+        { value: 'critical', label: t('wo.priority.critical'), dotClass: 'bg-red-500' },
+    ], [t])
+
     return (
         <Card>
-            <h4 className="mb-6">Overview</h4>
+            <h4 className="mb-6">{t('woForm.overviewTitle')}</h4>
 
             <FormItem
-                label="Title"
+                label={t('woForm.field.title')}
                 asterisk
                 invalid={Boolean(errors.title)}
                 errorMessage={errors.title?.message}
@@ -73,7 +77,7 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
                         <Input
                             type="text"
                             autoComplete="off"
-                            placeholder="e.g. Replace hydraulic pump filter"
+                            placeholder={t('woForm.placeholder.title')}
                             {...field}
                         />
                     )}
@@ -81,10 +85,10 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
             </FormItem>
 
             <FormItem
-                label="Code"
+                label={t('woForm.field.code')}
                 extra={
                     <span className="text-xs text-gray-400">
-                        Leave empty to auto-generate
+                        {t('woForm.codeHint')}
                     </span>
                 }
             >
@@ -96,7 +100,7 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
                             <Input
                                 type="text"
                                 autoComplete="off"
-                                placeholder="e.g. WO-0001"
+                                placeholder={t('woForm.placeholder.code')}
                                 {...field}
                                 onChange={(e) =>
                                     field.onChange(e.target.value.toUpperCase())
@@ -118,7 +122,7 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
 
             <div className="grid grid-cols-2 gap-4">
                 <FormItem
-                    label="Status"
+                    label={t('common.status')}
                     asterisk
                     invalid={Boolean(errors.status)}
                     errorMessage={errors.status?.message}
@@ -128,7 +132,7 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
                         control={control}
                         render={({ field }) => (
                             <Select<StatusOption>
-                                placeholder="Select status"
+                                placeholder={t('woForm.selectStatus')}
                                 options={statusOptions}
                                 value={
                                     statusOptions.find(
@@ -150,7 +154,7 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
                 </FormItem>
 
                 <FormItem
-                    label="Priority"
+                    label={t('common.priority')}
                     asterisk
                     invalid={Boolean(errors.priority)}
                     errorMessage={errors.priority?.message}
@@ -160,7 +164,7 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
                         control={control}
                         render={({ field }) => (
                             <Select<PriorityOption>
-                                placeholder="Select priority"
+                                placeholder={t('woForm.selectPriority')}
                                 options={priorityOptions}
                                 value={
                                     priorityOptions.find(
@@ -182,7 +186,7 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
                 </FormItem>
             </div>
 
-            <FormItem label="Description">
+            <FormItem label={t('woForm.field.description')}>
                 <Controller
                     name="description"
                     control={control}
@@ -190,7 +194,7 @@ const WorkOrderMainSection = ({ control, errors, setValue }: Props) => {
                         <Input
                             textArea
                             rows={5}
-                            placeholder="Describe the work to be done..."
+                            placeholder={t('woForm.placeholder.description')}
                             {...field}
                         />
                     )}

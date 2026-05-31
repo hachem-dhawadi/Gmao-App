@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import { TbCloudDownload, TbPlus } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
@@ -7,6 +8,7 @@ import { CSVLink } from 'react-csv'
 import useWarehouseList from '../hooks/useWarehouseList'
 
 const WarehouseListActionTools = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canCreate = useAuthority(userAuthority, ['inventory.write', 'admin', 'manager'])
@@ -30,7 +32,7 @@ const WarehouseListActionTools = () => {
                     icon={<TbCloudDownload className="text-xl" />}
                     className="w-full"
                 >
-                    Download
+                    {t('common.download')}
                 </Button>
             </CSVLink>
             {canCreate && (
@@ -43,7 +45,7 @@ const WarehouseListActionTools = () => {
                         )
                     }
                 >
-                    Add Warehouse
+                    {t('warehouse.addWarehouse')}
                 </Button>
             )}
         </div>

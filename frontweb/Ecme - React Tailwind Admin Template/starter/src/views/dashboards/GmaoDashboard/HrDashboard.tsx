@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import { useNavigate } from 'react-router-dom'
 import Container from '@/components/shared/Container'
@@ -35,9 +36,6 @@ const statusTagColors: Record<string, string> = {
     inactive: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
 }
 
-const capitalize = (s: string) =>
-    s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-
 // ── KPI Widget (mirrors Analytic > Metrics > Widget) ─────────────────────────
 type WidgetProps = {
     title: string
@@ -48,37 +46,41 @@ type WidgetProps = {
     iconClass: string
 }
 
-const Widget = ({ title, value, sub, growShrink, icon, iconClass }: WidgetProps) => (
-    <Card className="flex-1">
-        <div className="flex justify-between gap-2 relative">
-            <div>
-                <div className="mb-8 text-base">{title}</div>
-                <h3 className="mb-1">{value}</h3>
-                {growShrink !== undefined ? (
-                    <div className="inline-flex items-center flex-wrap gap-1">
-                        <GrowShrinkValue
-                            className="font-bold"
-                            value={growShrink}
-                            suffix="%"
-                            positiveIcon="+"
-                            negativeIcon=""
-                        />
-                        <span className="text-sm text-gray-500">vs last month</span>
-                    </div>
-                ) : (
-                    <span className="text-sm text-gray-500">{sub}</span>
-                )}
+const Widget = ({ title, value, sub, growShrink, icon, iconClass }: WidgetProps) => {
+    const { t } = useTranslation()
+    return (
+        <Card className="flex-1">
+            <div className="flex justify-between gap-2 relative">
+                <div>
+                    <div className="mb-8 text-base">{title}</div>
+                    <h3 className="mb-1">{value}</h3>
+                    {growShrink !== undefined ? (
+                        <div className="inline-flex items-center flex-wrap gap-1">
+                            <GrowShrinkValue
+                                className="font-bold"
+                                value={growShrink}
+                                suffix="%"
+                                positiveIcon="+"
+                                negativeIcon=""
+                            />
+                            <span className="text-sm text-gray-500">{t('dashboard.hr.kpi.vsLastMonth')}</span>
+                        </div>
+                    ) : (
+                        <span className="text-sm text-gray-500">{sub}</span>
+                    )}
+                </div>
+                <div className={`flex items-center justify-center min-h-12 min-w-12 max-h-12 max-w-12 text-gray-900 rounded-full text-2xl ${iconClass}`}>
+                    {icon}
+                </div>
             </div>
-            <div className={`flex items-center justify-center min-h-12 min-w-12 max-h-12 max-w-12 text-gray-900 rounded-full text-2xl ${iconClass}`}>
-                {icon}
-            </div>
-        </div>
-    </Card>
-)
+        </Card>
+    )
+}
 
 // ── Main component ────────────────────────────────────────────────────────────
 const HrDashboard = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
 
     const isFirstRender = useRef(true)
     const sideNavCollapse = useThemeStore((state) => state.layout.sideNavCollapse)
@@ -114,7 +116,7 @@ const HrDashboard = () => {
         return (
             <Container>
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <p className="text-lg font-semibold text-red-500">Dashboard failed to load</p>
+                    <p className="text-lg font-semibold text-red-500">{t('dashboard.error')}</p>
                     <p className="text-sm text-gray-500">{error?.response?.data?.message || error?.message || 'Unknown error'}</p>
                 </div>
             </Container>
@@ -129,7 +131,7 @@ const HrDashboard = () => {
                     {/* ── Header ─────────────────────────────────────────── */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h4 className="mb-1">HR overview</h4>
+                            <h4 className="mb-1">{t('dashboard.hr.title')}</h4>
                             <p className="text-gray-500">{dayjs().format('dddd, MMMM D YYYY')}</p>
                         </div>
                     </div>
@@ -140,18 +142,18 @@ const HrDashboard = () => {
                         {/* Members area chart */}
                         <Card className="col-span-3 h-full">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <h4>Member registrations</h4>
+                                <h4>{t('dashboard.hr.registrations.title')}</h4>
                                 <div className="inline-flex items-center gap-6">
                                     <div className="flex items-center gap-1.5">
                                         <div className="h-3.5 w-3.5 rounded-sm" style={{ backgroundColor: COLORS[0] }} />
-                                        <div>New members</div>
+                                        <div>{t('dashboard.hr.registrations.legend')}</div>
                                     </div>
                                 </div>
                             </div>
                             <div className="mt-8">
                                 <div className="flex items-center gap-10">
                                     <div>
-                                        <div className="mb-2">Total members</div>
+                                        <div className="mb-2">{t('dashboard.hr.registrations.totalMembers')}</div>
                                         <div className="flex items-end gap-2">
                                             <h3>{totalMembers}</h3>
                                             <GrowShrinkValue
@@ -164,7 +166,7 @@ const HrDashboard = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <div className="mb-2">New this month</div>
+                                        <div className="mb-2">{t('dashboard.hr.registrations.newThisMonth')}</div>
                                         <div className="flex items-end gap-2">
                                             <h3>{newThisMonth}</h3>
                                         </div>
@@ -175,7 +177,7 @@ const HrDashboard = () => {
                                 {monthCounts.length > 0 ? (
                                     <Chart
                                         type="area"
-                                        series={[{ name: 'New Members', data: monthCounts }]}
+                                        series={[{ name: t('dashboard.hr.registrations.legend'), data: monthCounts }]}
                                         xAxis={monthLabels}
                                         height="300px"
                                         customOptions={{
@@ -194,7 +196,7 @@ const HrDashboard = () => {
                                     />
                                 ) : (
                                     <div className="flex items-center justify-center h-[300px] text-gray-400 text-sm">
-                                        No member data yet
+                                        {t('dashboard.hr.registrations.empty')}
                                     </div>
                                 )}
                             </div>
@@ -203,7 +205,7 @@ const HrDashboard = () => {
                         {/* KPI widgets */}
                         <div className="2xl:col-span-1 flex flex-col 2xl:flex-col xl:flex-row gap-4">
                             <Widget
-                                title="Total members"
+                                title={t('dashboard.hr.kpi.totalMembers')}
                                 value={d.members.total}
                                 sub=""
                                 growShrink={d.member_grow_shrink}
@@ -211,16 +213,16 @@ const HrDashboard = () => {
                                 iconClass="bg-orange-200"
                             />
                             <Widget
-                                title="Active members"
+                                title={t('dashboard.hr.kpi.activeMembers')}
                                 value={d.members.active}
-                                sub={`${totalMembers ? Math.round((d.members.active / totalMembers) * 100) : 0}% of total`}
+                                sub={`${totalMembers ? Math.round((d.members.active / totalMembers) * 100) : 0}${t('dashboard.hr.kpi.ofTotal')}`}
                                 icon={<TbUserCheck />}
                                 iconClass="bg-emerald-200"
                             />
                             <Widget
-                                title="Inactive members"
+                                title={t('dashboard.hr.kpi.inactiveMembers')}
                                 value={d.members.inactive}
-                                sub={d.members.inactive ? 'Needs review' : 'All active'}
+                                sub={d.members.inactive ? t('dashboard.hr.kpi.needsReview') : t('dashboard.hr.kpi.allActive')}
                                 icon={<TbUserOff />}
                                 iconClass={d.members.inactive ? 'bg-red-200' : 'bg-gray-200'}
                             />
@@ -234,22 +236,22 @@ const HrDashboard = () => {
                         <div className="col-span-12 md:col-span-6 xl:col-span-4">
                             <Card className="h-full">
                                 <div className="flex items-center justify-between">
-                                    <h4>Recent members</h4>
+                                    <h4>{t('dashboard.hr.recentMembers.title')}</h4>
                                     <Button
                                         size="sm"
                                         onClick={() => navigate('/concepts/customers/customer-list')}
                                     >
-                                        View all
+                                        {t('dashboard.hr.recentMembers.viewAll')}
                                     </Button>
                                 </div>
                                 <div className="mt-6">
                                     <Table hoverable={false}>
                                         <THead>
                                             <Tr>
-                                                <Th className="px-0!">Member</Th>
-                                                <Th>Role</Th>
-                                                <Th>Status</Th>
-                                                <Th className="px-0! text-right!">Joined</Th>
+                                                <Th className="px-0!">{t('dashboard.hr.recentMembers.colMember')}</Th>
+                                                <Th>{t('dashboard.hr.recentMembers.colRole')}</Th>
+                                                <Th>{t('dashboard.hr.recentMembers.colStatus')}</Th>
+                                                <Th className="px-0! text-right!">{t('dashboard.hr.recentMembers.colJoined')}</Th>
                                             </Tr>
                                         </THead>
                                         <TBody>
@@ -281,13 +283,13 @@ const HrDashboard = () => {
                                                     <Td>
                                                         {m.role ? (
                                                             <Tag className={`text-xs ${roleTagColors[m.role.toLowerCase()] ?? roleTagColors.viewer}`}>
-                                                                {capitalize(m.role)}
+                                                                {t(`members.role.${m.role.toLowerCase()}`)}
                                                             </Tag>
                                                         ) : '—'}
                                                     </Td>
                                                     <Td>
                                                         <Tag className={`text-xs ${statusTagColors[m.status] ?? statusTagColors.inactive}`}>
-                                                            {capitalize(m.status)}
+                                                            {t(`members.status.${m.status}`)}
                                                         </Tag>
                                                     </Td>
                                                     <Td className="px-0! text-right! text-xs text-gray-400 whitespace-nowrap">
@@ -304,7 +306,7 @@ const HrDashboard = () => {
                         {/* Role distribution donut (mirrors DeviceSession) */}
                         <div className="col-span-12 md:col-span-6 xl:col-span-4">
                             <Card className="h-full">
-                                <h4>Role distribution</h4>
+                                <h4>{t('dashboard.hr.roles.distribution')}</h4>
                                 <div className="mt-6">
                                     {roleSeries.length > 0 && !roleSeries.every(v => v === 0) ? (
                                         <Chart
@@ -321,7 +323,7 @@ const HrDashboard = () => {
                                                                 total: {
                                                                     show: true,
                                                                     showAlways: true,
-                                                                    label: 'Total',
+                                                                    label: t('dashboard.hr.roles.totalWorkforce'),
                                                                     formatter: () => String(totalMembers),
                                                                 },
                                                             },
@@ -333,7 +335,7 @@ const HrDashboard = () => {
                                             type="donut"
                                         />
                                     ) : (
-                                        <p className="text-sm text-gray-400 text-center py-10">No role data</p>
+                                        <p className="text-sm text-gray-400 text-center py-10">{t('dashboard.hr.roles.noData')}</p>
                                     )}
                                 </div>
                                 <div className="mt-4 flex flex-wrap justify-center gap-x-8 gap-y-4">
@@ -356,10 +358,10 @@ const HrDashboard = () => {
                         <div className="col-span-12 xl:col-span-4">
                             <Card className="h-full">
                                 <div className="flex items-center justify-between">
-                                    <h4>Members by role</h4>
+                                    <h4>{t('dashboard.hr.roles.breakdown')}</h4>
                                 </div>
                                 <div className="mt-5">
-                                    <div className="mb-2">Total workforce</div>
+                                    <div className="mb-2">{t('dashboard.hr.roles.totalWorkforce')}</div>
                                     <div className="flex items-end gap-2 mb-1">
                                         <h3>{totalMembers}</h3>
                                         <GrowShrinkValue
@@ -373,9 +375,9 @@ const HrDashboard = () => {
                                     <Table className="mt-6" hoverable={false}>
                                         <THead>
                                             <Tr>
-                                                <Th className="px-0!">Role</Th>
-                                                <Th>Share</Th>
-                                                <Th className="px-0!">Count</Th>
+                                                <Th className="px-0!">{t('dashboard.hr.roles.colRole')}</Th>
+                                                <Th>{t('dashboard.hr.roles.colShare')}</Th>
+                                                <Th className="px-0!">{t('dashboard.hr.roles.colCount')}</Th>
                                             </Tr>
                                         </THead>
                                         <TBody>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Dialog from '@/components/ui/Dialog'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -12,6 +13,7 @@ type Props = {
 }
 
 const FileManagerRenameDialog = ({ onRenamed }: Props) => {
+    const { t } = useTranslation()
     const { renameDialog, setRenameDialog, renameFile } = useFileManagerStore()
 
     const [newName, setNewName] = useState('')
@@ -37,14 +39,14 @@ const FileManagerRenameDialog = ({ onRenamed }: Props) => {
             }
             renameFile({ id: renameDialog.id, fileName: newName.trim() })
             toast.push(
-                <Notification type="success" title="Renamed successfully" />,
+                <Notification type="success" title={t('fileManager.rename.toastSuccess')} />,
                 { placement: 'top-end' },
             )
             handleClose()
             onRenamed?.()
         } catch {
             toast.push(
-                <Notification type="danger" title="Rename failed" />,
+                <Notification type="danger" title={t('fileManager.rename.toastFailed')} />,
                 { placement: 'top-end' },
             )
         } finally {
@@ -59,10 +61,10 @@ const FileManagerRenameDialog = ({ onRenamed }: Props) => {
             onClose={handleClose}
             onRequestClose={handleClose}
         >
-            <h4>Rename {isDirectory ? 'folder' : 'file'}</h4>
+            <h4>{isDirectory ? t('fileManager.rename.titleFolder') : t('fileManager.rename.titleFile')}</h4>
             <div className="mt-6">
                 <Input
-                    placeholder="New name"
+                    placeholder={t('fileManager.rename.placeholder')}
                     type="text"
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
@@ -72,7 +74,7 @@ const FileManagerRenameDialog = ({ onRenamed }: Props) => {
             </div>
             <div className="mt-6 flex justify-end items-center gap-2">
                 <Button type="button" size="sm" onClick={handleClose}>
-                    Close
+                    {t('fileManager.rename.close')}
                 </Button>
                 <Button
                     type="button"
@@ -82,7 +84,7 @@ const FileManagerRenameDialog = ({ onRenamed }: Props) => {
                     disabled={!newName.trim()}
                     onClick={handleSubmit}
                 >
-                    <span className="flex justify-center min-w-10">Ok</span>
+                    <span className="flex justify-center min-w-10">{t('fileManager.rename.ok')}</span>
                 </Button>
             </div>
         </Dialog>

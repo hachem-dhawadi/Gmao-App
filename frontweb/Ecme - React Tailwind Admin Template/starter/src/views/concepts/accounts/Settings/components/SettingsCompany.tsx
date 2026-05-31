@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Upload from '@/components/ui/Upload'
@@ -83,63 +84,6 @@ type CountryOption = {
 }
 
 const { Control } = components
-
-const validationSchema: ZodType<CompanySchema> = z.object({
-    name: z
-        .string({ required_error: 'Please enter company name' })
-        .min(1, { message: 'Please enter company name' }),
-    legalName: z
-        .string({ required_error: 'Please enter legal name' })
-        .min(1, { message: 'Please enter legal name' }),
-    phone: z
-        .string({ required_error: 'Please enter company phone' })
-        .min(8, { message: 'Phone must have at least 8 characters' })
-        .max(30, { message: 'Phone is too long' }),
-    email: z
-        .string({ required_error: 'Please enter company email' })
-        .min(1, { message: 'Please enter company email' })
-        .email({ message: 'Please enter a valid email' }),
-    addressLine1: z
-        .string({ required_error: 'Please enter address line 1' })
-        .min(1, { message: 'Please enter address line 1' }),
-    addressLine2: z.string(),
-    city: z
-        .string({ required_error: 'Please enter city' })
-        .min(1, { message: 'Please enter city' }),
-    postalCode: z
-        .string({ required_error: 'Please enter postal code' })
-        .min(1, { message: 'Please enter postal code' }),
-    country: z
-        .string({ required_error: 'Please select country' })
-        .min(1, { message: 'Please select country' }),
-    timezone: z.string(),
-})
-
-const statusMeta: Record<
-    CompanyStatus,
-    { label: string; dotClass: string; textClass: string }
-> = {
-    in_creation: {
-        label: 'In creation',
-        dotClass: 'bg-gray-400',
-        textClass: 'text-gray-700 dark:text-gray-300',
-    },
-    pending: {
-        label: 'Pending approval',
-        dotClass: 'bg-amber-500',
-        textClass: 'text-amber-700 dark:text-amber-400',
-    },
-    rejected: {
-        label: 'Rejected',
-        dotClass: 'bg-red-500',
-        textClass: 'text-red-700 dark:text-red-400',
-    },
-    approved: {
-        label: 'Approved',
-        dotClass: 'bg-emerald-500',
-        textClass: 'text-emerald-700 dark:text-emerald-400',
-    },
-}
 
 const defaultValues: CompanySchema = {
     name: '',
@@ -269,6 +213,65 @@ const showToast = (type: 'success' | 'danger', message: string) => {
 }
 
 const SettingsCompany = () => {
+    const { t } = useTranslation()
+
+    const validationSchema: ZodType<CompanySchema> = z.object({
+        name: z
+            .string({ required_error: t('settingsCompany.validation.nameRequired') })
+            .min(1, { message: t('settingsCompany.validation.nameRequired') }),
+        legalName: z
+            .string({ required_error: t('settingsCompany.validation.legalNameRequired') })
+            .min(1, { message: t('settingsCompany.validation.legalNameRequired') }),
+        phone: z
+            .string({ required_error: t('settingsCompany.validation.phoneRequired') })
+            .min(8, { message: t('settingsCompany.validation.phoneMin') })
+            .max(30, { message: t('settingsCompany.validation.phoneTooLong') }),
+        email: z
+            .string({ required_error: t('settingsCompany.validation.emailRequired') })
+            .min(1, { message: t('settingsCompany.validation.emailRequired') })
+            .email({ message: t('settingsCompany.validation.emailInvalid') }),
+        addressLine1: z
+            .string({ required_error: t('settingsCompany.validation.addressRequired') })
+            .min(1, { message: t('settingsCompany.validation.addressRequired') }),
+        addressLine2: z.string(),
+        city: z
+            .string({ required_error: t('settingsCompany.validation.cityRequired') })
+            .min(1, { message: t('settingsCompany.validation.cityRequired') }),
+        postalCode: z
+            .string({ required_error: t('settingsCompany.validation.postalCodeRequired') })
+            .min(1, { message: t('settingsCompany.validation.postalCodeRequired') }),
+        country: z
+            .string({ required_error: t('settingsCompany.validation.countryRequired') })
+            .min(1, { message: t('settingsCompany.validation.countryRequired') }),
+        timezone: z.string(),
+    })
+
+    const statusMeta: Record<
+        CompanyStatus,
+        { label: string; dotClass: string; textClass: string }
+    > = {
+        in_creation: {
+            label: t('settingsCompany.status.inCreation'),
+            dotClass: 'bg-gray-400',
+            textClass: 'text-gray-700 dark:text-gray-300',
+        },
+        pending: {
+            label: t('settingsCompany.status.pending'),
+            dotClass: 'bg-amber-500',
+            textClass: 'text-amber-700 dark:text-amber-400',
+        },
+        rejected: {
+            label: t('settingsCompany.status.rejected'),
+            dotClass: 'bg-red-500',
+            textClass: 'text-red-700 dark:text-red-400',
+        },
+        approved: {
+            label: t('settingsCompany.status.approved'),
+            dotClass: 'bg-emerald-500',
+            textClass: 'text-emerald-700 dark:text-emerald-400',
+        },
+    }
+
     const [companyId, setCompanyId] = useState<number | null>(() => {
         const raw = localStorage.getItem(CURRENT_COMPANY_ID_KEY)
         return raw && /^\d+$/.test(raw) ? Number(raw) : null
@@ -412,7 +415,7 @@ const SettingsCompany = () => {
         if (files) {
             for (const file of files) {
                 if (!allowedFileType.includes(file.type)) {
-                    valid = 'Please upload a jpg, png, or webp image.'
+                    valid = t('settingsCompany.logo.errorType')
                 }
             }
         }
@@ -432,7 +435,7 @@ const SettingsCompany = () => {
         if (files) {
             for (const file of files) {
                 if (!allowedFileType.includes(file.type)) {
-                    valid = 'Please upload proof files as pdf, jpg, or png.'
+                    valid = t('settingsCompany.proof.errorType')
                 }
             }
         }
@@ -459,12 +462,12 @@ const SettingsCompany = () => {
         setProofFilesError('')
 
         if (!company && !selectedLogoFile) {
-            setLogoError('Please upload company logo')
+            setLogoError(t('settingsCompany.logo.error'))
             return
         }
 
         if (!company && selectedProofFiles.length === 0) {
-            setProofFilesError('Please upload at least one proof file')
+            setProofFilesError(t('settingsCompany.proof.error'))
             return
         }
 
@@ -502,7 +505,7 @@ const SettingsCompany = () => {
                   })
 
             if (!resp.success || !resp.data?.company) {
-                showToast('danger', resp.message || 'Unable to save company.')
+                showToast('danger', resp.message || t('settingsCompany.toast.saveFailed'))
                 return
             }
 
@@ -520,13 +523,13 @@ const SettingsCompany = () => {
             showToast(
                 'success',
                 company
-                    ? 'Company updated successfully.'
-                    : 'Company created successfully. Waiting for superadmin approval.',
+                    ? t('settingsCompany.toast.updated')
+                    : t('settingsCompany.toast.created'),
             )
         } catch (error: unknown) {
             const responseMessage =
                 (error as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message || 'Unable to save company.'
+                    ?.response?.data?.message || t('settingsCompany.toast.saveFailed')
 
             showToast('danger', responseMessage)
         }
@@ -559,10 +562,9 @@ const SettingsCompany = () => {
 
     return (
         <div>
-            <h4 className="mb-2">Company information</h4>
+            <h4 className="mb-2">{t('settingsCompany.title')}</h4>
             <p className="mb-6 text-sm text-gray-600 dark:text-gray-300">
-                Complete your company profile. You can update this form while
-                waiting for superadmin approval.
+                {t('settingsCompany.description')}
             </p>
 
             <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between gap-3">
@@ -573,13 +575,13 @@ const SettingsCompany = () => {
                     </span>
                 </div>
                 <Button size="sm" onClick={refreshCompany} loading={loadingStatus}>
-                    {loadingStatus ? 'Refreshing...' : 'Refresh status'}
+                    {loadingStatus ? t('settingsCompany.status.refreshing') : t('settingsCompany.status.refresh')}
                 </Button>
             </div>
 
             <Form onSubmit={handleSubmit(onSubmit)}>
                 <div className="mb-8">
-                    <label className="form-label mb-2">Company logo</label>
+                    <label className="form-label mb-2">{t('settingsCompany.logo.label')}</label>
                     <div className="flex items-center gap-4">
                         <Avatar
                             size={90}
@@ -610,7 +612,7 @@ const SettingsCompany = () => {
                                     type="button"
                                     icon={<HiOutlineCloudUpload />}
                                 >
-                                    Upload logo
+                                    {t('settingsCompany.logo.upload')}
                                 </Button>
                             </Upload>
                             {(selectedLogoFile || company?.logo_path) && (
@@ -626,7 +628,7 @@ const SettingsCompany = () => {
                                         setLogoError('')
                                     }}
                                 >
-                                    Remove
+                                    {t('settingsCompany.logo.remove')}
                                 </Button>
                             )}
                         </div>
@@ -654,7 +656,7 @@ const SettingsCompany = () => {
 
                 <div className="grid md:grid-cols-2 gap-4">
                     <FormItem
-                        label="Company name"
+                        label={t('settingsCompany.field.companyName')}
                         invalid={Boolean(errors.name)}
                         errorMessage={errors.name?.message}
                     >
@@ -665,7 +667,7 @@ const SettingsCompany = () => {
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="Company name"
+                                    placeholder={t('settingsCompany.field.companyName')}
                                     {...field}
                                 />
                             )}
@@ -673,7 +675,7 @@ const SettingsCompany = () => {
                     </FormItem>
 
                     <FormItem
-                        label="Legal name"
+                        label={t('settingsCompany.field.legalName')}
                         invalid={Boolean(errors.legalName)}
                         errorMessage={errors.legalName?.message}
                     >
@@ -684,7 +686,7 @@ const SettingsCompany = () => {
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="Legal name"
+                                    placeholder={t('settingsCompany.field.legalName')}
                                     {...field}
                                 />
                             )}
@@ -694,7 +696,7 @@ const SettingsCompany = () => {
 
                 <div className="grid md:grid-cols-2 gap-4">
                     <FormItem
-                        label="Phone"
+                        label={t('settingsCompany.field.phone')}
                         invalid={Boolean(errors.phone)}
                         errorMessage={errors.phone?.message}
                     >
@@ -705,7 +707,7 @@ const SettingsCompany = () => {
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="Company phone"
+                                    placeholder={t('settingsCompany.field.phone')}
                                     {...field}
                                 />
                             )}
@@ -713,7 +715,7 @@ const SettingsCompany = () => {
                     </FormItem>
 
                     <FormItem
-                        label="Email"
+                        label={t('settingsCompany.field.email')}
                         invalid={Boolean(errors.email)}
                         errorMessage={errors.email?.message}
                     >
@@ -733,7 +735,7 @@ const SettingsCompany = () => {
                 </div>
 
                 <FormItem
-                    label="Address line 1"
+                    label={t('settingsCompany.field.addressLine1')}
                     invalid={Boolean(errors.addressLine1)}
                     errorMessage={errors.addressLine1?.message}
                 >
@@ -744,7 +746,7 @@ const SettingsCompany = () => {
                             <Input
                                 type="text"
                                 autoComplete="off"
-                                placeholder="Address line 1"
+                                placeholder={t('settingsCompany.field.addressLine1')}
                                 {...field}
                             />
                         )}
@@ -752,7 +754,7 @@ const SettingsCompany = () => {
                 </FormItem>
 
                 <FormItem
-                    label="Address line 2"
+                    label={t('settingsCompany.field.addressLine2')}
                     invalid={Boolean(errors.addressLine2)}
                     errorMessage={errors.addressLine2?.message}
                 >
@@ -763,7 +765,7 @@ const SettingsCompany = () => {
                             <Input
                                 type="text"
                                 autoComplete="off"
-                                placeholder="Address line 2 (optional)"
+                                placeholder={t('settingsCompany.field.addressLine2Placeholder')}
                                 {...field}
                             />
                         )}
@@ -772,7 +774,7 @@ const SettingsCompany = () => {
 
                 <div className="grid md:grid-cols-2 gap-4">
                     <FormItem
-                        label="City"
+                        label={t('settingsCompany.field.city')}
                         invalid={Boolean(errors.city)}
                         errorMessage={errors.city?.message}
                     >
@@ -783,7 +785,7 @@ const SettingsCompany = () => {
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="City"
+                                    placeholder={t('settingsCompany.field.city')}
                                     {...field}
                                 />
                             )}
@@ -791,7 +793,7 @@ const SettingsCompany = () => {
                     </FormItem>
 
                     <FormItem
-                        label="Postal code"
+                        label={t('settingsCompany.field.postalCode')}
                         invalid={Boolean(errors.postalCode)}
                         errorMessage={errors.postalCode?.message}
                     >
@@ -802,7 +804,7 @@ const SettingsCompany = () => {
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="Postal code"
+                                    placeholder={t('settingsCompany.field.postalCode')}
                                     {...field}
                                 />
                             )}
@@ -812,7 +814,7 @@ const SettingsCompany = () => {
 
                 <div className="grid md:grid-cols-2 gap-4">
                     <FormItem
-                        label="Country"
+                        label={t('settingsCompany.field.country')}
                         invalid={Boolean(errors.country)}
                         errorMessage={errors.country?.message}
                     >
@@ -830,7 +832,7 @@ const SettingsCompany = () => {
                                         ),
                                         Control: CountryControl,
                                     }}
-                                    placeholder="Select country"
+                                    placeholder={t('settingsCompany.field.selectCountry')}
                                     value={countryList.find(
                                         (option) => option.value === field.value,
                                     )}
@@ -843,7 +845,7 @@ const SettingsCompany = () => {
                     </FormItem>
 
                     <FormItem
-                        label="Timezone (optional)"
+                        label={t('settingsCompany.field.timezone')}
                         invalid={Boolean(errors.timezone)}
                         errorMessage={errors.timezone?.message}
                     >
@@ -853,7 +855,7 @@ const SettingsCompany = () => {
                             render={({ field }) => (
                                 <Select<TimezoneOption>
                                     options={timezoneOptions}
-                                    placeholder="Select timezone"
+                                    placeholder={t('settingsCompany.field.selectTimezone')}
                                     value={timezoneOptions.find(
                                         (option) => option.value === field.value,
                                     )}
@@ -869,7 +871,7 @@ const SettingsCompany = () => {
 
                 <div className="mb-8">
                     <label className="form-label mb-2">
-                        Company proof files (pdf/jpg/png)
+                        {t('settingsCompany.proof.label')}
                     </label>
 
                     <Upload
@@ -890,16 +892,16 @@ const SettingsCompany = () => {
                             </div>
                             <p className="font-semibold">
                                 <span className="text-gray-800 dark:text-white">
-                                    Drop your files here, or{' '}
+                                    {t('settingsCompany.proof.drop')}{' '}
                                 </span>
-                                <span className="text-blue-500">browse</span>
+                                <span className="text-blue-500">{t('settingsCompany.proof.browse')}</span>
                             </p>
                             <p className="mt-1 opacity-60 dark:text-white">
-                                Support: pdf, jpg, png
+                                {t('settingsCompany.proof.support')}
                             </p>
                             {company && (
                                 <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                                    Uploading new files will replace current proofs after save.
+                                    {t('settingsCompany.proof.replaceWarning')}
                                 </p>
                             )}
                         </div>
@@ -914,7 +916,7 @@ const SettingsCompany = () => {
                                         size="xs"
                                         onClick={clearSelectedProofFiles}
                                     >
-                                        Clear selection
+                                        {t('settingsCompany.proof.clearSelection')}
                                     </Button>
                                 </div>
                             )}
@@ -965,7 +967,7 @@ const SettingsCompany = () => {
 
                 <div className="flex justify-end">
                     <Button variant="solid" type="submit" loading={isSubmitting}>
-                        {companyId ? 'Update company' : 'Create company'}
+                        {companyId ? t('settingsCompany.button.update') : t('settingsCompany.button.create')}
                     </Button>
                 </div>
             </Form>

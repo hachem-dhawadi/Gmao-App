@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useFieldArray } from 'react-hook-form'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -18,6 +19,7 @@ type Props = {
 }
 
 const PmTasksSection = ({ control }: Props) => {
+    const { t } = useTranslation()
     const [newTitle, setNewTitle] = useState('')
 
     const { fields, append, remove, move, update } = useFieldArray({
@@ -43,10 +45,10 @@ const PmTasksSection = ({ control }: Props) => {
         <Card>
             <h5 className="mb-1 flex items-center gap-2">
                 <TbChecklist className="text-blue-500 text-lg" />
-                Checklist Tasks
+                {t('pmForm.checklistTitle')}
             </h5>
             <p className="text-xs text-gray-400 mb-4">
-                Tasks will appear as a checklist on every work order generated from this PM plan.
+                {t('pmForm.checklistSubtitle')}
             </p>
 
             {fields.length > 0 && (
@@ -106,7 +108,7 @@ const PmTasksSection = ({ control }: Props) => {
             <div className="flex items-center gap-2">
                 <Input
                     size="sm"
-                    placeholder="Add a task (e.g. Check oil level)"
+                    placeholder={t('pmForm.placeholder.addTask')}
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -120,13 +122,13 @@ const PmTasksSection = ({ control }: Props) => {
                     type="button"
                     disabled={!newTitle.trim()}
                 >
-                    Add
+                    {t('pmForm.taskAdd')}
                 </Button>
             </div>
 
             {fields.length === 0 && (
                 <p className="text-xs text-gray-400 mt-2 text-center">
-                    No tasks yet. Add steps the technician should complete.
+                    {t('pmForm.taskEmpty')}
                 </p>
             )}
         </Card>

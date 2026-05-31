@@ -68,7 +68,13 @@
         "discard": "تجاهل",
         "print": "طباعة",
         "back": "رجوع",
-        "reopen": "إعادة فتح"
+        "reopen": "إعادة فتح",
+        "record": "تسجيل",
+        "update": "تحديث",
+        "discardConfirm": {
+            "title": "تجاهل التغييرات",
+            "body": "هل أنت متأكد أنك تريد تجاهل هذا؟ لا يمكن التراجع عن هذا الإجراء."
+        }
     },
     "wo": {
         "pageTitle": "أوامر العمل",
@@ -136,6 +142,29 @@
             "attachDeleteFailed": "فشل الحذف.",
             "worklogDurationRequired": "المدة (بالدقائق) مطلوبة.",
             "worklogFailed": "فشل حفظ سجل العمل."
+        },
+        "details": {
+            "backToList": "العودة إلى أوامر العمل",
+            "printLabel": "طباعة الملصق",
+            "printWo": "طباعة أمر العمل",
+            "archive": "أرشفة",
+            "unarchive": "إلغاء الأرشفة",
+            "editForm": "تعديل",
+            "statusField": "الحالة",
+            "priorityField": "الأولوية",
+            "assetField": "الأصل",
+            "assignedTo": "مُسند إلى",
+            "noAssignees": "لا يوجد مُسندون",
+            "dueDate": "تاريخ الاستحقاق",
+            "noDueDate": "لا يوجد تاريخ استحقاق",
+            "estLogged": "الوقت المُقدَّر / المُسجَّل",
+            "estMin": "{{min}} دقيقة مُقدَّرة",
+            "noEst": "— مُقدَّر",
+            "loggedMin": "{{min}} دقيقة مُسجَّلة",
+            "description": "الوصف",
+            "clickToAdd": "انقر لإضافة وصف...",
+            "noDescription": "لا يوجد وصف.",
+            "archivedBanner": "تمت أرشفة أمر العمل هذا. يكون للقراءة فقط حتى إلغاء الأرشفة."
         }
     },
     "assets": {
@@ -351,6 +380,7 @@
         "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
         "columns": { "name": "الاسم", "email": "البريد الإلكتروني", "phone": "الهاتف", "role": "الدور", "status": "الحالة" },
         "status": { "active": "نشط", "inactive": "غير نشط", "blocked": "غير نشط" },
+        "role": { "admin": "مدير النظام", "manager": "مدير", "technician": "فني", "hr": "موارد بشرية", "viewer": "مراقب" },
         "modal": {
             "close": "إغلاق",
             "edit": "تعديل",
@@ -447,5 +477,638 @@
             "woCreated": "تم إنشاء أمر العمل {{code}} بنجاح.",
             "rejected": "تم رفض الطلب."
         }
+    },
+    "dashboard": {
+        "error": "فشل تحميل لوحة التحكم",
+        "adminManager": {
+            "title": "نظرة عامة على العمليات",
+            "allWo": "جميع أوامر العمل",
+            "sectionWo": "أوامر العمل",
+            "sectionPeople": "الأصول والموارد البشرية",
+            "kpi": {
+                "open": "مفتوح",
+                "inProgress": "قيد التنفيذ",
+                "onHold": "معلق",
+                "overdue": "متأخر",
+                "unassigned": "غير مُعيَّن",
+                "completedMonth": "مكتمل (الشهر)",
+                "totalAssets": "إجمالي الأصول",
+                "activeMembers": "الأعضاء النشطون",
+                "technicians": "الفنيون",
+                "needsAttention": "يحتاج اهتماماً"
+            },
+            "requests": {
+                "title": "الطلبات المعلقة",
+                "awaiting": "بانتظار المراجعة",
+                "allClear": "كل شيء على ما يرام",
+                "reviewBtn": "مراجعة {{count}} طلب",
+                "reviewBtnPlural": "مراجعة {{count}} طلبات"
+            },
+            "pmCompliance": {
+                "title": "امتثال الصيانة الوقائية",
+                "thisMonth": "هذا الشهر",
+                "rate": "معدل الامتثال"
+            },
+            "mttr": {
+                "title": "متوسط وقت الإصلاح",
+                "subtitle": "متوسط وقت الإصلاح هذا الشهر",
+                "hrs": "ساعة",
+                "noData": "لا توجد أوامر عمل مكتملة هذا الشهر",
+                "excellent": "ممتاز",
+                "acceptable": "مقبول",
+                "needsImprovement": "يحتاج تحسيناً",
+                "target": "الهدف: أقل من 8 ساعات"
+            },
+            "schedule": {
+                "title": "الجدول الزمني",
+                "empty": "لا توجد أوامر عمل للعرض"
+            },
+            "pmUpcoming": {
+                "title": "خطط الصيانة الوقائية القادمة",
+                "viewAll": "عرض الكل",
+                "viewAllPm": "عرض جميع خطط الصيانة",
+                "active": "نشط",
+                "thisWeek": "هذا الأسبوع",
+                "thisMonth": "هذا الشهر",
+                "empty": "لا توجد خطط صيانة قريبة",
+                "pmPlan": "خطة صيانة"
+            },
+            "openWo": {
+                "title": "أوامر العمل الحالية",
+                "allTasks": "جميع المهام",
+                "empty": "لا توجد أوامر عمل مفتوحة",
+                "noDueDate": "بدون تاريخ استحقاق"
+            },
+            "taskOverview": {
+                "title": "نظرة عامة على المهام",
+                "status": "الحالة",
+                "monthly": "شهري",
+                "totalTasks": "إجمالي المهام",
+                "active": "نشط",
+                "blocked": "محجوب",
+                "onGoing": "جارٍ",
+                "finished": "منتهٍ",
+                "empty": "لا توجد بيانات لهذه الفترة"
+            },
+            "recentActivity": {
+                "title": "النشاط الأخير",
+                "viewAll": "عرض الكل",
+                "empty": "لا توجد أوامر عمل حديثة",
+                "due": "الاستحقاق {{date}}",
+                "noDueDate": "بدون تاريخ استحقاق",
+                "statusIs": "حالته"
+            },
+            "miniCal": {
+                "today": "اليوم",
+                "pmScheduled": "صيانة مجدولة"
+            }
+        },
+        "technician": {
+            "summary": {
+                "title": "ملخص أوامر العمل الخاصة بي",
+                "myOpenWos": "أوامر العمل المفتوحة",
+                "inProgress": "قيد التنفيذ",
+                "completionRate": "معدل الإنجاز",
+                "doneThisWeek": "منجز هذا الأسبوع",
+                "vsLastMonth": "مقارنة بالشهر الماضي"
+            },
+            "pm": {
+                "title": "صيانتي الوقائية",
+                "viewAll": "عرض الكل",
+                "dueThisWeek": "مستحق هذا الأسبوع",
+                "dueThisMonth": "مستحق هذا الشهر",
+                "upcoming": "القادم",
+                "empty": "لا توجد خطط صيانة قريبة"
+            },
+            "performance": {
+                "title": "أداء أوامر العمل",
+                "all": "الكل",
+                "active": "نشط",
+                "completed": "مكتمل",
+                "empty": "لا توجد بيانات أداء",
+                "scoreTitle": "درجة الأداء",
+                "activeSeries": "أوامر العمل النشطة",
+                "completedSeries": "المكتملة",
+                "radar": {
+                    "completion": "الإنجاز",
+                    "onTime": "الالتزام بالوقت",
+                    "response": "الاستجابة",
+                    "workload": "عبء العمل",
+                    "efficiency": "الكفاءة"
+                }
+            },
+            "recentWo": {
+                "title": "أوامر العمل الأخيرة",
+                "viewAll": "عرض الكل",
+                "empty": "لا توجد أوامر عمل معيَّنة لك",
+                "colActive": "نشط",
+                "colWo": "أمر العمل",
+                "colStatus": "الحالة",
+                "colPriority": "الأولوية",
+                "colAsset": "الأصل",
+                "colDueDate": "تاريخ الاستحقاق",
+                "updateFailed": "فشل تحديث الحالة"
+            }
+        },
+        "hr": {
+            "title": "نظرة عامة على الموارد البشرية",
+            "registrations": {
+                "title": "تسجيلات الأعضاء",
+                "legend": "أعضاء جدد",
+                "totalMembers": "إجمالي الأعضاء",
+                "newThisMonth": "جدد هذا الشهر",
+                "empty": "لا توجد بيانات أعضاء"
+            },
+            "kpi": {
+                "totalMembers": "إجمالي الأعضاء",
+                "activeMembers": "الأعضاء النشطون",
+                "inactiveMembers": "الأعضاء غير النشطين",
+                "ofTotal": "% من الإجمالي",
+                "needsReview": "يحتاج مراجعة",
+                "allActive": "جميعهم نشطون",
+                "vsLastMonth": "مقارنة بالشهر الماضي"
+            },
+            "recentMembers": {
+                "title": "الأعضاء الأخيرون",
+                "viewAll": "عرض الكل",
+                "colMember": "العضو",
+                "colRole": "الدور",
+                "colStatus": "الحالة",
+                "colJoined": "تاريخ الانضمام"
+            },
+            "roles": {
+                "distribution": "توزيع الأدوار",
+                "breakdown": "الأعضاء حسب الدور",
+                "totalWorkforce": "إجمالي القوى العاملة",
+                "noData": "لا توجد بيانات أدوار",
+                "colRole": "الدور",
+                "colShare": "النسبة",
+                "colCount": "العدد"
+            }
+        }
+    },
+    "notificationSettings": {
+        "title": "الإشعارات",
+        "desktop": {
+            "title": "تفعيل إشعارات سطح المكتب",
+            "desc": "اختر ما إذا كنت تريد تلقي إشعارات بالرسائل والتحديثات الجديدة"
+        },
+        "badge": {
+            "title": "تفعيل شارة الرسائل غير المقروءة",
+            "desc": "عرض مؤشر أحمر على أيقونة الإشعارات عند وجود رسائل غير مقروءة"
+        },
+        "email": {
+            "title": "إشعارات البريد الإلكتروني",
+            "desc": "يمكن للتطبيق إرسال إشعارات بريد إلكتروني لكل رسالة مباشرة جديدة"
+        },
+        "options": {
+            "newsAndUpdate":     { "label": "الأخبار والتحديثات",   "desc": "أخبار حول المنتج والميزات الجديدة" },
+            "tipsAndTutorial":   { "label": "النصائح والدروس",      "desc": "نصائح لتحسين كفاءتك" },
+            "offerAndPromotion": { "label": "العروض والترقيات",     "desc": "عروض على المنتجات وآخر الخصومات" },
+            "followUpReminder":  { "label": "تذكيرات المتابعة",     "desc": "تلقي إشعارات بجميع التذكيرات المحددة" }
+        },
+        "notifyMe": {
+            "allNewMessage": { "label": "جميع الرسائل الجديدة", "desc": "بث الإشعارات لكل رسالة جديدة" },
+            "mentionsOnly":  { "label": "الإشارات فقط",          "desc": "التنبيه فقط عند ذكري في رسالة" },
+            "nothing":       { "label": "لا شيء",                "desc": "لا أريد أي إشعارات" }
+        }
+    },
+    "calendar": {
+        "show": "عرض:",
+        "all": "الكل",
+        "mine": "الخاصة بي",
+        "toast": {
+            "moveFailed": "فشل نقل الحدث. يرجى المحاولة مرة أخرى.",
+            "saveFailed": "فشل حفظ الحدث. يرجى المحاولة مرة أخرى.",
+            "deleted": "تم حذف الحدث.",
+            "deleteFailed": "فشل حذف الحدث."
+        },
+        "dialog": {
+            "newEvent": "إضافة حدث جديد",
+            "editEvent": "تعديل الحدث",
+            "titleLabel": "عنوان الحدث",
+            "titlePlaceholder": "عنوان الحدث",
+            "startDate": "تاريخ البداية",
+            "endDate": "تاريخ النهاية",
+            "eventColor": "لون الحدث",
+            "create": "إنشاء",
+            "update": "تحديث",
+            "delete": "حذف",
+            "deleteTitle": "حذف الحدث",
+            "deleteConfirm": "حذف {{title}}؟ لا يمكن التراجع عن هذا الإجراء."
+        },
+        "validation": {
+            "titleRequired": "عنوان الحدث مطلوب",
+            "selectDate": "يرجى تحديد تاريخ",
+            "colorRequired": "اللون مطلوب"
+        }
+    },
+    "fileManager": {
+        "title": "مدير الملفات",
+        "newFolder": "مجلد جديد",
+        "upload": "رفع",
+        "noCompany": {
+            "title": "لم يتم اختيار شركة",
+            "desc": "اختر شركة من قائمة الشركات للوصول إلى مدير الملفات."
+        },
+        "columns": { "file": "الملف", "size": "الحجم", "type": "النوع" },
+        "empty": {
+            "title": "هذا المجلد فارغ",
+            "desc": "ارفع ملفاً أو أنشئ مجلداً للبدء"
+        },
+        "dropdown": {
+            "open": "فتح",
+            "download": "تحميل",
+            "rename": "إعادة تسمية",
+            "share": "مشاركة",
+            "delete": "حذف"
+        },
+        "delete": {
+            "titleFile": "حذف الملف",
+            "titleFolder": "حذف المجلد",
+            "confirmFile": "هل أنت متأكد من حذف هذا الملف؟ لا يمكن التراجع عن هذا الإجراء.",
+            "confirmFolder": "هل أنت متأكد من حذف هذا المجلد؟ سيتم حذف جميع المحتويات نهائياً. لا يمكن التراجع عن هذا الإجراء.",
+            "toastFile": "تم حذف الملف",
+            "toastFolder": "تم حذف المجلد",
+            "toastFailed": "فشل الحذف"
+        },
+        "rename": {
+            "titleFile": "إعادة تسمية الملف",
+            "titleFolder": "إعادة تسمية المجلد",
+            "placeholder": "الاسم الجديد",
+            "ok": "موافق",
+            "close": "إغلاق",
+            "toastSuccess": "تمت إعادة التسمية بنجاح",
+            "toastFailed": "فشل إعادة التسمية"
+        },
+        "createFolder": {
+            "title": "مجلد جديد",
+            "placeholder": "اسم المجلد",
+            "toastSuccess": "تم إنشاء المجلد!",
+            "toastFailed": "فشل إنشاء المجلد"
+        },
+        "share": {
+            "titleFile": "مشاركة هذا الملف",
+            "titleFolder": "مشاركة هذا المجلد",
+            "placeholder": "اختر الأعضاء للمشاركة...",
+            "currentlyShared": "مشارك حالياً مع:",
+            "toastFileSuccess": "تمت مشاركة الملف بنجاح",
+            "toastFolderSuccess": "تمت مشاركة المجلد بنجاح",
+            "toastFileFailed": "فشل مشاركة الملف",
+            "toastFolderFailed": "فشل مشاركة المجلد",
+            "shareBtn": "مشاركة"
+        },
+        "uploadDialog": {
+            "title": "رفع الملفات",
+            "dropHint": "اسحب ملفاتك هنا، أو",
+            "browse": "استعرض",
+            "through": "من جهازك",
+            "uploadBtn": "رفع",
+            "toastSuccess": "تم رفع {{count}} ملف/ملفات",
+            "toastFailed": "فشل الرفع"
+        },
+        "toast": {
+            "loadFailed": "فشل تحميل الملفات",
+            "downloadFailed": "فشل التحميل"
+        }
+    },
+    "settingsProfile": {
+        "title": "المعلومات الشخصية",
+        "otherInfo": "معلومات أخرى",
+        "firstName": "الاسم الأول",
+        "lastName": "اسم المستخدم",
+        "firstNamePlaceholder": "الاسم الأول",
+        "lastNamePlaceholder": "اسم العائلة",
+        "emailPlaceholder": "البريد الإلكتروني",
+        "phoneNumber": "رقم الهاتف",
+        "phonePlaceholder": "رقم الهاتف",
+        "locale": "اللغة",
+        "accountStatus": "حالة الحساب",
+        "lastLogin": "آخر تسجيل دخول",
+        "createdAt": "تاريخ الإنشاء",
+        "updatedAt": "تاريخ التحديث",
+        "uploadImage": "رفع صورة",
+        "remove": "إزالة",
+        "toast": {
+            "success": "تم تحديث الملف الشخصي بنجاح.",
+            "failed": "فشل تحديث الملف الشخصي."
+        },
+        "validation": {
+            "firstName": "الاسم الأول مطلوب",
+            "lastName": "اسم العائلة مطلوب",
+            "email": "البريد الإلكتروني مطلوب",
+            "emailInvalid": "بريد إلكتروني غير صالح",
+            "dialCode": "الرجاء اختيار رمز البلد",
+            "phone": "الرجاء إدخال رقم هاتفك"
+        }
+    },
+    "settingsSecurity": {
+        "title": "كلمة المرور",
+        "description": "تذكر أن كلمة المرور هي مفتاحك الرقمي للحساب. احتفظ بها في أمان!",
+        "currentPassword": "كلمة المرور الحالية",
+        "newPassword": "كلمة المرور الجديدة",
+        "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+        "updateBtn": "تحديث",
+        "confirmTitle": "تحديث كلمة المرور",
+        "confirmBody": "هل أنت متأكد من رغبتك في تغيير كلمة المرور؟",
+        "toast": {
+            "success": "تم تحديث كلمة المرور بنجاح.",
+            "failed": "فشل تحديث كلمة المرور."
+        },
+        "validation": {
+            "currentPassword": "الرجاء إدخال كلمة مرورك الحالية!",
+            "newPassword": "يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل.",
+            "confirmNewPassword": "الرجاء تأكيد كلمة مرورك الجديدة!",
+            "passwordMatch": "كلمتا المرور غير متطابقتين"
+        }
+    },
+    "settingsMenu": {
+        "profile": "الملف الشخصي",
+        "company": "الشركة",
+        "security": "الأمان"
+    },
+    "mail": {
+        "title": "الإشعارات",
+        "unread": "غير مقروء",
+        "viewInApp": "عرض في التطبيق",
+        "details": "التفاصيل",
+        "markAllRead": "تحديد الكل كمقروء",
+        "markRead": "تحديد كمقروء",
+        "noNotifications": "لا توجد إشعارات",
+        "delete": {
+            "title": "حذف الرسالة",
+            "confirmOne": "هل أنت متأكد من رغبتك في حذف هذه الرسالة؟ لا يمكن التراجع عن هذا الإجراء.",
+            "confirmMany": "هل أنت متأكد من رغبتك في حذف {{count}} رسالة؟ لا يمكن التراجع عن هذا الإجراء."
+        },
+        "editor": {
+            "newMessage": "رسالة جديدة",
+            "reply": "رد",
+            "titleLabel": "الموضوع:",
+            "titlePlaceholder": "أضف موضوعاً",
+            "toLabel": "إلى:",
+            "messageLabel": "الرسالة",
+            "discard": "تجاهل",
+            "send": "إرسال",
+            "sent": "تم إرسال الرسالة!",
+            "validation": {
+                "to": "الرجاء إدخال المستلم",
+                "message": "الرجاء إدخال رسالة"
+            }
+        },
+        "category": {
+            "all": "الكل",
+            "unread": "غير مقروء",
+            "work_order": "أوامر العمل",
+            "pm_plan": "خطط الصيانة",
+            "inventory": "المخزون",
+            "system": "النظام"
+        },
+        "typeLabel": {
+            "wo_assigned": "أمر عمل",
+            "wo_status_changed": "أمر عمل",
+            "wo_overdue": "أمر عمل",
+            "wo_due_soon": "أمر عمل",
+            "comment_mention": "أمر عمل",
+            "low_stock": "مخزون",
+            "pm_assigned": "خطة صيانة",
+            "pm_wo_generated": "خطة صيانة",
+            "pm_overdue": "خطة صيانة",
+            "po_ordered": "نظام",
+            "new_member": "نظام",
+            "new_request": "أمر عمل",
+            "request_converted": "أمر عمل",
+            "request_rejected": "أمر عمل"
+        },
+        "dataField": {
+            "wo_id": "رقم أمر العمل",
+            "wo_code": "كود أمر العمل",
+            "wo_title": "العنوان",
+            "hours_left": "الساعات المتبقية",
+            "new_status": "الحالة الجديدة",
+            "item_id": "رقم المادة",
+            "item_name": "اسم المادة",
+            "item_code": "كود المادة",
+            "item_stock": "المخزون الحالي",
+            "item_min_stock": "الحد الأدنى للمخزون",
+            "item_unit": "الوحدة",
+            "pm_id": "رقم خطة الصيانة",
+            "pm_code": "كود الصيانة",
+            "pm_name": "اسم خطة الصيانة",
+            "member_id": "رقم العضو",
+            "member_name": "اسم العضو",
+            "po_id": "رقم أمر الشراء",
+            "po_code": "كود أمر الشراء",
+            "request_id": "رقم الطلب",
+            "request_code": "كود الطلب",
+            "request_title": "عنوان الطلب",
+            "request_priority": "الأولوية"
+        },
+        "body": {
+            "wo_assigned": "تم تعيينك إلى \"{{wo_title}}\" ({{wo_code}})",
+            "wo_status_changed": "تم تغيير حالة \"{{wo_title}}\" ({{wo_code}}) إلى {{new_status}}",
+            "wo_overdue": "أمر العمل \"{{wo_title}}\" ({{wo_code}}) تجاوز تاريخ الاستحقاق.",
+            "wo_due_soon": "أمر العمل \"{{wo_title}}\" ({{wo_code}}) سيستحق خلال {{hours_left}} ساعة.",
+            "comment_mention": "تم ذكرك في تعليق على \"{{wo_title}}\" ({{wo_code}})",
+            "low_stock": "مخزون \"{{item_name}}\" ({{item_code}}) هو {{item_stock}} {{item_unit}}، والحد الأدنى {{item_min_stock}} {{item_unit}}.",
+            "pm_assigned": "تم تعيينك إلى خطة الصيانة \"{{pm_name}}\" ({{pm_code}})",
+            "pm_wo_generated": "قامت خطة الصيانة بإنشاء أمر العمل {{wo_code}} تلقائياً.",
+            "pm_overdue": "خطة الصيانة {{pm_code}} متأخرة ولم يتم تنفيذها.",
+            "po_ordered": "تم إرسال أمر الشراء {{po_code}} إلى المورد.",
+            "new_member": "تمت إضافة {{member_name}} إلى الشركة.",
+            "new_request": "طلب صيانة جديد: \"{{request_title}}\" ({{request_code}})",
+            "request_converted": "تم تحويل طلبك {{request_code}} إلى أمر عمل {{wo_code}}.",
+            "request_rejected": "تم رفض طلبك {{request_code}}."
+        }
+    },
+    "workOrderBoard": {
+        "title": "أوامر العمل", "subtitle": "لوحة كانبان", "listView": "عرض القائمة",
+        "newWorkOrder": "أمر عمل جديد", "emptyColumn": "لا توجد أوامر عمل",
+        "toast": { "updateFailed": "فشل تحديث الحالة." }
+    },
+    "reports": {
+        "title": "التقارير",
+        "description": "أداء الصيانة، صحة الأصول، امتثال الصيانة الوقائية وتكاليف المخزون",
+        "print": "طباعة / PDF",
+        "tabs": { "wo": "أوامر العمل", "asset": "الأصول", "pm": "امتثال الصيانة الوقائية", "inv": "المخزون" },
+        "filter": {
+            "clear": "مسح", "today": "اليوم", "from": "من تاريخ", "to": "إلى تاريخ",
+            "presets": { "thisMonth": "هذا الشهر", "last3m": "آخر 3 أشهر", "last6m": "آخر 6 أشهر", "thisYear": "هذا العام" }
+        },
+        "wo": {
+            "sectionTitle": "مؤشرات أوامر العمل", "totalWos": "إجمالي الأوامر", "completed": "مكتملة",
+            "onHold": "معلقة", "avgResolution": "متوسط الحل", "blocked": "محظورة",
+            "thisMonth": "هذا الشهر", "selectedPeriod": "الفترة المحددة", "allTime": "كل الوقت",
+            "chartTitle": "المنشأة مقابل المكتملة", "last6months": "آخر 6 أشهر",
+            "byStatus": "حسب الحالة", "byPriority": "حسب الأولوية",
+            "topTechnicians": "أفضل الفنيين بأوامر العمل المكتملة", "technician": "الفني",
+            "empty": "لا توجد أوامر عمل في هذه الفترة", "noData": "لا توجد بيانات أوامر عمل"
+        },
+        "asset": {
+            "sectionTitle": "نظرة عامة على صحة الأصول", "assetsTracked": "الأصول المتتبعة",
+            "withWo": "مع أوامر العمل", "mostFailures": "الأكثر أعطالاً",
+            "totalDowntime": "إجمالي وقت التوقف", "allAssets": "جميع الأصول مجتمعة",
+            "tableTitle": "الأصول حسب عدد أوامر العمل", "asset": "الأصل",
+            "location": "الموقع", "wos": "أوامر العمل", "downtime": "وقت التوقف",
+            "lastMaintenance": "آخر صيانة",
+            "empty": "لم يتم العثور على أصول بأوامر عمل في هذه الفترة"
+        },
+        "pm": {
+            "sectionTitle": "ملخص امتثال الصيانة الوقائية", "avgCompliance": "متوسط الامتثال",
+            "onTime": "في الموعد", "overdue": "متأخرة", "neverRun": "لم تُنفَّذ قط",
+            "activePlans": "خطط نشطة", "needAttention": "تحتاج اهتماماً",
+            "notStarted": "لم تبدأ بعد", "last6months": "آخر 6 أشهر",
+            "complianceTrend": "اتجاه الامتثال", "planStatus": "حالة خطط الصيانة",
+            "plan": "الخطة", "assignedTo": "مُسند إلى", "lastRun": "آخر تنفيذ",
+            "nextRun": "التنفيذ التالي", "status": "الحالة",
+            "noRun": "لم تُنفَّذ أي خطة صيانة في هذه الفترة", "noData": "لا توجد بيانات صيانة وقائية",
+            "tag": { "onTime": "في الموعد", "overdue": "متأخرة", "neverRun": "لم تُنفَّذ" }
+        },
+        "inv": {
+            "sectionTitle": "ملخص المخزون والتكاليف", "partsCostMonth": "تكلفة القطع هذا الشهر",
+            "partsCostYear": "تكلفة القطع هذا العام", "partsCostPeriod": "تكلفة القطع (الفترة)",
+            "stockValue": "قيمة المخزون", "currentInventory": "قيمة المخزون الحالية",
+            "topParts": "أكثر 10 قطع استخداماً", "item": "المادة", "qtyUsed": "الكمية المستخدمة",
+            "totalCost": "التكلفة الإجمالية", "emptyParts": "لم تُستخدم أي قطع في أوامر العمل في هذه الفترة",
+            "noData": "لا توجد بيانات مخزون"
+        }
+    },
+    "assetCreate": { "toast": { "success": "تم إنشاء الأصل بنجاح.", "error": "فشل إنشاء الأصل." } },
+    "workOrderCreate": { "toast": { "success": "تم إنشاء أمر العمل بنجاح.", "error": "فشل إنشاء أمر العمل." } },
+    "pmCreate": { "createButton": "إنشاء خطة الصيانة", "toast": { "success": "تم إنشاء خطة الصيانة بنجاح.", "error": "فشل إنشاء خطة الصيانة." } },
+    "warehouse": {
+        "title": "المستودعات", "addWarehouse": "إضافة مستودع",
+        "search": "البحث بالاسم أو الكود أو الموقع…",
+        "col": { "name": "الاسم", "code": "الكود", "location": "الموقع" },
+        "tooltip": { "view": "عرض التفاصيل", "edit": "تعديل", "delete": "حذف" },
+        "confirmDelete": { "title": "حذف المستودع", "body": "حذف {{name}}؟ لا يمكن التراجع عن هذا." },
+        "toast": { "deleted": "تم حذف المستودع.", "deleteFailed": "فشل حذف المستودع." }
+    },
+    "stockMove": {
+        "title": "حركات المخزون", "recordMove": "تسجيل حركة",
+        "dialog": {
+            "title": "تسجيل حركة مخزون", "recordMove": "تسجيل حركة",
+            "item": "المادة", "moveType": "نوع الحركة",
+            "warehouse": "المستودع", "quantity": "الكمية", "reference": "المرجع", "notes": "ملاحظات",
+            "selectItem": "اختر مادة…", "selectWarehouse": "اختر مستودعاً…",
+            "selectItemFirst": "اختر مادة أولاً…",
+            "warehouseHint": "عرض المستودعات التي تحتوي على مخزون لهذه المادة فقط",
+            "onlyWithStock": "عرض المستودعات التي تحتوي على مخزون لهذه المادة فقط",
+            "currentStock": "المخزون الحالي (هذا المستودع)", "afterMove": "بعد هذه الحركة",
+            "remaining": "متبقية", "inStock": "في المخزون",
+            "referencePlaceholder": "رقم أمر الشراء، كود أمر العمل…", "notesPlaceholder": "ملاحظات اختيارية"
+        },
+        "moveType": { "in": "إدخال — مخزون مستلم", "out": "إخراج — مخزون مستهلك / مستخدم", "adjustment": "تعديل — تصحيح يدوي" },
+        "filter": { "allItems": "جميع المواد", "allWarehouses": "جميع المستودعات", "allTypes": "جميع الأنواع", "adjustment": "تعديل" },
+        "col": { "date": "التاريخ", "type": "النوع", "item": "المادة", "warehouse": "المستودع", "qty": "الكمية", "reference": "المرجع", "by": "بواسطة" },
+        "confirmDelete": { "title": "حذف حركة المخزون", "body": "حذف حركة {{type}} هذه؟ لا يمكن التراجع وسيؤثر ذلك على مستويات المخزون." },
+        "validation": { "itemRequired": "المادة مطلوبة", "warehouseRequired": "المستودع مطلوب", "qtyRequired": "الكمية مطلوبة", "qtyPositive": "يجب أن يكون رقماً موجباً", "qtyMax": "الحد الأقصى المتاح هو {{max}}" },
+        "toast": { "recorded": "تم تسجيل حركة المخزون.", "recordFailed": "فشل تسجيل الحركة.", "deleted": "تم حذف حركة المخزون.", "deleteFailed": "فشل حذف الحركة." }
+    },
+    "customerCreate": { "toast": { "success": "تم إنشاء المستخدم بنجاح.", "error": "فشل إنشاء المستخدم.", "selectCompany": "يرجى اختيار شركة لتعيين هذا المستخدم إليها.", "passwordMismatch": "تأكيد كلمة المرور غير متطابق." } },
+    "departmentCreate": { "toast": { "success": "تم إنشاء القسم بنجاح.", "error": "فشل إنشاء القسم." } },
+    "settingsCompany": {
+        "title": "معلومات الشركة",
+        "description": "أكمل ملف شركتك. يمكنك تحديث هذا النموذج في انتظار موافقة المشرف.",
+        "status": { "inCreation": "قيد الإنشاء", "pending": "في انتظار الموافقة", "rejected": "مرفوض", "approved": "معتمد", "refreshing": "جارٍ التحديث...", "refresh": "تحديث الحالة" },
+        "logo": { "label": "شعار الشركة", "upload": "رفع الشعار", "remove": "إزالة", "error": "يرجى رفع شعار الشركة", "errorType": "يرجى رفع صورة بصيغة jpg أو png أو webp." },
+        "proof": { "label": "ملفات إثبات الشركة (pdf/jpg/png)", "drop": "أفلت ملفاتك هنا، أو", "browse": "تصفح", "support": "مقبول: pdf, jpg, png", "replaceWarning": "رفع ملفات جديدة سيستبدل الملفات الحالية بعد الحفظ.", "clearSelection": "مسح التحديد", "error": "يرجى رفع ملف إثبات واحد على الأقل", "errorType": "يرجى رفع ملفات الإثبات بصيغة pdf أو jpg أو png." },
+        "field": { "companyName": "اسم الشركة", "legalName": "الاسم القانوني", "phone": "الهاتف", "email": "البريد الإلكتروني", "addressLine1": "العنوان السطر 1", "addressLine2": "العنوان السطر 2", "city": "المدينة", "postalCode": "الرمز البريدي", "country": "البلد", "timezone": "المنطقة الزمنية (اختياري)", "selectCountry": "اختر بلداً", "selectTimezone": "اختر منطقة زمنية", "addressLine2Placeholder": "العنوان السطر 2 (اختياري)" },
+        "validation": { "nameRequired": "يرجى إدخال اسم الشركة", "legalNameRequired": "يرجى إدخال الاسم القانوني", "phoneRequired": "يرجى إدخال هاتف الشركة", "phoneMin": "يجب أن يحتوي الهاتف على 8 أحرف على الأقل", "phoneTooLong": "الهاتف طويل جداً", "emailRequired": "يرجى إدخال بريد الشركة", "emailInvalid": "يرجى إدخال بريد إلكتروني صحيح", "addressRequired": "يرجى إدخال العنوان السطر 1", "cityRequired": "يرجى إدخال المدينة", "postalCodeRequired": "يرجى إدخال الرمز البريدي", "countryRequired": "يرجى اختيار البلد" },
+        "button": { "update": "تحديث الشركة", "create": "إنشاء الشركة" },
+        "toast": { "updated": "تم تحديث الشركة بنجاح.", "created": "تم إنشاء الشركة بنجاح. في انتظار موافقة المشرف.", "saveFailed": "تعذر حفظ الشركة." }
+    },
+    "rolesPermissions": {
+        "title": "الأدوار والصلاحيات", "allAccounts": "جميع الحسابات",
+        "createRole": "إنشاء دور", "editRole": "تعديل الدور", "noRole": "لا يوجد دور", "never": "أبداً",
+        "module": {
+            "members": { "name": "إدارة الأعضاء", "description": "التحكم في الوصول لعمليات الأعضاء" },
+            "departments": { "name": "الأقسام", "description": "التحكم في الوصول لإدارة الأقسام" },
+            "roles": { "name": "الأدوار والصلاحيات", "description": "التحكم في الوصول لإدارة الأدوار" },
+            "assets": { "name": "الأصول", "description": "التحكم في الوصول لعمليات الأصول" },
+            "work_orders": { "name": "أوامر العمل", "description": "التحكم في الوصول لإدارة أوامر العمل" },
+            "pm_plans": { "name": "خطط الصيانة", "description": "التحكم في الوصول لخطط الصيانة الوقائية" },
+            "inventory": { "name": "المخزون", "description": "التحكم في الوصول لإدارة المخزون" },
+            "purchasing": { "name": "المشتريات", "description": "التحكم في الوصول لعمليات الشراء" },
+            "files": { "name": "مدير الملفات", "description": "الوصول إلى مدير الملفات" },
+            "chat": { "name": "الدردشة", "description": "الوصول إلى الدردشة" }
+        },
+        "accessor": { "read": "قراءة", "write": "كتابة", "create": "إنشاء", "update": "تعديل", "delete": "حذف", "assign": "تعيين" },
+        "roleDesc": { "admin": "وصول كامل لجميع الميزات والإعدادات وإدارة الشركة.", "hr": "إدارة الأعضاء والأقسام وعمليات الموارد البشرية.", "manager": "الإشراف على أوامر العمل والأصول وتعيينات الفريق.", "technician": "تنفيذ أوامر العمل وتسجيل أنشطة الصيانة.", "default": "{{count}} صلاحية مُعيَّنة" },
+        "col": { "name": "الاسم", "status": "الحالة", "lastOnline": "آخر اتصال", "role": "الدور" },
+        "filter": { "search": "بحث...", "status": "الحالة", "role": "الدور", "all": "الكل", "active": "نشط", "inactive": "غير نشط" },
+        "dialog": { "createTitle": "إنشاء دور", "roleName": "اسم الدور", "roleNamePlaceholder": "مثال: مشرف", "description": "الوصف", "descriptionPlaceholder": "صف ما يمكن لهذا الدور فعله...", "permission": "الصلاحية" },
+        "footer": { "membersSelected": "{{count}} أعضاء", "selected": "محدد" },
+        "confirmDelete": { "title": "إزالة الأعضاء", "body": "إزالة {{count}} عضو/أعضاء؟ سيؤدي ذلك إلى تعطيل وصولهم. لا يمكن التراجع عن هذا الإجراء." },
+        "toast": { "roleCreated": "تم إنشاء الدور \"{{label}}\" بنجاح.", "roleCreateFailed": "فشل إنشاء الدور. قد يكون الاسم موجوداً بالفعل.", "roleNameRequired": "اسم الدور مطلوب.", "permRequired": "اختر صلاحية واحدة على الأقل.", "roleUpdated": "تم تحديث الدور بنجاح.", "roleUpdateFailed": "فشل تحديث صلاحيات الدور.", "roleUpdateError": "فشل تحديث الدور. يرجى المحاولة مرة أخرى.", "membersRemoved": "تم إزالة الأعضاء.", "membersRemoveFailed": "فشل إزالة عضو أو أكثر." }
+    },
+    "assetForm": {
+        "section": {
+            "basicInfo": "المعلومات الأساسية", "basicInfoSub": "هوية الأصل وحالته التشغيلية",
+            "equipDetails": "تفاصيل المعدات", "equipDetailsSub": "المواصفات التقنية للآلة",
+            "photos": "صور الأصل", "photosSub": "حتى 5 صور للآلة أو المعدات",
+            "classification": "التصنيف", "classificationSub": "الفئة والموقع الفعلي",
+            "lifecycle": "دورة الحياة", "lifecycleSub": "تواريخ الشراء والضمان والتركيب"
+        },
+        "field": {
+            "assetName": "اسم الأصل", "assetCode": "رمز الأصل", "assetType": "نوع الأصل",
+            "serialNumber": "الرقم التسلسلي", "manufacturer": "الشركة المصنّعة", "model": "الطراز",
+            "addressZone": "العنوان / المنطقة", "purchaseDate": "تاريخ الشراء",
+            "warrantyExpires": "انتهاء الضمان", "installedAt": "تاريخ التركيب"
+        },
+        "placeholder": {
+            "assetName": "مثال: ضاغط الهواء الرئيسي", "assetCode": "مثال: COMP-001",
+            "serialNumber": "مثال: SN-2024-123456", "manufacturer": "مثال: Siemens", "model": "مثال: SIRIUS 3RW40",
+            "notes": "معلومات إضافية، تاريخ الصيانة، تعليمات خاصة...",
+            "location": "مثال: المبنى أ، الطابق 2", "addressZone": "مثال: المنطقة ب – الغرفة 12",
+            "pickDate": "اختر تاريخاً", "pickDateTime": "اختر التاريخ والوقت"
+        },
+        "status": { "active": "نشط", "inactive": "غير نشط", "under_maintenance": "قيد الصيانة", "decommissioned": "خارج الخدمة" },
+        "photo": {
+            "dropHere": "أسقط الصور هنا، أو", "browse": "انقر للتصفح", "addMore": "إضافة المزيد",
+            "maxSize": ".jpg · .jpeg · .png · .webp — الحد الأقصى 2 ميجابايت لكل صورة",
+            "removeTitle": "حذف الصورة", "removeBody": "حذف هذه الصورة؟ لا يمكن التراجع عن هذا."
+        },
+        "overview": "نظرة عامة", "details": "التفاصيل",
+        "generateCode": "توليد رمز", "selectStatus": "اختر الحالة", "selectType": "اختر النوع",
+        "validation": { "nameRequired": "الاسم مطلوب", "codeRequired": "الرمز مطلوب", "typeRequired": "نوع الأصل مطلوب", "statusRequired": "الحالة مطلوبة" }
+    },
+    "woForm": {
+        "overviewTitle": "نظرة عامة", "detailsTitle": "التفاصيل",
+        "field": { "title": "العنوان", "code": "الرمز", "asset": "الأصل", "dueDate": "تاريخ الاستحقاق", "estimatedTime": "الوقت المقدر", "assignMembers": "تعيين الأعضاء", "description": "الوصف" },
+        "placeholder": { "title": "مثال: استبدال فلتر مضخة الهيدروليك", "code": "مثال: WO-0001", "description": "صف العمل المطلوب تنفيذه...", "selectAsset": "اختر الأصل", "dueDate": "اختر تاريخ الاستحقاق", "selectMembers": "اختر الأعضاء" },
+        "codeHint": "اتركه فارغاً للتوليد التلقائي", "selectStatus": "اختر الحالة", "selectPriority": "اختر الأولوية",
+        "timePicker": { "label": "اختر المدة المقدرة", "hours": "ساعات", "minutes": "دقائق", "done": "تأكيد" },
+        "validation": { "titleRequired": "العنوان مطلوب", "assetRequired": "الأصل مطلوب", "statusRequired": "الحالة مطلوبة", "priorityRequired": "الأولوية مطلوبة" }
+    },
+    "pmForm": {
+        "planDetailsTitle": "تفاصيل الخطة", "triggerTitle": "جدول التشغيل",
+        "triggerSubtitle": "كم مرة يجب إنشاء أمر عمل تلقائياً؟",
+        "assignmentTitle": "التعيين", "checklistTitle": "مهام القائمة المرجعية",
+        "checklistSubtitle": "ستظهر المهام كقائمة تحقق في كل أمر عمل يُنشأ من هذه الخطة.",
+        "field": { "planName": "اسم الخطة", "repeatEvery": "تكرار كل", "firstRun": "تاريخ أول تشغيل", "assignTo": "تعيين إلى", "asset": "الأصل" },
+        "placeholder": { "planName": "مثال: فحص HVAC الشهري", "description": "صف ما تتضمنه خطة الصيانة هذه...", "selectAsset": "اختر الأصل", "selectTechnician": "اختر الفني", "pickDate": "اختر تاريخاً", "addTask": "أضف مهمة (مثال: فحص مستوى الزيت)" },
+        "status": { "active": "نشط", "inactive": "غير نشط", "draft": "مسودة" },
+        "priority": { "low": "منخفضة", "medium": "متوسطة", "high": "عالية", "critical": "حرجة" },
+        "intervalUnit": { "days": "أيام", "weeks": "أسابيع", "months": "أشهر" },
+        "intervalExample": "مثال: 3 أشهر = يُنشأ أمر عمل كل 3 أشهر",
+        "firstRunHint": "اختياري — اتركه فارغاً للبدء فوراً", "technicianOnly": "الفنيون فقط",
+        "noTechnicians": "لا يوجد فنيون", "taskAdd": "إضافة",
+        "taskEmpty": "لا توجد مهام بعد. أضف الخطوات التي يجب على الفني إتمامها.",
+        "selectStatus": "اختر الحالة", "selectPriority": "اختر الأولوية",
+        "timePicker": { "label": "اختر المدة المقدرة", "hours": "ساعات", "minutes": "دقائق", "done": "تأكيد" },
+        "validation": { "nameRequired": "الاسم مطلوب", "statusRequired": "الحالة مطلوبة", "priorityRequired": "الأولوية مطلوبة", "intervalValueRequired": "الفترة الزمنية مطلوبة" }
+    },
+    "memberForm": {
+        "overviewTitle": "نظرة عامة", "accountTitle": "الحساب", "roleTitle": "دور المستخدم",
+        "field": { "firstName": "الاسم الأول", "lastName": "الاسم الأخير", "phoneNumber": "رقم الهاتف", "password": "كلمة المرور", "confirmPassword": "تأكيد كلمة المرور", "assignCompany": "تعيين إلى شركة", "role": "الدور", "active": "نشط", "activeDesc": "تفعيل أو تعطيل هذا الحساب" },
+        "placeholder": { "firstName": "الاسم الأول", "lastName": "الاسم الأخير", "email": "البريد الإلكتروني", "location": "اختر الموقع", "phoneNumber": "رقم الهاتف", "password": "كلمة المرور", "confirmPassword": "تأكيد كلمة المرور", "company": "اختر شركة...", "role": "اختر الدور" }
+    },
+    "deptForm": {
+        "overviewTitle": "نظرة عامة", "orgTitle": "الهيكل التنظيمي",
+        "field": { "deptName": "اسم القسم", "parentDept": "القسم الأعلى" },
+        "placeholder": { "deptName": "مثال: الصيانة", "code": "مثال: MAINT", "description": "صف الغرض من هذا القسم...", "parentDept": "لا شيء (المستوى الأعلى)" },
+        "codeHint": "معرّف فريد، بأحرف كبيرة", "parentHint": "اتركه فارغاً للمستوى الأعلى",
+        "howItWorks": { "title": "كيف يعمل", "bullet1": "الأقسام العليا ليس لها قسم أعلى", "bullet2": "الأقسام الفرعية ترث التسلسل الهرمي", "bullet3": "يمكن تعيين الأعضاء لأي قسم" },
+        "validation": { "nameRequired": "الاسم مطلوب", "codeRequired": "الرمز مطلوب" }
     }
 }

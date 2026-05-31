@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Upload from '@/components/ui/Upload'
 import Input from '@/components/ui/Input'
@@ -39,20 +40,6 @@ type CountryOption = {
 }
 
 const { Control } = components
-
-const validationSchema: ZodType<ProfileSchema> = z.object({
-    firstName: z.string().min(1, { message: 'First name required' }),
-    lastName: z.string().min(1, { message: 'Last name required' }),
-    email: z
-        .string()
-        .min(1, { message: 'Email required' })
-        .email({ message: 'Invalid email' }),
-    dialCode: z.string().min(1, { message: 'Please select your country code' }),
-    phoneNumber: z
-        .string()
-        .min(1, { message: 'Please input your mobile number' }),
-    img: z.string(),
-})
 
 const formatDateTime = (value?: string) => {
     if (!value) {
@@ -127,6 +114,7 @@ const CustomControl = ({ children, ...props }: ControlProps<CountryOption>) => {
 }
 
 const SettingsProfile = () => {
+    const { t } = useTranslation()
     const setUser = useSessionUser((state) => state.setUser)
     const currentUserId = useSessionUser((state) => state.user.userId)
     const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null)
@@ -134,6 +122,18 @@ const SettingsProfile = () => {
     const profileSwrKey = currentUserId
         ? `/api/settings/profile/${currentUserId}`
         : null
+
+    const validationSchema: ZodType<ProfileSchema> = z.object({
+        firstName: z.string().min(1, { message: t('settingsProfile.validation.firstName') }),
+        lastName: z.string().min(1, { message: t('settingsProfile.validation.lastName') }),
+        email: z
+            .string()
+            .min(1, { message: t('settingsProfile.validation.email') })
+            .email({ message: t('settingsProfile.validation.emailInvalid') }),
+        dialCode: z.string().min(1, { message: t('settingsProfile.validation.dialCode') }),
+        phoneNumber: z.string().min(1, { message: t('settingsProfile.validation.phone') }),
+        img: z.string(),
+    })
 
     const { data, mutate } = useSWR(
         profileSwrKey,
@@ -224,13 +224,13 @@ const SettingsProfile = () => {
             await mutate()
 
             toast.push(
-                <Notification type="success">Profile updated successfully.</Notification>,
+                <Notification type="success">{t('settingsProfile.toast.success')}</Notification>,
                 { placement: 'top-center' },
             )
         } catch (error: unknown) {
             const message =
                 (error as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message || 'Failed to update profile.'
+                    ?.response?.data?.message || t('settingsProfile.toast.failed')
 
             toast.push(<Notification type="danger">{message}</Notification>, {
                 placement: 'top-center',
@@ -238,13 +238,13 @@ const SettingsProfile = () => {
         }
     }
 
-    const statusLabel = data?.isActive ? 'Active' : 'Inactive'
+    const statusLabel = data?.isActive ? t('members.status.active') : t('members.status.inactive')
     const statusDotClass = data?.isActive ? 'bg-emerald-500' : 'bg-gray-400'
     const statusTextClass = data?.isActive ? 'text-emerald-600' : 'text-gray-500'
 
     return (
         <>
-            <h4 className="mb-8">Personal information</h4>
+            <h4 className="mb-8">{t('settingsProfile.title')}</h4>
             <Form onSubmit={handleSubmit(onSubmit)}>
                 <div className="mb-8">
                     <Controller
@@ -279,7 +279,7 @@ const SettingsProfile = () => {
                                             type="button"
                                             icon={<TbPlus />}
                                         >
-                                            Upload Image
+                                            {t('settingsProfile.uploadImage')}
                                         </Button>
                                     </Upload>
                                     <Button
@@ -291,7 +291,7 @@ const SettingsProfile = () => {
                                             field.onChange('')
                                         }}
                                     >
-                                        Remove
+                                        {t('settingsProfile.remove')}
                                     </Button>
                                 </div>
                             </div>
@@ -300,7 +300,7 @@ const SettingsProfile = () => {
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                     <FormItem
-                        label="First name"
+                        label={t('settingsProfile.firstName')}
                         invalid={Boolean(errors.firstName)}
                         errorMessage={errors.firstName?.message}
                     >
@@ -311,14 +311,14 @@ const SettingsProfile = () => {
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="First Name"
+                                    placeholder={t('settingsProfile.firstNamePlaceholder')}
                                     {...field}
                                 />
                             )}
                         />
                     </FormItem>
                     <FormItem
-                        label="User name"
+                        label={t('settingsProfile.lastName')}
                         invalid={Boolean(errors.lastName)}
                         errorMessage={errors.lastName?.message}
                     >
@@ -329,7 +329,7 @@ const SettingsProfile = () => {
                                 <Input
                                     type="text"
                                     autoComplete="off"
-                                    placeholder="Last Name"
+                                    placeholder={t('settingsProfile.lastNamePlaceholder')}
                                     {...field}
                                 />
                             )}
@@ -337,7 +337,7 @@ const SettingsProfile = () => {
                     </FormItem>
                 </div>
                 <FormItem
-                    label="Email"
+                    label={t('members.modal.email')}
                     invalid={Boolean(errors.email)}
                     errorMessage={errors.email?.message}
                 >
@@ -348,7 +348,7 @@ const SettingsProfile = () => {
                             <Input
                                 type="email"
                                 autoComplete="off"
-                                placeholder="Email"
+                                placeholder={t('settingsProfile.emailPlaceholder')}
                                 {...field}
                             />
                         )}
@@ -358,7 +358,7 @@ const SettingsProfile = () => {
                     <FormItem
                         invalid={Boolean(errors.phoneNumber) || Boolean(errors.dialCode)}
                     >
-                        <label className="form-label mb-2">Phone number</label>
+                        <label className="form-label mb-2">{t('settingsProfile.phoneNumber')}</label>
                         <Controller
                             name="dialCode"
                             control={control}
@@ -397,7 +397,7 @@ const SettingsProfile = () => {
                             render={({ field }) => (
                                 <NumericInput
                                     autoComplete="off"
-                                    placeholder="Phone Number"
+                                    placeholder={t('settingsProfile.phonePlaceholder')}
                                     value={field.value}
                                     onChange={field.onChange}
                                     onBlur={field.onBlur}
@@ -407,31 +407,31 @@ const SettingsProfile = () => {
                     </FormItem>
                 </div>
 
-                <h4 className="mb-6">Other information</h4>
+                <h4 className="mb-6">{t('settingsProfile.otherInfo')}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormItem label="Locale">
+                    <FormItem label={t('settingsProfile.locale')}>
                         <Input value={data?.locale || '-'} readOnly />
                     </FormItem>
-                    <FormItem label="Account status">
+                    <FormItem label={t('settingsProfile.accountStatus')}>
                         <div className="h-11 px-3 border border-gray-300 dark:border-gray-600 rounded-md flex items-center">
                             <span className={`h-2.5 w-2.5 rounded-full mr-2 ${statusDotClass}`} />
                             <span className={`font-semibold ${statusTextClass}`}>{statusLabel}</span>
                         </div>
                     </FormItem>
-                    <FormItem label="Last login">
+                    <FormItem label={t('settingsProfile.lastLogin')}>
                         <Input value={formatDateTime(data?.lastLoginAt)} readOnly />
                     </FormItem>
-                    <FormItem label="Created at">
+                    <FormItem label={t('settingsProfile.createdAt')}>
                         <Input value={formatDateTime(data?.createdAt)} readOnly />
                     </FormItem>
-                    <FormItem label="Updated at">
+                    <FormItem label={t('settingsProfile.updatedAt')}>
                         <Input value={formatDateTime(data?.updatedAt)} readOnly />
                     </FormItem>
                 </div>
 
                 <div className="flex justify-end">
                     <Button variant="solid" type="submit" loading={isSubmitting}>
-                        Save
+                        {t('common.save')}
                     </Button>
                 </div>
             </Form>
@@ -440,5 +440,3 @@ const SettingsProfile = () => {
 }
 
 export default SettingsProfile
-
-

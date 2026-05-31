@@ -68,7 +68,13 @@
         "discard": "Annuler",
         "print": "Imprimer",
         "back": "Retour",
-        "reopen": "Rouvrir"
+        "reopen": "Rouvrir",
+        "record": "Enregistrer",
+        "update": "Mettre à jour",
+        "discardConfirm": {
+            "title": "Annuler les modifications",
+            "body": "Êtes-vous sûr de vouloir annuler ? Cette action est irréversible."
+        }
     },
     "wo": {
         "pageTitle": "Bons de travaux",
@@ -136,6 +142,29 @@
             "attachDeleteFailed": "Échec de la suppression.",
             "worklogDurationRequired": "La durée (minutes) est requise.",
             "worklogFailed": "Échec de l'enregistrement du journal de travail."
+        },
+        "details": {
+            "backToList": "Retour aux bons de travail",
+            "printLabel": "Imprimer l'étiquette",
+            "printWo": "Imprimer le BT",
+            "archive": "Archiver",
+            "unarchive": "Désarchiver",
+            "editForm": "Modifier",
+            "statusField": "Statut",
+            "priorityField": "Priorité",
+            "assetField": "Équipement",
+            "assignedTo": "Assigné à",
+            "noAssignees": "Aucun assigné",
+            "dueDate": "Échéance",
+            "noDueDate": "Aucune échéance",
+            "estLogged": "Temps est. / enregistré",
+            "estMin": "{{min}} min est.",
+            "noEst": "— est.",
+            "loggedMin": "{{min}} min enregistrées",
+            "description": "Description",
+            "clickToAdd": "Cliquez pour ajouter une description...",
+            "noDescription": "Aucune description.",
+            "archivedBanner": "Ce bon de travail est archivé. Il est en lecture seule jusqu'à désarchivage."
         }
     },
     "assets": {
@@ -351,6 +380,7 @@
         "searchPlaceholder": "Rechercher par nom, e-mail...",
         "columns": { "name": "Nom", "email": "E-mail", "phone": "Téléphone", "role": "Rôle", "status": "Statut" },
         "status": { "active": "Actif", "inactive": "Inactif", "blocked": "Inactif" },
+        "role": { "admin": "Admin", "manager": "Manager", "technician": "Technicien", "hr": "RH", "viewer": "Lecteur" },
         "modal": {
             "close": "Fermer",
             "edit": "Modifier",
@@ -447,5 +477,638 @@
             "woCreated": "Bon de travaux {{code}} créé avec succès.",
             "rejected": "Demande rejetée."
         }
+    },
+    "dashboard": {
+        "error": "Échec du chargement du tableau de bord",
+        "adminManager": {
+            "title": "Vue d'ensemble des opérations",
+            "allWo": "Tous les bons de travaux",
+            "sectionWo": "Bons de travaux",
+            "sectionPeople": "Actifs & Personnel",
+            "kpi": {
+                "open": "Ouvert",
+                "inProgress": "En cours",
+                "onHold": "En attente",
+                "overdue": "En retard",
+                "unassigned": "Non assigné",
+                "completedMonth": "Terminés (mois)",
+                "totalAssets": "Total des actifs",
+                "activeMembers": "Membres actifs",
+                "technicians": "Techniciens",
+                "needsAttention": "Nécessite attention"
+            },
+            "requests": {
+                "title": "Demandes en attente",
+                "awaiting": "En attente de révision",
+                "allClear": "Tout est en ordre",
+                "reviewBtn": "Réviser {{count}} demande",
+                "reviewBtnPlural": "Réviser {{count}} demandes"
+            },
+            "pmCompliance": {
+                "title": "Conformité MP",
+                "thisMonth": "Ce mois-ci",
+                "rate": "Taux de conformité"
+            },
+            "mttr": {
+                "title": "MTTR",
+                "subtitle": "Temps moyen de réparation ce mois",
+                "hrs": "h",
+                "noData": "Aucun BT terminé ce mois-ci",
+                "excellent": "Excellent",
+                "acceptable": "Acceptable",
+                "needsImprovement": "À améliorer",
+                "target": "objectif : moins de 8 h"
+            },
+            "schedule": {
+                "title": "Planning",
+                "empty": "Aucun bon de travaux à afficher"
+            },
+            "pmUpcoming": {
+                "title": "Plans MP à venir",
+                "viewAll": "Voir tout",
+                "viewAllPm": "Voir tous les plans MP",
+                "active": "Actif",
+                "thisWeek": "Cette semaine",
+                "thisMonth": "Ce mois-ci",
+                "empty": "Aucun plan MP prévu prochainement",
+                "pmPlan": "Plan MP"
+            },
+            "openWo": {
+                "title": "Bons de travaux en cours",
+                "allTasks": "Toutes les tâches",
+                "empty": "Aucun bon de travaux ouvert",
+                "noDueDate": "Sans échéance"
+            },
+            "taskOverview": {
+                "title": "Vue des tâches",
+                "status": "Statut",
+                "monthly": "Mensuel",
+                "totalTasks": "Total des tâches",
+                "active": "Actif",
+                "blocked": "Bloqué",
+                "onGoing": "En cours",
+                "finished": "Terminé",
+                "empty": "Aucune donnée pour cette période"
+            },
+            "recentActivity": {
+                "title": "Activité récente",
+                "viewAll": "Voir tout",
+                "empty": "Aucun bon de travaux récent",
+                "due": "Échéance {{date}}",
+                "noDueDate": "Sans échéance",
+                "statusIs": "a le statut"
+            },
+            "miniCal": {
+                "today": "Aujourd'hui",
+                "pmScheduled": "MP planifié"
+            }
+        },
+        "technician": {
+            "summary": {
+                "title": "Résumé de mes bons de travaux",
+                "myOpenWos": "Mes BT ouverts",
+                "inProgress": "En cours",
+                "completionRate": "Taux de complétion",
+                "doneThisWeek": "Terminés cette semaine",
+                "vsLastMonth": "vs mois précédent"
+            },
+            "pm": {
+                "title": "Ma maintenance préventive",
+                "viewAll": "Voir tout",
+                "dueThisWeek": "Dûs cette semaine",
+                "dueThisMonth": "Dûs ce mois-ci",
+                "upcoming": "À venir",
+                "empty": "Aucun plan MP prévu prochainement"
+            },
+            "performance": {
+                "title": "Performance BT",
+                "all": "Tout",
+                "active": "Actif",
+                "completed": "Terminé",
+                "empty": "Aucune donnée de performance",
+                "scoreTitle": "Score de performance",
+                "activeSeries": "BT actifs",
+                "completedSeries": "Terminés",
+                "radar": {
+                    "completion": "Exécution",
+                    "onTime": "Ponctualité",
+                    "response": "Réactivité",
+                    "workload": "Charge",
+                    "efficiency": "Efficacité"
+                }
+            },
+            "recentWo": {
+                "title": "Bons de travaux récents",
+                "viewAll": "Voir tout",
+                "empty": "Aucun bon de travaux assigné",
+                "colActive": "Actif",
+                "colWo": "Bon de travaux",
+                "colStatus": "Statut",
+                "colPriority": "Priorité",
+                "colAsset": "Actif",
+                "colDueDate": "Échéance",
+                "updateFailed": "Échec de la mise à jour du statut"
+            }
+        },
+        "hr": {
+            "title": "Vue RH",
+            "registrations": {
+                "title": "Inscriptions des membres",
+                "legend": "Nouveaux membres",
+                "totalMembers": "Total des membres",
+                "newThisMonth": "Nouveaux ce mois-ci",
+                "empty": "Aucune donnée de membre"
+            },
+            "kpi": {
+                "totalMembers": "Total des membres",
+                "activeMembers": "Membres actifs",
+                "inactiveMembers": "Membres inactifs",
+                "ofTotal": "% du total",
+                "needsReview": "À réviser",
+                "allActive": "Tous actifs",
+                "vsLastMonth": "vs mois précédent"
+            },
+            "recentMembers": {
+                "title": "Membres récents",
+                "viewAll": "Voir tout",
+                "colMember": "Membre",
+                "colRole": "Rôle",
+                "colStatus": "Statut",
+                "colJoined": "Inscrit le"
+            },
+            "roles": {
+                "distribution": "Répartition des rôles",
+                "breakdown": "Membres par rôle",
+                "totalWorkforce": "Effectif total",
+                "noData": "Aucune donnée de rôle",
+                "colRole": "Rôle",
+                "colShare": "Part",
+                "colCount": "Nombre"
+            }
+        }
+    },
+    "notificationSettings": {
+        "title": "Notifications",
+        "desktop": {
+            "title": "Activer les notifications bureau",
+            "desc": "Choisissez si vous souhaitez être notifié des nouveaux messages et mises à jour"
+        },
+        "badge": {
+            "title": "Activer le badge de messages non lus",
+            "desc": "Afficher un indicateur rouge sur l'icône de notification lorsque vous avez des messages non lus"
+        },
+        "email": {
+            "title": "Notifications par e-mail",
+            "desc": "L'application peut vous envoyer des notifications par e-mail pour tout nouveau message direct"
+        },
+        "options": {
+            "newsAndUpdate":     { "label": "Actualités & mises à jour",  "desc": "Actualités sur les produits et les nouvelles fonctionnalités" },
+            "tipsAndTutorial":   { "label": "Conseils & tutoriels",       "desc": "Astuces pour améliorer votre efficacité" },
+            "offerAndPromotion": { "label": "Offres & promotions",        "desc": "Promotions sur les produits et les dernières réductions" },
+            "followUpReminder":  { "label": "Rappels de suivi",           "desc": "Recevoir des notifications pour tous les rappels configurés" }
+        },
+        "notifyMe": {
+            "allNewMessage": { "label": "Tous les nouveaux messages", "desc": "Diffuser les notifications pour chaque nouveau message" },
+            "mentionsOnly":  { "label": "Mentions uniquement",        "desc": "M'alerter uniquement si quelqu'un me mentionne dans un message" },
+            "nothing":       { "label": "Rien",                       "desc": "Ne pas me notifier de quoi que ce soit" }
+        }
+    },
+    "calendar": {
+        "show": "Afficher :",
+        "all": "Tout",
+        "mine": "Les miens",
+        "toast": {
+            "moveFailed": "Déplacement de l'événement échoué. Veuillez réessayer.",
+            "saveFailed": "Enregistrement de l'événement échoué. Veuillez réessayer.",
+            "deleted": "Événement supprimé.",
+            "deleteFailed": "Suppression de l'événement échouée."
+        },
+        "dialog": {
+            "newEvent": "Ajouter un événement",
+            "editEvent": "Modifier l'événement",
+            "titleLabel": "Titre de l'événement",
+            "titlePlaceholder": "Titre de l'événement",
+            "startDate": "Date de début",
+            "endDate": "Date de fin",
+            "eventColor": "Couleur",
+            "create": "Créer",
+            "update": "Mettre à jour",
+            "delete": "Supprimer",
+            "deleteTitle": "Supprimer l'événement",
+            "deleteConfirm": "Supprimer {{title}} ? Cette action est irréversible."
+        },
+        "validation": {
+            "titleRequired": "Titre requis",
+            "selectDate": "Veuillez sélectionner une date",
+            "colorRequired": "Couleur requise"
+        }
+    },
+    "fileManager": {
+        "title": "Gestionnaire de fichiers",
+        "newFolder": "Nouveau dossier",
+        "upload": "Téléverser",
+        "noCompany": {
+            "title": "Aucune entreprise sélectionnée",
+            "desc": "Sélectionnez une entreprise dans la liste pour accéder au gestionnaire de fichiers."
+        },
+        "columns": { "file": "Fichier", "size": "Taille", "type": "Type" },
+        "empty": {
+            "title": "Ce dossier est vide",
+            "desc": "Téléversez un fichier ou créez un dossier pour commencer"
+        },
+        "dropdown": {
+            "open": "Ouvrir",
+            "download": "Télécharger",
+            "rename": "Renommer",
+            "share": "Partager",
+            "delete": "Supprimer"
+        },
+        "delete": {
+            "titleFile": "Supprimer le fichier",
+            "titleFolder": "Supprimer le dossier",
+            "confirmFile": "Êtes-vous sûr de vouloir supprimer ce fichier ? Cette action est irréversible.",
+            "confirmFolder": "Êtes-vous sûr de vouloir supprimer ce dossier ? Tout le contenu sera définitivement supprimé. Cette action est irréversible.",
+            "toastFile": "Fichier supprimé",
+            "toastFolder": "Dossier supprimé",
+            "toastFailed": "Échec de la suppression"
+        },
+        "rename": {
+            "titleFile": "Renommer le fichier",
+            "titleFolder": "Renommer le dossier",
+            "placeholder": "Nouveau nom",
+            "ok": "Ok",
+            "close": "Fermer",
+            "toastSuccess": "Renommé avec succès",
+            "toastFailed": "Échec du renommage"
+        },
+        "createFolder": {
+            "title": "Nouveau dossier",
+            "placeholder": "Nom du dossier",
+            "toastSuccess": "Dossier créé !",
+            "toastFailed": "Échec de la création du dossier"
+        },
+        "share": {
+            "titleFile": "Partager ce fichier",
+            "titleFolder": "Partager ce dossier",
+            "placeholder": "Sélectionner des membres à inviter...",
+            "currentlyShared": "Partagé avec :",
+            "toastFileSuccess": "Fichier partagé avec succès",
+            "toastFolderSuccess": "Dossier partagé avec succès",
+            "toastFileFailed": "Échec du partage du fichier",
+            "toastFolderFailed": "Échec du partage du dossier",
+            "shareBtn": "Partager"
+        },
+        "uploadDialog": {
+            "title": "Téléverser des fichiers",
+            "dropHint": "Déposez vos fichiers ici, ou",
+            "browse": "parcourez",
+            "through": "votre ordinateur",
+            "uploadBtn": "Téléverser",
+            "toastSuccess": "{{count}} fichier(s) téléversé(s)",
+            "toastFailed": "Échec du téléversement"
+        },
+        "toast": {
+            "loadFailed": "Échec du chargement des fichiers",
+            "downloadFailed": "Échec du téléchargement"
+        }
+    },
+    "settingsProfile": {
+        "title": "Informations personnelles",
+        "otherInfo": "Autres informations",
+        "firstName": "Prénom",
+        "lastName": "Nom d'utilisateur",
+        "firstNamePlaceholder": "Prénom",
+        "lastNamePlaceholder": "Nom",
+        "emailPlaceholder": "E-mail",
+        "phoneNumber": "Numéro de téléphone",
+        "phonePlaceholder": "Numéro de téléphone",
+        "locale": "Langue",
+        "accountStatus": "Statut du compte",
+        "lastLogin": "Dernière connexion",
+        "createdAt": "Créé le",
+        "updatedAt": "Mis à jour le",
+        "uploadImage": "Télécharger une image",
+        "remove": "Supprimer",
+        "toast": {
+            "success": "Profil mis à jour avec succès.",
+            "failed": "Échec de la mise à jour du profil."
+        },
+        "validation": {
+            "firstName": "Prénom requis",
+            "lastName": "Nom requis",
+            "email": "E-mail requis",
+            "emailInvalid": "E-mail invalide",
+            "dialCode": "Veuillez sélectionner votre indicatif",
+            "phone": "Veuillez entrer votre numéro de téléphone"
+        }
+    },
+    "settingsSecurity": {
+        "title": "Mot de passe",
+        "description": "N'oubliez pas, votre mot de passe est la clé numérique de votre compte. Gardez-le en sécurité !",
+        "currentPassword": "Mot de passe actuel",
+        "newPassword": "Nouveau mot de passe",
+        "confirmNewPassword": "Confirmer le nouveau mot de passe",
+        "updateBtn": "Mettre à jour",
+        "confirmTitle": "Mettre à jour le mot de passe",
+        "confirmBody": "Êtes-vous sûr de vouloir changer votre mot de passe ?",
+        "toast": {
+            "success": "Mot de passe mis à jour avec succès.",
+            "failed": "Échec de la mise à jour du mot de passe."
+        },
+        "validation": {
+            "currentPassword": "Veuillez entrer votre mot de passe actuel !",
+            "newPassword": "Le nouveau mot de passe doit comporter au moins 8 caractères.",
+            "confirmNewPassword": "Veuillez confirmer votre nouveau mot de passe !",
+            "passwordMatch": "Les mots de passe ne correspondent pas"
+        }
+    },
+    "settingsMenu": {
+        "profile": "Profil",
+        "company": "Entreprise",
+        "security": "Sécurité"
+    },
+    "mail": {
+        "title": "Notifications",
+        "unread": "Non lu",
+        "viewInApp": "Voir dans l'application",
+        "details": "Détails",
+        "markAllRead": "Tout marquer comme lu",
+        "markRead": "Marquer comme lu",
+        "noNotifications": "Aucune notification",
+        "delete": {
+            "title": "Supprimer le message",
+            "confirmOne": "Êtes-vous sûr de vouloir supprimer ce message ? Cette action est irréversible.",
+            "confirmMany": "Êtes-vous sûr de vouloir supprimer {{count}} messages ? Cette action est irréversible."
+        },
+        "editor": {
+            "newMessage": "Nouveau message",
+            "reply": "Répondre",
+            "titleLabel": "Objet :",
+            "titlePlaceholder": "Ajouter un objet",
+            "toLabel": "À :",
+            "messageLabel": "Message",
+            "discard": "Annuler",
+            "send": "Envoyer",
+            "sent": "Message envoyé !",
+            "validation": {
+                "to": "Veuillez entrer le destinataire",
+                "message": "Veuillez entrer un message"
+            }
+        },
+        "category": {
+            "all": "Tout",
+            "unread": "Non lu",
+            "work_order": "Bons de travaux",
+            "pm_plan": "Plans PM",
+            "inventory": "Inventaire",
+            "system": "Système"
+        },
+        "typeLabel": {
+            "wo_assigned": "Bon de travaux",
+            "wo_status_changed": "Bon de travaux",
+            "wo_overdue": "Bon de travaux",
+            "wo_due_soon": "Bon de travaux",
+            "comment_mention": "Bon de travaux",
+            "low_stock": "Inventaire",
+            "pm_assigned": "Plan PM",
+            "pm_wo_generated": "Plan PM",
+            "pm_overdue": "Plan PM",
+            "po_ordered": "Système",
+            "new_member": "Système",
+            "new_request": "Bon de travaux",
+            "request_converted": "Bon de travaux",
+            "request_rejected": "Bon de travaux"
+        },
+        "dataField": {
+            "wo_id": "N° OT",
+            "wo_code": "Code OT",
+            "wo_title": "Titre",
+            "hours_left": "Heures restantes",
+            "new_status": "Nouveau statut",
+            "item_id": "N° article",
+            "item_name": "Nom de l'article",
+            "item_code": "Code article",
+            "item_stock": "Stock actuel",
+            "item_min_stock": "Stock minimum",
+            "item_unit": "Unité",
+            "pm_id": "N° plan PM",
+            "pm_code": "Code PM",
+            "pm_name": "Nom du plan PM",
+            "member_id": "N° membre",
+            "member_name": "Nom du membre",
+            "po_id": "N° bon de commande",
+            "po_code": "Code BC",
+            "request_id": "N° demande",
+            "request_code": "Code demande",
+            "request_title": "Titre demande",
+            "request_priority": "Priorité"
+        },
+        "body": {
+            "wo_assigned": "Vous avez été affecté à \"{{wo_title}}\" ({{wo_code}})",
+            "wo_status_changed": "\"{{wo_title}}\" ({{wo_code}}) statut changé en {{new_status}}",
+            "wo_overdue": "Le bon de travaux \"{{wo_title}}\" ({{wo_code}}) est en retard.",
+            "wo_due_soon": "Le bon de travaux \"{{wo_title}}\" ({{wo_code}}) expire dans {{hours_left}} heures.",
+            "comment_mention": "Vous avez été mentionné dans un commentaire sur \"{{wo_title}}\" ({{wo_code}})",
+            "low_stock": "\"{{item_name}}\" ({{item_code}}) stock : {{item_stock}} {{item_unit}}, minimum : {{item_min_stock}} {{item_unit}}.",
+            "pm_assigned": "Vous avez été affecté au plan PM \"{{pm_name}}\" ({{pm_code}})",
+            "pm_wo_generated": "Le plan PM a généré automatiquement le bon de travaux {{wo_code}}.",
+            "pm_overdue": "Le plan PM {{pm_code}} est en retard et n'a pas été exécuté.",
+            "po_ordered": "Le bon de commande {{po_code}} a été soumis au fournisseur.",
+            "new_member": "{{member_name}} a été ajouté à la société.",
+            "new_request": "Nouvelle demande : \"{{request_title}}\" ({{request_code}})",
+            "request_converted": "Votre demande {{request_code}} a été convertie en bon de travaux {{wo_code}}.",
+            "request_rejected": "Votre demande {{request_code}} a été rejetée."
+        }
+    },
+    "workOrderBoard": {
+        "title": "Bons de travaux", "subtitle": "Tableau Kanban", "listView": "Vue liste",
+        "newWorkOrder": "Nouveau bon de travaux", "emptyColumn": "Aucun bon de travaux",
+        "toast": { "updateFailed": "Échec de la mise à jour du statut." }
+    },
+    "reports": {
+        "title": "Rapports",
+        "description": "Performance de maintenance, santé des actifs, conformité PM et coûts d'inventaire",
+        "print": "Imprimer / PDF",
+        "tabs": { "wo": "Bons de travaux", "asset": "Actifs", "pm": "Conformité PM", "inv": "Inventaire" },
+        "filter": {
+            "clear": "Effacer", "today": "aujourd'hui", "from": "Date de début", "to": "Date de fin",
+            "presets": { "thisMonth": "Ce mois-ci", "last3m": "3 derniers mois", "last6m": "6 derniers mois", "thisYear": "Cette année" }
+        },
+        "wo": {
+            "sectionTitle": "Métriques des bons de travaux", "totalWos": "Total BT", "completed": "Terminés",
+            "onHold": "En attente", "avgResolution": "Résolution moy.", "blocked": "Bloqués",
+            "thisMonth": "Ce mois", "selectedPeriod": "Période sélectionnée", "allTime": "Tout le temps",
+            "chartTitle": "Créés vs Terminés", "last6months": "6 derniers mois",
+            "byStatus": "Par statut", "byPriority": "Par priorité",
+            "topTechnicians": "Top techniciens par BT terminés", "technician": "Technicien",
+            "empty": "Aucun bon de travaux dans cette période", "noData": "Aucune donnée de bon de travaux disponible"
+        },
+        "asset": {
+            "sectionTitle": "Vue d'ensemble de la santé des actifs", "assetsTracked": "Actifs suivis",
+            "withWo": "Avec des bons de travaux", "mostFailures": "Plus de pannes",
+            "totalDowntime": "Temps d'arrêt total", "allAssets": "Tous les actifs combinés",
+            "tableTitle": "Actifs par nombre de bons de travaux", "asset": "Actif",
+            "location": "Localisation", "wos": "BT", "downtime": "Temps d'arrêt",
+            "lastMaintenance": "Dernière maintenance",
+            "empty": "Aucun actif avec des bons de travaux trouvé dans cette période"
+        },
+        "pm": {
+            "sectionTitle": "Résumé de conformité PM", "avgCompliance": "Conformité moy.",
+            "onTime": "Dans les délais", "overdue": "En retard", "neverRun": "Jamais exécuté",
+            "activePlans": "Plans actifs", "needAttention": "Nécessitent attention",
+            "notStarted": "Pas encore démarré", "last6months": "6 derniers mois",
+            "complianceTrend": "Tendance de conformité", "planStatus": "Statut des plans PM",
+            "plan": "Plan", "assignedTo": "Assigné à", "lastRun": "Dernière exécution",
+            "nextRun": "Prochaine exécution", "status": "Statut",
+            "noRun": "Aucun plan PM n'a été exécuté dans cette période", "noData": "Aucune donnée PM disponible",
+            "tag": { "onTime": "Dans les délais", "overdue": "En retard", "neverRun": "Jamais exécuté" }
+        },
+        "inv": {
+            "sectionTitle": "Résumé des stocks et coûts", "partsCostMonth": "Coût des pièces ce mois",
+            "partsCostYear": "Coût des pièces cette année", "partsCostPeriod": "Coût des pièces (période)",
+            "stockValue": "Valeur du stock", "currentInventory": "Valeur actuelle du stock",
+            "topParts": "Top 10 des pièces les plus utilisées", "item": "Article", "qtyUsed": "Qté utilisée",
+            "totalCost": "Coût total", "emptyParts": "Aucune pièce utilisée sur des bons de travaux dans cette période",
+            "noData": "Aucune donnée d'inventaire disponible"
+        }
+    },
+    "assetCreate": { "toast": { "success": "Actif créé avec succès.", "error": "Échec de la création de l'actif." } },
+    "workOrderCreate": { "toast": { "success": "Bon de travaux créé avec succès.", "error": "Échec de la création du bon de travaux." } },
+    "pmCreate": { "createButton": "Créer le plan PM", "toast": { "success": "Plan PM créé avec succès.", "error": "Échec de la création du plan PM." } },
+    "warehouse": {
+        "title": "Entrepôts", "addWarehouse": "Ajouter un entrepôt",
+        "search": "Rechercher par nom, code, localisation…",
+        "col": { "name": "Nom", "code": "Code", "location": "Localisation" },
+        "tooltip": { "view": "Voir les détails", "edit": "Modifier", "delete": "Supprimer" },
+        "confirmDelete": { "title": "Supprimer l'entrepôt", "body": "Supprimer {{name}} ? Cette action est irréversible." },
+        "toast": { "deleted": "Entrepôt supprimé.", "deleteFailed": "Échec de la suppression de l'entrepôt." }
+    },
+    "stockMove": {
+        "title": "Mouvements de stock", "recordMove": "Enregistrer un mouvement",
+        "dialog": {
+            "title": "Enregistrer un mouvement de stock", "recordMove": "Enregistrer un mouvement",
+            "item": "Article", "moveType": "Type de mouvement",
+            "warehouse": "Entrepôt", "quantity": "Quantité", "reference": "Référence", "notes": "Notes",
+            "selectItem": "Sélectionner un article…", "selectWarehouse": "Sélectionner un entrepôt…",
+            "selectItemFirst": "Sélectionner d'abord un article…",
+            "warehouseHint": "Affichage des entrepôts avec stock de cet article uniquement",
+            "onlyWithStock": "Affichage des entrepôts avec stock de cet article uniquement",
+            "currentStock": "Stock actuel (cet entrepôt)", "afterMove": "Après ce mouvement",
+            "remaining": "restants", "inStock": "en stock",
+            "referencePlaceholder": "N° BC, code BT…", "notesPlaceholder": "Notes optionnelles"
+        },
+        "moveType": { "in": "ENTRÉE — Stock reçu", "out": "SORTIE — Stock consommé / utilisé", "adjustment": "AJUSTEMENT — Correction manuelle" },
+        "filter": { "allItems": "Tous les articles", "allWarehouses": "Tous les entrepôts", "allTypes": "Tous les types", "adjustment": "Ajustement" },
+        "col": { "date": "Date", "type": "Type", "item": "Article", "warehouse": "Entrepôt", "qty": "Qté", "reference": "Référence", "by": "Par" },
+        "confirmDelete": { "title": "Supprimer le mouvement", "body": "Supprimer ce mouvement {{type}} ? Cette action est irréversible et affectera les niveaux de stock." },
+        "validation": { "itemRequired": "L'article est requis", "warehouseRequired": "L'entrepôt est requis", "qtyRequired": "La quantité est requise", "qtyPositive": "Doit être un nombre positif", "qtyMax": "Maximum disponible : {{max}}" },
+        "toast": { "recorded": "Mouvement de stock enregistré.", "recordFailed": "Échec de l'enregistrement.", "deleted": "Mouvement de stock supprimé.", "deleteFailed": "Échec de la suppression du mouvement." }
+    },
+    "customerCreate": { "toast": { "success": "Utilisateur créé avec succès.", "error": "Échec de la création de l'utilisateur.", "selectCompany": "Veuillez sélectionner une société à affecter à cet utilisateur.", "passwordMismatch": "La confirmation du mot de passe ne correspond pas." } },
+    "departmentCreate": { "toast": { "success": "Département créé avec succès.", "error": "Échec de la création du département." } },
+    "settingsCompany": {
+        "title": "Informations de la société",
+        "description": "Complétez le profil de votre société. Vous pouvez mettre à jour ce formulaire en attendant l'approbation.",
+        "status": { "inCreation": "En cours de création", "pending": "En attente d'approbation", "rejected": "Rejeté", "approved": "Approuvé", "refreshing": "Actualisation...", "refresh": "Actualiser le statut" },
+        "logo": { "label": "Logo de la société", "upload": "Télécharger le logo", "remove": "Supprimer", "error": "Veuillez télécharger le logo de la société", "errorType": "Veuillez télécharger une image jpg, png ou webp." },
+        "proof": { "label": "Fichiers justificatifs (pdf/jpg/png)", "drop": "Déposez vos fichiers ici, ou", "browse": "parcourir", "support": "Accepté : pdf, jpg, png", "replaceWarning": "Le téléchargement de nouveaux fichiers remplacera les justificatifs actuels après enregistrement.", "clearSelection": "Effacer la sélection", "error": "Veuillez télécharger au moins un fichier justificatif", "errorType": "Veuillez télécharger des fichiers justificatifs en pdf, jpg ou png." },
+        "field": { "companyName": "Nom de la société", "legalName": "Nom légal", "phone": "Téléphone", "email": "E-mail", "addressLine1": "Adresse ligne 1", "addressLine2": "Adresse ligne 2", "city": "Ville", "postalCode": "Code postal", "country": "Pays", "timezone": "Fuseau horaire (optionnel)", "selectCountry": "Sélectionner un pays", "selectTimezone": "Sélectionner un fuseau horaire", "addressLine2Placeholder": "Adresse ligne 2 (optionnel)" },
+        "validation": { "nameRequired": "Veuillez saisir le nom de la société", "legalNameRequired": "Veuillez saisir le nom légal", "phoneRequired": "Veuillez saisir le téléphone de la société", "phoneMin": "Le téléphone doit comporter au moins 8 caractères", "phoneTooLong": "Le téléphone est trop long", "emailRequired": "Veuillez saisir l'e-mail de la société", "emailInvalid": "Veuillez saisir un e-mail valide", "addressRequired": "Veuillez saisir l'adresse ligne 1", "cityRequired": "Veuillez saisir la ville", "postalCodeRequired": "Veuillez saisir le code postal", "countryRequired": "Veuillez sélectionner un pays" },
+        "button": { "update": "Mettre à jour la société", "create": "Créer la société" },
+        "toast": { "updated": "Société mise à jour avec succès.", "created": "Société créée avec succès. En attente de l'approbation.", "saveFailed": "Impossible d'enregistrer la société." }
+    },
+    "rolesPermissions": {
+        "title": "Rôles & Permissions", "allAccounts": "Tous les comptes",
+        "createRole": "Créer un rôle", "editRole": "Modifier le rôle", "noRole": "Aucun rôle", "never": "Jamais",
+        "module": {
+            "members": { "name": "Gestion des membres", "description": "Contrôle d'accès pour les opérations sur les membres" },
+            "departments": { "name": "Départements", "description": "Contrôle d'accès pour la gestion des départements" },
+            "roles": { "name": "Rôles & Permissions", "description": "Contrôle d'accès pour la gestion des rôles" },
+            "assets": { "name": "Actifs", "description": "Contrôle d'accès pour les opérations sur les actifs" },
+            "work_orders": { "name": "Bons de travaux", "description": "Contrôle d'accès pour la gestion des bons de travaux" },
+            "pm_plans": { "name": "Plans PM", "description": "Contrôle d'accès pour les plans de maintenance préventive" },
+            "inventory": { "name": "Inventaire", "description": "Contrôle d'accès pour la gestion des stocks" },
+            "purchasing": { "name": "Achats", "description": "Contrôle d'accès pour les opérations d'achat" },
+            "files": { "name": "Gestionnaire de fichiers", "description": "Accès au gestionnaire de fichiers" },
+            "chat": { "name": "Chat", "description": "Accès au chat" }
+        },
+        "accessor": { "read": "Lecture", "write": "Écriture", "create": "Créer", "update": "Modifier", "delete": "Supprimer", "assign": "Assigner" },
+        "roleDesc": { "admin": "Accès complet à toutes les fonctionnalités, paramètres et gestion de la société.", "hr": "Gérer les membres, départements et opérations RH.", "manager": "Superviser les bons de travaux, actifs et affectations d'équipe.", "technician": "Exécuter les bons de travaux et enregistrer les activités de maintenance.", "default": "{{count}} permissions assignées" },
+        "col": { "name": "Nom", "status": "Statut", "lastOnline": "Dernière connexion", "role": "Rôle" },
+        "filter": { "search": "Rechercher...", "status": "Statut", "role": "Rôle", "all": "Tout", "active": "Actif", "inactive": "Inactif" },
+        "dialog": { "createTitle": "Créer un rôle", "roleName": "Nom du rôle", "roleNamePlaceholder": "Ex. Superviseur", "description": "Description", "descriptionPlaceholder": "Décrivez ce que ce rôle peut faire...", "permission": "Permission" },
+        "footer": { "membersSelected": "{{count}} Membres", "selected": "sélectionné(s)" },
+        "confirmDelete": { "title": "Supprimer des membres", "body": "Supprimer {{count}} membre(s) ? Cela désactivera leur accès. Cette action est irréversible." },
+        "toast": { "roleCreated": "Rôle \"{{label}}\" créé avec succès.", "roleCreateFailed": "Échec de la création du rôle. Le nom existe peut-être déjà.", "roleNameRequired": "Le nom du rôle est requis.", "permRequired": "Sélectionnez au moins une permission.", "roleUpdated": "Rôle mis à jour avec succès.", "roleUpdateFailed": "Échec de la mise à jour des permissions.", "roleUpdateError": "Échec de la mise à jour du rôle. Veuillez réessayer.", "membersRemoved": "Membre(s) supprimé(s).", "membersRemoveFailed": "Échec de la suppression d'un ou plusieurs membres." }
+    },
+    "assetForm": {
+        "section": {
+            "basicInfo": "Informations de base", "basicInfoSub": "Identité et statut opérationnel de l'actif",
+            "equipDetails": "Détails de l'équipement", "equipDetailsSub": "Spécifications techniques de la machine",
+            "photos": "Photos de l'actif", "photosSub": "Jusqu'à 5 photos de la machine ou de l'équipement",
+            "classification": "Classification", "classificationSub": "Catégorie et emplacement physique",
+            "lifecycle": "Cycle de vie", "lifecycleSub": "Dates d'achat, de garantie et d'installation"
+        },
+        "field": {
+            "assetName": "Nom de l'actif", "assetCode": "Code de l'actif", "assetType": "Type d'actif",
+            "serialNumber": "Numéro de série", "manufacturer": "Fabricant", "model": "Modèle",
+            "addressZone": "Adresse / Zone", "purchaseDate": "Date d'achat",
+            "warrantyExpires": "Expiration de la garantie", "installedAt": "Installé le"
+        },
+        "placeholder": {
+            "assetName": "ex. Compresseur d'air principal", "assetCode": "ex. COMP-001",
+            "serialNumber": "ex. SN-2024-123456", "manufacturer": "ex. Siemens", "model": "ex. SIRIUS 3RW40",
+            "notes": "Informations supplémentaires, historique de maintenance, instructions spéciales...",
+            "location": "ex. Bâtiment A, Étage 2", "addressZone": "ex. Zone B – Salle 12",
+            "pickDate": "Choisir une date", "pickDateTime": "Choisir date & heure"
+        },
+        "status": { "active": "Actif", "inactive": "Inactif", "under_maintenance": "En maintenance", "decommissioned": "Déclassé" },
+        "photo": {
+            "dropHere": "Déposez les photos ici, ou", "browse": "Cliquer pour parcourir", "addMore": "Ajouter plus",
+            "maxSize": ".jpg · .jpeg · .png · .webp — max 2 Mo chacun",
+            "removeTitle": "Supprimer l'image", "removeBody": "Supprimer cette image ? Cette action est irréversible."
+        },
+        "overview": "Aperçu", "details": "Détails",
+        "generateCode": "Générer un code", "selectStatus": "Sélectionner le statut", "selectType": "Sélectionner le type",
+        "validation": { "nameRequired": "Le nom est requis", "codeRequired": "Le code est requis", "typeRequired": "Le type d'actif est requis", "statusRequired": "Le statut est requis" }
+    },
+    "woForm": {
+        "overviewTitle": "Aperçu", "detailsTitle": "Détails",
+        "field": { "title": "Titre", "code": "Code", "asset": "Actif", "dueDate": "Date d'échéance", "estimatedTime": "Temps estimé", "assignMembers": "Assigner des membres", "description": "Description" },
+        "placeholder": { "title": "ex. Remplacer le filtre de la pompe hydraulique", "code": "ex. BT-0001", "description": "Décrivez le travail à effectuer...", "selectAsset": "Sélectionner un actif", "dueDate": "Sélectionner la date d'échéance", "selectMembers": "Sélectionner les membres" },
+        "codeHint": "Laisser vide pour générer automatiquement", "selectStatus": "Sélectionner le statut", "selectPriority": "Sélectionner la priorité",
+        "timePicker": { "label": "Sélectionner la durée estimée", "hours": "Heures", "minutes": "Minutes", "done": "Valider" },
+        "validation": { "titleRequired": "Le titre est requis", "assetRequired": "L'actif est requis", "statusRequired": "Le statut est requis", "priorityRequired": "La priorité est requise" }
+    },
+    "pmForm": {
+        "planDetailsTitle": "Détails du plan", "triggerTitle": "Planification du déclencheur",
+        "triggerSubtitle": "À quelle fréquence un bon de travail doit-il être généré automatiquement ?",
+        "assignmentTitle": "Attribution", "checklistTitle": "Tâches de vérification",
+        "checklistSubtitle": "Les tâches apparaîtront comme liste de contrôle sur chaque bon de travail généré par ce plan PM.",
+        "field": { "planName": "Nom du plan", "repeatEvery": "Répéter tous les", "firstRun": "Date du premier déclenchement", "assignTo": "Assigner à", "asset": "Actif" },
+        "placeholder": { "planName": "ex. Inspection mensuelle HVAC", "description": "Décrivez ce que ce plan PM implique...", "selectAsset": "Sélectionner un actif", "selectTechnician": "Sélectionner un technicien", "pickDate": "Choisir une date", "addTask": "Ajouter une tâche (ex. Vérifier le niveau d'huile)" },
+        "status": { "active": "Actif", "inactive": "Inactif", "draft": "Brouillon" },
+        "priority": { "low": "Faible", "medium": "Moyen", "high": "Élevé", "critical": "Critique" },
+        "intervalUnit": { "days": "Jours", "weeks": "Semaines", "months": "Mois" },
+        "intervalExample": "Exemple : 3 mois = un bon de travail est créé tous les 3 mois",
+        "firstRunHint": "Facultatif — laisser vide pour démarrer immédiatement", "technicianOnly": "Techniciens uniquement",
+        "noTechnicians": "Aucun technicien trouvé", "taskAdd": "Ajouter",
+        "taskEmpty": "Aucune tâche. Ajoutez les étapes que le technicien doit effectuer.",
+        "selectStatus": "Sélectionner le statut", "selectPriority": "Sélectionner la priorité",
+        "timePicker": { "label": "Sélectionner la durée estimée", "hours": "Heures", "minutes": "Minutes", "done": "Valider" },
+        "validation": { "nameRequired": "Le nom est requis", "statusRequired": "Le statut est requis", "priorityRequired": "La priorité est requise", "intervalValueRequired": "L'intervalle est requis" }
+    },
+    "memberForm": {
+        "overviewTitle": "Aperçu", "accountTitle": "Compte", "roleTitle": "Rôle utilisateur",
+        "field": { "firstName": "Prénom", "lastName": "Nom", "phoneNumber": "Numéro de téléphone", "password": "Mot de passe", "confirmPassword": "Confirmer le mot de passe", "assignCompany": "Assigner à une entreprise", "role": "Rôle", "active": "Actif", "activeDesc": "Activer ou désactiver ce compte" },
+        "placeholder": { "firstName": "Prénom", "lastName": "Nom", "email": "E-mail", "location": "Sélectionner la localisation", "phoneNumber": "Numéro de téléphone", "password": "Mot de passe", "confirmPassword": "Confirmer le mot de passe", "company": "Sélectionner une entreprise...", "role": "Sélectionner un rôle" }
+    },
+    "deptForm": {
+        "overviewTitle": "Aperçu", "orgTitle": "Organisation",
+        "field": { "deptName": "Nom du département", "parentDept": "Département parent" },
+        "placeholder": { "deptName": "ex. Maintenance", "code": "ex. MAINT", "description": "Décrivez l'objectif de ce département...", "parentDept": "Aucun (niveau supérieur)" },
+        "codeHint": "Identifiant unique, en majuscules", "parentHint": "Laisser vide pour un niveau supérieur",
+        "howItWorks": { "title": "Comment ça fonctionne", "bullet1": "Les départements de niveau supérieur n'ont pas de parent", "bullet2": "Les sous-départements héritent de la hiérarchie", "bullet3": "Les membres peuvent être assignés à n'importe quel département" },
+        "validation": { "nameRequired": "Le nom est requis", "codeRequired": "Le code est requis" }
     }
 }

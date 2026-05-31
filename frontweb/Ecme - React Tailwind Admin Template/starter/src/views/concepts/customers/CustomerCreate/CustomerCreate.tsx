@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
@@ -44,6 +45,7 @@ const generateEmployeeCode = (firstName: string, lastName: string): string => {
 type CompanyOption = { value: number; label: string }
 
 const CustomerCreate = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const isSuperadmin = useSessionUser((state) => Boolean(state.user.isSuperadmin))
 
@@ -71,7 +73,7 @@ const CustomerCreate = () => {
         if (isSuperadmin && !selectedCompanyId) {
             toast.push(
                 <Notification type="warning">
-                    Please select a company to assign this user to.
+                    {t('customerCreate.toast.selectCompany')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -87,7 +89,7 @@ const CustomerCreate = () => {
         if (password && password !== passwordConfirmation) {
             toast.push(
                 <Notification type="danger">
-                    Password confirmation does not match.
+                    {t('customerCreate.toast.passwordMismatch')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -147,7 +149,7 @@ const CustomerCreate = () => {
 
             toast.push(
                 <Notification type="success">
-                    User created successfully.
+                    {t('customerCreate.toast.success')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -157,7 +159,7 @@ const CustomerCreate = () => {
                 (error as { response?: { data?: { message?: string } } })
                     ?.response?.data?.message ||
                 (error as Error)?.message ||
-                'Failed to create user.'
+                t('customerCreate.toast.error')
 
             toast.push(
                 <Notification type="danger">{backendMessage}</Notification>,
@@ -210,14 +212,14 @@ const CustomerCreate = () => {
                                     setDiscardConfirmationOpen(true)
                                 }
                             >
-                                Discard
+                                {t('common.discard')}
                             </Button>
                             <Button
                                 variant="solid"
                                 type="submit"
                                 loading={isSubmiting}
                             >
-                                Create
+                                {t('common.create')}
                             </Button>
                         </div>
                     </div>
@@ -226,7 +228,7 @@ const CustomerCreate = () => {
             <ConfirmDialog
                 isOpen={discardConfirmationOpen}
                 type="danger"
-                title="Discard changes"
+                title={t('common.discardConfirm.title')}
                 onClose={() => setDiscardConfirmationOpen(false)}
                 onRequestClose={() => setDiscardConfirmationOpen(false)}
                 onCancel={() => setDiscardConfirmationOpen(false)}
@@ -235,10 +237,7 @@ const CustomerCreate = () => {
                     navigate('/concepts/customers/customer-list')
                 }}
             >
-                <p>
-                    Are you sure you want discard this? This action can&apos;t
-                    be undo.
-                </p>
+                <p>{t('common.discardConfirm.body')}</p>
             </ConfirmDialog>
         </>
     )

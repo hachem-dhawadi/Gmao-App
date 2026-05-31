@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import useSWR from 'swr'
 import { useNavigate } from 'react-router-dom'
 import Container from '@/components/shared/Container'
@@ -96,14 +97,16 @@ const capitalize = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, c => c.t
 
 type KpiBoxProps = { title: string; value: number; icon: ReactNode; className: string; alert?: boolean }
 
-const KpiBox = ({ title, value, icon, className, alert }: KpiBoxProps) => (
+const KpiBox = ({ title, value, icon, className, alert }: KpiBoxProps) => {
+    const { t } = useTranslation()
+    return (
     <div className={classNames('rounded-2xl p-4 flex flex-col justify-center', className)}>
         <div className="flex justify-between items-center relative">
             <div>
                 <div className="mb-3 text-gray-900 font-bold text-sm">{title}</div>
                 <h2 className="mb-1 text-gray-900">{value}</h2>
                 {alert && value > 0 && (
-                    <span className="text-xs font-semibold text-red-600">Needs attention</span>
+                    <span className="text-xs font-semibold text-red-600">{t('dashboard.adminManager.kpi.needsAttention')}</span>
                 )}
             </div>
             <div className="flex items-center justify-center min-h-12 min-w-12 max-h-12 max-w-12 bg-gray-900 text-white rounded-full text-2xl">
@@ -111,7 +114,8 @@ const KpiBox = ({ title, value, icon, className, alert }: KpiBoxProps) => (
             </div>
         </div>
     </div>
-)
+    )
+}
 
 const WoOverviewCard = ({
     wo, assets, members, onViewAll,
@@ -120,33 +124,36 @@ const WoOverviewCard = ({
     assets: { total: number }
     members: { total_active: number; technicians: number }
     onViewAll: () => void
-}) => (
+}) => {
+    const { t } = useTranslation()
+    return (
     <Card>
         <div className="flex items-center justify-between mb-4">
-            <h4>Operations Overview</h4>
-            <Button size="sm" onClick={onViewAll}>All work orders</Button>
+            <h4>{t('dashboard.adminManager.title')}</h4>
+            <Button size="sm" onClick={onViewAll}>{t('dashboard.adminManager.allWo')}</Button>
         </div>
 
         {/* Row 1 — Work Orders */}
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Work Orders</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{t('dashboard.adminManager.sectionWo')}</p>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <KpiBox title="Open" value={wo.open ?? 0} icon={<TbProgressBolt />} className="bg-sky-100 dark:bg-sky-500/20" />
-            <KpiBox title="In Progress" value={wo.in_progress ?? 0} icon={<TbLoader />} className="bg-amber-100 dark:bg-amber-500/20" />
-            <KpiBox title="On Hold" value={wo.on_hold ?? 0} icon={<TbPlayerPause />} className="bg-gray-100 dark:bg-gray-700" />
-            <KpiBox title="Overdue" value={wo.overdue ?? 0} icon={<TbArrowDownToArc />} className={wo.overdue ? 'bg-red-100 dark:bg-red-500/20' : 'bg-purple-100 dark:bg-purple-500/20'} alert />
-            <KpiBox title="Unassigned" value={wo.unassigned ?? 0} icon={<TbUserExclamation />} className={wo.unassigned ? 'bg-orange-100 dark:bg-orange-500/20' : 'bg-gray-100 dark:bg-gray-700'} alert />
+            <KpiBox title={t('dashboard.adminManager.kpi.open')} value={wo.open ?? 0} icon={<TbProgressBolt />} className="bg-sky-100 dark:bg-sky-500/20" />
+            <KpiBox title={t('dashboard.adminManager.kpi.inProgress')} value={wo.in_progress ?? 0} icon={<TbLoader />} className="bg-amber-100 dark:bg-amber-500/20" />
+            <KpiBox title={t('dashboard.adminManager.kpi.onHold')} value={wo.on_hold ?? 0} icon={<TbPlayerPause />} className="bg-gray-100 dark:bg-gray-700" />
+            <KpiBox title={t('dashboard.adminManager.kpi.overdue')} value={wo.overdue ?? 0} icon={<TbArrowDownToArc />} className={wo.overdue ? 'bg-red-100 dark:bg-red-500/20' : 'bg-purple-100 dark:bg-purple-500/20'} alert />
+            <KpiBox title={t('dashboard.adminManager.kpi.unassigned')} value={wo.unassigned ?? 0} icon={<TbUserExclamation />} className={wo.unassigned ? 'bg-orange-100 dark:bg-orange-500/20' : 'bg-gray-100 dark:bg-gray-700'} alert />
         </div>
 
         {/* Row 2 — Assets & People */}
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4 mb-2">Assets & People</p>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4 mb-2">{t('dashboard.adminManager.sectionPeople')}</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <KpiBox title="Completed (month)" value={wo.completed_month ?? 0} icon={<TbCopyCheck />} className="bg-emerald-100 dark:bg-emerald-500/20" />
-            <KpiBox title="Total Assets" value={assets?.total ?? 0} icon={<TbEngine />} className="bg-indigo-100 dark:bg-indigo-500/20" />
-            <KpiBox title="Active Members" value={members?.total_active ?? 0} icon={<TbUsers />} className="bg-teal-100 dark:bg-teal-500/20" />
-            <KpiBox title="Technicians" value={members?.technicians ?? 0} icon={<TbTool />} className="bg-violet-100 dark:bg-violet-500/20" />
+            <KpiBox title={t('dashboard.adminManager.kpi.completedMonth')} value={wo.completed_month ?? 0} icon={<TbCopyCheck />} className="bg-emerald-100 dark:bg-emerald-500/20" />
+            <KpiBox title={t('dashboard.adminManager.kpi.totalAssets')} value={assets?.total ?? 0} icon={<TbEngine />} className="bg-indigo-100 dark:bg-indigo-500/20" />
+            <KpiBox title={t('dashboard.adminManager.kpi.activeMembers')} value={members?.total_active ?? 0} icon={<TbUsers />} className="bg-teal-100 dark:bg-teal-500/20" />
+            <KpiBox title={t('dashboard.adminManager.kpi.technicians')} value={members?.technicians ?? 0} icon={<TbTool />} className="bg-violet-100 dark:bg-violet-500/20" />
         </div>
     </Card>
-)
+    )
+}
 
 // ── 2. CMMS KPI Row — Requests / PM Compliance / MTTR ─────────────────
 
@@ -170,7 +177,9 @@ const CmmsKpiRow = ({
     pmCompliancePct: number
     mttrHours: number
     onRequests: () => void
-}) => (
+}) => {
+    const { t } = useTranslation()
+    return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {/* Pending Requests */}
@@ -178,11 +187,11 @@ const CmmsKpiRow = ({
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                        Pending Requests
+                        {t('dashboard.adminManager.requests.title')}
                     </p>
                     <h2 className={pendingRequests > 0 ? 'text-amber-500' : ''}>{pendingRequests}</h2>
                     <p className="text-xs text-gray-400 mt-1">
-                        {pendingRequests > 0 ? 'Awaiting review' : 'All clear'}
+                        {pendingRequests > 0 ? t('dashboard.adminManager.requests.awaiting') : t('dashboard.adminManager.requests.allClear')}
                     </p>
                 </div>
                 <div className="w-11 h-11 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center">
@@ -197,7 +206,9 @@ const CmmsKpiRow = ({
                     block
                     onClick={onRequests}
                 >
-                    Review {pendingRequests} request{pendingRequests !== 1 ? 's' : ''}
+                    {pendingRequests === 1
+                        ? t('dashboard.adminManager.requests.reviewBtn', { count: pendingRequests })
+                        : t('dashboard.adminManager.requests.reviewBtnPlural', { count: pendingRequests })}
                 </Button>
             )}
         </Card>
@@ -207,12 +218,12 @@ const CmmsKpiRow = ({
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                        PM Compliance
+                        {t('dashboard.adminManager.pmCompliance.title')}
                     </p>
                     <h2 className={complianceColor(pmCompliancePct)}>
                         {pmCompliancePct}%
                     </h2>
-                    <p className="text-xs text-gray-400 mt-1">This month</p>
+                    <p className="text-xs text-gray-400 mt-1">{t('dashboard.adminManager.pmCompliance.thisMonth')}</p>
                 </div>
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${complianceBg(pmCompliancePct)}`}>
                     <TbCalendarStats className={`text-xl ${complianceColor(pmCompliancePct)}`} />
@@ -220,7 +231,7 @@ const CmmsKpiRow = ({
             </div>
             <div className="mt-4">
                 <div className="flex justify-between text-xs text-gray-400 mb-1">
-                    <span>Compliance rate</span>
+                    <span>{t('dashboard.adminManager.pmCompliance.rate')}</span>
                     <span className={`font-semibold ${complianceColor(pmCompliancePct)}`}>{pmCompliancePct}%</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
@@ -240,35 +251,36 @@ const CmmsKpiRow = ({
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
-                        MTTR
+                        {t('dashboard.adminManager.mttr.title')}
                     </p>
                     <div className="flex items-end gap-1">
                         <h2>{mttrHours > 0 ? mttrHours : '—'}</h2>
                         {mttrHours > 0 && (
-                            <span className="text-sm text-gray-400 mb-1.5">hrs</span>
+                            <span className="text-sm text-gray-400 mb-1.5">{t('dashboard.adminManager.mttr.hrs')}</span>
                         )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">Avg repair time this month</p>
+                    <p className="text-xs text-gray-400 mt-1">{t('dashboard.adminManager.mttr.subtitle')}</p>
                 </div>
                 <div className="w-11 h-11 rounded-xl bg-sky-100 dark:bg-sky-500/20 flex items-center justify-center">
                     <TbClock className="text-sky-500 text-xl" />
                 </div>
             </div>
             {mttrHours === 0 && (
-                <p className="text-xs text-gray-400 mt-4">No completed WOs this month yet</p>
+                <p className="text-xs text-gray-400 mt-4">{t('dashboard.adminManager.mttr.noData')}</p>
             )}
             {mttrHours > 0 && (
                 <p className="text-xs mt-4">
                     <span className={mttrHours <= 8 ? 'text-emerald-500 font-semibold' : mttrHours <= 24 ? 'text-amber-500 font-semibold' : 'text-red-500 font-semibold'}>
-                        {mttrHours <= 8 ? 'Excellent' : mttrHours <= 24 ? 'Acceptable' : 'Needs improvement'}
+                        {mttrHours <= 8 ? t('dashboard.adminManager.mttr.excellent') : mttrHours <= 24 ? t('dashboard.adminManager.mttr.acceptable') : t('dashboard.adminManager.mttr.needsImprovement')}
                     </span>
-                    <span className="text-gray-400"> — target is under 8 hrs</span>
+                    <span className="text-gray-400"> — {t('dashboard.adminManager.mttr.target')}</span>
                 </p>
             )}
         </Card>
 
     </div>
-)
+    )
+}
 
 // ── 3. WO Gantt Schedule  (= Schedule) ────────────────────────────────
 
@@ -303,6 +315,7 @@ const mapWoToGanttTask = (wo: WoItem): ExtendedTask => {
 }
 
 const WoScheduleCard = ({ wos }: { wos: WoItem[] }) => {
+    const { t } = useTranslation()
     const activeWos = wos.filter(w => w.status !== 'cancelled')
     const [tasks, setTasks] = useState<ExtendedTask[]>([])
 
@@ -315,10 +328,10 @@ const WoScheduleCard = ({ wos }: { wos: WoItem[] }) => {
 
     return (
         <Card>
-            <h4>Schedule</h4>
+            <h4>{t('dashboard.adminManager.schedule.title')}</h4>
             <div className="mt-4 overflow-x-auto">
                 {tasks.length === 0 ? (
-                    <p className="text-sm text-gray-400 text-center py-10">No work orders to display</p>
+                    <p className="text-sm text-gray-400 text-center py-10">{t('dashboard.adminManager.schedule.empty')}</p>
                 ) : (
                     <GanttChart
                         tasks={tasks}
@@ -341,7 +354,9 @@ const PmScheduleCard = ({
     pm: { active: number; due_week: number; due_month: number }
     pmDueSoon: PmItem[]
     onViewAll: () => void
-}) => (
+}) => {
+    const { t } = useTranslation()
+    return (
     <Card>
         <div className="flex flex-col md:flex-row xl:flex-col md:gap-10 xl:gap-0">
             {/* Stats panel — replaces the Calendar */}
@@ -350,15 +365,15 @@ const PmScheduleCard = ({
                     <div className="grid grid-cols-3 gap-3 text-center">
                         <div className="rounded-2xl p-3 bg-purple-50 dark:bg-purple-500/10">
                             <p className="text-2xl font-bold heading-text">{pm.active}</p>
-                            <p className="text-xs text-gray-500 mt-1">Active</p>
+                            <p className="text-xs text-gray-500 mt-1">{t('dashboard.adminManager.pmUpcoming.active')}</p>
                         </div>
                         <div className="rounded-2xl p-3 bg-amber-50 dark:bg-amber-500/10">
                             <p className="text-2xl font-bold heading-text">{pm.due_week}</p>
-                            <p className="text-xs text-gray-500 mt-1">This week</p>
+                            <p className="text-xs text-gray-500 mt-1">{t('dashboard.adminManager.pmUpcoming.thisWeek')}</p>
                         </div>
                         <div className="rounded-2xl p-3 bg-sky-50 dark:bg-sky-500/10">
                             <p className="text-2xl font-bold heading-text">{pm.due_month}</p>
-                            <p className="text-xs text-gray-500 mt-1">This month</p>
+                            <p className="text-xs text-gray-500 mt-1">{t('dashboard.adminManager.pmUpcoming.thisMonth')}</p>
                         </div>
                     </div>
                 </div>
@@ -367,16 +382,16 @@ const PmScheduleCard = ({
             {/* Due soon list — replaces the events list */}
             <div className="w-full">
                 <div className="my-6 flex items-center justify-between">
-                    <h5>Upcoming PM Plans</h5>
+                    <h5>{t('dashboard.adminManager.pmUpcoming.title')}</h5>
                     <Button size="sm" variant="solid" onClick={onViewAll}>
-                        View all
+                        {t('dashboard.adminManager.pmUpcoming.viewAll')}
                     </Button>
                 </div>
                 <div className="w-full">
                     <ScrollBar className="overflow-y-auto h-[280px] xl:max-w-[280px]">
                         <div className="flex flex-col gap-4">
                             {pmDueSoon.length === 0 && (
-                                <p className="text-sm text-gray-400 text-center">No PM plans due soon</p>
+                                <p className="text-sm text-gray-400 text-center">{t('dashboard.adminManager.pmUpcoming.empty')}</p>
                             )}
                             {pmDueSoon.map(pm => (
                                 <div key={pm.id} className="flex items-center justify-between gap-4 py-1">
@@ -389,7 +404,7 @@ const PmScheduleCard = ({
                                         />
                                         <div>
                                             <div className="font-bold heading-text truncate max-w-[140px]">{pm.name}</div>
-                                            <div className="font-normal text-gray-500 text-sm">PM Plan · {pm.code}</div>
+                                            <div className="font-normal text-gray-500 text-sm">{t('dashboard.adminManager.pmUpcoming.pmPlan')} · {pm.code}</div>
                                         </div>
                                     </div>
                                     <div className="text-right flex-shrink-0">
@@ -411,11 +426,12 @@ const PmScheduleCard = ({
 
         <div className="mt-4">
             <Button block size="sm" variant="default" onClick={onViewAll}>
-                View all PM plans
+                {t('dashboard.adminManager.pmUpcoming.viewAllPm')}
             </Button>
         </div>
     </Card>
-)
+    )
+}
 
 // ── 5. Open Work Orders  (= CurrentTasks — exact copy) ─────────────────
 
@@ -424,6 +440,7 @@ type WoTask = WoItem & { checked: boolean }
 const OpenWorkOrdersCard = ({
     wos, onViewAll, onRow,
 }: { wos: WoItem[]; onViewAll: () => void; onRow: (id: number) => void }) => {
+    const { t } = useTranslation()
     const active = wos.filter(w => w.status === 'open' || w.status === 'in_progress')
     const [tasks, setTasks] = useState<WoTask[]>([])
 
@@ -453,12 +470,12 @@ const OpenWorkOrdersCard = ({
     return (
         <Card>
             <div className="flex items-center justify-between">
-                <h4>Current work orders</h4>
-                <Button size="sm" onClick={onViewAll}>All tasks</Button>
+                <h4>{t('dashboard.adminManager.openWo.title')}</h4>
+                <Button size="sm" onClick={onViewAll}>{t('dashboard.adminManager.openWo.allTasks')}</Button>
             </div>
             <div className="mt-4">
                 {tasks.length === 0 && (
-                    <p className="text-sm text-gray-400 text-center py-8">No open work orders</p>
+                    <p className="text-sm text-gray-400 text-center py-8">{t('dashboard.adminManager.openWo.empty')}</p>
                 )}
                 {tasks.map((wo, i) => (
                     <div
@@ -490,13 +507,13 @@ const OpenWorkOrdersCard = ({
                                 </div>
                                 <div className="flex items-center gap-1 text-sm text-gray-500">
                                     <TbCalendar className="text-lg" />
-                                    {wo.due_at ? dayjs(wo.due_at).format('MMMM DD') : 'No due date'}
+                                    {wo.due_at ? dayjs(wo.due_at).format('MMMM DD') : t('dashboard.adminManager.openWo.noDueDate')}
                                 </div>
                             </div>
                         </div>
                         <div>
                             <Tag className={`mr-2 rtl:ml-2 mb-2 ${labelClass[wo.priority] ?? ''}`}>
-                                {capitalize(wo.priority)}
+                                {t(`wo.priority.${wo.priority}`)}
                             </Tag>
                         </div>
                     </div>
@@ -540,6 +557,7 @@ type MonthlyStatItem = { month: string; active: number; completed: number }
 const WoStatusOverviewCard = ({
     wo, monthlyStats,
 }: { wo: Record<string, number>; monthlyStats: MonthlyStatItem[] }) => {
+    const { t } = useTranslation()
     const [timeRange, setTimeRange] = useState<TimeRange>('status')
 
     const data = useMemo<Record<TimeRange, OverviewChartData>>(() => {
@@ -549,10 +567,15 @@ const WoStatusOverviewCard = ({
             onGoing: (wo.open ?? 0) + (wo.in_progress ?? 0),
             finished: wo.completed_month ?? 0,
             series: [
-                { name: 'Active', data: [wo.open ?? 0, wo.in_progress ?? 0, 0, 0] },
-                { name: 'Blocked', data: [0, 0, wo.on_hold ?? 0, wo.overdue ?? 0] },
+                { name: t('dashboard.adminManager.taskOverview.active'), data: [wo.open ?? 0, wo.in_progress ?? 0, 0, 0] },
+                { name: t('dashboard.adminManager.taskOverview.blocked'), data: [0, 0, wo.on_hold ?? 0, wo.overdue ?? 0] },
             ],
-            range: ['Open', 'In Progress', 'On Hold', 'Overdue'],
+            range: [
+                t('dashboard.adminManager.kpi.open'),
+                t('dashboard.adminManager.kpi.inProgress'),
+                t('dashboard.adminManager.kpi.onHold'),
+                t('dashboard.adminManager.kpi.overdue'),
+            ],
         }
 
         // "Monthly" view — real monthly data from backend (last 6 months)
@@ -561,14 +584,15 @@ const WoStatusOverviewCard = ({
             onGoing: monthlyStats.reduce((s, m) => s + m.active, 0),
             finished: monthlyStats.reduce((s, m) => s + m.completed, 0),
             series: [
-                { name: 'On Going', data: monthlyStats.map(m => m.active) },
-                { name: 'Finished', data: monthlyStats.map(m => m.completed) },
+                { name: t('dashboard.adminManager.taskOverview.onGoing'), data: monthlyStats.map(m => m.active) },
+                { name: t('dashboard.adminManager.taskOverview.finished'), data: monthlyStats.map(m => m.completed) },
             ],
             range: monthlyStats.map(m => m.month),
         }
 
         return { status: statusData, monthly: monthlyData }
-    }, [wo, monthlyStats])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [wo, monthlyStats, t])
 
     const current = data[timeRange]
     const hasChartData = current.series.some(s => s.data.some(v => v > 0))
@@ -576,15 +600,15 @@ const WoStatusOverviewCard = ({
     return (
         <Card>
             <div className="flex sm:flex-row flex-col md:items-center justify-between mb-6 gap-4">
-                <h4>Task overview</h4>
+                <h4>{t('dashboard.adminManager.taskOverview.title')}</h4>
                 <Segment value={timeRange} size="sm" onChange={(val) => setTimeRange(val as TimeRange)}>
-                    <Segment.Item value="status">Status</Segment.Item>
-                    <Segment.Item value="monthly">Monthly</Segment.Item>
+                    <Segment.Item value="status">{t('dashboard.adminManager.taskOverview.status')}</Segment.Item>
+                    <Segment.Item value="monthly">{t('dashboard.adminManager.taskOverview.monthly')}</Segment.Item>
                 </Segment>
             </div>
 
             <div className="flex items-center justify-between mb-4">
-                <ChartLegend showBadge={false} label="Total Tasks" value={current.total} />
+                <ChartLegend showBadge={false} label={t('dashboard.adminManager.taskOverview.totalTasks')} value={current.total} />
                 <div className="flex gap-x-6">
                     <ChartLegend color={COLORS[7]} label={current.series[0].name} value={current.onGoing} />
                     <ChartLegend color={COLORS[8]} label={current.series[1].name} value={current.finished} />
@@ -611,7 +635,7 @@ const WoStatusOverviewCard = ({
                 />
             ) : (
                 <div className="flex items-center justify-center h-[200px] text-gray-400 text-sm">
-                    No work order data for this period
+                    {t('dashboard.adminManager.taskOverview.empty')}
                 </div>
             )}
         </Card>
@@ -622,18 +646,20 @@ const WoStatusOverviewCard = ({
 
 const RecentWoActivityCard = ({
     wos, onViewAll, onRow,
-}: { wos: WoItem[]; onViewAll: () => void; onRow: (id: number) => void }) => (
+}: { wos: WoItem[]; onViewAll: () => void; onRow: (id: number) => void }) => {
+    const { t } = useTranslation()
+    return (
     <Card>
         <div className="flex sm:flex-row flex-col md:items-center justify-between mb-6 gap-4">
-            <h4>Recent activity</h4>
-            <Button size="sm" onClick={onViewAll}>View all</Button>
+            <h4>{t('dashboard.adminManager.recentActivity.title')}</h4>
+            <Button size="sm" onClick={onViewAll}>{t('dashboard.adminManager.recentActivity.viewAll')}</Button>
         </div>
         <div className="mt-4">
             <ScrollBar className="max-h-[390px]">
                 <Timeline>
                     {wos.length === 0 && (
                         <Timeline.Item>
-                            <p className="text-sm text-gray-400">No recent work orders</p>
+                            <p className="text-sm text-gray-400">{t('dashboard.adminManager.recentActivity.empty')}</p>
                         </Timeline.Item>
                     )}
                     {wos.map(wo => (
@@ -653,8 +679,8 @@ const RecentWoActivityCard = ({
                                     <span className="font-bold heading-text">{wo.code}</span>
                                     <span className="text-xs font-semibold text-gray-500">
                                         {wo.due_at
-                                            ? `Due ${dayjs(wo.due_at).format('MMM D, YYYY')}`
-                                            : 'No due date'}
+                                            ? t('dashboard.adminManager.recentActivity.due', { date: dayjs(wo.due_at).format('MMM D, YYYY') })
+                                            : t('dashboard.adminManager.recentActivity.noDueDate')}
                                     </span>
                                 </div>
                                 <div
@@ -662,9 +688,9 @@ const RecentWoActivityCard = ({
                                     onClick={() => onRow(wo.id)}
                                 >
                                     <span className="font-bold heading-text">{wo.title} </span>
-                                    <span className="mx-1">status is</span>
+                                    <span className="mx-1">{t('dashboard.adminManager.recentActivity.statusIs')}</span>
                                     <Tag className={`text-xs ${statusTag[wo.status]}`}>
-                                        {capitalize(wo.status)}
+                                        {t(`wo.status.${wo.status}`)}
                                     </Tag>
                                 </div>
                             </div>
@@ -674,13 +700,15 @@ const RecentWoActivityCard = ({
             </ScrollBar>
         </div>
     </Card>
-)
+    )
+}
 
 // ── 8. Mini Calendar ──────────────────────────────────────────────────
 
 const CAL_DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 const MiniCalendar = ({ highlights = [] }: { highlights: string[] }) => {
+    const { t } = useTranslation()
     const [current, setCurrent] = useState(() => dayjs().startOf('month'))
     const today = dayjs()
 
@@ -753,11 +781,11 @@ const MiniCalendar = ({ highlights = [] }: { highlights: string[] }) => {
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-primary inline-block" />
-                    Today
+                    {t('dashboard.adminManager.miniCal.today')}
                 </div>
                 <div className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" />
-                    PM scheduled
+                    {t('dashboard.adminManager.miniCal.pmScheduled')}
                 </div>
             </div>
         </Card>
@@ -789,6 +817,7 @@ const LoadingSkeleton = () => (
 
 const AdminManagerDashboard = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const { data, isLoading, error } = useSWR(
         '/dashboard',
         () => apiGetAdminManagerDashboard(),
@@ -803,7 +832,7 @@ const AdminManagerDashboard = () => {
         return (
             <Container>
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <p className="text-lg font-semibold text-red-500">Dashboard failed to load</p>
+                    <p className="text-lg font-semibold text-red-500">{t('dashboard.error')}</p>
                     <p className="text-sm text-gray-500">{status ? `HTTP ${status}: ` : ''}{message}</p>
                 </div>
             </Container>

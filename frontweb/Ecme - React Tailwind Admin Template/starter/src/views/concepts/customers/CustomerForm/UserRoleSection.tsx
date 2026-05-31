@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Select from '@/components/ui/Select'
 import { FormItem } from '@/components/ui/Form'
@@ -12,6 +13,7 @@ type UserRoleSectionProps = FormSectionBaseProps
 type RoleOption = { value: string; label: string }
 
 const UserRoleSection = ({ control, errors }: UserRoleSectionProps) => {
+    const { t } = useTranslation()
     const { data, isLoading } = useSWR<RolesResponse>(
         '/roles',
         () => apiGetRoles<RolesResponse>(),
@@ -26,10 +28,10 @@ const UserRoleSection = ({ control, errors }: UserRoleSectionProps) => {
 
     return (
         <Card>
-            <h4 className="mb-2">User Role</h4>
+            <h4 className="mb-2">{t('memberForm.roleTitle')}</h4>
             <div className="mt-6">
                 <FormItem
-                    label="Role"
+                    label={t('memberForm.field.role')}
                     invalid={Boolean(errors.role)}
                     errorMessage={errors.role?.message as string}
                 >
@@ -40,7 +42,7 @@ const UserRoleSection = ({ control, errors }: UserRoleSectionProps) => {
                             <Select<RoleOption>
                                 isLoading={isLoading}
                                 options={roleOptions}
-                                placeholder="Select user role"
+                                placeholder={t('memberForm.placeholder.role')}
                                 value={roleOptions.find((o) => o.value === field.value) || null}
                                 onChange={(option) => field.onChange(option?.value || '')}
                             />

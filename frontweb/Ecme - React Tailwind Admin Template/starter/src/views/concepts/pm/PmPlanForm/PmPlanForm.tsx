@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Form } from '@/components/ui/Form'
 import Container from '@/components/shared/Container'
 import BottomStickyBar from '@/components/template/BottomStickyBar'
@@ -12,35 +13,6 @@ import isEmpty from 'lodash/isEmpty'
 import type { CommonProps } from '@/@types/common'
 import type { PmPlanFormSchema } from './types'
 
-const validationSchema = z.object({
-    name: z.string().min(1, { message: 'Plan name is required' }),
-    description: z.string().optional().default(''),
-    status: z.enum(['active', 'inactive', 'draft'], {
-        required_error: 'Status is required',
-    }),
-    priority: z.enum(['low', 'medium', 'high', 'critical'], {
-        required_error: 'Priority is required',
-    }),
-    estimated_minutes: z.string().optional().default(''),
-    asset_id: z.number().nullable().optional().default(null),
-    assigned_member_id: z.number().nullable().optional().default(null),
-    trigger_interval_value: z
-        .string()
-        .min(1, { message: 'Interval is required' }),
-    trigger_interval_unit: z.enum(['days', 'weeks', 'months'], {
-        required_error: 'Interval unit is required',
-    }),
-    trigger_next_run_at: z.string().optional().default(''),
-    tasks: z
-        .array(
-            z.object({
-                id: z.number().optional(),
-                title: z.string().min(1, 'Task title is required'),
-            }),
-        )
-        .default([]),
-})
-
 type PmPlanFormProps = {
     onFormSubmit: (values: PmPlanFormSchema) => void
     defaultValues?: Partial<PmPlanFormSchema>
@@ -51,6 +23,37 @@ const PmPlanForm = ({
     defaultValues = {},
     children,
 }: PmPlanFormProps) => {
+    const { t } = useTranslation()
+
+    const validationSchema = useMemo(() => z.object({
+        name: z.string().min(1, { message: t('pmForm.validation.nameRequired') }),
+        description: z.string().optional().default(''),
+        status: z.enum(['active', 'inactive', 'draft'], {
+            required_error: t('pmForm.validation.statusRequired'),
+        }),
+        priority: z.enum(['low', 'medium', 'high', 'critical'], {
+            required_error: t('pmForm.validation.priorityRequired'),
+        }),
+        estimated_minutes: z.string().optional().default(''),
+        asset_id: z.number().nullable().optional().default(null),
+        assigned_member_id: z.number().nullable().optional().default(null),
+        trigger_interval_value: z
+            .string()
+            .min(1, { message: t('pmForm.validation.intervalValueRequired') }),
+        trigger_interval_unit: z.enum(['days', 'weeks', 'months'], {
+            required_error: t('pmForm.validation.intervalValueRequired'),
+        }),
+        trigger_next_run_at: z.string().optional().default(''),
+        tasks: z
+            .array(
+                z.object({
+                    id: z.number().optional(),
+                    title: z.string().min(1, t('pmForm.validation.nameRequired')),
+                }),
+            )
+            .default([]),
+    }), [t])
+
     const {
         handleSubmit,
         reset,

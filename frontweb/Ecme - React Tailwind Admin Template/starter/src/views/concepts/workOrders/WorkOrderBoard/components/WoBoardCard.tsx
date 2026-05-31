@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Tag from '@/components/ui/Tag'
 import UsersAvatarGroup from '@/components/shared/UsersAvatarGroup'
@@ -13,37 +14,18 @@ interface WoBoardCardProps extends CardProps {
     ref?: Ref<HTMLDivElement>
 }
 
-const priorityConfig: Record<
-    WorkOrder['priority'],
-    { label: string; className: string }
-> = {
-    low: {
-        label: 'Low',
-        className:
-            'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
-    },
-    medium: {
-        label: 'Medium',
-        className:
-            'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
-    },
-    high: {
-        label: 'High',
-        className:
-            'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
-    },
-    critical: {
-        label: 'Critical',
-        className:
-            'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
-    },
+const priorityClassName: Record<WorkOrder['priority'], string> = {
+    low: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
+    medium: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
+    high: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+    critical: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
 }
 
 const WoBoardCard = (props: WoBoardCardProps) => {
     const { data, ref, ...rest } = props
     const navigate = useNavigate()
+    const { t } = useTranslation()
 
-    const priority = priorityConfig[data.priority]
     const isOverdue =
         data.due_at &&
         new Date(data.due_at) < new Date() &&
@@ -74,8 +56,8 @@ const WoBoardCard = (props: WoBoardCardProps) => {
                 <Tag className="bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 font-mono text-xs border-0">
                     {data.code}
                 </Tag>
-                <Tag className={`text-xs ${priority.className}`}>
-                    {priority.label}
+                <Tag className={`text-xs ${priorityClassName[data.priority]}`}>
+                    {t(`wo.priority.${data.priority}`)}
                 </Tag>
             </div>
 

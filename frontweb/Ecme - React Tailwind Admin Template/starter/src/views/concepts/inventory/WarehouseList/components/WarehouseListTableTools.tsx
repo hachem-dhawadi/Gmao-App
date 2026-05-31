@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next'
 import cloneDeep from 'lodash/cloneDeep'
 import DebouceInput from '@/components/shared/DebouceInput'
 import { TbSearch } from 'react-icons/tb'
 import useWarehouseList from '../hooks/useWarehouseList'
 
 const WarehouseListTableTools = () => {
+    const { t } = useTranslation()
     const { tableData, setTableData } = useWarehouseList()
 
     const handleInputChange = (val: string) => {
@@ -16,7 +18,7 @@ const WarehouseListTableTools = () => {
     return (
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <DebouceInput
-                placeholder="Search by name, code, location…"
+                placeholder={t('warehouse.search')}
                 suffix={<TbSearch className="text-lg" />}
                 onChange={(e) => handleInputChange(e.target.value)}
             />

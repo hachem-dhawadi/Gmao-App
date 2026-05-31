@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import AdaptiveCard from '@/components/shared/AdaptiveCard'
 import Button from '@/components/ui/Button'
 import { DragDropContext, Droppable } from '@hello-pangea/dnd'
@@ -22,6 +23,7 @@ import type { WorkOrdersListResponse } from '@/services/WorkOrdersService'
 
 const WorkOrderBoard = () => {
     const navigate = useNavigate()
+    const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canCreate = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager', 'technician'])
 
@@ -66,7 +68,7 @@ const WorkOrderBoard = () => {
             moveCard(woId, toStatus, fromStatus, source.index)
             toast.push(
                 <Notification type="danger">
-                    Failed to update status.
+                    {t('workOrderBoard.toast.updateFailed')}
                 </Notification>,
                 { placement: 'top-center' },
             )
@@ -78,8 +80,8 @@ const WorkOrderBoard = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h3>Work Orders</h3>
-                    <p className="font-semibold text-gray-500">Kanban Board</p>
+                    <h3>{t('workOrderBoard.title')}</h3>
+                    <p className="font-semibold text-gray-500">{t('workOrderBoard.subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
@@ -89,7 +91,7 @@ const WorkOrderBoard = () => {
                             navigate('/concepts/work-orders/work-order-list')
                         }
                     >
-                        List view
+                        {t('workOrderBoard.listView')}
                     </Button>
                     {canCreate && (
                         <Button
@@ -102,7 +104,7 @@ const WorkOrderBoard = () => {
                                 )
                             }
                         >
-                            New Work Order
+                            {t('workOrderBoard.newWorkOrder')}
                         </Button>
                     )}
                 </div>

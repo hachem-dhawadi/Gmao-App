@@ -68,7 +68,13 @@
         "discard": "Discard",
         "print": "Print",
         "back": "Back",
-        "reopen": "Reopen"
+        "reopen": "Reopen",
+        "record": "Record",
+        "update": "Update",
+        "discardConfirm": {
+            "title": "Discard changes",
+            "body": "Are you sure you want to discard this? This action can't be undone."
+        }
     },
     "wo": {
         "pageTitle": "Work Orders",
@@ -136,6 +142,29 @@
             "attachDeleteFailed": "Failed to delete.",
             "worklogDurationRequired": "Duration (minutes) is required.",
             "worklogFailed": "Failed to save work log."
+        },
+        "details": {
+            "backToList": "Back to Work Orders",
+            "printLabel": "Print Label",
+            "printWo": "Print WO",
+            "archive": "Archive",
+            "unarchive": "Unarchive",
+            "editForm": "Edit",
+            "statusField": "Status",
+            "priorityField": "Priority",
+            "assetField": "Asset",
+            "assignedTo": "Assigned to",
+            "noAssignees": "No assignees",
+            "dueDate": "Due Date",
+            "noDueDate": "No due date",
+            "estLogged": "Est. / Logged Time",
+            "estMin": "{{min}} min est.",
+            "noEst": "— est.",
+            "loggedMin": "{{min}} min logged",
+            "description": "Description",
+            "clickToAdd": "Click to add a description...",
+            "noDescription": "No description.",
+            "archivedBanner": "This work order is archived. It is read-only until unarchived."
         }
     },
     "assets": {
@@ -351,6 +380,7 @@
         "searchPlaceholder": "Search by name, email...",
         "columns": { "name": "Name", "email": "Email", "phone": "Phone", "role": "Role", "status": "Status" },
         "status": { "active": "Active", "inactive": "Inactive", "blocked": "Inactive" },
+        "role": { "admin": "Admin", "manager": "Manager", "technician": "Technician", "hr": "HR", "viewer": "Viewer" },
         "modal": {
             "close": "Close",
             "edit": "Edit",
@@ -447,5 +477,704 @@
             "woCreated": "Work order {{code}} created successfully.",
             "rejected": "Request rejected."
         }
+    },
+    "dashboard": {
+        "error": "Dashboard failed to load",
+        "adminManager": {
+            "title": "Operations Overview",
+            "allWo": "All work orders",
+            "sectionWo": "Work Orders",
+            "sectionPeople": "Assets & People",
+            "kpi": {
+                "open": "Open",
+                "inProgress": "In Progress",
+                "onHold": "On Hold",
+                "overdue": "Overdue",
+                "unassigned": "Unassigned",
+                "completedMonth": "Completed (month)",
+                "totalAssets": "Total Assets",
+                "activeMembers": "Active Members",
+                "technicians": "Technicians",
+                "needsAttention": "Needs attention"
+            },
+            "requests": {
+                "title": "Pending Requests",
+                "awaiting": "Awaiting review",
+                "allClear": "All clear",
+                "reviewBtn": "Review {{count}} request",
+                "reviewBtnPlural": "Review {{count}} requests"
+            },
+            "pmCompliance": {
+                "title": "PM Compliance",
+                "thisMonth": "This month",
+                "rate": "Compliance rate"
+            },
+            "mttr": {
+                "title": "MTTR",
+                "subtitle": "Avg repair time this month",
+                "hrs": "hrs",
+                "noData": "No completed WOs this month yet",
+                "excellent": "Excellent",
+                "acceptable": "Acceptable",
+                "needsImprovement": "Needs improvement",
+                "target": "target is under 8 hrs"
+            },
+            "schedule": {
+                "title": "Schedule",
+                "empty": "No work orders to display"
+            },
+            "pmUpcoming": {
+                "title": "Upcoming PM Plans",
+                "viewAll": "View all",
+                "viewAllPm": "View all PM plans",
+                "active": "Active",
+                "thisWeek": "This week",
+                "thisMonth": "This month",
+                "empty": "No PM plans due soon",
+                "pmPlan": "PM Plan"
+            },
+            "openWo": {
+                "title": "Current work orders",
+                "allTasks": "All tasks",
+                "empty": "No open work orders",
+                "noDueDate": "No due date"
+            },
+            "taskOverview": {
+                "title": "Task overview",
+                "status": "Status",
+                "monthly": "Monthly",
+                "totalTasks": "Total Tasks",
+                "active": "Active",
+                "blocked": "Blocked",
+                "onGoing": "On Going",
+                "finished": "Finished",
+                "empty": "No work order data for this period"
+            },
+            "recentActivity": {
+                "title": "Recent activity",
+                "viewAll": "View all",
+                "empty": "No recent work orders",
+                "due": "Due {{date}}",
+                "noDueDate": "No due date",
+                "statusIs": "status is"
+            },
+            "miniCal": {
+                "today": "Today",
+                "pmScheduled": "PM scheduled"
+            }
+        },
+        "technician": {
+            "summary": {
+                "title": "My Work Order Summary",
+                "myOpenWos": "My Open WOs",
+                "inProgress": "In Progress",
+                "completionRate": "Completion Rate",
+                "doneThisWeek": "Done This Week",
+                "vsLastMonth": "vs last month"
+            },
+            "pm": {
+                "title": "My Preventive Maintenance",
+                "viewAll": "View all",
+                "dueThisWeek": "Due This Week",
+                "dueThisMonth": "Due This Month",
+                "upcoming": "Upcoming",
+                "empty": "No PM plans due soon"
+            },
+            "performance": {
+                "title": "WO Performance",
+                "all": "All",
+                "active": "Active",
+                "completed": "Completed",
+                "empty": "No performance data yet",
+                "scoreTitle": "Performance Score",
+                "activeSeries": "Active WOs",
+                "completedSeries": "Completed",
+                "radar": {
+                    "completion": "Completion",
+                    "onTime": "On Time",
+                    "response": "Response",
+                    "workload": "Workload",
+                    "efficiency": "Efficiency"
+                }
+            },
+            "recentWo": {
+                "title": "Recent Work Orders",
+                "viewAll": "View all",
+                "empty": "No work orders assigned to you",
+                "colActive": "Active",
+                "colWo": "Work Order",
+                "colStatus": "Status",
+                "colPriority": "Priority",
+                "colAsset": "Asset",
+                "colDueDate": "Due Date",
+                "updateFailed": "Failed to update status"
+            }
+        },
+        "hr": {
+            "title": "HR overview",
+            "registrations": {
+                "title": "Member registrations",
+                "legend": "New members",
+                "totalMembers": "Total members",
+                "newThisMonth": "New this month",
+                "empty": "No member data yet"
+            },
+            "kpi": {
+                "totalMembers": "Total members",
+                "activeMembers": "Active members",
+                "inactiveMembers": "Inactive members",
+                "ofTotal": "% of total",
+                "needsReview": "Needs review",
+                "allActive": "All active",
+                "vsLastMonth": "vs last month"
+            },
+            "recentMembers": {
+                "title": "Recent members",
+                "viewAll": "View all",
+                "colMember": "Member",
+                "colRole": "Role",
+                "colStatus": "Status",
+                "colJoined": "Joined"
+            },
+            "roles": {
+                "distribution": "Role distribution",
+                "breakdown": "Members by role",
+                "totalWorkforce": "Total workforce",
+                "noData": "No role data",
+                "colRole": "Role",
+                "colShare": "Share",
+                "colCount": "Count"
+            }
+        }
+    },
+    "notificationSettings": {
+        "title": "Notification",
+        "desktop": {
+            "title": "Enable desktop notification",
+            "desc": "Decide whether you want to be notified of new message & updates"
+        },
+        "badge": {
+            "title": "Enable unread notification badge",
+            "desc": "Display a red indicator on the notification icon when you have unread message"
+        },
+        "email": {
+            "title": "Email notification",
+            "desc": "Substance can send you email notification for any new direct message"
+        },
+        "options": {
+            "newsAndUpdate":     { "label": "News & updates",     "desc": "News about product and features update" },
+            "tipsAndTutorial":   { "label": "Tips & tutorials",   "desc": "Tips & tricks to increase your performance efficiency" },
+            "offerAndPromotion": { "label": "Offer & promotions", "desc": "Promotion about product price & latest discount" },
+            "followUpReminder":  { "label": "Follow up reminder", "desc": "Receive notifications for all reminders that have been set" }
+        },
+        "notifyMe": {
+            "allNewMessage": { "label": "All new messages", "desc": "Broadcast notifications to the channel for each new message" },
+            "mentionsOnly":  { "label": "Mentions only",    "desc": "Only alert me in the channel if someone mentions me in a message" },
+            "nothing":       { "label": "Nothing",          "desc": "Don't notify me about anything" }
+        }
+    },
+    "calendar": {
+        "show": "Show:",
+        "all": "All",
+        "mine": "Mine",
+        "toast": {
+            "moveFailed": "Failed to move event. Please try again.",
+            "saveFailed": "Failed to save event. Please try again.",
+            "deleted": "Event deleted.",
+            "deleteFailed": "Failed to delete event."
+        },
+        "dialog": {
+            "newEvent": "Add New Event",
+            "editEvent": "Edit Event",
+            "titleLabel": "Event title",
+            "titlePlaceholder": "Event title",
+            "startDate": "Start date",
+            "endDate": "End date",
+            "eventColor": "Event color",
+            "create": "Create",
+            "update": "Update",
+            "delete": "Delete",
+            "deleteTitle": "Delete event",
+            "deleteConfirm": "Delete {{title}}? This cannot be undone."
+        },
+        "validation": {
+            "titleRequired": "Event title required",
+            "selectDate": "Please select a date",
+            "colorRequired": "Color required"
+        }
+    },
+    "fileManager": {
+        "title": "File Manager",
+        "newFolder": "New Folder",
+        "upload": "Upload",
+        "noCompany": {
+            "title": "No company selected",
+            "desc": "Enter a company context from the company list to access the file manager."
+        },
+        "columns": { "file": "File", "size": "Size", "type": "Type" },
+        "empty": {
+            "title": "This folder is empty",
+            "desc": "Upload a file or create a folder to get started"
+        },
+        "dropdown": {
+            "open": "Open",
+            "download": "Download",
+            "rename": "Rename",
+            "share": "Share",
+            "delete": "Delete"
+        },
+        "delete": {
+            "titleFile": "Delete file",
+            "titleFolder": "Delete folder",
+            "confirmFile": "Are you sure you want to delete this file? This action cannot be undone.",
+            "confirmFolder": "Are you sure you want to delete this folder? All contents will be permanently removed. This action cannot be undone.",
+            "toastFile": "File deleted",
+            "toastFolder": "Folder deleted",
+            "toastFailed": "Delete failed"
+        },
+        "rename": {
+            "titleFile": "Rename file",
+            "titleFolder": "Rename folder",
+            "placeholder": "New name",
+            "ok": "Ok",
+            "close": "Close",
+            "toastSuccess": "Renamed successfully",
+            "toastFailed": "Rename failed"
+        },
+        "createFolder": {
+            "title": "New Folder",
+            "placeholder": "Folder name",
+            "toastSuccess": "Folder created!",
+            "toastFailed": "Failed to create folder"
+        },
+        "share": {
+            "titleFile": "Share this file",
+            "titleFolder": "Share this folder",
+            "placeholder": "Select members to share with...",
+            "currentlyShared": "Currently shared with:",
+            "toastFileSuccess": "File shared successfully",
+            "toastFolderSuccess": "Folder shared successfully",
+            "toastFileFailed": "Failed to share file",
+            "toastFolderFailed": "Failed to share folder",
+            "shareBtn": "Share"
+        },
+        "uploadDialog": {
+            "title": "Upload Files",
+            "dropHint": "Drop your files here, or",
+            "browse": "browse",
+            "through": "through your machine",
+            "uploadBtn": "Upload",
+            "toastSuccess": "{{count}} file(s) uploaded",
+            "toastFailed": "Upload failed"
+        },
+        "toast": {
+            "loadFailed": "Failed to load files",
+            "downloadFailed": "Download failed"
+        }
+    },
+    "settingsProfile": {
+        "title": "Personal information",
+        "otherInfo": "Other information",
+        "firstName": "First name",
+        "lastName": "User name",
+        "firstNamePlaceholder": "First Name",
+        "lastNamePlaceholder": "Last Name",
+        "emailPlaceholder": "Email",
+        "phoneNumber": "Phone number",
+        "phonePlaceholder": "Phone Number",
+        "locale": "Locale",
+        "accountStatus": "Account status",
+        "lastLogin": "Last login",
+        "createdAt": "Created at",
+        "updatedAt": "Updated at",
+        "uploadImage": "Upload Image",
+        "remove": "Remove",
+        "toast": {
+            "success": "Profile updated successfully.",
+            "failed": "Failed to update profile."
+        },
+        "validation": {
+            "firstName": "First name required",
+            "lastName": "Last name required",
+            "email": "Email required",
+            "emailInvalid": "Invalid email",
+            "dialCode": "Please select your country code",
+            "phone": "Please input your mobile number"
+        }
+    },
+    "settingsSecurity": {
+        "title": "Password",
+        "description": "Remember, your password is your digital key to your account. Keep it safe, keep it secure!",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmNewPassword": "Confirm new password",
+        "updateBtn": "Update",
+        "confirmTitle": "Update password",
+        "confirmBody": "Are you sure you want to change your password?",
+        "toast": {
+            "success": "Password updated successfully.",
+            "failed": "Failed to update password."
+        },
+        "validation": {
+            "currentPassword": "Please enter your current password!",
+            "newPassword": "New password must be at least 8 characters.",
+            "confirmNewPassword": "Please confirm your new password!",
+            "passwordMatch": "Passwords do not match"
+        }
+    },
+    "settingsMenu": {
+        "profile": "Profile",
+        "company": "Company",
+        "security": "Security"
+    },
+    "mail": {
+        "title": "Notifications",
+        "unread": "Unread",
+        "viewInApp": "View in App",
+        "details": "Details",
+        "markAllRead": "Mark all read",
+        "markRead": "Mark read",
+        "noNotifications": "No notifications",
+        "delete": {
+            "title": "Delete mail",
+            "confirmOne": "Are you sure you want to delete this mail? This action can't be undone.",
+            "confirmMany": "Are you sure you want to delete {{count}} of these mails? This action can't be undone."
+        },
+        "editor": {
+            "newMessage": "New Message",
+            "reply": "Reply",
+            "titleLabel": "Title:",
+            "titlePlaceholder": "Add a subject",
+            "toLabel": "To:",
+            "messageLabel": "Message",
+            "discard": "Discard",
+            "send": "Send",
+            "sent": "Mail sent!",
+            "validation": {
+                "to": "Please enter recipient",
+                "message": "Please enter message"
+            }
+        },
+        "category": {
+            "all": "All",
+            "unread": "Unread",
+            "work_order": "Work Orders",
+            "pm_plan": "PM Plans",
+            "inventory": "Inventory",
+            "system": "System"
+        },
+        "typeLabel": {
+            "wo_assigned": "Work Order",
+            "wo_status_changed": "Work Order",
+            "wo_overdue": "Work Order",
+            "wo_due_soon": "Work Order",
+            "comment_mention": "Work Order",
+            "low_stock": "Inventory",
+            "pm_assigned": "PM Plan",
+            "pm_wo_generated": "PM Plan",
+            "pm_overdue": "PM Plan",
+            "po_ordered": "System",
+            "new_member": "System",
+            "new_request": "Work Order",
+            "request_converted": "Work Order",
+            "request_rejected": "Work Order"
+        },
+        "dataField": {
+            "wo_id": "WO ID",
+            "wo_code": "WO Code",
+            "wo_title": "Title",
+            "hours_left": "Hours Left",
+            "new_status": "New Status",
+            "item_id": "Item ID",
+            "item_name": "Item Name",
+            "item_code": "Item Code",
+            "item_stock": "Current Stock",
+            "item_min_stock": "Min Stock",
+            "item_unit": "Unit",
+            "pm_id": "PM Plan ID",
+            "pm_code": "PM Code",
+            "pm_name": "PM Name",
+            "member_id": "Member ID",
+            "member_name": "Member Name",
+            "po_id": "PO ID",
+            "po_code": "PO Code",
+            "request_id": "Request ID",
+            "request_code": "Request Code",
+            "request_title": "Request Title",
+            "request_priority": "Priority"
+        },
+        "body": {
+            "wo_assigned": "You were assigned to \"{{wo_title}}\" ({{wo_code}})",
+            "wo_status_changed": "\"{{wo_title}}\" ({{wo_code}}) status changed to {{new_status}}",
+            "wo_overdue": "Work order \"{{wo_title}}\" ({{wo_code}}) is past its due date.",
+            "wo_due_soon": "Work order \"{{wo_title}}\" ({{wo_code}}) is due in {{hours_left}} hours.",
+            "comment_mention": "You were mentioned in a comment on \"{{wo_title}}\" ({{wo_code}})",
+            "low_stock": "\"{{item_name}}\" ({{item_code}}) stock is {{item_stock}} {{item_unit}}, minimum is {{item_min_stock}} {{item_unit}}.",
+            "pm_assigned": "You were assigned to PM plan \"{{pm_name}}\" ({{pm_code}})",
+            "pm_wo_generated": "PM plan automatically created work order {{wo_code}}.",
+            "pm_overdue": "PM plan {{pm_code}} is overdue and has not been executed.",
+            "po_ordered": "PO {{po_code}} has been submitted to the supplier.",
+            "new_member": "{{member_name}} has been added to the company.",
+            "new_request": "New request: \"{{request_title}}\" ({{request_code}})",
+            "request_converted": "Your request {{request_code}} has been converted to work order {{wo_code}}.",
+            "request_rejected": "Your request {{request_code}} has been rejected."
+        }
+    },
+    "workOrderBoard": {
+        "title": "Work Orders",
+        "subtitle": "Kanban Board",
+        "listView": "List view",
+        "newWorkOrder": "New Work Order",
+        "emptyColumn": "No work orders",
+        "toast": { "updateFailed": "Failed to update status." }
+    },
+    "reports": {
+        "title": "Reports",
+        "description": "Maintenance performance, asset health, PM compliance and inventory costs",
+        "print": "Print / PDF",
+        "tabs": { "wo": "Work Orders", "asset": "Assets", "pm": "PM Compliance", "inv": "Inventory" },
+        "filter": {
+            "clear": "Clear", "today": "today", "from": "From date", "to": "To date",
+            "presets": { "thisMonth": "This Month", "last3m": "Last 3M", "last6m": "Last 6M", "thisYear": "This Year" }
+        },
+        "wo": {
+            "sectionTitle": "Work Order Metrics", "totalWos": "Total WOs", "completed": "Completed",
+            "onHold": "On Hold", "avgResolution": "Avg Resolution", "blocked": "Blocked",
+            "thisMonth": "This month", "selectedPeriod": "Selected period", "allTime": "All time",
+            "chartTitle": "Created vs Completed", "last6months": "Last 6 Months",
+            "byStatus": "By Status", "byPriority": "By Priority",
+            "topTechnicians": "Top Technicians by WOs Completed", "technician": "Technician",
+            "empty": "No work orders in this period", "noData": "No work order data available"
+        },
+        "asset": {
+            "sectionTitle": "Asset Health Overview", "assetsTracked": "Assets Tracked",
+            "withWo": "With work orders", "mostFailures": "Most Failures",
+            "totalDowntime": "Total Downtime", "allAssets": "All assets combined",
+            "tableTitle": "Assets by Work Order Count", "asset": "Asset",
+            "location": "Location", "wos": "WOs", "downtime": "Downtime",
+            "lastMaintenance": "Last Maintenance",
+            "empty": "No assets with work orders found in this period"
+        },
+        "pm": {
+            "sectionTitle": "PM Compliance Summary", "avgCompliance": "Avg Compliance",
+            "onTime": "On Time", "overdue": "Overdue", "neverRun": "Never Run",
+            "activePlans": "Active plans", "needAttention": "Need attention",
+            "notStarted": "Not started yet", "last6months": "Last 6 months",
+            "complianceTrend": "Compliance Trend", "planStatus": "PM Plan Status",
+            "plan": "Plan", "assignedTo": "Assigned To", "lastRun": "Last Run",
+            "nextRun": "Next Run", "status": "Status",
+            "noRun": "No PM plans have run in this period", "noData": "No PM data available",
+            "tag": { "onTime": "On Time", "overdue": "Overdue", "neverRun": "Never Run" }
+        },
+        "inv": {
+            "sectionTitle": "Inventory & Cost Summary", "partsCostMonth": "Parts Cost This Month",
+            "partsCostYear": "Parts Cost This Year", "partsCostPeriod": "Parts Cost (Period)",
+            "stockValue": "Stock Value", "currentInventory": "Current inventory value",
+            "topParts": "Top 10 Most Used Parts", "item": "Item", "qtyUsed": "Qty Used",
+            "totalCost": "Total Cost", "emptyParts": "No parts used on work orders yet in this period",
+            "noData": "No inventory data available"
+        }
+    },
+    "assetCreate": {
+        "toast": { "success": "Asset created successfully.", "error": "Failed to create asset." }
+    },
+    "workOrderCreate": {
+        "toast": { "success": "Work order created successfully.", "error": "Failed to create work order." }
+    },
+    "pmCreate": {
+        "createButton": "Create PM Plan",
+        "toast": { "success": "PM plan created successfully.", "error": "Failed to create PM plan." }
+    },
+    "warehouse": {
+        "title": "Warehouses", "addWarehouse": "Add Warehouse",
+        "search": "Search by name, code, location…",
+        "col": { "name": "Name", "code": "Code", "location": "Location" },
+        "tooltip": { "view": "View details", "edit": "Edit", "delete": "Delete" },
+        "confirmDelete": { "title": "Delete warehouse", "body": "Delete {{name}}? This cannot be undone." },
+        "toast": { "deleted": "Warehouse deleted.", "deleteFailed": "Failed to delete warehouse." }
+    },
+    "stockMove": {
+        "title": "Stock Moves", "recordMove": "Record Move",
+        "dialog": {
+            "title": "Record Stock Move", "recordMove": "Record Move",
+            "item": "Item", "moveType": "Move type",
+            "warehouse": "Warehouse", "quantity": "Quantity", "reference": "Reference", "notes": "Notes",
+            "selectItem": "Select item…", "selectWarehouse": "Select warehouse…",
+            "selectItemFirst": "Select item first…",
+            "warehouseHint": "Showing only warehouses with stock of this item",
+            "onlyWithStock": "Showing only warehouses with stock of this item",
+            "currentStock": "Current stock (this warehouse)", "afterMove": "After this move",
+            "remaining": "remaining", "inStock": "in stock",
+            "referencePlaceholder": "PO number, WO code…", "notesPlaceholder": "Optional notes"
+        },
+        "moveType": {
+            "in": "IN — Stock received", "out": "OUT — Stock consumed / used",
+            "adjustment": "ADJUSTMENT — Manual correction"
+        },
+        "filter": { "allItems": "All items", "allWarehouses": "All warehouses", "allTypes": "All types", "adjustment": "Adjustment" },
+        "col": { "date": "Date", "type": "Type", "item": "Item", "warehouse": "Warehouse", "qty": "Qty", "reference": "Reference", "by": "By" },
+        "confirmDelete": { "title": "Delete stock move", "body": "Delete this {{type}} move? This cannot be undone and will affect stock levels." },
+        "validation": {
+            "itemRequired": "Item is required", "warehouseRequired": "Warehouse is required",
+            "qtyRequired": "Quantity is required", "qtyPositive": "Must be a positive number",
+            "qtyMax": "Maximum available is {{max}}"
+        },
+        "toast": {
+            "recorded": "Stock move recorded.", "recordFailed": "Failed to record move.",
+            "deleted": "Stock move deleted.", "deleteFailed": "Failed to delete stock move."
+        }
+    },
+    "customerCreate": {
+        "toast": {
+            "success": "User created successfully.", "error": "Failed to create user.",
+            "selectCompany": "Please select a company to assign this user to.",
+            "passwordMismatch": "Password confirmation does not match."
+        }
+    },
+    "departmentCreate": {
+        "toast": { "success": "Department created successfully.", "error": "Failed to create department." }
+    },
+    "settingsCompany": {
+        "title": "Company information",
+        "description": "Complete your company profile. You can update this form while waiting for superadmin approval.",
+        "status": {
+            "inCreation": "In creation", "pending": "Pending approval",
+            "rejected": "Rejected", "approved": "Approved",
+            "refreshing": "Refreshing...", "refresh": "Refresh status"
+        },
+        "logo": { "label": "Company logo", "upload": "Upload logo", "remove": "Remove", "error": "Please upload company logo", "errorType": "Please upload a jpg, png, or webp image." },
+        "proof": {
+            "label": "Company proof files (pdf/jpg/png)", "drop": "Drop your files here, or", "browse": "browse",
+            "support": "Support: pdf, jpg, png", "replaceWarning": "Uploading new files will replace current proofs after save.",
+            "clearSelection": "Clear selection", "error": "Please upload at least one proof file",
+            "errorType": "Please upload proof files as pdf, jpg, or png."
+        },
+        "field": {
+            "companyName": "Company name", "legalName": "Legal name", "phone": "Phone", "email": "Email",
+            "addressLine1": "Address line 1", "addressLine2": "Address line 2", "city": "City",
+            "postalCode": "Postal code", "country": "Country", "timezone": "Timezone (optional)",
+            "selectCountry": "Select country", "selectTimezone": "Select timezone",
+            "addressLine2Placeholder": "Address line 2 (optional)"
+        },
+        "validation": {
+            "nameRequired": "Please enter company name", "legalNameRequired": "Please enter legal name",
+            "phoneRequired": "Please enter company phone", "phoneMin": "Phone must have at least 8 characters",
+            "phoneTooLong": "Phone is too long", "emailRequired": "Please enter company email",
+            "emailInvalid": "Please enter a valid email", "addressRequired": "Please enter address line 1",
+            "cityRequired": "Please enter city", "postalCodeRequired": "Please enter postal code",
+            "countryRequired": "Please select country"
+        },
+        "button": { "update": "Update company", "create": "Create company" },
+        "toast": { "updated": "Company updated successfully.", "created": "Company created successfully. Waiting for superadmin approval.", "saveFailed": "Unable to save company." }
+    },
+    "rolesPermissions": {
+        "title": "Roles & Permissions", "allAccounts": "All accounts",
+        "createRole": "Create role", "editRole": "Edit role", "noRole": "No role", "never": "Never",
+        "module": {
+            "members": { "name": "Member management", "description": "Access control for member operations" },
+            "departments": { "name": "Departments", "description": "Access control for department management" },
+            "roles": { "name": "Roles & Permissions", "description": "Access control for role management" },
+            "assets": { "name": "Assets", "description": "Access control for asset operations" },
+            "work_orders": { "name": "Work Orders", "description": "Access control for work order management" },
+            "pm_plans": { "name": "PM Plans", "description": "Access control for preventive maintenance plans" },
+            "inventory": { "name": "Inventory", "description": "Access control for inventory management" },
+            "purchasing": { "name": "Purchasing", "description": "Access control for purchasing operations" },
+            "files": { "name": "File Manager", "description": "Access to the file manager" },
+            "chat": { "name": "Chat", "description": "Access to the chat" }
+        },
+        "accessor": { "read": "Read", "write": "Write", "create": "Create", "update": "Update", "delete": "Delete", "assign": "Assign" },
+        "roleDesc": {
+            "admin": "Full access to all features, settings and company management.",
+            "hr": "Manage members, departments and human resources operations.",
+            "manager": "Oversee work orders, assets and team assignments.",
+            "technician": "Execute work orders and log maintenance activities.",
+            "default": "{{count}} permissions assigned"
+        },
+        "col": { "name": "Name", "status": "Status", "lastOnline": "Last online", "role": "Role" },
+        "filter": { "search": "Search...", "status": "Status", "role": "Role", "all": "All", "active": "Active", "inactive": "Inactive" },
+        "dialog": {
+            "createTitle": "Create role", "roleName": "Role name",
+            "roleNamePlaceholder": "e.g. Supervisor", "description": "Description",
+            "descriptionPlaceholder": "Describe what this role can do...", "permission": "Permission"
+        },
+        "footer": { "membersSelected": "{{count}} Members", "selected": "selected" },
+        "confirmDelete": { "title": "Remove members", "body": "Remove {{count}} member(s)? This will deactivate their access. This action can't be undone." },
+        "toast": {
+            "roleCreated": "Role \"{{label}}\" created successfully.", "roleCreateFailed": "Failed to create role. The name may already exist.",
+            "roleNameRequired": "Role name is required.", "permRequired": "Select at least one permission.",
+            "roleUpdated": "Role updated successfully.", "roleUpdateFailed": "Failed to update role permissions.",
+            "roleUpdateError": "Failed to update role. Please try again.",
+            "membersRemoved": "Member(s) removed.", "membersRemoveFailed": "Failed to remove one or more members."
+        }
+    },
+    "assetForm": {
+        "section": {
+            "basicInfo": "Basic Information", "basicInfoSub": "Identity and operational status of the asset",
+            "equipDetails": "Equipment Details", "equipDetailsSub": "Technical specifications of the machine",
+            "photos": "Asset Photos", "photosSub": "Up to 5 photos of the machine or equipment",
+            "classification": "Classification", "classificationSub": "Category and physical location",
+            "lifecycle": "Lifecycle", "lifecycleSub": "Dates for purchase, warranty, and installation"
+        },
+        "field": {
+            "assetName": "Asset Name", "assetCode": "Asset Code", "assetType": "Asset Type",
+            "serialNumber": "Serial Number", "manufacturer": "Manufacturer", "model": "Model",
+            "addressZone": "Address / Zone", "purchaseDate": "Purchase Date",
+            "warrantyExpires": "Warranty Expires", "installedAt": "Installed At"
+        },
+        "placeholder": {
+            "assetName": "e.g. Main Air Compressor", "assetCode": "e.g. COMP-001",
+            "serialNumber": "e.g. SN-2024-123456", "manufacturer": "e.g. Siemens", "model": "e.g. SIRIUS 3RW40",
+            "notes": "Additional information, maintenance history, special instructions...",
+            "location": "e.g. Building A, Floor 2", "addressZone": "e.g. Zone B – Room 12",
+            "pickDate": "Pick a date", "pickDateTime": "Pick date & time"
+        },
+        "status": { "active": "Active", "inactive": "Inactive", "under_maintenance": "Under Maintenance", "decommissioned": "Decommissioned" },
+        "photo": {
+            "dropHere": "Drop photos here, or", "browse": "Click to browse", "addMore": "Add more",
+            "maxSize": ".jpg · .jpeg · .png · .webp — max 2 MB each",
+            "removeTitle": "Remove image", "removeBody": "Remove this image? This cannot be undone."
+        },
+        "overview": "Overview", "details": "Details",
+        "generateCode": "Generate code", "selectStatus": "Select status", "selectType": "Select type",
+        "validation": { "nameRequired": "Name is required", "codeRequired": "Code is required", "typeRequired": "Asset type is required", "statusRequired": "Status is required" }
+    },
+    "woForm": {
+        "overviewTitle": "Overview", "detailsTitle": "Details",
+        "field": { "title": "Title", "code": "Code", "asset": "Asset", "dueDate": "Due Date", "estimatedTime": "Estimated Time", "assignMembers": "Assign Members", "description": "Description" },
+        "placeholder": { "title": "e.g. Replace hydraulic pump filter", "code": "e.g. WO-0001", "description": "Describe the work to be done...", "selectAsset": "Select asset", "dueDate": "Select due date", "selectMembers": "Select members" },
+        "codeHint": "Leave empty to auto-generate", "selectStatus": "Select status", "selectPriority": "Select priority",
+        "timePicker": { "label": "Select estimated duration", "hours": "Hours", "minutes": "Minutes", "done": "Done" },
+        "validation": { "titleRequired": "Title is required", "assetRequired": "Asset is required", "statusRequired": "Status is required", "priorityRequired": "Priority is required" }
+    },
+    "pmForm": {
+        "planDetailsTitle": "Plan Details", "triggerTitle": "Trigger Schedule",
+        "triggerSubtitle": "How often should a work order be automatically generated?",
+        "assignmentTitle": "Assignment", "checklistTitle": "Checklist Tasks",
+        "checklistSubtitle": "Tasks will appear as a checklist on every work order generated from this PM plan.",
+        "field": { "planName": "Plan Name", "repeatEvery": "Repeat every", "firstRun": "First run date", "assignTo": "Assign To", "asset": "Asset" },
+        "placeholder": { "planName": "e.g. Monthly HVAC Inspection", "description": "Describe what this PM plan involves...", "selectAsset": "Select asset", "selectTechnician": "Select technician", "pickDate": "Pick a date", "addTask": "Add a task (e.g. Check oil level)" },
+        "status": { "active": "Active", "inactive": "Inactive", "draft": "Draft" },
+        "priority": { "low": "Low", "medium": "Medium", "high": "High", "critical": "Critical" },
+        "intervalUnit": { "days": "Days", "weeks": "Weeks", "months": "Months" },
+        "intervalExample": "Example: 3 months = a work order is created every 3 months",
+        "firstRunHint": "Optional — leave blank to start immediately", "technicianOnly": "Technicians only",
+        "noTechnicians": "No technicians found", "taskAdd": "Add",
+        "taskEmpty": "No tasks yet. Add steps the technician should complete.",
+        "selectStatus": "Select status", "selectPriority": "Select priority",
+        "timePicker": { "label": "Select estimated duration", "hours": "Hours", "minutes": "Minutes", "done": "Done" },
+        "validation": { "nameRequired": "Name is required", "statusRequired": "Status is required", "priorityRequired": "Priority is required", "intervalValueRequired": "Interval is required" }
+    },
+    "memberForm": {
+        "overviewTitle": "Overview", "accountTitle": "Account", "roleTitle": "User Role",
+        "field": { "firstName": "First Name", "lastName": "Last Name", "phoneNumber": "Phone number", "password": "Password", "confirmPassword": "Confirm Password", "assignCompany": "Assign to Company", "role": "Role", "active": "Active", "activeDesc": "Enable or disable this account" },
+        "placeholder": { "firstName": "First Name", "lastName": "Last Name", "email": "Email", "location": "Select location", "phoneNumber": "Phone Number", "password": "Password", "confirmPassword": "Confirm Password", "company": "Select a company...", "role": "Select user role" }
+    },
+    "deptForm": {
+        "overviewTitle": "Overview", "orgTitle": "Organization",
+        "field": { "deptName": "Department Name", "parentDept": "Parent Department" },
+        "placeholder": { "deptName": "e.g. Maintenance", "code": "e.g. MAINT", "description": "Describe the purpose of this department...", "parentDept": "None (top-level)" },
+        "codeHint": "Unique identifier, uppercase", "parentHint": "Leave empty for top-level",
+        "howItWorks": { "title": "How it works", "bullet1": "Top-level departments have no parent", "bullet2": "Sub-departments inherit the hierarchy", "bullet3": "Members can be assigned to any department" },
+        "validation": { "nameRequired": "Name is required", "codeRequired": "Code is required" }
     }
 }

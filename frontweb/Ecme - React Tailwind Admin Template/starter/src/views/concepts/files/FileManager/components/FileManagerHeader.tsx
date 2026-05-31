@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { useTranslation } from 'react-i18next'
 import Segment from '@/components/ui/Segment'
 import Button from '@/components/ui/Button'
 import UploadFile from './UploadFile'
@@ -15,6 +16,7 @@ const FileManagerHeader = ({
     onEntryClick,
     onDirectoryClick,
 }: FileManagerHeaderProps) => {
+    const { t } = useTranslation()
     const { directories, layout, setLayout, openedDirectoryId, setCreateDirDialog } =
         useFileManagerStore()
 
@@ -41,7 +43,7 @@ const FileManagerHeader = ({
                                 role="button"
                                 onClick={handleEntryClick}
                             >
-                                File Manager
+                                {t('fileManager.title')}
                             </span>
                             {directories.map((dir, index) => (
                                 <Fragment key={dir.id}>
@@ -64,7 +66,7 @@ const FileManagerHeader = ({
                         </h3>
                     </div>
                 ) : (
-                    <h3>File Manager</h3>
+                    <h3>{t('fileManager.title')}</h3>
                 )}
             </div>
             <div className="flex items-center gap-2">
@@ -85,7 +87,7 @@ const FileManagerHeader = ({
                     icon={<TbFolderPlus />}
                     onClick={handleNewFolder}
                 >
-                    New Folder
+                    {t('fileManager.newFolder')}
                 </Button>
                 <UploadFile />
             </div>

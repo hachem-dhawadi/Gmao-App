@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 type MailDeleteConfimationProps = {
@@ -13,22 +14,22 @@ const MailDeleteConfimation = ({
     onConfirmDelete,
     selectedMailCount,
 }: MailDeleteConfimationProps) => {
+    const { t } = useTranslation()
+
     return (
         <ConfirmDialog
             isOpen={isOpen}
             type="danger"
-            title="Delete mail"
+            title={t('mail.delete.title')}
             onClose={onClose}
             onRequestClose={onClose}
             onCancel={onClose}
             onConfirm={onConfirmDelete}
         >
             <p>
-                Are you sure you want to delete{' '}
                 {selectedMailCount > 1
-                    ? `${selectedMailCount} of these mails`
-                    : 'this mail'}{' '}
-                ? This action can&apos;t be undo.{' '}
+                    ? t('mail.delete.confirmMany', { count: selectedMailCount })
+                    : t('mail.delete.confirmOne')}
             </p>
         </ConfirmDialog>
     )

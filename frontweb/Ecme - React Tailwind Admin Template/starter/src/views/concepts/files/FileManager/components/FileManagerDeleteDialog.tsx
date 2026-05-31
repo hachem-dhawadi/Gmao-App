@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
@@ -11,6 +12,7 @@ type Props = {
 }
 
 const FileManagerDeleteDialog = ({ onDeleted }: Props) => {
+    const { t } = useTranslation()
     const { deleteDialog, setDeleteDialog, deleteFile } = useFileManagerStore()
 
     const [loading, setLoading] = useState(false)
@@ -37,7 +39,7 @@ const FileManagerDeleteDialog = ({ onDeleted }: Props) => {
             toast.push(
                 <Notification
                     type="success"
-                    title={isDirectory ? 'Folder deleted' : 'File deleted'}
+                    title={isDirectory ? t('fileManager.delete.toastFolder') : t('fileManager.delete.toastFile')}
                 />,
                 { placement: 'top-end' },
             )
@@ -46,7 +48,7 @@ const FileManagerDeleteDialog = ({ onDeleted }: Props) => {
         } catch (err) {
             const msg =
                 (err as AxiosError<{ message?: string }>)?.response?.data
-                    ?.message ?? 'Delete failed'
+                    ?.message ?? t('fileManager.delete.toastFailed')
             toast.push(
                 <Notification type="danger" title={msg} />,
                 { placement: 'top-end' },
@@ -60,7 +62,7 @@ const FileManagerDeleteDialog = ({ onDeleted }: Props) => {
         <ConfirmDialog
             isOpen={deleteDialog.open}
             type="danger"
-            title={isDirectory ? 'Delete folder' : 'Delete file'}
+            title={isDirectory ? t('fileManager.delete.titleFolder') : t('fileManager.delete.titleFile')}
             confirmButtonProps={{ loading, type: 'button' }}
             cancelButtonProps={{ type: 'button' }}
             onClose={handleClose}
@@ -69,10 +71,9 @@ const FileManagerDeleteDialog = ({ onDeleted }: Props) => {
             onConfirm={handleConfirm}
         >
             <p>
-                Are you sure you want to delete this{' '}
-                <strong>{isDirectory ? 'folder' : 'file'}</strong>?
-                {isDirectory && ' All contents will be permanently removed.'}
-                {' '}This action cannot be undone.
+                {isDirectory
+                    ? t('fileManager.delete.confirmFolder')
+                    : t('fileManager.delete.confirmFile')}
             </p>
         </ConfirmDialog>
     )
