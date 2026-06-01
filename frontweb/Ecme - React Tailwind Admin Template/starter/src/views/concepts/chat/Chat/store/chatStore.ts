@@ -1,129 +1,126 @@
 import { create } from 'zustand'
-import type {
-    Chats,
-    ChatType,
-    Conversation,
-    Conversations,
-    Message,
-    SelectedChat,
-} from '../types'
+import type { ChatConversation, ChatMessage } from '@/services/ChatService'
+import type { SelectedConversation } from '../types'
 
-type ContactInfoDrawer = {
-    userId: string
-    chatId: string
-    chatType: ChatType | ''
-    open: boolean
-}
-
-export type ChatState = {
-    conversationRecord: Conversations
-    selectedChat: SelectedChat
-    selectedChatType: ChatType | ''
+type ChatState = {
+    conversations: ChatConversation[]
+    selectedConversation: SelectedConversation
+    messages: ChatMessage[]
+    messagesLoading: boolean
     mobileSideBarExpand: boolean
-    chats: Chats
-    chatsFetched: boolean
-    contactListDialog: boolean
-    contactInfoDrawer: ContactInfoDrawer
 }
 
 type ChatAction = {
-    setChats: (payload: Chats) => void
-    setChatsFetched: (payload: boolean) => void
-    setSelectedChat: (payload: SelectedChat) => void
-    setContactInfoDrawer: (payload: ContactInfoDrawer) => void
-    setChatMute: (payload: { id: string; muted: boolean }) => void
-    setSelectedChatType: (payload: ChatType | '') => void
-    setChatRead: (payload: string) => void
-    setContactListDialog: (payload: boolean) => void
+    setConversations: (payload: ChatConversation[]) => void
+    setSelectedConversation: (payload: SelectedConversation) => void
+    setMessages: (payload: ChatMessage[]) => void
+    prependMessages: (payload: ChatMessage[]) => void
+    pushMessage: (payload: ChatMessage) => void
+    setMessagesLoading: (payload: boolean) => void
     setMobileSidebar: (payload: boolean) => void
-    pushConversationRecord: (payload: Conversation) => void
-    pushConversationMessage: (id: string, conversation: Message) => void
-    deleteConversationRecord: (payload: string) => void
-}
-
-const initialState: ChatState = {
-    conversationRecord: [],
-    selectedChat: {},
-    mobileSideBarExpand: false,
-    chats: [],
-    selectedChatType: 'personal',
-    chatsFetched: false,
-    contactListDialog: false,
-    contactInfoDrawer: {
-        userId: '',
-        chatId: '',
-        chatType: '',
-        open: false,
-    },
+    markConversationRead: (id: number) => void
+    updateConversationLastMessage: (conversationId: number, message: ChatMessage) => void
+    upsertConversationFromNotification: (conv: { id: number; name: string; type: 'direct' | 'group'; avatar: string | null; unread_count: number }, message: ChatMessage) => void
+    prependConversationIfMissing: (conv: ChatConversation) => void
+    removeConversation: (id: number) => void
 }
 
 export const useChatStore = create<ChatState & ChatAction>((set, get) => ({
-    ...initialState,
-    setChats: (payload) => set(() => ({ chats: payload })),
-    setChatsFetched: (payload) => set(() => ({ chatsFetched: payload })),
-    setSelectedChat: (payload) => set(() => ({ selectedChat: payload })),
-    setContactInfoDrawer: (payload) =>
-        set(() => ({ contactInfoDrawer: payload })),
-    setChatMute: ({ id, muted }) =>
-        set(() => {
-            const chats = get().chats.map((chat) => {
-                if (chat.id === id) {
-                    chat.muted = muted
-                }
-                return chat
-            })
-            return { chats }
+    conversations: [],
+    selectedConversation: {},
+    messages: [],
+    messagesLoading: false,
+    mobileSideBarExpand: false,
+
+    setConversations: (payload) => set({ conversations: payload }),
+
+    setSelectedConversation: (payload) =>
+        set({ selectedConversation: payload, messages: [] }),
+
+    setMessages: (payload) => set({ messages: payload }),
+
+    prependMessages: (payload) =>
+        set((state) => ({ messages: [...payload, ...state.messages] })),
+
+    pushMessage: (payload) =>
+        set((state) => {
+            if (state.messages.some((m) => m.id === payload.id)) return state
+            return { messages: [...state.messages, payload] }
         }),
-    setSelectedChatType: (payload) =>
-        set(() => ({ selectedChatType: payload })),
-    setChatRead: (id) =>
-        set(() => {
-            const chats = get().chats.map((chat) => {
-                if (chat.id === id) {
-                    chat.unread = 0
-                }
-                return chat
-            })
-            return { chats }
+
+    setMessagesLoading: (payload) => set({ messagesLoading: payload }),
+
+    setMobileSidebar: (payload) => set({ mobileSideBarExpand: payload }),
+
+    markConversationRead: (id) =>
+        set((state) => ({
+            conversations: state.conversations.map((c) =>
+                c.id === id ? { ...c, unread_count: 0 } : c,
+            ),
+        })),
+
+    updateConversationLastMessage: (conversationId, message) =>
+        set((state) => ({
+            conversations: state.conversations.map((c) =>
+                c.id === conversationId
+                    ? {
+                          ...c,
+                          last_message: {
+                              id: message.id,
+                              body: message.body,
+                              type: message.type,
+                              created_at: message.created_at,
+                              sender: message.sender,
+                          },
+                      }
+                    : c,
+            ),
+        })),
+
+    prependConversationIfMissing: (conv) =>
+        set((state) => {
+            if (state.conversations.some((c) => c.id === conv.id)) return state
+            return { conversations: [conv, ...state.conversations] }
         }),
-    setContactListDialog: (payload) =>
-        set(() => ({ contactListDialog: payload })),
-    setMobileSidebar: (payload) =>
-        set(() => ({ mobileSideBarExpand: payload })),
-    pushConversationRecord: (payload) =>
-        set(() => {
-            const previousConversationRecord = get().conversationRecord
-            return {
-                conversationRecord: [
-                    ...previousConversationRecord,
-                    ...[payload],
-                ],
+
+    removeConversation: (id) =>
+        set((state) => ({
+            conversations: state.conversations.filter((c) => c.id !== id),
+            selectedConversation:
+                state.selectedConversation.id === id ? {} : state.selectedConversation,
+            messages: state.selectedConversation.id === id ? [] : state.messages,
+        })),
+
+    upsertConversationFromNotification: (conv, message) =>
+        set((state) => {
+            // If this conversation is currently open the user is reading it — keep unread at 0
+            const isOpen    = state.selectedConversation.id === conv.id
+            const unread    = isOpen ? 0 : conv.unread_count
+            const lastMessage = {
+                id:         message.id,
+                body:       message.body,
+                type:       message.type,
+                created_at: message.created_at,
+                sender:     message.sender,
             }
-        }),
-    pushConversationMessage: (id, message) =>
-        set(() => {
-            const previousConversationRecord = get().conversationRecord
-            const conversationRecord = structuredClone(
-                previousConversationRecord,
-            ).map((record) => {
-                if (id === record.id) {
-                    record.conversation.push(message)
+            const exists = state.conversations.some((c) => c.id === conv.id)
+            if (exists) {
+                return {
+                    conversations: state.conversations.map((c) =>
+                        c.id === conv.id
+                            ? { ...c, unread_count: unread, last_message: lastMessage }
+                            : c,
+                    ),
                 }
-                return record
-            })
-            return {
-                conversationRecord,
             }
-        }),
-    deleteConversationRecord: (payload) =>
-        set(() => {
-            const previousConversationRecord = get().conversationRecord
-            const previousChats = get().chats
-            return {
-                conversationRecord: previousConversationRecord.filter(
-                    (record) => record.id !== payload,
-                ),
-                chats: previousChats.filter((chat) => chat.id !== payload),
+            // Not yet in the list — prepend it
+            const newConv: ChatConversation = {
+                ...conv,
+                unread_count: unread,
+                members:      [],
+                last_message: lastMessage,
+                created_at:   message.created_at,
             }
+            return { conversations: [newConv, ...state.conversations] }
         }),
 }))

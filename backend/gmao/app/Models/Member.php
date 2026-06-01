@@ -34,4 +34,11 @@ class Member extends Model
     {
         return $this->belongsToMany(Role::class, 'member_roles');
     }
+
+    public function conversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_members')
+            ->withPivot(['last_read_at', 'joined_at'])
+            ->withTimestamps();
+    }
 }

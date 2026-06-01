@@ -47,6 +47,7 @@ const ReceiptList = lazy(() => import('@/views/concepts/purchasing/ReceiptList/R
 const EcommerceDashboard = lazy(() => import('@/views/dashboards/EcommerceDashboard'))
 const Calendar = lazy(() => import('@/views/concepts/calendar/Calendar'))
 const FileManager = lazy(() => import('@/views/concepts/files/FileManager'))
+const ChatPage = lazy(() => import('@/views/concepts/chat/Chat'))
 const Mail = lazy(() => import('@/views/concepts/mail/Mail'))
 const CustomerDetails = lazy(() => import('@/views/concepts/customers/CustomerDetails'))
 
@@ -200,6 +201,16 @@ const placeholderRoutes: Routes = [
         path: '/concepts/calendar',
         component: Calendar,
         authority: [],
+    },
+    {
+        key: 'concepts.chat',
+        path: '/concepts/chat',
+        component: ChatPage,
+        authority: [],
+        meta: {
+            pageContainerType: 'gutterless',
+            pageBackgroundType: 'plain',
+        },
     },
     {
         key: 'concepts.fileManager',

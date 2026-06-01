@@ -336,6 +336,16 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 subMenu: [],
             },
             {
+                key: 'concepts.chat',
+                path: `${CONCEPTS_PREFIX_PATH}/chat`,
+                title: 'Chat',
+                translateKey: 'nav.chat',
+                icon: 'chat',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: ['user'],
+                subMenu: [],
+            },
+            {
                 key: 'concepts.mail',
                 path: `${CONCEPTS_PREFIX_PATH}/mail`,
                 title: 'Notifications',

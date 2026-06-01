@@ -16,6 +16,7 @@
         "workspace": "مساحة العمل",
         "calendar": "التقويم",
         "fileManager": "مدير الملفات",
+        "chat": "محادثة",
         "notifications": "الإشعارات",
         "account": { "account": "الحساب", "settings": "الإعدادات" }
     },

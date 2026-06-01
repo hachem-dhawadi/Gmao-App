@@ -16,6 +16,7 @@
         "workspace": "Espace de travail",
         "calendar": "Calendrier",
         "fileManager": "Gestionnaire de fichiers",
+        "chat": "Chat",
         "notifications": "Notifications",
         "account": { "account": "Compte", "settings": "Paramètres" }
     },

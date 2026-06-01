@@ -2,174 +2,176 @@ import { useEffect, useState, useMemo } from 'react'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
+import Input from '@/components/ui/Input'
 import ScrollBar from '@/components/ui/ScrollBar'
-import DebouceInput from '@/components/shared/DebouceInput'
+import Notification from '@/components/ui/Notification'
+import toast from '@/components/ui/toast'
 import classNames from '@/utils/classNames'
-import { apiGetContacts } from '@/services/ChatService'
-import { TbSearch, TbCheck } from 'react-icons/tb'
-import useSWRMutation from 'swr/mutation'
-import type { GetContactsResponse, UserDetails } from '../types'
+import { apiGetMembersList } from '@/services/MembersService'
+import { apiCreateConversation } from '@/services/ChatService'
+import { useChatStore } from '../store/chatStore'
+import { TbSearch, TbCheck, TbPlus, TbUsers } from 'react-icons/tb'
+import type { Member } from '@/services/MembersService'
 
-async function getContacts() {
-    const data = await apiGetContacts<GetContactsResponse>()
-    return data
+type Props = {
+    onCreated: () => void
 }
 
-const NewChat = () => {
-    const [contactListDialog, setContactListDialog] = useState(false)
-    const [selectedContact, setSelectedContact] = useState<UserDetails[]>([])
-    const [query, setQuery] = useState('')
+const NewChat = ({ onCreated }: Props) => {
+    const setSelectedConversation = useChatStore((state) => state.setSelectedConversation)
 
-    const { data, trigger: fetchContacts } = useSWRMutation(
-        `/api/contacts/`,
-        getContacts,
-    )
+    const [open, setOpen]             = useState(false)
+    const [query, setQuery]           = useState('')
+    const [groupName, setGroupName]   = useState('')
+    const [selected, setSelected]     = useState<Member[]>([])
+    const [members, setMembers]       = useState<Member[]>([])
+    const [loading, setLoading]       = useState(false)
+    const [creating, setCreating]     = useState(false)
 
     useEffect(() => {
-        if (contactListDialog) {
-            fetchContacts()
+        if (!open) return
+        setLoading(true)
+        apiGetMembersList({ per_page: 200 })
+            .then((resp) => setMembers(resp.data?.members ?? []))
+            .finally(() => setLoading(false))
+    }, [open])
+
+    const filtered = useMemo(() =>
+        members.filter((m) =>
+            !query || (m.user?.name ?? '').toLowerCase().includes(query.toLowerCase()),
+        ),
+    [members, query])
+
+    const isGroup = selected.length > 1
+
+    const toggle = (member: Member) => {
+        setSelected((prev) =>
+            prev.some((m) => m.id === member.id)
+                ? prev.filter((m) => m.id !== member.id)
+                : [...prev, member],
+        )
+    }
+
+    const handleStart = async () => {
+        if (selected.length === 0) return
+        if (isGroup && !groupName.trim()) {
+            toast.push(<Notification type="warning">Please enter a group name.</Notification>, { placement: 'top-center' })
+            return
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [contactListDialog])
-
-    const contacts = useMemo(() => {
-        if (data) {
-            return data.filter((contact) => {
-                if (!query) {
-                    return true
-                }
-
-                if (contact.name.toLocaleLowerCase().includes(query)) {
-                    return true
-                }
-
-                return false
+        setCreating(true)
+        try {
+            const resp = await apiCreateConversation({
+                type:       isGroup ? 'group' : 'direct',
+                member_ids: selected.map((m) => m.id),
+                name:       isGroup ? groupName.trim() : undefined,
             })
+            const conv = resp.data.conversation
+            setSelectedConversation({
+                id:                   conv.id,
+                name:                 conv.name,
+                avatar:               conv.avatar,
+                type:                 conv.type,
+                members:              conv.members,
+                created_by_member_id: conv.created_by_member_id,
+            })
+            onCreated()
+            handleClose()
+        } catch {
+            toast.push(<Notification type="danger">Failed to start conversation.</Notification>, { placement: 'top-center' })
+        } finally {
+            setCreating(false)
         }
-    }, [data, query])
-
-    const handleDialogClose = () => {
-        setContactListDialog(false)
-        setSelectedContact([])
     }
 
-    const handleStartNewChat = () => {
-        handleDialogClose()
-    }
-
-    const handleInputChange = (value: string) => {
-        setQuery(value)
-    }
-
-    const handleSetSelectedContact = (contact: UserDetails) => {
-        setSelectedContact((prevSelectedContacts) => {
-            const contactExists = prevSelectedContacts.some(
-                (c) => c.id === contact.id,
-            )
-
-            if (contactExists) {
-                return prevSelectedContacts.filter((c) => c.id !== contact.id)
-            } else {
-                return [...prevSelectedContacts, contact]
-            }
-        })
+    const handleClose = () => {
+        setOpen(false)
+        setSelected([])
+        setQuery('')
+        setGroupName('')
     }
 
     return (
         <>
-            <Button
-                block
-                variant="solid"
-                onClick={() => setContactListDialog(true)}
-            >
+            <Button block variant="solid" icon={<TbPlus />} onClick={() => setOpen(true)}>
                 New chat
             </Button>
-            <Dialog
-                isOpen={contactListDialog}
-                onClose={handleDialogClose}
-                onRequestClose={handleDialogClose}
-            >
-                {contacts && (
-                    <div>
-                        <div className="text-center mb-6">
-                            <h4 className="mb-1">Contact List</h4>
-                            <p>
-                                Browse and select contacts to start a
-                                conversation
-                            </p>
-                        </div>
-                        <DebouceInput
-                            placeholder="Search..."
-                            type="text"
-                            size="sm"
-                            prefix={<TbSearch className="text-lg" />}
-                            onChange={(e) => handleInputChange(e.target.value)}
-                        />
-                        <div className="mt-4">
-                            <p className="font-semibold uppercase text-xs mb-4">
-                                {contacts.length} person available
-                            </p>
-                            <div className="mb-6">
-                                <ScrollBar
-                                    className={classNames(
-                                        'overflow-y-auto h-80',
-                                    )}
-                                >
-                                    <div className="h-full pr-3 flex flex-col gap-2">
-                                        {contacts.map((contact) => (
-                                            <div
-                                                key={contact.id}
-                                                className={classNames(
-                                                    'py-3 px-3 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700',
-                                                    selectedContact.some(
-                                                        (item) =>
-                                                            item.id ===
-                                                            contact.id,
-                                                    ) &&
-                                                        'bg-gray-100 dark:bg-gray-700',
-                                                )}
-                                                role="button"
-                                                onClick={() =>
-                                                    handleSetSelectedContact(
-                                                        contact,
-                                                    )
-                                                }
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <Avatar
-                                                        shape="circle"
-                                                        src={contact.img}
-                                                    />
-                                                    <div>
-                                                        <p className="heading-text font-bold">
-                                                            {contact.name}
-                                                        </p>
-                                                        <p>{contact.email}</p>
-                                                    </div>
-                                                </div>
-                                                {selectedContact.some(
-                                                    (item) =>
-                                                        item.id === contact.id,
-                                                ) && (
-                                                    <TbCheck className="text-2xl text-primary" />
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </ScrollBar>
-                            </div>
-                            <Button
-                                block
-                                variant="solid"
-                                onClick={handleStartNewChat}
-                            >
-                                {selectedContact.length > 1
-                                    ? 'Group Message'
-                                    : 'Message'}
-                            </Button>
-                        </div>
+
+            <Dialog isOpen={open} onClose={handleClose} onRequestClose={handleClose}>
+                <div>
+                    <div className="text-center mb-5">
+                        <h4 className="mb-1">New Conversation</h4>
+                        <p className="text-sm text-gray-500">Select one person for DM or multiple for a group</p>
                     </div>
-                )}
+
+                    {isGroup && (
+                        <div className="mb-4">
+                            <Input
+                                prefix={<TbUsers />}
+                                placeholder="Group name..."
+                                value={groupName}
+                                onChange={(e) => setGroupName(e.target.value)}
+                            />
+                        </div>
+                    )}
+
+                    <Input
+                        prefix={<TbSearch />}
+                        placeholder="Search members..."
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
+
+                    <div className="mt-3">
+                        <p className="font-semibold uppercase text-xs mb-3 text-gray-400">
+                            {filtered.length} member{filtered.length !== 1 ? 's' : ''}
+                        </p>
+                        <ScrollBar className="overflow-y-auto h-72">
+                            <div className="flex flex-col gap-1 pr-2">
+                                {loading && <p className="text-center text-gray-400 text-sm py-4">Loading...</p>}
+                                {!loading && filtered.map((member) => {
+                                    const isSelected = selected.some((m) => m.id === member.id)
+                                    return (
+                                        <div
+                                            key={member.id}
+                                            className={classNames(
+                                                'py-2 px-3 rounded-lg flex items-center justify-between cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700',
+                                                isSelected && 'bg-gray-100 dark:bg-gray-700',
+                                            )}
+                                            role="button"
+                                            onClick={() => toggle(member)}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Avatar src={member.user?.avatar_url ?? undefined} size={32}>
+                                                    {!member.user?.avatar_url
+                                                        ? (member.user?.name?.charAt(0)?.toUpperCase() ?? '?')
+                                                        : null}
+                                                </Avatar>
+                                                <div>
+                                                    <p className="font-semibold text-sm heading-text">
+                                                        {member.user?.name ?? member.employee_code ?? 'Unknown'}
+                                                    </p>
+                                                    <p className="text-xs text-gray-400">{member.user?.email}</p>
+                                                </div>
+                                            </div>
+                                            {isSelected && <TbCheck className="text-xl text-primary" />}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </ScrollBar>
+                    </div>
+
+                    <Button
+                        block
+                        variant="solid"
+                        className="mt-4"
+                        disabled={selected.length === 0}
+                        loading={creating}
+                        onClick={handleStart}
+                    >
+                        {isGroup ? 'Create Group' : 'Start Chat'}
+                    </Button>
+                </div>
             </Dialog>
         </>
     )

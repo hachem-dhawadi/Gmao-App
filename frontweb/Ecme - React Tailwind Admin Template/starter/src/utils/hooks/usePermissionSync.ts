@@ -47,8 +47,15 @@ const usePermissionSync = () => {
                 newAuthority.length !== currentAuthority.length ||
                 newAuthority.some((a) => !currentAuthority.includes(a))
 
+            const freshAvatar = backendUser.avatar_url || backendUser.avatar_path || undefined
+
             if (changed) {
-                setUser({ authority: newAuthority })
+                setUser({ authority: newAuthority, ...(freshAvatar ? { avatar: freshAvatar } : {}) })
+            } else if (freshAvatar) {
+                const currentAvatar = useSessionUser.getState().user.avatar
+                if (currentAvatar !== freshAvatar) {
+                    setUser({ avatar: freshAvatar })
+                }
             }
         },
     })

@@ -61,7 +61,11 @@ const Message = (props: MessageProps) => {
                                         <Avatar
                                             src={sender.avatarImageUrl}
                                             size={35}
-                                        />
+                                        >
+                                            {!sender.avatarImageUrl
+                                                ? sender.name?.charAt(0)?.toUpperCase()
+                                                : null}
+                                        </Avatar>
                                     )}
                                 </div>
                             )}

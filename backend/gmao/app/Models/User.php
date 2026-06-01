@@ -59,6 +59,13 @@ class User extends Authenticatable
         ];
     }
 
+    protected $appends = ['avatar_url'];
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        return $this->avatar_path ? '/storage/' . $this->avatar_path : null;
+    }
+
     public function members(): HasMany
     {
         return $this->hasMany(Member::class);

@@ -1,80 +1,42 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import Avatar from '@/components/ui/Avatar'
-import Card from '@/components/ui/Card'
+import Spinner from '@/components/ui/Spinner'
 import ChatBox from '@/components/view/ChatBox'
-import ChatAction from './ChatAction'
 import StartConverstation from '@/assets/svg/StartConverstation'
+import ConversationInfoPanel from './ConversationInfoPanel'
 import { useChatStore } from '../store/chatStore'
-import { apiGetConversation } from '@/services/ChatService'
+import { apiSendMessage } from '@/services/ChatService'
 import classNames from '@/utils/classNames'
 import useResponsive from '@/utils/hooks/useResponsive'
-import dayjs from 'dayjs'
-import uniqueId from 'lodash/uniqueId'
-import { TbChevronLeft } from 'react-icons/tb'
-import type { GetConversationResponse, Message, ChatType } from '../types'
+import { TbChevronLeft, TbUsers, TbInfoCircle } from 'react-icons/tb'
 import type { ScrollBarRef } from '@/components/view/ChatBox'
-
-const getFileType = (file: File) => {
-    console.log('file.type', file.type)
-    switch (file.type) {
-        case 'image/jpg':
-        case 'image/jpeg':
-        case 'image/png':
-        case 'image/webp':
-            return 'image'
-        case 'video/mp4':
-        case 'video/avi':
-            return 'video'
-        case 'audio/mp3':
-        case 'audio/wav':
-            return 'audio'
-        default:
-            return 'misc'
-    }
-}
 
 const ChatBody = () => {
     const scrollRef = useRef<ScrollBarRef>(null)
-    const selectedChat = useChatStore((state) => state.selectedChat)
-    const conversationRecord = useChatStore((state) => state.conversationRecord)
-    const pushConversationRecord = useChatStore(
-        (state) => state.pushConversationRecord,
-    )
-    const setSelectedChat = useChatStore((state) => state.setSelectedChat)
-    const pushConversationMessage = useChatStore(
-        (state) => state.pushConversationMessage,
-    )
-    const setContactInfoDrawer = useChatStore(
-        (state) => state.setContactInfoDrawer,
-    )
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, setIsFetchingConversation] = useState(false)
-    const [conversation, setConversation] = useState<Message[]>([])
+
+    const selectedConversation = useChatStore((state) => state.selectedConversation)
+    const messages             = useChatStore((state) => state.messages)
+    const messagesLoading      = useChatStore((state) => state.messagesLoading)
+    const pushMessage          = useChatStore((state) => state.pushMessage)
+    const updateConversationLastMessage = useChatStore((state) => state.updateConversationLastMessage)
+    const setSelectedConversation = useChatStore((state) => state.setSelectedConversation)
 
     const { smaller } = useResponsive()
+    const [sending, setSending] = useState(false)
+    const [infoOpen, setInfoOpen] = useState(false)
 
     const scrollToBottom = () => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-        }
-    }
-
-    const handleProfileClick = () => {
-        setContactInfoDrawer({
-            userId: selectedChat.user?.id as string,
-            chatId: selectedChat.id as string,
-            chatType: selectedChat.chatType as ChatType,
-            open: true,
+        // requestAnimationFrame ensures the DOM has painted before we scroll
+        requestAnimationFrame(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+            }
         })
     }
 
-    const handlePushMessage = (message: Message) => {
-        pushConversationMessage(selectedChat.id as string, message)
-        setConversation((prevConversation) => {
-            prevConversation.push(message)
-            return structuredClone(prevConversation)
-        })
-    }
+    useEffect(() => {
+        if (messages.length > 0) scrollToBottom()
+    }, [messages.length])
 
     const handleInputChange = async ({
         value,
@@ -83,141 +45,131 @@ const ChatBody = () => {
         value: string
         attachments?: File[]
     }) => {
-        const newMessage: Message = {
-            id: uniqueId('chat-conversation-'),
-            sender: {
-                id: '1',
-                name: 'Angelina Gotelli',
-                avatarImageUrl: '/img/avatars/thumb-1.jpg',
-            },
-            content: value,
-            attachments: attachments?.map((attachment) => {
-                return {
-                    type: getFileType(attachment),
-                    source: attachment,
-                    mediaUrl: URL.createObjectURL(attachment),
-                }
-            }),
-            timestamp: dayjs().toDate(),
-            type: 'regular',
-            isMyMessage: true,
-        }
-        handlePushMessage(newMessage)
-    }
-
-    const cardHeaderProps = {
-        header: {
-            content: (
-                <div className="flex items-center gap-2">
-                    {smaller.md && (
-                        <button
-                            className="text-xl hover:text-primary"
-                            onClick={() => setSelectedChat({})}
-                        >
-                            <TbChevronLeft />
-                        </button>
-                    )}
-                    <button
-                        className="flex items-center gap-2"
-                        role="button"
-                        onClick={handleProfileClick}
-                    >
-                        <div>
-                            <Avatar src={selectedChat.user?.avatarImageUrl} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex justify-between">
-                                <div className="font-bold heading-text truncate">
-                                    {selectedChat.user?.name}
-                                </div>
-                            </div>
-                            <div>
-                                {selectedChat?.chatType === 'groups'
-                                    ? 'click here for group info'
-                                    : 'last seen recently'}
-                            </div>
-                        </div>
-                    </button>
-                </div>
-            ),
-            extra: <ChatAction muted={selectedChat.muted} />,
-            className: 'bg-gray-100 dark:bg-gray-600 h-[100px]',
-        },
-    }
-
-    useEffect(() => {
-        const fetchConvesation = async () => {
-            setIsFetchingConversation(true)
-
-            const record = conversationRecord.find(
-                (item) => item.id === selectedChat.id,
+        if (!selectedConversation.id || (!value.trim() && !attachments?.length)) return
+        setSending(true)
+        try {
+            const resp = await apiSendMessage(
+                selectedConversation.id,
+                value,
+                attachments,
             )
-
-            if (record) {
-                setConversation(record.conversation)
-            } else {
-                const resp = await apiGetConversation<GetConversationResponse>({
-                    id: selectedChat.id as string,
-                })
-                setConversation(resp.conversation)
-                pushConversationRecord(resp)
-            }
-
-            setIsFetchingConversation(false)
+            const msg = resp.data.message
+            pushMessage(msg)
+            updateConversationLastMessage(selectedConversation.id, msg)
             scrollToBottom()
+        } finally {
+            setSending(false)
         }
+    }
 
-        if (selectedChat.id) {
-            setConversation([])
-            fetchConvesation()
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedChat.id, conversation])
+    // Map backend messages to ChatBox format
+    const messageList = messages.map((msg) => ({
+        id:        String(msg.id),
+        sender: {
+            id:              String(msg.sender.id),
+            name:            msg.sender.name ?? 'Unknown',
+            avatarImageUrl:  msg.sender.avatar ?? undefined,
+        },
+        content:     msg.body ?? '',
+        attachments: msg.attachments.map((a) => ({
+            type:     a.mime_type?.startsWith('image/') ? 'image' as const : 'misc' as const,
+            source:   new File([], a.original_name),
+            mediaUrl: a.url,
+        })),
+        timestamp:   new Date(msg.created_at),
+        type:        'regular' as const,
+        isMyMessage: msg.is_mine,
+        showAvatar:  !msg.is_mine,
+    }))
 
-    const messageList = useMemo(() => {
-        return conversation.map((item) => {
-            item.timestamp = dayjs
-                .unix(item.timestamp as number)
-                .toDate() as Date
-            if (item.isMyMessage) {
-                item.showAvatar = false
-            }
-            return item
-        })
-    }, [conversation])
+    const cardHeaderContent = selectedConversation.id ? (
+        <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-2">
+                {smaller.md && (
+                    <button className="text-xl hover:text-primary" onClick={() => setSelectedConversation({})}>
+                        <TbChevronLeft />
+                    </button>
+                )}
+                <div className="flex items-center gap-2">
+                    {selectedConversation.type === 'group' ? (
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                            <TbUsers className="text-xl" />
+                        </div>
+                    ) : (
+                        <Avatar src={selectedConversation.avatar ?? undefined}>
+                            {!selectedConversation.avatar
+                                ? (selectedConversation.name?.charAt(0)?.toUpperCase() ?? '?')
+                                : null}
+                        </Avatar>
+                    )}
+                    <div className="min-w-0">
+                        <div className="font-bold heading-text truncate">{selectedConversation.name}</div>
+                        {selectedConversation.type === 'group' && (
+                            <div className="text-xs text-gray-400">
+                                {selectedConversation.members?.length ?? 0} members
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+            <button
+                className="text-xl text-gray-500 hover:text-primary transition-colors"
+                onClick={() => setInfoOpen((v) => !v)}
+                title="Conversation info"
+            >
+                <TbInfoCircle />
+            </button>
+        </div>
+    ) : null
 
     return (
-        <div
-            className={classNames(
-                'w-full md:block',
-                !selectedChat.id && 'hidden',
-            )}
-        >
-            {selectedChat.id ? (
-                <Card
-                    className="flex-1 h-full max-h-full dark:border-gray-700"
-                    bodyClass="h-[calc(100%-100px)] relative"
-                    {...cardHeaderProps}
-                >
-                    <ChatBox
-                        ref={scrollRef}
-                        messageList={messageList}
-                        placeholder="Enter a prompt here"
-                        showAvatar={true}
-                        avatarGap={true}
-                        messageListClass="h-[calc(100%-100px)]"
-                        bubbleClass="max-w-[300px]"
-                        onInputChange={handleInputChange}
-                    />
-                </Card>
+        <div className={classNames('w-full md:block', !selectedConversation.id && 'hidden')}>
+            {selectedConversation.id ? (
+                <div className="flex flex-col h-full rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-gray-100 dark:bg-gray-600 px-4 h-[72px] flex items-center border-b border-gray-200 dark:border-gray-700">
+                        {cardHeaderContent}
+                    </div>
+
+                    {/* Messages + Info Panel */}
+                    <div className="flex flex-1 overflow-hidden">
+                        <div className="flex-1 overflow-hidden relative">
+                            {messagesLoading ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <Spinner size={40} />
+                                </div>
+                            ) : (
+                                <ChatBox
+                                    ref={scrollRef}
+                                    messageList={messageList}
+                                    placeholder="Type a message..."
+                                    showAvatar={true}
+                                    avatarGap={true}
+                                    messageListClass="h-[calc(100%-72px)]"
+                                    bubbleClass="max-w-[340px]"
+                                    onInputChange={handleInputChange}
+                                />
+                            )}
+                            {sending && (
+                                <div className="absolute bottom-20 right-6 flex items-center gap-1 text-xs text-gray-400">
+                                    <Spinner size={14} /> Sending...
+                                </div>
+                            )}
+                        </div>
+                        {infoOpen && (
+                            <ConversationInfoPanel
+                                conversation={selectedConversation}
+                                onClose={() => setInfoOpen(false)}
+                            />
+                        )}
+                    </div>
+                </div>
             ) : (
                 <div className="flex-1 h-full max-h-full flex flex-col items-center justify-center rounded-2xl border border-gray-200 dark:border-gray-800">
                     <StartConverstation height={250} width={250} />
                     <div className="mt-10 text-center">
                         <h3>Start Chatting!</h3>
-                        <p className="mt-2 text-base">
-                            Pick a Conversation or Begin a New One
-                        </p>
+                        <p className="mt-2 text-base">Pick a conversation or begin a new one</p>
                     </div>
                 </div>
             )}

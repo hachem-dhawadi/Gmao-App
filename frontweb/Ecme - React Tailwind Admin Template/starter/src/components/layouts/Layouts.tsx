@@ -5,10 +5,15 @@ import { useAuth } from '@/auth'
 import { useThemeStore } from '@/store/themeStore'
 import PostLoginLayout from './PostLoginLayout'
 import PreLoginLayout from './PreLoginLayout'
+import useGlobalChatNotifications from '@/hooks/useGlobalChatNotifications'
+
+const AuthenticatedLayout = ({ layoutType, children }: CommonProps & { layoutType: string }) => {
+    useGlobalChatNotifications()
+    return <PostLoginLayout layoutType={layoutType}>{children}</PostLoginLayout>
+}
 
 const Layout = ({ children }: CommonProps) => {
     const layoutType = useThemeStore((state) => state.layout.type)
-
     const { authenticated } = useAuth()
 
     return (
@@ -20,9 +25,9 @@ const Layout = ({ children }: CommonProps) => {
             }
         >
             {authenticated ? (
-                <PostLoginLayout layoutType={layoutType}>
+                <AuthenticatedLayout layoutType={layoutType}>
                     {children}
-                </PostLoginLayout>
+                </AuthenticatedLayout>
             ) : (
                 <PreLoginLayout>{children}</PreLoginLayout>
             )}

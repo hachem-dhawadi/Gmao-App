@@ -26,13 +26,7 @@ class AuthUserResource extends JsonResource
         $avatarUrl = null;
 
         if ($avatarExists) {
-            $storageUrl = Storage::disk('public')->url($avatarStoragePath);
-            $storagePath = parse_url($storageUrl, PHP_URL_PATH) ?: $storageUrl;
-            $normalizedPath = str_starts_with($storagePath, '/')
-                ? $storagePath
-                : '/' . ltrim($storagePath, '/');
-
-            $avatarUrl = $request->getSchemeAndHttpHost() . $normalizedPath;
+            $avatarUrl = '/storage/' . $avatarStoragePath;
         }
 
         return [

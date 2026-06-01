@@ -12,6 +12,7 @@ export type MemberUser = {
     email: string
     phone: string | null
     last_login_at: string | null
+    avatar_url: string | null
 }
 
 export type Member = {

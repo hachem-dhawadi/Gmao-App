@@ -1,110 +1,60 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import Avatar from '@/components/ui/Avatar'
 import Badge from '@/components/ui/Badge'
 import ScrollBar from '@/components/ui/ScrollBar'
-import ChatSegment from './ChatSegment'
 import NewChat from './NewChat'
 import { useChatStore } from '../store/chatStore'
-import useChat from '../hooks/useChat'
 import classNames from '@/utils/classNames'
-import useDebounce from '@/utils/hooks/useDebounce'
-import { TbVolumeOff, TbSearch, TbX } from 'react-icons/tb'
 import dayjs from 'dayjs'
-import type { ChatType } from '../types'
-import type { ChangeEvent } from 'react'
+import { TbSearch, TbX, TbUsers } from 'react-icons/tb'
+import type { ChatConversation } from '@/services/ChatService'
 
-const ChatList = () => {
-    const chats = useChatStore((state) => state.chats)
-    const chatsFetched = useChatStore((state) => state.chatsFetched)
-    const selectedChat = useChatStore((state) => state.selectedChat)
-    const setSelectedChat = useChatStore((state) => state.setSelectedChat)
-    const setMobileSidebar = useChatStore((state) => state.setMobileSidebar)
-    const selectedChatType = useChatStore((state) => state.selectedChatType)
-    const setSelectedChatType = useChatStore(
-        (state) => state.setSelectedChatType,
-    )
-    const setChatRead = useChatStore((state) => state.setChatRead)
+type Props = {
+    onConversationCreated: () => void
+}
+
+const ChatList = ({ onConversationCreated }: Props) => {
+    const conversations           = useChatStore((state) => state.conversations)
+    const selectedConversation    = useChatStore((state) => state.selectedConversation)
+    const setSelectedConversation = useChatStore((state) => state.setSelectedConversation)
+    const setMobileSidebar        = useChatStore((state) => state.setMobileSidebar)
+    const markConversationRead    = useChatStore((state) => state.markConversationRead)
 
     const inputRef = useRef<HTMLInputElement>(null)
+    const [showSearch, setShowSearch] = useState(false)
+    const [query, setQuery]   = useState('')
+    const [filter, setFilter] = useState<'all' | 'direct' | 'group'>('all')
 
-    const [showSearchBar, setShowSearchBar] = useState(false)
-    const [queryText, setQueryText] = useState('')
-
-    const { fetchChats } = useChat()
-
-    useEffect(() => {
-        if (!chatsFetched) {
-            fetchChats()
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
-
-    useEffect(() => {
-        if (showSearchBar) {
-            inputRef.current?.focus()
-        } else {
-            inputRef.current?.blur()
-        }
-    }, [showSearchBar])
-
-    const handleChatClick = ({
-        id,
-        user,
-        muted,
-        chatType,
-        unread,
-    }: {
-        id: string
-        user: { id: string; avatarImageUrl: string; name: string }
-        muted: boolean
-        chatType: ChatType
-        unread: number
-    }) => {
-        if (unread > 0) {
-            setChatRead(id)
-        }
-
-        setSelectedChat({
-            id,
-            user,
-            muted,
-            chatType,
+    const handleClick = (conv: ChatConversation) => {
+        setSelectedConversation({
+            id:                   conv.id,
+            name:                 conv.name,
+            avatar:               conv.avatar,
+            type:                 conv.type,
+            members:              conv.members,
+            created_by_member_id: conv.created_by_member_id,
         })
+        markConversationRead(conv.id)
         setMobileSidebar(false)
     }
 
-    function handleDebounceFn(e: ChangeEvent<HTMLInputElement>) {
-        if (e.target.value.length > 0) {
-            setSelectedChatType('')
-        }
-
-        if (e.target.value.length === 0) {
-            setSelectedChatType('personal')
-        }
-
-        setQueryText(e.target.value)
-    }
-
-    const debounceFn = useDebounce(handleDebounceFn, 500)
-
-    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-        debounceFn(e)
-    }
-
-    const handleSearchToggleClick = () => {
-        setShowSearchBar(!showSearchBar)
-    }
+    const filtered = conversations.filter((c) => {
+        const matchesQuery  = !query || c.name.toLowerCase().includes(query.toLowerCase())
+        const matchesFilter = filter === 'all' || c.type === filter
+        return matchesQuery && matchesFilter
+    })
 
     return (
         <div className="flex flex-col justify-between h-full">
             <div className="mb-4">
-                <div className="flex items-center justify-between mb-4">
-                    {showSearchBar ? (
+                <div className="flex items-center justify-between mb-3">
+                    {showSearch ? (
                         <input
                             ref={inputRef}
-                            className="flex-1 h-full placeholder:text-gray-400 placeholder:text-base placeholder:font-normal bg-transparent focus:outline-hidden heading-text font-bold"
-                            placeholder="Search chat"
-                            onChange={handleInputChange}
+                            autoFocus
+                            className="flex-1 h-full placeholder:text-gray-400 placeholder:text-base bg-transparent focus:outline-hidden heading-text font-bold"
+                            placeholder="Search conversations..."
+                            onChange={(e) => setQuery(e.target.value)}
                         />
                     ) : (
                         <h4>Chat</h4>
@@ -112,81 +62,92 @@ const ChatList = () => {
                     <button
                         className="close-button text-lg"
                         type="button"
-                        onClick={handleSearchToggleClick}
+                        onClick={() => { setShowSearch(!showSearch); setQuery('') }}
                     >
-                        {showSearchBar ? <TbX /> : <TbSearch />}
+                        {showSearch ? <TbX /> : <TbSearch />}
                     </button>
                 </div>
-                <ChatSegment />
-            </div>
-            <ScrollBar className="h-[calc(100%-150px)] overflow-y-auto">
-                <div className="flex flex-col gap-2 h-full">
-                    {chats
-                        .filter((item) => {
-                            if (queryText) {
-                                return item.name
-                                    .toLowerCase()
-                                    .includes(queryText)
-                            }
 
-                            return selectedChatType === item.chatType
-                        })
-                        .map((item) => (
-                            <div
-                                key={item.id}
-                                className={classNames(
-                                    'py-3 px-2 flex items-center gap-2 justify-between rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 relative cursor-pointer select-none',
-                                    selectedChat.id === item.id &&
-                                        'bg-gray-100 dark:bg-gray-700',
-                                )}
-                                role="button"
-                                onClick={() =>
-                                    handleChatClick({
-                                        id: item.id,
-                                        user: {
-                                            id: item.userId || item.groupId,
-                                            avatarImageUrl: item.avatar,
-                                            name: item.name,
-                                        },
-                                        muted: item.muted,
-                                        chatType: item.chatType,
-                                        unread: item.unread,
-                                    })
-                                }
-                            >
-                                <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <div>
-                                        <Avatar src={item.avatar} />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex justify-between">
-                                            <div className="font-bold heading-text truncate flex gap-2 items-center">
-                                                <span>{item.name}</span>
-                                                {item.muted && (
-                                                    <TbVolumeOff className="opacity-60" />
-                                                )}
-                                            </div>
+                {/* Filter tabs */}
+                <div className="flex gap-1 mb-2">
+                    {(['all', 'direct', 'group'] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            className={classNames(
+                                'px-3 py-1 rounded-full text-xs font-semibold transition-colors',
+                                filter === tab
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
+                            )}
+                            onClick={() => setFilter(tab)}
+                        >
+                            {tab === 'all' ? 'All' : tab === 'direct' ? 'Direct' : 'Groups'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <ScrollBar className="h-[calc(100%-140px)] overflow-y-auto">
+                <div className="flex flex-col gap-1 h-full">
+                    {filtered.length === 0 && (
+                        <p className="text-center text-gray-400 text-sm mt-8">No conversations yet</p>
+                    )}
+                    {filtered.map((conv) => (
+                        <div
+                            key={conv.id}
+                            className={classNames(
+                                'py-3 px-2 flex items-center gap-2 justify-between rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 relative cursor-pointer select-none',
+                                selectedConversation.id === conv.id && 'bg-gray-100 dark:bg-gray-700',
+                            )}
+                            role="button"
+                            onClick={() => handleClick(conv)}
+                        >
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <div className="relative">
+                                    {conv.type === 'group' ? (
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                            <TbUsers className="text-xl" />
                                         </div>
-                                        <div className="truncate">
-                                            {item.lastConversation}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex gap-1 items-center">
-                                    <small className="font-semibold">
-                                        {dayjs
-                                            .unix(item.time)
-                                            .format('hh:mm A')}
-                                    </small>
-                                    {item.unread > 0 && (
-                                        <Badge className="bg-primary" />
+                                    ) : (
+                                        <Avatar src={conv.avatar ?? undefined}>
+                                            {!conv.avatar ? (conv.name?.charAt(0)?.toUpperCase() ?? '?') : null}
+                                        </Avatar>
                                     )}
                                 </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="font-bold heading-text truncate">{conv.name}</div>
+                                    <div className="truncate text-sm text-gray-500 dark:text-gray-400">
+                                        {conv.last_message?.body
+                                            ? (conv.last_message.body.length > 35
+                                                ? conv.last_message.body.slice(0, 35) + '…'
+                                                : conv.last_message.body)
+                                            : conv.last_message
+                                            ? '📎 File'
+                                            : 'No messages yet'}
+                                    </div>
+                                </div>
                             </div>
-                        ))}
+                            <div className="flex flex-col gap-1 items-end shrink-0">
+                                {conv.last_message && (
+                                    <small className="font-semibold text-gray-400">
+                                        {dayjs(conv.last_message.created_at).format('HH:mm')}
+                                    </small>
+                                )}
+                                {conv.unread_count > 0 && (
+                                    <Badge
+                                        className="bg-primary text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center rounded-full"
+                                        content={conv.unread_count > 99 ? '99+' : String(conv.unread_count)}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </ScrollBar>
-            <NewChat />
+
+            <div className="mt-3">
+                <NewChat onCreated={onConversationCreated} />
+            </div>
         </div>
     )
 }

@@ -16,6 +16,7 @@
         "workspace": "Workspace",
         "calendar": "Calendar",
         "fileManager": "File Manager",
+        "chat": "Chat",
         "notifications": "Notifications",
         "account": { "account": "Account", "settings": "Settings" }
     },

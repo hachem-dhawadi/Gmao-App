@@ -4,7 +4,6 @@ namespace App\Http\Resources\Api\V1\Members;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @mixin \App\Models\Member
@@ -16,28 +15,18 @@ class MemberResource extends JsonResource
      *
      * @return array<string, mixed>
      */
-    private function resolveAvatarUrl(Request $request, ?string $avatarPath): ?string
+    private function resolveAvatarUrl(?string $avatarPath): ?string
     {
         if (! $avatarPath) {
             return null;
         }
 
-        if (! Storage::disk('public')->exists($avatarPath)) {
-            return null;
-        }
-
-        $storageUrl = Storage::disk('public')->url($avatarPath);
-        $storagePath = parse_url($storageUrl, PHP_URL_PATH) ?: $storageUrl;
-        $normalizedPath = str_starts_with($storagePath, '/')
-            ? $storagePath
-            : '/' . ltrim($storagePath, '/');
-
-        return $request->getSchemeAndHttpHost() . $normalizedPath;
+        return '/storage/' . $avatarPath;
     }
 
     public function toArray(Request $request): array
     {
-        $avatarUrl = $this->resolveAvatarUrl($request, $this->user?->avatar_path ?? null);
+        $avatarUrl = $this->resolveAvatarUrl($this->user?->avatar_path ?? null);
 
         return [
             'id' => $this->id,

@@ -32,7 +32,16 @@ use App\Http\Controllers\Api\V1\Calendar\CalendarController;
 use App\Http\Controllers\Api\V1\FileManager\FileManagerController;
 use App\Http\Controllers\Api\V1\MaintenanceRequests\MaintenanceRequestController;
 use App\Http\Controllers\Api\V1\Reports\ReportController;
+use App\Http\Controllers\Api\V1\Chat\ConversationController;
+use App\Http\Controllers\Api\V1\Chat\MessageController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+
+// Broadcasting auth under /api so the Vite proxy forwards it correctly
+Route::match(['get', 'post'], '/broadcasting/auth', function (Request $request) {
+    return Broadcast::auth($request);
+})->middleware('auth:sanctum');
 
 Route::prefix('v1')->group(function (): void {
     Route::get('/health', HealthController::class);
@@ -224,6 +233,19 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/', [PmPlanController::class, 'store'])->middleware('permission:pm_plans.write');
         Route::patch('/{pmPlan}', [PmPlanController::class, 'update'])->middleware('permission:pm_plans.write');
         Route::delete('/{pmPlan}', [PmPlanController::class, 'destroy'])->middleware('permission:pm_plans.delete');
+    });
+
+    // ── Chat ─────────────────────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('chat')->group(function (): void {
+        Route::get('/conversations',                                   [ConversationController::class, 'index']);
+        Route::post('/conversations',                                  [ConversationController::class, 'store']);
+        Route::post('/conversations/{conversation}/read',              [ConversationController::class, 'markRead']);
+        Route::get('/conversations/{conversation}/files',              [ConversationController::class, 'files']);
+        Route::post('/conversations/{conversation}/leave',             [ConversationController::class, 'leave']);
+        Route::delete('/conversations/{conversation}',                 [ConversationController::class, 'destroy']);
+        Route::get('/conversations/{conversation}/messages',           [MessageController::class, 'index']);
+        Route::post('/conversations/{conversation}/messages',          [MessageController::class, 'store']);
+        Route::delete('/messages/{message}',                           [MessageController::class, 'destroy']);
     });
 
     // ── Reports ───────────────────────────────────────────────────────────────
