@@ -93,6 +93,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('members')->group(function (): void {
         Route::get('/for-mention', [MemberController::class, 'forMention']); // no permission gate — any member can see names for @mention
+        Route::get('/for-chat', [MemberController::class, 'forChat']); // no permission gate — any member can see colleagues for chat
         Route::get('/', [MemberController::class, 'index'])->middleware('permission:members.read');
         Route::get('/{member}', [MemberController::class, 'show'])->middleware('permission:members.read');
         Route::post('/', [MemberController::class, 'store'])->middleware('permission:members.create');

@@ -1,5 +1,4 @@
 import classNames from 'classnames'
-import { APP_NAME } from '@/constants/app.constant'
 import type { CommonProps } from '@/@types/common'
 
 interface LogoProps extends CommonProps {
@@ -13,26 +12,27 @@ const Logo = (props: LogoProps) => {
     const {
         type = 'full',
         className,
-        imgClass,
         style,
         logoWidth = 'auto',
     } = props
 
-    const src =
-        type === 'streamline'
-            ? '/img/logo/logo-icon.png'
-            : '/img/logo/logo-full.png'
-
     return (
         <div
-            className={classNames('logo', className)}
+            className={classNames('logo flex items-center', className)}
             style={{ ...style, width: logoWidth }}
         >
-            <img
-                className={imgClass}
-                src={src}
-                alt={`${APP_NAME} logo`}
-            />
+            {type === 'streamline' ? (
+                <div className="w-8 h-8 rounded-lg bg-gray-900 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm font-black leading-none">C</span>
+                </div>
+            ) : (
+                <span
+                    className="text-gray-900 font-black tracking-widest select-none"
+                    style={{ fontSize: 20, letterSpacing: 5 }}
+                >
+                    CMMS
+                </span>
+            )}
         </div>
     )
 }

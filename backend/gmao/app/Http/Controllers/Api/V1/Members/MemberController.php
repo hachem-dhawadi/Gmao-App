@@ -96,6 +96,33 @@ class MemberController extends Controller
         return response()->json(['success' => true, 'data' => $members]);
     }
 
+    public function forChat(Request $request): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
+
+        if (! $currentCompany || ! $currentMember) {
+            return response()->json(['success' => false], 400);
+        }
+
+        $members = Member::query()
+            ->with('user')
+            ->where('company_id', $currentCompany->id)
+            ->where('status', 'active')
+            ->where('id', '!=', $currentMember->id)
+            ->get()
+            ->filter(fn ($m) => $m->user?->name)
+            ->map(fn ($m) => [
+                'id'         => $m->id,
+                'name'       => $m->user->name,
+                'email'      => $m->user->email,
+                'avatar_url' => $m->user->avatar_url ?? null,
+            ])
+            ->values();
+
+        return response()->json(['success' => true, 'data' => ['members' => $members]]);
+    }
+
     public function store(StoreMemberRequest $request): JsonResponse
     {
         $validated = $request->validated();

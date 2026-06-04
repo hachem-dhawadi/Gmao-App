@@ -52,6 +52,20 @@ export async function apiGetMembersList<
     })
 }
 
+export type ChatMember = {
+    id: number
+    name: string
+    email: string
+    avatar_url: string | null
+}
+
+export async function apiGetMembersForChat() {
+    return ApiService.fetchDataWithAxios<{ members: ChatMember[] }>({
+        url: '/members/for-chat',
+        method: 'get',
+    })
+}
+
 export async function apiUpdateMemberRoles<
     T = { success: boolean; message: string },
 >(memberId: number, roleCodes: string[]) {

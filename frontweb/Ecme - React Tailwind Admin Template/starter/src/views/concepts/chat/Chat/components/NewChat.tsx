@@ -7,11 +7,11 @@ import ScrollBar from '@/components/ui/ScrollBar'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import classNames from '@/utils/classNames'
-import { apiGetMembersList } from '@/services/MembersService'
+import { apiGetMembersForChat } from '@/services/MembersService'
 import { apiCreateConversation } from '@/services/ChatService'
 import { useChatStore } from '../store/chatStore'
 import { TbSearch, TbCheck, TbPlus, TbUsers } from 'react-icons/tb'
-import type { Member } from '@/services/MembersService'
+import type { ChatMember } from '@/services/MembersService'
 
 type Props = {
     onCreated: () => void
@@ -23,22 +23,22 @@ const NewChat = ({ onCreated }: Props) => {
     const [open, setOpen]             = useState(false)
     const [query, setQuery]           = useState('')
     const [groupName, setGroupName]   = useState('')
-    const [selected, setSelected]     = useState<Member[]>([])
-    const [members, setMembers]       = useState<Member[]>([])
+    const [selected, setSelected]     = useState<ChatMember[]>([])
+    const [members, setMembers]       = useState<ChatMember[]>([])
     const [loading, setLoading]       = useState(false)
     const [creating, setCreating]     = useState(false)
 
     useEffect(() => {
         if (!open) return
         setLoading(true)
-        apiGetMembersList({ per_page: 200 })
+        apiGetMembersForChat()
             .then((resp) => setMembers(resp.data?.members ?? []))
             .finally(() => setLoading(false))
     }, [open])
 
     const filtered = useMemo(() =>
         members.filter((m) =>
-            !query || (m.user?.name ?? '').toLowerCase().includes(query.toLowerCase()),
+            !query || m.name.toLowerCase().includes(query.toLowerCase()),
         ),
     [members, query])
 
@@ -141,16 +141,16 @@ const NewChat = ({ onCreated }: Props) => {
                                             onClick={() => toggle(member)}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <Avatar src={member.user?.avatar_url ?? undefined} size={32}>
-                                                    {!member.user?.avatar_url
-                                                        ? (member.user?.name?.charAt(0)?.toUpperCase() ?? '?')
+                                                <Avatar src={member.avatar_url ?? undefined} size={32}>
+                                                    {!member.avatar_url
+                                                        ? (member.name?.charAt(0)?.toUpperCase() ?? '?')
                                                         : null}
                                                 </Avatar>
                                                 <div>
                                                     <p className="font-semibold text-sm heading-text">
-                                                        {member.user?.name ?? member.employee_code ?? 'Unknown'}
+                                                        {member.name}
                                                     </p>
-                                                    <p className="text-xs text-gray-400">{member.user?.email}</p>
+                                                    <p className="text-xs text-gray-400">{member.email}</p>
                                                 </div>
                                             </div>
                                             {isSelected && <TbCheck className="text-xl text-primary" />}
