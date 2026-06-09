@@ -11,10 +11,12 @@ export const initialTableData: TableQueries = {
 
 export type AssetFilter = {
     status: 'all' | 'active' | 'inactive' | 'under_maintenance' | 'decommissioned'
+    site_id: number | null
 }
 
 export const initialFilterData: AssetFilter = {
     status: 'all',
+    site_id: null,
 }
 
 type AssetListState = {

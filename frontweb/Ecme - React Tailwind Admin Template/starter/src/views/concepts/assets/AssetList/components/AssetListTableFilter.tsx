@@ -2,12 +2,17 @@ import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Radio from '@/components/ui/Radio'
+import Select from '@/components/ui/Select'
 import { Form, FormItem } from '@/components/ui/Form'
 import useAssetList from '../hooks/useAssetList'
 import { TbFilter } from 'react-icons/tb'
 import { useForm, Controller } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
+import useSWR from 'swr'
+import { apiGetAllSites } from '@/services/SiteService'
 import type { AssetFilter } from '../store/assetListStore'
+
+type SiteOption = { value: number; label: string }
 
 const AssetListTableFilter = () => {
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -18,18 +23,29 @@ const AssetListTableFilter = () => {
         defaultValues: filterData,
     })
 
+    const { data: sitesData } = useSWR(
+        '/sites/all',
+        () => apiGetAllSites(),
+        { revalidateOnFocus: false },
+    )
+    const siteOptions: SiteOption[] = ((sitesData as any)?.data?.sites || [])
+        .filter((s: any) => s.is_active !== false)
+        .map((s: any) => ({ value: s.id, label: `${s.name} (${s.code})` }))
+
     const onSubmit = (values: AssetFilter) => {
         setFilterData(values)
         setDialogOpen(false)
     }
 
     const handleReset = () => {
-        reset({ status: 'all' })
-        setFilterData({ status: 'all' })
+        reset({ status: 'all', site_id: null })
+        setFilterData({ status: 'all', site_id: null })
         setDialogOpen(false)
     }
 
-    const isActive = filterData.status !== 'all'
+    const activeCount =
+        (filterData.status !== 'all' ? 1 : 0) +
+        (filterData.site_id != null ? 1 : 0)
 
     const statusOptions = [
         { value: 'all',               label: t('assets.status.all') },
@@ -45,12 +61,12 @@ const AssetListTableFilter = () => {
                 icon={<TbFilter />}
                 onClick={() => setDialogOpen(true)}
                 className={
-                    isActive
+                    activeCount > 0
                         ? 'border-primary ring-1 ring-primary text-primary'
                         : ''
                 }
             >
-                {t('common.filter')}{isActive ? ' (1)' : ''}
+                {t('common.filter')}{activeCount > 0 ? ` (${activeCount})` : ''}
             </Button>
 
             <Dialog
@@ -61,6 +77,23 @@ const AssetListTableFilter = () => {
             >
                 <h4 className="mb-4">{t('common.filter')} — {t('assets.pageTitle')}</h4>
                 <Form onSubmit={handleSubmit(onSubmit)}>
+
+                    <FormItem label="Site">
+                        <Controller
+                            name="site_id"
+                            control={control}
+                            render={({ field }) => (
+                                <Select<SiteOption>
+                                    placeholder="All sites"
+                                    options={siteOptions}
+                                    isClearable
+                                    value={siteOptions.find((o) => o.value === field.value) ?? null}
+                                    onChange={(opt) => field.onChange(opt?.value ?? null)}
+                                />
+                            )}
+                        />
+                    </FormItem>
+
                     <FormItem label={t('common.status')}>
                         <Controller
                             name="status"

@@ -11,8 +11,13 @@ import isEmpty from 'lodash/isEmpty'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import useSWR from 'swr'
+import { useSessionUser } from '@/store/authStore'
+import { apiGetAllSites } from '@/services/SiteService'
 import type { CommonProps } from '@/@types/common'
 import type { CustomerFormSchema } from './types'
+
+type SiteOption = { value: number; label: string }
 
 type CompanyOption = { value: number; label: string }
 
@@ -47,6 +52,7 @@ const baseSchema = z.object({
     employeeCode: z.string().optional(),
     locale: z.string().optional(),
     role: z.string().optional().default(''),
+    site_id: z.number().nullable().optional(),
     password: z.string().optional(),
     passwordConfirmation: z.string().optional(),
 })
@@ -81,6 +87,17 @@ const CustomerForm = (props: CustomerFormProps) => {
         onCompanyChange,
         children,
     } = props
+
+    const isSuperadmin = useSessionUser((state) => Boolean(state.user.isSuperadmin))
+
+    const { data: sitesData } = useSWR(
+        !isSuperadmin ? '/sites/all' : null,
+        () => apiGetAllSites(),
+        { revalidateOnFocus: false },
+    )
+    const siteOptions: SiteOption[] = ((sitesData as any)?.data?.sites || [])
+        .filter((s: any) => s.is_active !== false)
+        .map((s: any) => ({ value: s.id, label: `${s.name} (${s.code})` }))
 
     const validationSchema = useMemo(
         () => buildValidationSchema(newCustomer),
@@ -141,6 +158,7 @@ const CustomerForm = (props: CustomerFormProps) => {
                             companyOptions={companyOptions}
                             selectedCompanyId={selectedCompanyId}
                             onCompanyChange={onCompanyChange}
+                            siteOptions={siteOptions}
                         />
                         {showAddressSection && (
                             <AddressSection

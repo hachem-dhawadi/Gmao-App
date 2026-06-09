@@ -3,6 +3,7 @@ import type { ImageItem } from '@/services/AssetsService'
 export type AssetFormSchema = {
     name: string
     code: string
+    site_id: number | null
     asset_type_id: number | null
     status: 'active' | 'inactive' | 'under_maintenance' | 'decommissioned'
     serial_number: string

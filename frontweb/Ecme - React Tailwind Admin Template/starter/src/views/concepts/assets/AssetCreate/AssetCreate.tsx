@@ -25,6 +25,7 @@ const AssetCreate = () => {
             const fd = new FormData()
             fd.append('name', values.name)
             fd.append('code', values.code)
+            if (values.site_id != null) fd.append('site_id', String(values.site_id))
             fd.append('asset_type_id', String(values.asset_type_id!))
             fd.append('status', values.status)
             if (values.serial_number) fd.append('serial_number', values.serial_number)

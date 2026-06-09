@@ -14,12 +14,14 @@ import type { FormSectionBaseProps } from './types'
 import type { ControlProps, OptionProps } from 'react-select'
 
 type CompanyOption = { value: number; label: string }
+type SiteOption = { value: number; label: string }
 
 type OverviewSectionProps = FormSectionBaseProps & {
     showOnCreate?: boolean
     companyOptions?: CompanyOption[]
     selectedCompanyId?: number | null
     onCompanyChange?: (id: number | null) => void
+    siteOptions?: SiteOption[]
 }
 
 type CountryOption = {
@@ -90,6 +92,7 @@ const OverviewSection = ({
     companyOptions = [],
     selectedCompanyId = null,
     onCompanyChange,
+    siteOptions = [],
 }: OverviewSectionProps) => {
     const { t } = useTranslation()
 
@@ -243,6 +246,24 @@ const OverviewSection = ({
                     />
                 </FormItem>
             </div>
+
+            {siteOptions.length > 0 && (
+                <FormItem label="Site">
+                    <Controller
+                        name="site_id"
+                        control={control}
+                        render={({ field }) => (
+                            <Select<SiteOption>
+                                placeholder="Assign to site (optional)"
+                                options={siteOptions}
+                                isClearable
+                                value={siteOptions.find((o) => o.value === field.value) ?? null}
+                                onChange={(opt) => field.onChange(opt?.value ?? null)}
+                            />
+                        )}
+                    />
+                </FormItem>
+            )}
 
             {showOnCreate && (
                 <>

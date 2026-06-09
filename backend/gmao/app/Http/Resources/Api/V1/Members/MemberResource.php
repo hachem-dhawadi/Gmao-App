@@ -32,6 +32,12 @@ class MemberResource extends JsonResource
             'id' => $this->id,
             'company_id' => $this->company_id,
             'user_id' => $this->user_id,
+            'site_id' => $this->site_id,
+            'site' => $this->relationLoaded('site') && $this->site ? [
+                'id' => $this->site->id,
+                'name' => $this->site->name,
+                'code' => $this->site->code,
+            ] : null,
             'department_id' => $this->department_id,
             'employee_code' => $this->employee_code,
             'job_title' => $this->job_title,

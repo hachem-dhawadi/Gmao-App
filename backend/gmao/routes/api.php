@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\Assets\AssetController;
 use App\Http\Controllers\Api\V1\Roles\RoleController;
 use App\Http\Controllers\Api\V1\Assets\AssetTypeController;
 use App\Http\Controllers\Api\V1\Departments\DepartmentController;
+use App\Http\Controllers\Api\V1\Sites\SiteController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
 use App\Http\Controllers\Api\V1\WorkOrders\WorkOrderController;
 use App\Http\Controllers\Api\V1\WorkOrders\WorkLogController;
@@ -65,6 +66,15 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->prefix('companies')->group(function (): void {
         Route::post('/', [OwnerCompanyController::class, 'store']);
         Route::patch('/current', [OwnerCompanyController::class, 'update']);
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('sites')->group(function (): void {
+        Route::get('/all', [SiteController::class, 'all'])->middleware('permission:sites.read');
+        Route::get('/', [SiteController::class, 'index'])->middleware('permission:sites.read');
+        Route::get('/{site}', [SiteController::class, 'show'])->middleware('permission:sites.read');
+        Route::post('/', [SiteController::class, 'store'])->middleware('permission:sites.create');
+        Route::patch('/{site}', [SiteController::class, 'update'])->middleware('permission:sites.update');
+        Route::delete('/{site}', [SiteController::class, 'destroy'])->middleware('permission:sites.delete');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('departments')->group(function (): void {

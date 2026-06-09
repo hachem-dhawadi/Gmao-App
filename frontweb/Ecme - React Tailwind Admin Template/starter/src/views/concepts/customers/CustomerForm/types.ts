@@ -35,11 +35,16 @@ export type AccountField = {
     accountVerified?: boolean
 }
 
+export type SiteField = {
+    site_id?: number | null
+}
+
 export type CustomerFormSchema = OverviewFields &
     AddressFields &
     ProfileImageFields &
     RoleField &
-    AccountField
+    AccountField &
+    SiteField
 
 export type FormSectionBaseProps = {
     control: Control<CustomerFormSchema>

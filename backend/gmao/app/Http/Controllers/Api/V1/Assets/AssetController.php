@@ -24,10 +24,16 @@ class AssetController extends Controller
         $search  = $request->query('search');
         $status  = $request->query('status');
 
+        $siteId = $request->query('site_id');
+
         $query = Asset::query()
-            ->with('assetType')
+            ->with(['assetType', 'site'])
             ->where('company_id', $currentCompany->id)
             ->orderByDesc('id');
+
+        if ($siteId) {
+            $query->where('site_id', $siteId);
+        }
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -63,7 +69,7 @@ class AssetController extends Controller
             return response()->json(['success' => false, 'message' => 'Asset not found.'], 404);
         }
 
-        $asset->load('assetType');
+        $asset->load(['assetType', 'site']);
 
         return response()->json([
             'success' => true,
@@ -83,6 +89,7 @@ class AssetController extends Controller
         $validated = $request->validate([
             'name'            => ['required', 'string', 'max:255'],
             'code'            => ['required', 'string', 'max:100'],
+            'site_id'         => ['nullable', 'integer', 'exists:sites,id'],
             'asset_type_id'   => ['required', 'integer', 'exists:asset_types,id'],
             'status'          => ['required', 'string', 'in:active,inactive,under_maintenance,decommissioned'],
             'serial_number'   => ['nullable', 'string', 'max:255'],
@@ -109,6 +116,7 @@ class AssetController extends Controller
 
         $asset = Asset::query()->create([
             'company_id'      => $currentCompany->id,
+            'site_id'         => $validated['site_id'] ?? null,
             'asset_type_id'   => $validated['asset_type_id'],
             'code'            => $validated['code'],
             'name'            => $validated['name'],
@@ -125,7 +133,7 @@ class AssetController extends Controller
             'images'          => $images,
         ]);
 
-        $asset->load('assetType');
+        $asset->load(['assetType', 'site']);
 
         return response()->json([
             'success' => true,
@@ -149,6 +157,7 @@ class AssetController extends Controller
         $validated = $request->validate([
             'name'              => ['sometimes', 'string', 'max:255'],
             'code'              => ['sometimes', 'string', 'max:100'],
+            'site_id'           => ['sometimes', 'nullable', 'integer', 'exists:sites,id'],
             'asset_type_id'     => ['sometimes', 'integer', 'exists:asset_types,id'],
             'status'            => ['sometimes', 'string', 'in:active,inactive,under_maintenance,decommissioned'],
             'serial_number'     => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -190,7 +199,7 @@ class AssetController extends Controller
 
         $fillable       = [];
         $scalarFields   = [
-            'name', 'code', 'asset_type_id', 'status', 'serial_number',
+            'name', 'code', 'site_id', 'asset_type_id', 'status', 'serial_number',
             'manufacturer', 'model', 'location', 'address_label', 'notes',
             'purchase_date', 'warranty_end_at', 'installed_at',
         ];
@@ -202,7 +211,7 @@ class AssetController extends Controller
         $fillable['images'] = $finalImages;
 
         $asset->forceFill($fillable)->save();
-        $asset->load('assetType');
+        $asset->load(['assetType', 'site']);
 
         return response()->json([
             'success' => true,

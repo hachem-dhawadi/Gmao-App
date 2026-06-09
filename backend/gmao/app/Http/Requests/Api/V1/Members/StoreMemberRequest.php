@@ -33,6 +33,7 @@ class StoreMemberRequest extends FormRequest
             'locale' => ['nullable', 'string', 'max:10'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'password_confirmation' => ['required', 'string'],
+            'site_id' => ['nullable', 'integer', 'exists:sites,id'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ];
     }

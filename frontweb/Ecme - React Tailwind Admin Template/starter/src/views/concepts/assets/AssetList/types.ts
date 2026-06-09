@@ -1,6 +1,7 @@
 export type Asset = {
     id: number
     company_id: number
+    site_id: number | null
     asset_type_id: number
     code: string
     name: string
@@ -18,4 +19,5 @@ export type Asset = {
     updated_at: string | null
     images?: string[]
     asset_type: { id: number; name: string; code: string } | null
+    site: { id: number; name: string; code: string } | null
 }

@@ -31,6 +31,7 @@ class UpdateMemberRequest extends FormRequest
             'job_title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'employee_code' => ['sometimes', 'string', 'max:255'],
             'status' => ['sometimes', 'string', 'max:50'],
+            'site_id' => ['sometimes', 'nullable', 'integer', 'exists:sites,id'],
             'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'remove_avatar' => ['sometimes', 'boolean'],
         ];

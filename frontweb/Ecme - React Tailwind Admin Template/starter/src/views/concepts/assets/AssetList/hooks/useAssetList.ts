@@ -15,13 +15,17 @@ export default function useAssetList() {
         setSelectAllAsset,
     } = useAssetListStore((state) => state)
 
-    const queryParams = {
+    const queryParams: Record<string, unknown> = {
         page: Number(tableData.pageIndex || 1),
         per_page: Number(tableData.pageSize || 10),
     }
 
+    if (filterData.site_id != null) {
+        queryParams.site_id = filterData.site_id
+    }
+
     const { data, error, isLoading, mutate } = useSWR(
-        ['/assets', tableData.pageIndex, tableData.pageSize],
+        ['/assets', tableData.pageIndex, tableData.pageSize, filterData.site_id],
         () => apiGetAssetsList<AssetsListResponse>(queryParams),
         { revalidateOnFocus: false },
     )

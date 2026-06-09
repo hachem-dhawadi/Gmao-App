@@ -16,6 +16,9 @@ const AssetDetails = lazy(() => import('@/views/concepts/assets/AssetDetails'))
 const DepartmentCreate = lazy(() => import('@/views/concepts/departments/DepartmentCreate'))
 const DepartmentEdit = lazy(() => import('@/views/concepts/departments/DepartmentEdit'))
 const DepartmentDetails = lazy(() => import('@/views/concepts/departments/DepartmentDetails'))
+const SiteList = lazy(() => import('@/views/concepts/sites/SiteList'))
+const SiteCreate = lazy(() => import('@/views/concepts/sites/SiteCreate'))
+const SiteEdit = lazy(() => import('@/views/concepts/sites/SiteEdit'))
 const WorkOrderList = lazy(() => import('@/views/concepts/workOrders/WorkOrderList'))
 const WorkOrderCreate = lazy(() => import('@/views/concepts/workOrders/WorkOrderCreate'))
 const WorkOrderEdit = lazy(() => import('@/views/concepts/workOrders/WorkOrderEdit'))
@@ -523,6 +526,24 @@ export const protectedRoutes: Routes = [
         key: 'concepts.customers.customerCreate',
         path: '/concepts/customers/customer-create',
         component: lazy(() => import('@/views/concepts/customers/CustomerCreate')),
+        authority: [],
+    },
+    {
+        key: 'concepts.sites',
+        path: '/concepts/sites',
+        component: SiteList,
+        authority: [],
+    },
+    {
+        key: 'concepts.sites.siteCreate',
+        path: '/concepts/sites/site-create',
+        component: SiteCreate,
+        authority: [],
+    },
+    {
+        key: 'concepts.sites.siteEdit',
+        path: '/concepts/sites/site-edit/:id',
+        component: SiteEdit,
         authority: [],
     },
     {

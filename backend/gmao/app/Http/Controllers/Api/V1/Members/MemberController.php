@@ -35,9 +35,12 @@ class MemberController extends Controller
         $perPage = (int) $request->query('per_page', 15);
         $perPage = max(1, min($perPage, 100));
 
+        $siteId = $request->query('site_id');
+
         $members = Member::query()
-            ->with(['user', 'roles'])
+            ->with(['user', 'roles', 'site'])
             ->where('company_id', $currentCompany->id)
+            ->when($siteId, fn ($q) => $q->where('site_id', (int) $siteId))
             ->orderByDesc('id')
             ->paginate($perPage);
 
@@ -66,7 +69,7 @@ class MemberController extends Controller
             ], 404);
         }
 
-        $member->load(['user', 'roles']);
+        $member->load(['user', 'roles', 'site']);
 
         return response()->json([
             'success' => true,
@@ -235,6 +238,7 @@ class MemberController extends Controller
             $member = Member::query()->create([
                 'company_id' => $currentCompany->id,
                 'user_id' => $user->id,
+                'site_id' => $validated['site_id'] ?? null,
                 'department_id' => $validated['department_id'] ?? null,
                 'employee_code' => $validated['employee_code'],
                 'job_title' => $validated['job_title'] ?? null,
@@ -243,7 +247,7 @@ class MemberController extends Controller
 
             $member->roles()->sync($roles->pluck('id')->all());
 
-            return $member->load(['user', 'roles']);
+            return $member->load(['user', 'roles', 'site']);
         });
 
         NotificationService::notifyNewMember($member, $currentCompany->id);
@@ -371,7 +375,7 @@ class MemberController extends Controller
             }
 
             $memberPayload = [];
-            foreach (['department_id', 'employee_code', 'job_title', 'status'] as $field) {
+            foreach (['site_id', 'department_id', 'employee_code', 'job_title', 'status'] as $field) {
                 if (array_key_exists($field, $validated)) {
                     $memberPayload[$field] = $validated[$field];
                 }
@@ -385,7 +389,7 @@ class MemberController extends Controller
                 $member->roles()->sync($roles->pluck('id')->all());
             }
 
-            return $member->load(['user', 'roles']);
+            return $member->load(['user', 'roles', 'site']);
         });
 
         return response()->json([

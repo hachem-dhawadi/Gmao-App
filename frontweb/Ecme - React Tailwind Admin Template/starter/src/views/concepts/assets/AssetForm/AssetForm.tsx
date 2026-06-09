@@ -19,6 +19,7 @@ import cloneDeep from 'lodash/cloneDeep'
 import dayjs from 'dayjs'
 import useSWR from 'swr'
 import { apiGetAssetTypes } from '@/services/AssetsService'
+import { apiGetAllSites } from '@/services/SiteService'
 import { HiEye, HiTrash } from 'react-icons/hi'
 import { PiImagesThin } from 'react-icons/pi'
 import {
@@ -35,7 +36,6 @@ import type { ImageItem, AssetTypesResponse } from '@/services/AssetsService'
 
 export type { ImageItem }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function generateAssetCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'
     let suffix = ''
@@ -44,7 +44,8 @@ function generateAssetCode(): string {
 }
 
 type StatusOption = { value: AssetFormSchema['status']; label: string; dotClass: string }
-type TypeOption = { value: number; label: string }
+type TypeOption   = { value: number; label: string }
+type SiteOption   = { value: number; label: string }
 
 const StatusLabel = ({ label, dotClass }: { label: string; dotClass: string }) => (
     <div className="flex items-center gap-2">
@@ -53,7 +54,6 @@ const StatusLabel = ({ label, dotClass }: { label: string; dotClass: string }) =
     </div>
 )
 
-// ── Image gallery sub-component ───────────────────────────────────────────────
 const ImageList = ({
     imgList,
     onDelete,
@@ -65,7 +65,7 @@ const ImageList = ({
     removeTitle: string
     removeBody: string
 }) => {
-    const [viewImg, setViewImg] = useState<ImageItem | null>(null)
+    const [viewImg, setViewImg]       = useState<ImageItem | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<ImageItem | null>(null)
 
     return (
@@ -81,16 +81,10 @@ const ImageList = ({
                         alt={img.name}
                     />
                     <div className="absolute inset-2 bg-black/70 group-hover:flex hidden text-xl items-center justify-center gap-1 rounded-lg">
-                        <span
-                            className="text-gray-100 hover:text-white cursor-pointer p-1.5"
-                            onClick={() => setViewImg(img)}
-                        >
+                        <span className="text-gray-100 hover:text-white cursor-pointer p-1.5" onClick={() => setViewImg(img)}>
                             <HiEye />
                         </span>
-                        <span
-                            className="text-gray-100 hover:text-red-400 cursor-pointer p-1.5"
-                            onClick={() => setDeleteTarget(img)}
-                        >
+                        <span className="text-gray-100 hover:text-red-400 cursor-pointer p-1.5" onClick={() => setDeleteTarget(img)}>
                             <HiTrash />
                         </span>
                     </div>
@@ -109,10 +103,7 @@ const ImageList = ({
                 onClose={() => setDeleteTarget(null)}
                 onRequestClose={() => setDeleteTarget(null)}
                 onCancel={() => setDeleteTarget(null)}
-                onConfirm={() => {
-                    if (deleteTarget) onDelete(deleteTarget)
-                    setDeleteTarget(null)
-                }}
+                onConfirm={() => { if (deleteTarget) onDelete(deleteTarget); setDeleteTarget(null) }}
             >
                 <p>{removeBody}</p>
             </ConfirmDialog>
@@ -120,30 +111,18 @@ const ImageList = ({
     )
 }
 
-// ── Section label helper ──────────────────────────────────────────────────────
-const SectionLabel = ({
-    icon,
-    title,
-    subtitle,
-}: {
-    icon: ReactNode
-    title: string
-    subtitle?: string
-}) => (
+const SectionLabel = ({ icon, title, subtitle }: { icon: ReactNode; title: string; subtitle?: string }) => (
     <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary text-lg flex-shrink-0">
             {icon}
         </div>
         <div>
             <h5 className="heading-text font-semibold leading-tight">{title}</h5>
-            {subtitle && (
-                <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
         </div>
     </div>
 )
 
-// ── Main form ─────────────────────────────────────────────────────────────────
 type AssetFormProps = {
     onFormSubmit: (values: AssetFormSchema) => void
     defaultValues?: Partial<AssetFormSchema>
@@ -153,94 +132,67 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
     const { t } = useTranslation()
 
     const validationSchema = useMemo(() => z.object({
-        name: z.string().min(1, { message: t('assetForm.validation.nameRequired') }),
-        code: z.string().min(1, { message: t('assetForm.validation.codeRequired') }).max(100),
-        asset_type_id: z
+        name:           z.string().min(1, { message: t('assetForm.validation.nameRequired') }),
+        code:           z.string().min(1, { message: t('assetForm.validation.codeRequired') }).max(100),
+        site_id:        z.number().nullable().optional().default(null),
+        asset_type_id:  z
             .number({ required_error: t('assetForm.validation.typeRequired') })
             .nullable()
             .refine((v) => v !== null, { message: t('assetForm.validation.typeRequired') }),
-        status: z.enum(['active', 'inactive', 'under_maintenance', 'decommissioned'], {
+        status:         z.enum(['active', 'inactive', 'under_maintenance', 'decommissioned'], {
             required_error: t('assetForm.validation.statusRequired'),
         }),
-        serial_number: z.string().optional().default(''),
-        manufacturer: z.string().optional().default(''),
-        model: z.string().optional().default(''),
-        location: z.string().optional().default(''),
-        address_label: z.string().optional().default(''),
-        notes: z.string().optional().default(''),
-        purchase_date: z.string().optional().default(''),
+        serial_number:  z.string().optional().default(''),
+        manufacturer:   z.string().optional().default(''),
+        model:          z.string().optional().default(''),
+        location:       z.string().optional().default(''),
+        address_label:  z.string().optional().default(''),
+        notes:          z.string().optional().default(''),
+        purchase_date:  z.string().optional().default(''),
         warranty_end_at: z.string().optional().default(''),
-        installed_at: z.string().optional().default(''),
-        imgList: z.array(z.any()).default([]),
+        installed_at:   z.string().optional().default(''),
+        imgList:        z.array(z.any()).default([]),
     }), [t])
 
     const statusOptions: StatusOption[] = useMemo(() => [
-        { value: 'active', label: t('assetForm.status.active'), dotClass: 'bg-emerald-500' },
-        { value: 'inactive', label: t('assetForm.status.inactive'), dotClass: 'bg-gray-400' },
-        { value: 'under_maintenance', label: t('assetForm.status.under_maintenance'), dotClass: 'bg-amber-500' },
-        { value: 'decommissioned', label: t('assetForm.status.decommissioned'), dotClass: 'bg-red-500' },
+        { value: 'active',            label: t('assetForm.status.active'),            dotClass: 'bg-emerald-500' },
+        { value: 'inactive',          label: t('assetForm.status.inactive'),          dotClass: 'bg-gray-400'    },
+        { value: 'under_maintenance', label: t('assetForm.status.under_maintenance'), dotClass: 'bg-amber-500'   },
+        { value: 'decommissioned',    label: t('assetForm.status.decommissioned'),    dotClass: 'bg-red-500'     },
     ], [t])
 
-    const {
-        handleSubmit,
-        reset,
-        setValue,
-        formState: { errors },
-        control,
-    } = useForm<AssetFormSchema>({
+    const { handleSubmit, reset, setValue, formState: { errors }, control } = useForm<AssetFormSchema>({
         defaultValues: {
-            name: '',
-            code: '',
-            asset_type_id: null,
-            status: 'active',
-            serial_number: '',
-            manufacturer: '',
-            model: '',
-            location: '',
-            address_label: '',
-            notes: '',
-            purchase_date: '',
-            warranty_end_at: '',
-            installed_at: '',
-            imgList: [],
-            ...defaultValues,
+            name: '', code: '', site_id: null, asset_type_id: null,
+            status: 'active', serial_number: '', manufacturer: '', model: '',
+            location: '', address_label: '', notes: '',
+            purchase_date: '', warranty_end_at: '', installed_at: '',
+            imgList: [], ...defaultValues,
         },
         resolver: zodResolver(validationSchema),
     })
 
-    const { data: typesData } = useSWR(
-        '/asset-types',
-        () => apiGetAssetTypes<AssetTypesResponse>(),
-        { revalidateOnFocus: false },
-    )
-    const typeOptions: TypeOption[] = (typesData?.data?.asset_types || []).map(
-        (tp) => ({ value: tp.id, label: tp.name }),
-    )
+    const { data: typesData } = useSWR('/asset-types', () => apiGetAssetTypes<AssetTypesResponse>(), { revalidateOnFocus: false })
+    const typeOptions: TypeOption[] = (typesData?.data?.asset_types || []).map((tp) => ({ value: tp.id, label: tp.name }))
+
+    const { data: sitesData } = useSWR('/sites/all', () => apiGetAllSites(), { revalidateOnFocus: false })
+    const siteOptions: SiteOption[] = ((sitesData as any)?.data?.sites || [])
+        .filter((s: any) => s.is_active !== false)
+        .map((s: any) => ({ value: s.id, label: `${s.name} (${s.code})` }))
 
     useEffect(() => {
         if (!isEmpty(defaultValues)) {
             reset({
-                name: '',
-                code: '',
-                asset_type_id: null,
-                status: 'active',
-                serial_number: '',
-                manufacturer: '',
-                model: '',
-                location: '',
-                address_label: '',
-                notes: '',
-                purchase_date: '',
-                warranty_end_at: '',
-                installed_at: '',
-                imgList: [],
-                ...defaultValues,
+                name: '', code: '', site_id: null, asset_type_id: null,
+                status: 'active', serial_number: '', manufacturer: '', model: '',
+                location: '', address_label: '', notes: '',
+                purchase_date: '', warranty_end_at: '', installed_at: '',
+                imgList: [], ...defaultValues,
             })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [JSON.stringify({ ...defaultValues, imgList: undefined })])
 
-    // Image helpers
     const beforeUpload = (file: FileList | null): boolean | string => {
         if (!file) return true
         for (const f of file) {
@@ -271,10 +223,10 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
             <Container>
                 <div className="flex flex-col xl:flex-row gap-4">
 
-                    {/* LEFT COLUMN */}
+                    {/* ── LEFT COLUMN ─────────────────────────────────── */}
                     <div className="flex-auto flex flex-col gap-4">
 
-                        {/* Card 1: Basic Information */}
+                        {/* 1. Identity */}
                         <Card>
                             <SectionLabel
                                 icon={<TbInfoCircle />}
@@ -287,17 +239,9 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                 invalid={!!errors.name}
                                 errorMessage={errors.name?.message}
                             >
-                                <Controller
-                                    name="name"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Input
-                                            {...field}
-                                            autoComplete="off"
-                                            placeholder={t('assetForm.placeholder.assetName')}
-                                        />
-                                    )}
-                                />
+                                <Controller name="name" control={control} render={({ field }) => (
+                                    <Input {...field} autoComplete="off" placeholder={t('assetForm.placeholder.assetName')} />
+                                )} />
                             </FormItem>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
@@ -306,31 +250,25 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                     invalid={!!errors.code}
                                     errorMessage={errors.code?.message}
                                 >
-                                    <Controller
-                                        name="code"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    {...field}
-                                                    autoComplete="off"
-                                                    placeholder={t('assetForm.placeholder.assetCode')}
-                                                    className="font-mono"
-                                                    onChange={(e) =>
-                                                        field.onChange(e.target.value.toUpperCase())
-                                                    }
-                                                />
-                                                <button
-                                                    type="button"
-                                                    title={t('assetForm.generateCode')}
-                                                    className="flex-shrink-0 px-3 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-primary hover:border-primary transition-colors"
-                                                    onClick={() => setValue('code', generateAssetCode())}
-                                                >
-                                                    <TbRefresh className="text-lg" />
-                                                </button>
-                                            </div>
-                                        )}
-                                    />
+                                    <Controller name="code" control={control} render={({ field }) => (
+                                        <div className="flex gap-2">
+                                            <Input
+                                                {...field}
+                                                autoComplete="off"
+                                                placeholder={t('assetForm.placeholder.assetCode')}
+                                                className="font-mono"
+                                                onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                                            />
+                                            <button
+                                                type="button"
+                                                title={t('assetForm.generateCode')}
+                                                className="flex-shrink-0 px-3 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 hover:text-primary hover:border-primary transition-colors"
+                                                onClick={() => setValue('code', generateAssetCode())}
+                                            >
+                                                <TbRefresh className="text-lg" />
+                                            </button>
+                                        </div>
+                                    )} />
                                 </FormItem>
 
                                 <FormItem
@@ -338,26 +276,58 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                     invalid={!!errors.status}
                                     errorMessage={errors.status?.message}
                                 >
-                                    <Controller
-                                        name="status"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Select<StatusOption>
-                                                placeholder={t('assetForm.selectStatus')}
-                                                options={statusOptions}
-                                                value={statusOptions.find((o) => o.value === field.value) || null}
-                                                onChange={(opt) => field.onChange(opt?.value)}
-                                                formatOptionLabel={(opt) => (
-                                                    <StatusLabel label={opt.label} dotClass={opt.dotClass} />
-                                                )}
-                                            />
-                                        )}
-                                    />
+                                    <Controller name="status" control={control} render={({ field }) => (
+                                        <Select<StatusOption>
+                                            placeholder={t('assetForm.selectStatus')}
+                                            options={statusOptions}
+                                            value={statusOptions.find((o) => o.value === field.value) || null}
+                                            onChange={(opt) => field.onChange(opt?.value)}
+                                            formatOptionLabel={(opt) => <StatusLabel label={opt.label} dotClass={opt.dotClass} />}
+                                        />
+                                    )} />
                                 </FormItem>
                             </div>
                         </Card>
 
-                        {/* Card 2: Equipment Details */}
+                        {/* 2. Classification */}
+                        <Card>
+                            <SectionLabel
+                                icon={<TbTag />}
+                                title={t('assetForm.section.classification')}
+                                subtitle={t('assetForm.section.classificationSub')}
+                            />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                                <FormItem label="Site">
+                                    <Controller name="site_id" control={control} render={({ field }) => (
+                                        <Select<SiteOption>
+                                            placeholder="Select site (optional)"
+                                            options={siteOptions}
+                                            isClearable
+                                            value={siteOptions.find((o) => o.value === field.value) || null}
+                                            onChange={(opt) => field.onChange(opt?.value ?? null)}
+                                        />
+                                    )} />
+                                </FormItem>
+
+                                <FormItem
+                                    label={t('assetForm.field.assetType')}
+                                    invalid={!!errors.asset_type_id}
+                                    errorMessage={errors.asset_type_id?.message}
+                                >
+                                    <Controller name="asset_type_id" control={control} render={({ field }) => (
+                                        <Select<TypeOption>
+                                            placeholder={t('assetForm.selectType')}
+                                            options={typeOptions}
+                                            value={typeOptions.find((o) => o.value === field.value) || null}
+                                            onChange={(opt) => field.onChange(opt?.value ?? null)}
+                                        />
+                                    )} />
+                                </FormItem>
+                            </div>
+                        </Card>
+
+                        {/* 3. Technical Details */}
                         <Card>
                             <SectionLabel
                                 icon={<TbEngine />}
@@ -367,69 +337,36 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
                                 <FormItem label={t('assetForm.field.manufacturer')}>
-                                    <Controller
-                                        name="manufacturer"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Input
-                                                {...field}
-                                                autoComplete="off"
-                                                placeholder={t('assetForm.placeholder.manufacturer')}
-                                            />
-                                        )}
-                                    />
+                                    <Controller name="manufacturer" control={control} render={({ field }) => (
+                                        <Input {...field} autoComplete="off" placeholder={t('assetForm.placeholder.manufacturer')} />
+                                    )} />
                                 </FormItem>
 
                                 <FormItem label={t('assetForm.field.model')}>
-                                    <Controller
-                                        name="model"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Input
-                                                {...field}
-                                                autoComplete="off"
-                                                placeholder={t('assetForm.placeholder.model')}
-                                            />
-                                        )}
-                                    />
+                                    <Controller name="model" control={control} render={({ field }) => (
+                                        <Input {...field} autoComplete="off" placeholder={t('assetForm.placeholder.model')} />
+                                    )} />
                                 </FormItem>
 
                                 <FormItem label={t('assetForm.field.serialNumber')} className="md:col-span-2">
-                                    <Controller
-                                        name="serial_number"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <Input
-                                                {...field}
-                                                autoComplete="off"
-                                                placeholder={t('assetForm.placeholder.serialNumber')}
-                                            />
-                                        )}
-                                    />
+                                    <Controller name="serial_number" control={control} render={({ field }) => (
+                                        <Input {...field} autoComplete="off" placeholder={t('assetForm.placeholder.serialNumber')} />
+                                    )} />
                                 </FormItem>
                             </div>
 
                             <FormItem label={t('common.description')}>
-                                <Controller
-                                    name="notes"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Input
-                                            {...field}
-                                            textArea
-                                            rows={4}
-                                            placeholder={t('assetForm.placeholder.notes')}
-                                        />
-                                    )}
-                                />
+                                <Controller name="notes" control={control} render={({ field }) => (
+                                    <Input {...field} textArea rows={4} placeholder={t('assetForm.placeholder.notes')} />
+                                )} />
                             </FormItem>
                         </Card>
                     </div>
 
-                    {/* RIGHT COLUMN */}
+                    {/* ── RIGHT COLUMN ────────────────────────────────── */}
                     <div className="lg:min-w-[360px] 2xl:w-[400px] flex flex-col gap-4">
 
-                        {/* Card 3: Photos */}
+                        {/* 4. Photos */}
                         <Card>
                             <SectionLabel
                                 icon={<PiImagesThin />}
@@ -437,126 +374,70 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                                 subtitle={t('assetForm.section.photosSub')}
                             />
 
-                            <Controller
-                                name="imgList"
-                                control={control}
-                                render={({ field }) => (
-                                    <>
-                                        {field.value && field.value.length > 0 ? (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                                <ImageList
-                                                    imgList={field.value}
-                                                    removeTitle={t('assetForm.photo.removeTitle')}
-                                                    removeBody={t('assetForm.photo.removeBody')}
-                                                    onDelete={(img) =>
-                                                        handleDelete(field.onChange, field.value, img)
-                                                    }
-                                                />
-                                                {field.value.length < 5 && (
-                                                    <Upload
-                                                        draggable
-                                                        className="min-h-fit"
-                                                        beforeUpload={beforeUpload}
-                                                        showList={false}
-                                                        onChange={(files) =>
-                                                            handleUpload(field.onChange, field.value, files)
-                                                        }
-                                                    >
-                                                        <div className="flex flex-col items-center justify-center min-h-[130px] px-2">
-                                                            <PiImagesThin className="text-4xl text-gray-300" />
-                                                            <p className="text-xs text-primary mt-1">{t('assetForm.photo.addMore')}</p>
-                                                        </div>
-                                                    </Upload>
-                                                )}
+                            <Controller name="imgList" control={control} render={({ field }) => (
+                                <>
+                                    {field.value && field.value.length > 0 ? (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                            <ImageList
+                                                imgList={field.value}
+                                                removeTitle={t('assetForm.photo.removeTitle')}
+                                                removeBody={t('assetForm.photo.removeBody')}
+                                                onDelete={(img) => handleDelete(field.onChange, field.value, img)}
+                                            />
+                                            {field.value.length < 5 && (
+                                                <Upload draggable className="min-h-fit" beforeUpload={beforeUpload} showList={false}
+                                                    onChange={(files) => handleUpload(field.onChange, field.value, files)}>
+                                                    <div className="flex flex-col items-center justify-center min-h-[130px] px-2">
+                                                        <PiImagesThin className="text-4xl text-gray-300" />
+                                                        <p className="text-xs text-primary mt-1">{t('assetForm.photo.addMore')}</p>
+                                                    </div>
+                                                </Upload>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <Upload draggable beforeUpload={beforeUpload} showList={false}
+                                            onChange={(files) => handleUpload(field.onChange, field.value ?? [], files)}>
+                                            <div className="flex flex-col items-center justify-center py-8">
+                                                <PiImagesThin className="text-6xl text-gray-300" />
+                                                <p className="flex flex-col items-center mt-2 text-sm">
+                                                    <span className="text-gray-500 dark:text-gray-400">{t('assetForm.photo.dropHere')}</span>
+                                                    <span className="text-primary font-semibold">{t('assetForm.photo.browse')}</span>
+                                                </p>
                                             </div>
-                                        ) : (
-                                            <Upload
-                                                draggable
-                                                beforeUpload={beforeUpload}
-                                                showList={false}
-                                                onChange={(files) =>
-                                                    handleUpload(field.onChange, field.value ?? [], files)
-                                                }
-                                            >
-                                                <div className="flex flex-col items-center justify-center py-8">
-                                                    <PiImagesThin className="text-6xl text-gray-300" />
-                                                    <p className="flex flex-col items-center mt-2 text-sm">
-                                                        <span className="text-gray-500 dark:text-gray-400">
-                                                            {t('assetForm.photo.dropHere')}
-                                                        </span>
-                                                        <span className="text-primary font-semibold">
-                                                            {t('assetForm.photo.browse')}
-                                                        </span>
-                                                    </p>
-                                                </div>
-                                            </Upload>
-                                        )}
-                                    </>
-                                )}
-                            />
-                            <p className="text-xs text-gray-400 mt-3">
-                                {t('assetForm.photo.maxSize')}
-                            </p>
+                                        </Upload>
+                                    )}
+                                </>
+                            )} />
+                            <p className="text-xs text-gray-400 mt-3">{t('assetForm.photo.maxSize')}</p>
                         </Card>
 
-                        {/* Card 4: Classification */}
+                        {/* 5. Location */}
                         <Card>
                             <SectionLabel
-                                icon={<TbTag />}
-                                title={t('assetForm.section.classification')}
-                                subtitle={t('assetForm.section.classificationSub')}
+                                icon={<TbMapPin />}
+                                title={t('common.location')}
+                                subtitle="Where this asset is physically installed"
                             />
 
-                            <FormItem
-                                label={t('assetForm.field.assetType')}
-                                invalid={!!errors.asset_type_id}
-                                errorMessage={errors.asset_type_id?.message}
-                            >
-                                <Controller
-                                    name="asset_type_id"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Select<TypeOption>
-                                            placeholder={t('assetForm.selectType')}
-                                            options={typeOptions}
-                                            value={typeOptions.find((o) => o.value === field.value) || null}
-                                            onChange={(opt) => field.onChange(opt?.value ?? null)}
-                                        />
-                                    )}
-                                />
-                            </FormItem>
-
                             <FormItem label={t('common.location')}>
-                                <Controller
-                                    name="location"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Input
-                                            {...field}
-                                            autoComplete="off"
-                                            prefix={<TbMapPin className="text-gray-400" />}
-                                            placeholder={t('assetForm.placeholder.location')}
-                                        />
-                                    )}
-                                />
+                                <Controller name="location" control={control} render={({ field }) => (
+                                    <Input
+                                        {...field}
+                                        autoComplete="off"
+                                        prefix={<TbMapPin className="text-gray-400" />}
+                                        placeholder={t('assetForm.placeholder.location')}
+                                    />
+                                )} />
                             </FormItem>
 
                             <FormItem label={t('assetForm.field.addressZone')}>
-                                <Controller
-                                    name="address_label"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Input
-                                            {...field}
-                                            autoComplete="off"
-                                            placeholder={t('assetForm.placeholder.addressZone')}
-                                        />
-                                    )}
-                                />
+                                <Controller name="address_label" control={control} render={({ field }) => (
+                                    <Input {...field} autoComplete="off" placeholder={t('assetForm.placeholder.addressZone')} />
+                                )} />
                             </FormItem>
                         </Card>
 
-                        {/* Card 5: Lifecycle */}
+                        {/* 6. Lifecycle */}
                         <Card>
                             <SectionLabel
                                 icon={<TbCalendar />}
@@ -565,53 +446,33 @@ const AssetForm = ({ onFormSubmit, defaultValues = {}, children }: AssetFormProp
                             />
 
                             <FormItem label={t('assetForm.field.purchaseDate')}>
-                                <Controller
-                                    name="purchase_date"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <DatePicker
-                                            placeholder={t('assetForm.placeholder.pickDate')}
-                                            value={field.value ? new Date(field.value) : null}
-                                            onChange={(date) =>
-                                                field.onChange(date ? dayjs(date).format('YYYY-MM-DD') : '')
-                                            }
-                                        />
-                                    )}
-                                />
+                                <Controller name="purchase_date" control={control} render={({ field }) => (
+                                    <DatePicker
+                                        placeholder={t('assetForm.placeholder.pickDate')}
+                                        value={field.value ? new Date(field.value) : null}
+                                        onChange={(date) => field.onChange(date ? dayjs(date).format('YYYY-MM-DD') : '')}
+                                    />
+                                )} />
                             </FormItem>
 
                             <FormItem label={t('assetForm.field.warrantyExpires')}>
-                                <Controller
-                                    name="warranty_end_at"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <DatePicker
-                                            placeholder={t('assetForm.placeholder.pickDate')}
-                                            value={field.value ? new Date(field.value) : null}
-                                            onChange={(date) =>
-                                                field.onChange(date ? dayjs(date).format('YYYY-MM-DD') : '')
-                                            }
-                                        />
-                                    )}
-                                />
+                                <Controller name="warranty_end_at" control={control} render={({ field }) => (
+                                    <DatePicker
+                                        placeholder={t('assetForm.placeholder.pickDate')}
+                                        value={field.value ? new Date(field.value) : null}
+                                        onChange={(date) => field.onChange(date ? dayjs(date).format('YYYY-MM-DD') : '')}
+                                    />
+                                )} />
                             </FormItem>
 
                             <FormItem label={t('assetForm.field.installedAt')}>
-                                <Controller
-                                    name="installed_at"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <DatePicker.DateTimepicker
-                                            placeholder={t('assetForm.placeholder.pickDateTime')}
-                                            value={field.value ? new Date(field.value) : null}
-                                            onChange={(date) =>
-                                                field.onChange(
-                                                    date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : '',
-                                                )
-                                            }
-                                        />
-                                    )}
-                                />
+                                <Controller name="installed_at" control={control} render={({ field }) => (
+                                    <DatePicker.DateTimepicker
+                                        placeholder={t('assetForm.placeholder.pickDateTime')}
+                                        value={field.value ? new Date(field.value) : null}
+                                        onChange={(date) => field.onChange(date ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : '')}
+                                    />
+                                )} />
                             </FormItem>
                         </Card>
                     </div>

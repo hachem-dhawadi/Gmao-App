@@ -86,6 +86,7 @@ const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailMo
                 { label: t('members.modal.employeeCode'), value: m.employee_code || '-' },
                 { label: t('members.modal.jobTitle'), value: m.job_title || '-' },
                 { label: t('members.modal.roles'), value: m.roles?.map((r) => r.label).join(', ') || '-' },
+                { label: 'Site', value: m.site ? `${m.site.name} (${m.site.code})` : '-' },
             ],
         }
     }, [data, t])
@@ -262,6 +263,15 @@ const CustomerListTable = () => {
                     <span>{props.row.original.personalInfo.phoneNumber || '-'}</span>
                 ),
             },
+            ...(!isSuperadmin ? [{
+                header: 'Site',
+                id: 'site',
+                cell: (props: any) => (
+                    <span className="text-sm text-gray-500">
+                        {props.row.original.siteName || '-'}
+                    </span>
+                ),
+            }] : []),
             {
                 header: '',
                 id: 'action',
@@ -277,7 +287,7 @@ const CustomerListTable = () => {
             },
         ],
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [canEdit, canDelete, t],
+        [canEdit, canDelete, isSuperadmin, t],
     )
 
     const handleSetTableData = (data: TableQueries) => {

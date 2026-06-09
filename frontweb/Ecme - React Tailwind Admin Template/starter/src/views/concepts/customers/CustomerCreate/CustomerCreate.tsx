@@ -125,6 +125,7 @@ const CustomerCreate = () => {
                     password: password || null,
                     password_confirmation: password ? passwordConfirmation : null,
                     department_id: null,
+                    site_id: values.site_id ?? null,
                     avatar: values.imgFile || null,
                 })
             } finally {

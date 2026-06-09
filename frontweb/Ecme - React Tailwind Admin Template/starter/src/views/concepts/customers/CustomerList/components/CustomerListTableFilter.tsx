@@ -1,113 +1,129 @@
 import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
-import Checkbox from '@/components/ui/Checkbox'
-import Input from '@/components/ui/Input'
+import Radio from '@/components/ui/Radio'
+import Select from '@/components/ui/Select'
 import { Form, FormItem } from '@/components/ui/Form'
 import useCustomerList from '../hooks/useCustomerList'
 import { TbFilter } from 'react-icons/tb'
 import { useForm, Controller } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import type { ZodType } from 'zod'
+import { useSessionUser } from '@/store/authStore'
+import { useTranslation } from 'react-i18next'
+import useSWR from 'swr'
+import { apiGetAllSites } from '@/services/SiteService'
+import type { Filter } from '../types'
 
-type FormSchema = {
-    purchasedProducts: string
-    purchaseChannel: Array<string>
-}
-
-const channelList = [
-    'Retail Stores',
-    'Online Retailers',
-    'Resellers',
-    'Mobile Apps',
-    'Direct Sales',
-]
-
-const validationSchema: ZodType<FormSchema> = z.object({
-    purchasedProducts: z.string(),
-    purchaseChannel: z.array(z.string()),
-})
+type SiteOption = { value: number; label: string }
 
 const CustomerListTableFilter = () => {
-    const [dialogIsOpen, setIsOpen] = useState(false)
-
+    const [dialogOpen, setDialogOpen] = useState(false)
     const { filterData, setFilterData } = useCustomerList()
+    const { t } = useTranslation()
+    const isSuperadmin = useSessionUser((state) => Boolean(state.user.isSuperadmin))
 
-    const openDialog = () => {
-        setIsOpen(true)
-    }
-
-    const onDialogClose = () => {
-        setIsOpen(false)
-    }
-
-    const { handleSubmit, reset, control } = useForm<FormSchema>({
+    const { handleSubmit, reset, control } = useForm<Filter>({
         defaultValues: filterData,
-        resolver: zodResolver(validationSchema),
     })
 
-    const onSubmit = (values: FormSchema) => {
+    const { data: sitesData } = useSWR(
+        !isSuperadmin ? '/sites/all' : null,
+        () => apiGetAllSites(),
+        { revalidateOnFocus: false },
+    )
+    const siteOptions: SiteOption[] = ((sitesData as any)?.data?.sites || [])
+        .filter((s: any) => s.is_active !== false)
+        .map((s: any) => ({ value: s.id, label: `${s.name} (${s.code})` }))
+
+    const onSubmit = (values: Filter) => {
         setFilterData(values)
-        setIsOpen(false)
+        setDialogOpen(false)
     }
+
+    const handleReset = () => {
+        reset({ status: 'all', site_id: null })
+        setFilterData({ status: 'all', site_id: null })
+        setDialogOpen(false)
+    }
+
+    const activeCount =
+        (filterData.status !== 'all' ? 1 : 0) +
+        (filterData.site_id != null ? 1 : 0)
+
+    const statusOptions = [
+        { value: 'all', label: t('members.status.all', 'All') },
+        { value: 'active', label: t('members.status.active') },
+        { value: 'blocked', label: t('members.status.blocked', 'Inactive') },
+    ]
 
     return (
         <>
-            <Button icon={<TbFilter />} onClick={() => openDialog()}>
-                Filter
-            </Button>
-            <Dialog
-                isOpen={dialogIsOpen}
-                onClose={onDialogClose}
-                onRequestClose={onDialogClose}
+            <Button
+                icon={<TbFilter />}
+                onClick={() => setDialogOpen(true)}
+                className={
+                    activeCount > 0
+                        ? 'border-primary ring-1 ring-primary text-primary'
+                        : ''
+                }
             >
-                <h4 className="mb-4">Filter</h4>
+                {t('common.filter')}{activeCount > 0 ? ` (${activeCount})` : ''}
+            </Button>
+
+            <Dialog
+                isOpen={dialogOpen}
+                onClose={() => setDialogOpen(false)}
+                onRequestClose={() => setDialogOpen(false)}
+                width={400}
+            >
+                <h4 className="mb-4">{t('common.filter')} — {t('members.pageTitle')}</h4>
                 <Form onSubmit={handleSubmit(onSubmit)}>
-                    <FormItem label="Products">
+
+                    {!isSuperadmin && siteOptions.length > 0 && (
+                        <FormItem label="Site">
+                            <Controller
+                                name="site_id"
+                                control={control}
+                                render={({ field }) => (
+                                    <Select<SiteOption>
+                                        placeholder="All sites"
+                                        options={siteOptions}
+                                        isClearable
+                                        value={siteOptions.find((o) => o.value === field.value) ?? null}
+                                        onChange={(opt) => field.onChange(opt?.value ?? null)}
+                                    />
+                                )}
+                            />
+                        </FormItem>
+                    )}
+
+                    <FormItem label={t('common.status')}>
                         <Controller
-                            name="purchasedProducts"
+                            name="status"
                             control={control}
                             render={({ field }) => (
-                                <Input
-                                    type="text"
-                                    autoComplete="off"
-                                    placeholder="Search by purchased product"
-                                    {...field}
-                                />
-                            )}
-                        />
-                    </FormItem>
-                    <FormItem label="Purchase Channel">
-                        <Controller
-                            name="purchaseChannel"
-                            control={control}
-                            render={({ field }) => (
-                                <Checkbox.Group
-                                    vertical
-                                    className="flex mt-4"
-                                    {...field}
-                                >
-                                    {channelList.map((source, index) => (
-                                        <Checkbox
-                                            key={source + index}
-                                            name={field.name}
-                                            value={source}
-                                            className="justify-between flex-row-reverse heading-text"
+                                <div className="flex flex-col gap-3 mt-2">
+                                    {statusOptions.map((opt) => (
+                                        <Radio
+                                            key={opt.value}
+                                            name="status"
+                                            value={opt.value}
+                                            checked={field.value === opt.value}
+                                            onChange={() => field.onChange(opt.value)}
                                         >
-                                            {source}
-                                        </Checkbox>
+                                            {opt.label}
+                                        </Radio>
                                     ))}
-                                </Checkbox.Group>
+                                </div>
                             )}
                         />
                     </FormItem>
-                    <div className="flex justify-end items-center gap-2 mt-4">
-                        <Button type="button" onClick={() => reset()}>
-                            Reset
+
+                    <div className="flex justify-end items-center gap-2 mt-6">
+                        <Button type="button" onClick={handleReset}>
+                            {t('common.reset')}
                         </Button>
                         <Button type="submit" variant="solid">
-                            Apply
+                            {t('common.apply')}
                         </Button>
                     </div>
                 </Form>

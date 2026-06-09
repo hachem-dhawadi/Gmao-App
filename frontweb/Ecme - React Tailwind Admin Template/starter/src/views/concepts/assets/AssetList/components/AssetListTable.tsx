@@ -121,6 +121,18 @@ const AssetListTable = () => {
                     ),
             },
             {
+                header: 'Site',
+                accessorKey: 'site',
+                cell: (props) =>
+                    props.row.original.site ? (
+                        <Tag className="bg-teal-100 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 text-xs border-0">
+                            {props.row.original.site.name}
+                        </Tag>
+                    ) : (
+                        <span className="text-gray-400">—</span>
+                    ),
+            },
+            {
                 header: t('assets.columns.status'),
                 accessorKey: 'status',
                 cell: (props) => (

@@ -258,6 +258,39 @@ const conceptsNavigationConfig: NavigationTree[] = [
                 ],
             },
 
+            // Sites
+            {
+                key: 'concepts.sites',
+                path: '',
+                title: 'Sites',
+                translateKey: 'nav.sites.sites',
+                icon: 'sites',
+                type: NAV_ITEM_TYPE_COLLAPSE,
+                authority: ['sites.read', 'admin'],
+                subMenu: [
+                    {
+                        key: 'concepts.sites.siteList',
+                        path: `${CONCEPTS_PREFIX_PATH}/sites`,
+                        title: 'Site List',
+                        translateKey: 'nav.sites.siteList',
+                        icon: 'memberList',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: ['sites.read', 'admin'],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'concepts.sites.siteCreate',
+                        path: `${CONCEPTS_PREFIX_PATH}/sites/site-create`,
+                        title: 'Add Site',
+                        translateKey: 'nav.sites.siteCreate',
+                        icon: 'memberCreate',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: ['sites.create', 'admin'],
+                        subMenu: [],
+                    },
+                ],
+            },
+
             // Departments
             {
                 key: 'concepts.departments',

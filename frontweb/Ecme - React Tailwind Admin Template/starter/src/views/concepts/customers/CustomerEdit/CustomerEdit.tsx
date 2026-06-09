@@ -166,6 +166,7 @@ const toDefaultValuesFromMember = (
         passwordConfirmation: '',
         imgFile: null,
         removeAvatar: false,
+        site_id: member.site_id ?? null,
     }
 }
 
@@ -275,6 +276,7 @@ const CustomerEdit = () => {
                     job_title: toTitleCase(selectedRole),
                     status: values.banAccount ? 'inactive' : 'active',
                     locale: values.locale || 'TN',
+                    site_id: values.site_id ?? null,
                 }
                 if (values.imgFile instanceof File) {
                     payload.avatar = values.imgFile

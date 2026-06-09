@@ -96,6 +96,7 @@ import {
     PiUsersThreeDuotone,
     PiShieldPlusDuotone,
     PiBellDuotone,
+    PiMapPinDuotone,
 } from 'react-icons/pi'
 import type { JSX } from 'react'
 
@@ -228,6 +229,7 @@ const navigationIcon: NavigationIcons = {
     memberList: <PiUserListDuotone />,
     memberCreate: <PiUserPlusDuotone />,
     departments: <PiBuildingsDuotone />,
+    sites: <PiMapPinDuotone />,
     rolesPermissions: <PiShieldPlusDuotone />,
     reports: <PiChartBarDuotone />,
 }

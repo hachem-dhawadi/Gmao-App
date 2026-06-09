@@ -27,6 +27,11 @@ class Asset extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function site(): BelongsTo
+    {
+        return $this->belongsTo(Site::class);
+    }
+
     public function assetType(): BelongsTo
     {
         return $this->belongsTo(AssetType::class);

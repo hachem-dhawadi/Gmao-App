@@ -15,6 +15,7 @@ class AssetResource extends JsonResource
         return [
             'id'              => $this->id,
             'company_id'      => $this->company_id,
+            'site_id'         => $this->site_id,
             'asset_type_id'   => $this->asset_type_id,
             'code'            => $this->code,
             'name'            => $this->name,
@@ -33,6 +34,9 @@ class AssetResource extends JsonResource
             'images'          => $this->images ?? [],
             'asset_type'      => $this->relationLoaded('assetType') && $this->assetType
                 ? ['id' => $this->assetType->id, 'name' => $this->assetType->name, 'code' => $this->assetType->code]
+                : null,
+            'site'            => $this->relationLoaded('site') && $this->site
+                ? ['id' => $this->site->id, 'name' => $this->site->name, 'code' => $this->site->code]
                 : null,
         ];
     }

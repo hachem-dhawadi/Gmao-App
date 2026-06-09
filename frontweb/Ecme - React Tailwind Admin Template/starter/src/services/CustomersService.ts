@@ -34,6 +34,8 @@ export type CompanyMemberListItem = {
     id: number
     company_id: number
     user_id: number
+    site_id: number | null
+    site: { id: number; name: string; code: string } | null
     department_id: number | null
     employee_code: string | null
     job_title: string | null
@@ -91,6 +93,7 @@ export type CreateMemberRequest = {
     password?: string | null
     password_confirmation?: string | null
     department_id?: number | null
+    site_id?: number | null
     avatar?: File | null
 }
 
@@ -121,6 +124,7 @@ export type UpdateMemberRequest = {
     email?: string
     phone?: string
     department_id?: number | null
+    site_id?: number | null
     roles?: string[]
     job_title?: string | null
     employee_code?: string

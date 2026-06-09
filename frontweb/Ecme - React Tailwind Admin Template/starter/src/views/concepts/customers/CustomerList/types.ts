@@ -46,6 +46,7 @@ export type GetCustomersListResponse = {
 
 export type Filter = {
     status: 'all' | 'active' | 'blocked'
+    site_id: number | null
 }
 
 export type Customer = {
@@ -59,6 +60,8 @@ export type Customer = {
     role: string
     lastOnline: number
     status: string
+    site_id?: number | null
+    siteName?: string | null
     personalInfo: PersonalInfo
     orderHistory: OrderHistory[]
     paymentMethod: PaymentMethod[]

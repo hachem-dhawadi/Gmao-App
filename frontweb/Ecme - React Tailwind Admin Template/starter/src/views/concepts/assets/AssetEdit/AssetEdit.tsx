@@ -50,6 +50,7 @@ const AssetEdit = () => {
             fd.append('_method', 'PATCH')
             fd.append('name', values.name)
             fd.append('code', values.code)
+            fd.append('site_id', values.site_id != null ? String(values.site_id) : '')
             fd.append('asset_type_id', String(values.asset_type_id!))
             fd.append('status', values.status)
             fd.append('serial_number', values.serial_number || '')
@@ -145,6 +146,7 @@ const AssetEdit = () => {
         ? {
               name: data.name,
               code: data.code,
+              site_id: data.site_id ?? null,
               asset_type_id: data.asset_type_id,
               status: data.status,
               serial_number: data.serial_number ?? '',

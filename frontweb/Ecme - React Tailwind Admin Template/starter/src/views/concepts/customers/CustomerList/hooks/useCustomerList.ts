@@ -15,6 +15,7 @@ import type { Customer } from '../types'
 type ListQueryParams = {
     page?: number
     per_page?: number
+    site_id?: number
 }
 
 const toNameParts = (name: string) => {
@@ -100,6 +101,8 @@ function toCustomerFromMember(member: CompanyMemberListItem): Customer {
         role: member.roles?.[0]?.label || member.job_title || 'Member',
         lastOnline: Date.now(),
         status: toStatus(member.status),
+        site_id: member.site_id ?? null,
+        siteName: member.site ? `${member.site.name} (${member.site.code})` : null,
         personalInfo: {
             location: '-',
             title: member.job_title || '',
@@ -143,6 +146,10 @@ export default function useCustomerList() {
         per_page: Number(tableData.pageSize || 10),
     }
 
+    if (!isSuperadmin && filterData.site_id != null) {
+        queryParams.site_id = filterData.site_id
+    }
+
     const { data, error, isLoading, mutate } = useSWR(
         [
             isSuperadmin ? '/superadmin/users' : '/members',
@@ -150,6 +157,7 @@ export default function useCustomerList() {
             currentCompanyId,
             tableData.pageIndex,
             tableData.pageSize,
+            filterData.site_id,
         ],
         () =>
             isSuperadmin
@@ -199,7 +207,7 @@ export default function useCustomerList() {
         return queryMatches && statusMatches
     })
 
-    const usingClientFilter = queryText.length > 0 || statusFilter !== 'all'
+    const usingClientFilter = queryText.length > 0 || statusFilter !== 'all' || filterData.site_id != null
 
     const apiTotal = isSuperadmin
         ? (data as SuperadminUsersListResponse | undefined)?.data?.pagination

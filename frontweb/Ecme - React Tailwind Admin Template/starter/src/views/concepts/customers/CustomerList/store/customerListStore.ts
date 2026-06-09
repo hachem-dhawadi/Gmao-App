@@ -15,6 +15,7 @@ export const initialTableData: TableQueries = {
 
 export const initialFilterData: Filter = {
     status: 'all',
+    site_id: null,
 }
 
 export type CustomersListState = {
