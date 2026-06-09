@@ -24,6 +24,7 @@ class SiteController extends Controller
         $perPage = max(1, min((int) $request->query('per_page', 15), 100));
 
         $sites = Site::query()
+            ->withCount(['assets', 'members', 'warehouses'])
             ->where('company_id', $currentCompany->id)
             ->orderBy('name')
             ->paginate($perPage);

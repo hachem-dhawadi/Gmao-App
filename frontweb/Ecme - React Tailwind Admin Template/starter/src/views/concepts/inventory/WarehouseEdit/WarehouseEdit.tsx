@@ -38,6 +38,7 @@ const WarehouseEdit = () => {
                 code: values.code,
                 name: values.name,
                 location: values.location || null,
+                site_id: values.site_id ?? null,
             })
 
             await globalMutate(

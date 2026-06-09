@@ -198,6 +198,33 @@ const SiteListTable = () => {
                 ),
             },
             {
+                header: 'Assets',
+                id: 'assets_count',
+                cell: (props) => (
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        {props.row.original.assets_count ?? '—'}
+                    </span>
+                ),
+            },
+            {
+                header: 'Members',
+                id: 'members_count',
+                cell: (props) => (
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        {props.row.original.members_count ?? '—'}
+                    </span>
+                ),
+            },
+            {
+                header: 'Warehouses',
+                id: 'warehouses_count',
+                cell: (props) => (
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                        {props.row.original.warehouses_count ?? '—'}
+                    </span>
+                ),
+            },
+            {
                 header: 'Address',
                 accessorKey: 'address',
                 cell: (props) => (

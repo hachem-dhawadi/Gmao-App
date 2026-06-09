@@ -21,8 +21,10 @@ class WarehouseController extends Controller
 
         $perPage = max(1, min((int) $request->query('per_page', 15), 100));
         $search  = $request->query('search');
+        $siteId  = $request->query('site_id');
 
         $query = Warehouse::query()
+            ->with('site')
             ->where('company_id', $currentCompany->id)
             ->orderByDesc('id');
 
@@ -32,6 +34,10 @@ class WarehouseController extends Controller
                     ->orWhere('code', 'like', "%{$search}%")
                     ->orWhere('location', 'like', "%{$search}%");
             });
+        }
+
+        if ($siteId) {
+            $query->where('site_id', (int) $siteId);
         }
 
         $warehouses = $query->paginate($perPage);
@@ -77,6 +83,8 @@ class WarehouseController extends Controller
             ->values()
             ->all();
 
+        $warehouse->load('site');
+
         return response()->json([
             'success' => true,
             'message' => 'Warehouse retrieved successfully.',
@@ -99,6 +107,7 @@ class WarehouseController extends Controller
             'code'     => 'required|string|max:100',
             'name'     => 'required|string|max:255',
             'location' => 'nullable|string|max:500',
+            'site_id'  => 'nullable|integer|exists:sites,id',
         ]);
 
         if (Warehouse::query()
@@ -110,10 +119,12 @@ class WarehouseController extends Controller
 
         $warehouse = Warehouse::query()->create([
             'company_id' => $currentCompany->id,
+            'site_id'    => $validated['site_id'] ?? null,
             'code'       => $validated['code'],
             'name'       => $validated['name'],
             'location'   => $validated['location'] ?? null,
         ]);
+        $warehouse->load('site');
 
         return response()->json([
             'success' => true,
@@ -134,6 +145,7 @@ class WarehouseController extends Controller
             'code'     => 'sometimes|string|max:100',
             'name'     => 'sometimes|string|max:255',
             'location' => 'nullable|string|max:500',
+            'site_id'  => 'sometimes|nullable|integer|exists:sites,id',
         ]);
 
         if (array_key_exists('code', $validated) &&
@@ -146,6 +158,7 @@ class WarehouseController extends Controller
         }
 
         $warehouse->forceFill($validated)->save();
+        $warehouse->load('site');
 
         return response()->json([
             'success' => true,
@@ -179,6 +192,12 @@ class WarehouseController extends Controller
         return [
             'id'         => $warehouse->id,
             'company_id' => $warehouse->company_id,
+            'site_id'    => $warehouse->site_id,
+            'site'       => $warehouse->relationLoaded('site') && $warehouse->site ? [
+                'id'   => $warehouse->site->id,
+                'name' => $warehouse->site->name,
+                'code' => $warehouse->site->code,
+            ] : null,
             'code'       => $warehouse->code,
             'name'       => $warehouse->name,
             'location'   => $warehouse->location,

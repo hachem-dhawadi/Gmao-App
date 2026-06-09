@@ -4,11 +4,16 @@ import Container from '@/components/shared/Container'
 import BottomStickyBar from '@/components/template/BottomStickyBar'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import { useForm, Controller } from 'react-hook-form'
 import { TbRefresh } from 'react-icons/tb'
+import useSWR from 'swr'
+import { apiGetAllSites } from '@/services/SiteService'
 import type { ReactNode } from 'react'
 import type { Warehouse } from '@/services/InventoryService'
+
+type SiteOption = { value: number; label: string }
 
 function generateWarehouseCode(): string {
     const n = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0')
@@ -19,6 +24,7 @@ export type WarehouseFormSchema = {
     code: string
     name: string
     location: string
+    site_id: number | null
 }
 
 type WarehouseFormProps = {
@@ -43,6 +49,7 @@ const WarehouseForm = ({
             code: warehouse?.code || '',
             name: warehouse?.name || '',
             location: warehouse?.location || '',
+            site_id: warehouse?.site_id ?? null,
         },
     })
 
@@ -52,9 +59,19 @@ const WarehouseForm = ({
                 code: warehouse.code,
                 name: warehouse.name,
                 location: warehouse.location || '',
+                site_id: warehouse.site_id ?? null,
             })
         }
     }, [warehouse, reset])
+
+    const { data: sitesData } = useSWR(
+        '/sites/all',
+        () => apiGetAllSites(),
+        { revalidateOnFocus: false },
+    )
+    const siteOptions: SiteOption[] = ((sitesData as any)?.data?.sites || [])
+        .filter((s: any) => s.is_active !== false)
+        .map((s: any) => ({ value: s.id, label: `${s.name} (${s.code})` }))
 
     return (
         <Form
@@ -136,6 +153,24 @@ const WarehouseForm = ({
                     <div className="md:w-[370px] gap-4 flex flex-col">
                         <Card>
                             <h4 className="mb-6">Details</h4>
+
+                            {siteOptions.length > 0 && (
+                                <FormItem label="Site">
+                                    <Controller
+                                        name="site_id"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select<SiteOption>
+                                                placeholder="Assign to site (optional)"
+                                                options={siteOptions}
+                                                isClearable
+                                                value={siteOptions.find((o) => o.value === field.value) ?? null}
+                                                onChange={(opt) => field.onChange(opt?.value ?? null)}
+                                            />
+                                        )}
+                                    />
+                                </FormItem>
+                            )}
 
                             <FormItem label="Location">
                                 <Controller

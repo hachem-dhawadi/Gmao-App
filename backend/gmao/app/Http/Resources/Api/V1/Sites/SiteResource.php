@@ -27,18 +27,9 @@ class SiteResource extends JsonResource
             'created_at'  => $this->created_at?->toISOString(),
             'updated_at'  => $this->updated_at?->toISOString(),
             'archived_at' => $this->archived_at?->toISOString(),
-            'assets_count' => $this->when(
-                $this->relationLoaded('assets'),
-                fn () => $this->assets->count()
-            ),
-            'members_count' => $this->when(
-                $this->relationLoaded('members'),
-                fn () => $this->members->count()
-            ),
-            'warehouses_count' => $this->when(
-                $this->relationLoaded('warehouses'),
-                fn () => $this->warehouses->count()
-            ),
+            'assets_count'    => $this->assets_count ?? null,
+            'members_count'   => $this->members_count ?? null,
+            'warehouses_count' => $this->warehouses_count ?? null,
         ];
     }
 }

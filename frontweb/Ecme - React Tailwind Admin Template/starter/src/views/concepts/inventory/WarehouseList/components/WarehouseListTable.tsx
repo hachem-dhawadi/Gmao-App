@@ -82,6 +82,17 @@ const WarehouseListTable = () => {
                 ),
             },
             {
+                header: 'Site',
+                id: 'site',
+                cell: (props) => (
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {props.row.original.site
+                            ? `${props.row.original.site.name} (${props.row.original.site.code})`
+                            : '—'}
+                    </span>
+                ),
+            },
+            {
                 header: t('warehouse.col.location'),
                 accessorKey: 'location',
                 cell: (props) => (

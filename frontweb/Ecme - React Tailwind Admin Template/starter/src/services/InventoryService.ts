@@ -27,6 +27,8 @@ export type Item = {
 export type Warehouse = {
     id: number
     company_id: number
+    site_id: number | null
+    site: { id: number; name: string; code: string } | null
     code: string
     name: string
     location: string | null
@@ -145,6 +147,7 @@ export type CreateWarehouseRequest = {
     code: string
     name: string
     location?: string | null
+    site_id?: number | null
 }
 
 export type UpdateWarehouseRequest = Partial<CreateWarehouseRequest>
