@@ -62,6 +62,7 @@ export type Customer = {
     status: string
     site_id?: number | null
     siteName?: string | null
+    sites?: { id: number; name: string; code: string }[]
     personalInfo: PersonalInfo
     orderHistory: OrderHistory[]
     paymentMethod: PaymentMethod[]

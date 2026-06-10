@@ -35,6 +35,7 @@ const WorkOrderForm = ({
             .nullable()
             .refine((v) => v !== null, { message: t('woForm.validation.assetRequired') }),
         site_id: z.number().nullable().optional(),
+        team_id: z.number().nullable().optional(),
         code: z.string().optional().default(''),
         status: z.enum(['open', 'in_progress', 'on_hold', 'completed', 'cancelled'], {
             required_error: t('woForm.validation.statusRequired'),
@@ -59,6 +60,7 @@ const WorkOrderForm = ({
             title: '',
             asset_id: null,
             site_id: null,
+            team_id: null,
             code: '',
             status: 'open',
             priority: 'medium',

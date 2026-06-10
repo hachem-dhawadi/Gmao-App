@@ -11,7 +11,7 @@ import toast from '@/components/ui/toast'
 import useCustomerList from '../hooks/useCustomerList'
 import { useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPencil, TbEye, TbTrash } from 'react-icons/tb'
+import { TbPencil, TbEye, TbTrash, TbBuilding, TbBuildingOff, TbBuildingPlus } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import useSWR from 'swr'
@@ -86,7 +86,12 @@ const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailMo
                 { label: t('members.modal.employeeCode'), value: m.employee_code || '-' },
                 { label: t('members.modal.jobTitle'), value: m.job_title || '-' },
                 { label: t('members.modal.roles'), value: m.roles?.map((r) => r.label).join(', ') || '-' },
-                { label: 'Site', value: m.site ? `${m.site.name} (${m.site.code})` : '-' },
+                {
+                    label: 'Sites',
+                    value: m.sites && m.sites.length > 0
+                        ? m.sites.map((s) => `${s.name} (${s.code})`).join(', ')
+                        : m.site ? `${m.site.name} (${m.site.code})` : '-',
+                },
             ],
         }
     }, [data, t])
@@ -264,13 +269,43 @@ const CustomerListTable = () => {
                 ),
             },
             ...(!isSuperadmin ? [{
-                header: 'Site',
-                id: 'site',
-                cell: (props: any) => (
-                    <span className="text-sm text-gray-500">
-                        {props.row.original.siteName || '-'}
-                    </span>
-                ),
+                header: 'Sites',
+                id: 'sites',
+                cell: (props: any) => {
+                    const sites: { id: number; name: string; code: string }[] = props.row.original.sites ?? []
+                    if (sites.length === 0) {
+                        return (
+                            <span className="inline-flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                                <TbBuildingOff className="text-sm shrink-0" />
+                                No site
+                            </span>
+                        )
+                    }
+                    if (sites.length === 1) {
+                        return (
+                            <div className="inline-flex items-center gap-1.5">
+                                <TbBuilding className="text-indigo-400 text-sm shrink-0" />
+                                <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">
+                                    {sites[0].name}
+                                </span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 font-mono">
+                                    {sites[0].code}
+                                </span>
+                            </div>
+                        )
+                    }
+                    return (
+                        <div className="inline-flex items-center gap-1.5">
+                            <TbBuildingPlus className="text-indigo-400 text-sm shrink-0" />
+                            <span className="text-sm text-gray-700 dark:text-gray-200 font-medium">
+                                {sites[0].name}
+                            </span>
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400">
+                                +{sites.length - 1} more
+                            </span>
+                        </div>
+                    )
+                },
             }] : []),
             {
                 header: '',

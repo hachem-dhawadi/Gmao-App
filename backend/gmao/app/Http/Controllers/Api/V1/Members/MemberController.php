@@ -38,9 +38,9 @@ class MemberController extends Controller
         $siteId = $request->query('site_id');
 
         $members = Member::query()
-            ->with(['user', 'roles', 'site'])
+            ->with(['user', 'roles', 'site', 'sites'])
             ->where('company_id', $currentCompany->id)
-            ->when($siteId, fn ($q) => $q->where('site_id', (int) $siteId))
+            ->when($siteId, fn ($q) => $q->whereHas('sites', fn ($sq) => $sq->where('sites.id', (int) $siteId)))
             ->orderByDesc('id')
             ->paginate($perPage);
 
@@ -69,7 +69,7 @@ class MemberController extends Controller
             ], 404);
         }
 
-        $member->load(['user', 'roles', 'site']);
+        $member->load(['user', 'roles', 'site', 'sites']);
 
         return response()->json([
             'success' => true,
@@ -235,19 +235,23 @@ class MemberController extends Controller
                 $user->forceFill($userPayload)->save();
             }
 
+            $siteIds = $validated['site_ids'] ?? [];
             $member = Member::query()->create([
-                'company_id' => $currentCompany->id,
-                'user_id' => $user->id,
-                'site_id' => $validated['site_id'] ?? null,
+                'company_id'    => $currentCompany->id,
+                'user_id'       => $user->id,
+                'site_id'       => !empty($siteIds) ? $siteIds[0] : null,
                 'department_id' => $validated['department_id'] ?? null,
                 'employee_code' => $validated['employee_code'],
-                'job_title' => $validated['job_title'] ?? null,
-                'status' => 'active',
+                'job_title'     => $validated['job_title'] ?? null,
+                'status'        => 'active',
             ]);
 
             $member->roles()->sync($roles->pluck('id')->all());
+            if (!empty($siteIds)) {
+                $member->sites()->sync($siteIds);
+            }
 
-            return $member->load(['user', 'roles', 'site']);
+            return $member->load(['user', 'roles', 'site', 'sites']);
         });
 
         NotificationService::notifyNewMember($member, $currentCompany->id);
@@ -375,10 +379,16 @@ class MemberController extends Controller
             }
 
             $memberPayload = [];
-            foreach (['site_id', 'department_id', 'employee_code', 'job_title', 'status'] as $field) {
+            foreach (['department_id', 'employee_code', 'job_title', 'status'] as $field) {
                 if (array_key_exists($field, $validated)) {
                     $memberPayload[$field] = $validated[$field];
                 }
+            }
+
+            // Keep site_id in sync with the first selected site
+            if (array_key_exists('site_ids', $validated)) {
+                $siteIds = $validated['site_ids'] ?? [];
+                $memberPayload['site_id'] = !empty($siteIds) ? $siteIds[0] : null;
             }
 
             if ($memberPayload !== []) {
@@ -389,7 +399,11 @@ class MemberController extends Controller
                 $member->roles()->sync($roles->pluck('id')->all());
             }
 
-            return $member->load(['user', 'roles', 'site']);
+            if (array_key_exists('site_ids', $validated)) {
+                $member->sites()->sync($validated['site_ids'] ?? []);
+            }
+
+            return $member->load(['user', 'roles', 'site', 'sites']);
         });
 
         return response()->json([

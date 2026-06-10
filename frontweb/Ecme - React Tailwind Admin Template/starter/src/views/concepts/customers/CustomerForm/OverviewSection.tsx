@@ -248,17 +248,26 @@ const OverviewSection = ({
             </div>
 
             {siteOptions.length > 0 && (
-                <FormItem label="Site">
+                <FormItem
+                    label="Sites"
+                    extra={
+                        <span className="text-xs text-gray-400">
+                            Sites this technician can work at
+                        </span>
+                    }
+                >
                     <Controller
-                        name="site_id"
+                        name="site_ids"
                         control={control}
                         render={({ field }) => (
-                            <Select<SiteOption>
-                                placeholder="Assign to site (optional)"
+                            <Select<SiteOption, true>
+                                isMulti
+                                placeholder="Select sites (optional)…"
                                 options={siteOptions}
-                                isClearable
-                                value={siteOptions.find((o) => o.value === field.value) ?? null}
-                                onChange={(opt) => field.onChange(opt?.value ?? null)}
+                                value={siteOptions.filter((o) => (field.value ?? []).includes(o.value))}
+                                onChange={(selected) =>
+                                    field.onChange(selected ? selected.map((o) => o.value) : [])
+                                }
                             />
                         )}
                     />

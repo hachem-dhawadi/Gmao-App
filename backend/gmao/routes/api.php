@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\Roles\RoleController;
 use App\Http\Controllers\Api\V1\Assets\AssetTypeController;
 use App\Http\Controllers\Api\V1\Departments\DepartmentController;
 use App\Http\Controllers\Api\V1\Sites\SiteController;
+use App\Http\Controllers\Api\V1\Teams\TeamController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
 use App\Http\Controllers\Api\V1\WorkOrders\WorkOrderController;
 use App\Http\Controllers\Api\V1\WorkOrders\WorkLogController;
@@ -91,6 +92,15 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/', [RoleController::class, 'index'])->middleware('permission:roles.read');
         Route::post('/', [RoleController::class, 'store'])->middleware('permission:roles.write');
         Route::patch('/{role}', [RoleController::class, 'update'])->middleware('permission:roles.write');
+    });
+
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('teams')->group(function (): void {
+        Route::get('/all', [TeamController::class, 'all'])->middleware('permission:teams.read');
+        Route::get('/', [TeamController::class, 'index'])->middleware('permission:teams.read');
+        Route::get('/{team}', [TeamController::class, 'show'])->middleware('permission:teams.read');
+        Route::post('/', [TeamController::class, 'store'])->middleware('permission:teams.write');
+        Route::patch('/{team}', [TeamController::class, 'update'])->middleware('permission:teams.write');
+        Route::delete('/{team}', [TeamController::class, 'destroy'])->middleware('permission:teams.write');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('assets')->group(function (): void {

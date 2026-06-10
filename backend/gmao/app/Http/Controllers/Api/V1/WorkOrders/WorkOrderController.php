@@ -37,7 +37,7 @@ class WorkOrderController extends Controller
         $siteId       = $request->query('site_id');
         $showArchived = $request->boolean('archived');
 
-        $with = ['asset', 'site', 'createdBy.user', 'assignedMembers.user'];
+        $with = ['asset', 'site', 'team', 'createdBy.user', 'assignedMembers.user'];
         if ($assetId) {
             $with[] = 'workLogs';
         }
@@ -140,6 +140,7 @@ class WorkOrderController extends Controller
             'company_id'           => $currentCompany->id,
             'asset_id'             => $validated['asset_id'],
             'site_id'              => $asset?->site_id,
+            'team_id'              => $validated['team_id'] ?? null,
             'code'                 => $code,
             'created_by_member_id' => $currentMember->id,
             'status'               => $validated['status'],
@@ -160,7 +161,7 @@ class WorkOrderController extends Controller
             NotificationService::notifyWoAssigned($workOrder, $validated['assigned_member_ids'], $currentMember->id);
         }
 
-        $workOrder->load(['asset', 'site', 'createdBy.user', 'assignedMembers.user']);
+        $workOrder->load(['asset', 'site', 'team', 'createdBy.user', 'assignedMembers.user']);
 
         return response()->json([
             'success' => true,
@@ -255,7 +256,7 @@ class WorkOrderController extends Controller
             NotificationService::notifyWoStatusChanged($workOrder, $oldStatus, $validated['status'], $currentMember->id);
         }
 
-        $workOrder->load(['asset', 'site', 'createdBy.user', 'assignedMembers.user']);
+        $workOrder->load(['asset', 'site', 'team', 'createdBy.user', 'assignedMembers.user']);
 
         return response()->json([
             'success' => true,

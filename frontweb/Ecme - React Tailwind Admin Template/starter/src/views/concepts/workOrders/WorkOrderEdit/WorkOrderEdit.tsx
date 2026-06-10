@@ -66,6 +66,7 @@ const WorkOrderEdit = () => {
                 estimated_minutes: values.estimated_minutes
                     ? parseInt(values.estimated_minutes, 10)
                     : null,
+                team_id: values.team_id ?? null,
                 assigned_member_ids: values.assigned_member_ids || [],
             })
 
@@ -148,6 +149,7 @@ const WorkOrderEdit = () => {
               title: data.title,
               asset_id: data.asset_id,
               site_id: data.site_id ?? null,
+              team_id: data.team_id ?? null,
               code: data.code,
               status: data.status,
               priority: data.priority,

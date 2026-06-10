@@ -32,6 +32,7 @@ const WorkOrderCreate = () => {
                 estimated_minutes: values.estimated_minutes
                     ? parseInt(values.estimated_minutes, 10)
                     : null,
+                team_id: values.team_id ?? null,
                 assigned_member_ids: values.assigned_member_ids || [],
             })
 

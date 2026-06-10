@@ -1,7 +1,7 @@
 import { lazy } from 'react'
 import authRoute from './authRoute'
 import othersRoute from './othersRoute'
-import { SUPERADMIN, ADMIN, MANAGER, TECHNICIAN } from '@/constants/roles.constant'
+import { SUPERADMIN } from '@/constants/roles.constant'
 import type { Routes } from '@/@types/routes'
 
 export const publicRoutes: Routes = [...authRoute]
@@ -17,6 +17,7 @@ const DepartmentCreate = lazy(() => import('@/views/concepts/departments/Departm
 const DepartmentEdit = lazy(() => import('@/views/concepts/departments/DepartmentEdit'))
 const DepartmentDetails = lazy(() => import('@/views/concepts/departments/DepartmentDetails'))
 const SiteList = lazy(() => import('@/views/concepts/sites/SiteList'))
+const TeamList = lazy(() => import('@/views/concepts/teams/TeamList'))
 const SiteCreate = lazy(() => import('@/views/concepts/sites/SiteCreate'))
 const SiteEdit = lazy(() => import('@/views/concepts/sites/SiteEdit'))
 const WorkOrderList = lazy(() => import('@/views/concepts/workOrders/WorkOrderList'))
@@ -125,7 +126,7 @@ const placeholderRoutes: Routes = [
         key: 'concepts.customers.customerDetails',
         path: '/concepts/customers/customer-details/:id',
         component: CustomerDetails,
-        authority: [],
+        authority: ['members.read'],
     },
     {
         key: 'concepts.products.productList',
@@ -219,7 +220,7 @@ const placeholderRoutes: Routes = [
         key: 'concepts.fileManager',
         path: '/concepts/file-manager',
         component: FileManager,
-        authority: [],
+        authority: ['files.read'],
         meta: {
             pageContainerType: 'contained',
             pageBackgroundType: 'plain',
@@ -242,151 +243,151 @@ const placeholderRoutes: Routes = [
         key: 'concepts.workOrders.workOrderList',
         path: '/concepts/work-orders/work-order-list',
         component: WorkOrderList,
-        authority: [],
+        authority: ['work_orders.read'],
     },
     {
         key: 'concepts.workOrders.workOrderCreate',
         path: '/concepts/work-orders/work-order-create',
         component: WorkOrderCreate,
-        authority: [ADMIN, MANAGER],
+        authority: ['work_orders.write'],
     },
     {
         key: 'concepts.workOrders.workOrderEdit',
         path: '/concepts/work-orders/work-order-edit/:id',
         component: WorkOrderEdit,
-        authority: [ADMIN, MANAGER, TECHNICIAN],
+        authority: ['work_orders.write'],
     },
     {
         key: 'concepts.workOrders.workOrderDetails',
         path: '/concepts/work-orders/work-order-details/:id',
         component: WorkOrderDetails,
-        authority: [],
+        authority: ['work_orders.read'],
     },
     {
         key: 'concepts.workOrders.workOrderBoard',
         path: '/concepts/work-orders/work-order-board',
         component: WorkOrderBoard,
-        authority: [],
+        authority: ['work_orders.read'],
     },
     {
         key: 'concepts.pm.pmList',
         path: '/concepts/pm/pm-list',
         component: PmPlanList,
-        authority: [],
+        authority: ['pm_plans.read'],
     },
     {
         key: 'concepts.pm.pmCreate',
         path: '/concepts/pm/pm-create',
         component: PmPlanCreate,
-        authority: [ADMIN, MANAGER],
+        authority: ['pm_plans.write'],
     },
     {
         key: 'concepts.pm.pmDetails',
         path: '/concepts/pm/pm-details/:id',
         component: PmPlanDetails,
-        authority: [],
+        authority: ['pm_plans.read'],
     },
     {
         key: 'concepts.pm.pmEdit',
         path: '/concepts/pm/pm-edit/:id',
         component: PmPlanEdit,
-        authority: [ADMIN, MANAGER],
+        authority: ['pm_plans.write'],
     },
     {
         key: 'concepts.inventory.items',
         path: '/concepts/inventory/items',
         component: ItemList,
-        authority: [],
+        authority: ['inventory.read'],
     },
     {
         key: 'concepts.inventory.items.itemCreate',
         path: '/concepts/inventory/items/item-create',
         component: ItemCreate,
-        authority: [ADMIN, MANAGER],
+        authority: ['inventory.write'],
     },
     {
         key: 'concepts.inventory.items.itemEdit',
         path: '/concepts/inventory/items/item-edit/:id',
         component: ItemEdit,
-        authority: [ADMIN, MANAGER],
+        authority: ['inventory.write'],
     },
     {
         key: 'concepts.inventory.items.itemDetails',
         path: '/concepts/inventory/items/item-details/:id',
         component: ItemDetails,
-        authority: [],
+        authority: ['inventory.read'],
     },
     {
         key: 'concepts.inventory.warehouses',
         path: '/concepts/inventory/warehouses',
         component: WarehouseList,
-        authority: [],
+        authority: ['inventory.write'],
     },
     {
         key: 'concepts.inventory.warehouses.warehouseCreate',
         path: '/concepts/inventory/warehouses/warehouse-create',
         component: WarehouseCreate,
-        authority: [ADMIN, MANAGER],
+        authority: ['inventory.write'],
     },
     {
         key: 'concepts.inventory.warehouses.warehouseEdit',
         path: '/concepts/inventory/warehouses/warehouse-edit/:id',
         component: WarehouseEdit,
-        authority: [ADMIN, MANAGER],
+        authority: ['inventory.write'],
     },
     {
         key: 'concepts.inventory.warehouses.warehouseDetails',
         path: '/concepts/inventory/warehouses/warehouse-details/:id',
         component: WarehouseDetails,
-        authority: [],
+        authority: ['inventory.read'],
     },
     {
         key: 'concepts.inventory.stockMoves',
         path: '/concepts/inventory/stock-moves',
         component: StockMoveList,
-        authority: [ADMIN, MANAGER],
+        authority: ['inventory.write'],
     },
     {
         key: 'concepts.reports',
         path: '/concepts/reports',
         component: Reports,
-        authority: [ADMIN, MANAGER],
+        authority: ['work_orders.read'],
     },
     {
         key: 'concepts.requests.requestList',
         path: '/concepts/requests/request-list',
         component: RequestList,
-        authority: [],
+        authority: ['work_orders.read'],
     },
     {
         key: 'concepts.requests.requestCreate',
         path: '/concepts/requests/request-create',
         component: RequestCreate,
-        authority: [],
+        authority: ['work_orders.read'],
     },
     {
         key: 'concepts.requests.requestDetails',
         path: '/concepts/requests/request-details/:id',
         component: RequestDetails,
-        authority: [],
+        authority: ['work_orders.read'],
     },
     {
         key: 'concepts.purchasing.suppliers',
         path: '/concepts/purchasing/suppliers',
         component: SupplierList,
-        authority: [],
+        authority: ['purchasing.read'],
     },
     {
         key: 'concepts.purchasing.purchaseOrders',
         path: '/concepts/purchasing/purchase-orders',
         component: PurchaseOrderList,
-        authority: [],
+        authority: ['purchasing.read'],
     },
     {
         key: 'concepts.purchasing.purchaseOrderCreate',
         path: '/concepts/purchasing/purchase-orders/create',
         component: PurchaseOrderCreate,
-        authority: [ADMIN, MANAGER],
+        authority: ['purchasing.write'],
         meta: {
             header: {
                 title: 'Create order',
@@ -400,7 +401,7 @@ const placeholderRoutes: Routes = [
         key: 'concepts.purchasing.purchaseOrderEdit',
         path: '/concepts/purchasing/purchase-orders/edit/:id',
         component: PurchaseOrderEdit,
-        authority: [ADMIN, MANAGER],
+        authority: ['purchasing.write'],
         meta: {
             header: {
                 title: 'Edit order',
@@ -413,7 +414,7 @@ const placeholderRoutes: Routes = [
         key: 'concepts.purchasing.purchaseOrderDetails',
         path: '/concepts/purchasing/purchase-orders/:id',
         component: PurchaseOrderDetails,
-        authority: [],
+        authority: ['purchasing.read'],
         meta: {
             header: {
                 contained: true,
@@ -431,13 +432,19 @@ const placeholderRoutes: Routes = [
         key: 'concepts.purchasing.receipts',
         path: '/concepts/purchasing/receipts',
         component: ReceiptList,
-        authority: [],
+        authority: ['purchasing.read'],
+    },
+    {
+        key: 'concepts.teams',
+        path: '/concepts/teams',
+        component: TeamList,
+        authority: ['teams.read'],
     },
     {
         key: 'concepts.rolesPermissions',
         path: '/concepts/roles-permissions',
         component: RolesPermissions,
-        authority: [],
+        authority: ['roles.read'],
         meta: {
             pageBackgroundType: 'plain',
         },
@@ -514,7 +521,7 @@ export const protectedRoutes: Routes = [
         key: 'concepts.customers.customerList',
         path: '/concepts/customers/customer-list',
         component: lazy(() => import('@/views/concepts/customers/CustomerList')),
-        authority: [],
+        authority: ['members.read'],
     },
     {
         key: 'concepts.customers.customerEdit',
@@ -526,73 +533,73 @@ export const protectedRoutes: Routes = [
         key: 'concepts.customers.customerCreate',
         path: '/concepts/customers/customer-create',
         component: lazy(() => import('@/views/concepts/customers/CustomerCreate')),
-        authority: [],
+        authority: ['members.create'],
     },
     {
         key: 'concepts.sites',
         path: '/concepts/sites',
         component: SiteList,
-        authority: [],
+        authority: ['sites.read'],
     },
     {
         key: 'concepts.sites.siteCreate',
         path: '/concepts/sites/site-create',
         component: SiteCreate,
-        authority: [],
+        authority: ['sites.create'],
     },
     {
         key: 'concepts.sites.siteEdit',
         path: '/concepts/sites/site-edit/:id',
         component: SiteEdit,
-        authority: [],
+        authority: ['sites.update'],
     },
     {
         key: 'concepts.departments',
         path: '/concepts/departments',
         component: DepartmentList,
-        authority: [],
+        authority: ['departments.read'],
     },
     {
         key: 'concepts.departments.departmentCreate',
         path: '/concepts/departments/department-create',
         component: DepartmentCreate,
-        authority: [],
+        authority: ['departments.create'],
     },
     {
         key: 'concepts.departments.departmentEdit',
         path: '/concepts/departments/department-edit/:id',
         component: DepartmentEdit,
-        authority: [],
+        authority: ['departments.update'],
     },
     {
         key: 'concepts.departments.departmentDetails',
         path: '/concepts/departments/department-details/:id',
         component: DepartmentDetails,
-        authority: [],
+        authority: ['departments.read'],
     },
     {
         key: 'concepts.assets.assetList',
         path: '/concepts/assets/asset-list',
         component: AssetList,
-        authority: [],
+        authority: ['assets.read'],
     },
     {
         key: 'concepts.assets.assetCreate',
         path: '/concepts/assets/asset-create',
         component: AssetCreate,
-        authority: [],
+        authority: ['assets.write'],
     },
     {
         key: 'concepts.assets.assetEdit',
         path: '/concepts/assets/asset-edit/:id',
         component: AssetEdit,
-        authority: [],
+        authority: ['assets.write'],
     },
     {
         key: 'concepts.assets.assetDetails',
         path: '/concepts/assets/asset-details/:id',
         component: AssetDetails,
-        authority: [],
+        authority: ['assets.read'],
     },
     {
         key: 'concepts.account.settings',

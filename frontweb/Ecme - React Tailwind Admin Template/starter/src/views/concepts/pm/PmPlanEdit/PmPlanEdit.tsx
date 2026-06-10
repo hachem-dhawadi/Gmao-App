@@ -54,6 +54,7 @@ const PmPlanEdit = () => {
                     : null,
                 asset_id: values.asset_id || null,
                 assigned_member_id: values.assigned_member_id || null,
+                team_id: values.team_id ?? null,
                 trigger: {
                     type: 'time_based',
                     interval_value: parseInt(values.trigger_interval_value, 10),
@@ -143,6 +144,7 @@ const PmPlanEdit = () => {
                   : '',
               asset_id: data.asset?.id ?? null,
               assigned_member_id: data.assigned_to?.id ?? null,
+              team_id: data.team_id ?? null,
               trigger_interval_value: data.trigger
                   ? String(data.trigger.interval_value)
                   : '1',

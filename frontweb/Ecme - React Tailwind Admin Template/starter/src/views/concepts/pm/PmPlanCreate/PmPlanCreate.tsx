@@ -31,6 +31,7 @@ const PmPlanCreate = () => {
                     : null,
                 asset_id: values.asset_id || null,
                 assigned_member_id: values.assigned_member_id || null,
+                team_id: values.team_id ?? null,
                 trigger: {
                     type: 'time_based',
                     interval_value: parseInt(values.trigger_interval_value, 10),

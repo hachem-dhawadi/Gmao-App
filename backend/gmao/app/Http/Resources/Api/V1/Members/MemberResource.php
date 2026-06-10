@@ -38,6 +38,13 @@ class MemberResource extends JsonResource
                 'name' => $this->site->name,
                 'code' => $this->site->code,
             ] : null,
+            'sites' => $this->relationLoaded('sites')
+                ? $this->sites->map(fn ($s) => [
+                    'id'   => $s->id,
+                    'name' => $s->name,
+                    'code' => $s->code,
+                ])->values()->all()
+                : [],
             'department_id' => $this->department_id,
             'employee_code' => $this->employee_code,
             'job_title' => $this->job_title,

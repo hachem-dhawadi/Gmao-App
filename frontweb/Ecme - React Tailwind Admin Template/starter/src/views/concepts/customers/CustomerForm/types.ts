@@ -36,7 +36,7 @@ export type AccountField = {
 }
 
 export type SiteField = {
-    site_id?: number | null
+    site_ids?: number[]
 }
 
 export type CustomerFormSchema = OverviewFields &

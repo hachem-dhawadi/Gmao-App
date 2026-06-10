@@ -37,6 +37,7 @@ const PmPlanForm = ({
         estimated_minutes: z.string().optional().default(''),
         asset_id: z.number().nullable().optional().default(null),
         assigned_member_id: z.number().nullable().optional().default(null),
+        team_id: z.number().nullable().optional().default(null),
         trigger_interval_value: z
             .string()
             .min(1, { message: t('pmForm.validation.intervalValueRequired') }),
@@ -59,6 +60,7 @@ const PmPlanForm = ({
         reset,
         formState: { errors },
         control,
+        setValue,
     } = useForm<PmPlanFormSchema>({
         defaultValues: {
             name: '',
@@ -68,6 +70,7 @@ const PmPlanForm = ({
             estimated_minutes: '',
             asset_id: null,
             assigned_member_id: null,
+            team_id: null,
             trigger_interval_value: '1',
             trigger_interval_unit: 'months',
             trigger_next_run_at: '',
@@ -110,7 +113,7 @@ const PmPlanForm = ({
                         <PmTasksSection control={control} />
                     </div>
                     <div className="md:w-[370px] gap-4 flex flex-col">
-                        <PmPlanSideSection control={control} errors={errors} />
+                        <PmPlanSideSection control={control} errors={errors} setValue={setValue} />
                     </div>
                 </div>
             </Container>

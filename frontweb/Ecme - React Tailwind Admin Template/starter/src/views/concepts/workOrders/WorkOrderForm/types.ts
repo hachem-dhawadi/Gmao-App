@@ -2,6 +2,7 @@ export type WorkOrderFormSchema = {
     title: string
     asset_id: number | null
     site_id: number | null
+    team_id: number | null
     code: string
     status: 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
     priority: 'low' | 'medium' | 'high' | 'critical'

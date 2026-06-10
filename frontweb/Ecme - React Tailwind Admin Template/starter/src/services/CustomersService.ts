@@ -36,6 +36,7 @@ export type CompanyMemberListItem = {
     user_id: number
     site_id: number | null
     site: { id: number; name: string; code: string } | null
+    sites: { id: number; name: string; code: string }[]
     department_id: number | null
     employee_code: string | null
     job_title: string | null
@@ -93,7 +94,7 @@ export type CreateMemberRequest = {
     password?: string | null
     password_confirmation?: string | null
     department_id?: number | null
-    site_id?: number | null
+    site_ids?: number[]
     avatar?: File | null
 }
 
@@ -124,7 +125,7 @@ export type UpdateMemberRequest = {
     email?: string
     phone?: string
     department_id?: number | null
-    site_id?: number | null
+    site_ids?: number[]
     roles?: string[]
     job_title?: string | null
     employee_code?: string
@@ -237,6 +238,9 @@ export async function apiCreateMember<
                 'department_id',
                 data.department_id === null ? '' : String(data.department_id),
             )
+        }
+        if (Array.isArray(data.site_ids)) {
+            data.site_ids.forEach((id) => formData.append('site_ids[]', String(id)))
         }
         data.roles.forEach((role) => {
             formData.append('roles[]', role)
@@ -373,6 +377,9 @@ export async function apiUpdateCompanyMemberById<
         }
         if (data.locale !== undefined) {
             formData.append('locale', data.locale ?? '')
+        }
+        if (Array.isArray(data.site_ids)) {
+            data.site_ids.forEach((id) => formData.append('site_ids[]', String(id)))
         }
         if (Array.isArray(data.roles)) {
             data.roles.forEach((role) => {

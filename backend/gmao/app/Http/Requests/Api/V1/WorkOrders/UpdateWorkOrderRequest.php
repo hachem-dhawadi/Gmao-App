@@ -24,6 +24,7 @@ class UpdateWorkOrderRequest extends FormRequest
                     ->where('company_id', $companyId)
                     ->whereNull('deleted_at'),
             ],
+            'team_id'           => ['sometimes', 'nullable', 'integer', Rule::exists('teams', 'id')->where('company_id', $companyId)->whereNull('deleted_at')],
             'code'              => ['sometimes', 'nullable', 'string', 'max:50'],
             'status'            => ['sometimes', 'string', 'in:open,in_progress,on_hold,completed,cancelled'],
             'priority'          => ['sometimes', 'string', 'in:low,medium,high,critical'],

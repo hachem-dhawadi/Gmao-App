@@ -52,7 +52,7 @@ const baseSchema = z.object({
     employeeCode: z.string().optional(),
     locale: z.string().optional(),
     role: z.string().optional().default(''),
-    site_id: z.number().nullable().optional(),
+    site_ids: z.array(z.number()).optional().default([]),
     password: z.string().optional(),
     passwordConfirmation: z.string().optional(),
 })
@@ -124,6 +124,7 @@ const CustomerForm = (props: CustomerFormProps) => {
                 locale: 'TN',
                 dialCode: '+216',
                 city: 'Tunis',
+                site_ids: [] as number[],
             },
             ...defaultValues,
         },

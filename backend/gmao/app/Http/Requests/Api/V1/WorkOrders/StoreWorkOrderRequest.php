@@ -24,6 +24,7 @@ class StoreWorkOrderRequest extends FormRequest
                     ->where('company_id', $companyId)
                     ->whereNull('deleted_at'),
             ],
+            'team_id'           => ['nullable', 'integer', Rule::exists('teams', 'id')->where('company_id', $companyId)->whereNull('deleted_at')],
             'code'              => ['nullable', 'string', 'max:50'],
             'status'            => ['required', 'string', 'in:open,in_progress,on_hold,completed,cancelled'],
             'priority'          => ['required', 'string', 'in:low,medium,high,critical'],

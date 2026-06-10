@@ -36,6 +36,11 @@ class Member extends Model
         return $this->belongsTo(Site::class);
     }
 
+    public function sites(): BelongsToMany
+    {
+        return $this->belongsToMany(Site::class, 'member_sites');
+    }
+
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'member_roles');

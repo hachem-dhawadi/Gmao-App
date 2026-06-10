@@ -29,7 +29,7 @@ class PmPlanController extends Controller
         $search   = $request->query('search');
 
         $query = PmPlan::query()
-            ->with(['assets', 'createdBy.user', 'assignedTo.user', 'triggers'])
+            ->with(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'team'])
             ->where('company_id', $currentCompany->id)
             ->orderByDesc('id');
 
@@ -69,7 +69,7 @@ class PmPlanController extends Controller
             return response()->json(['success' => false, 'message' => 'PM plan not found.'], 404);
         }
 
-        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks', 'pmWorkOrders.workOrder']);
+        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks', 'team', 'pmWorkOrders.workOrder']);
 
         return response()->json([
             'success' => true,
@@ -95,6 +95,7 @@ class PmPlanController extends Controller
             'estimated_minutes'  => 'nullable|integer|min:1',
             'asset_id'           => 'nullable|integer|exists:assets,id',
             'assigned_member_id' => 'nullable|integer|exists:members,id',
+            'team_id'            => 'nullable|integer|exists:teams,id',
             'trigger'            => 'required|array',
             'trigger.type'       => 'required|in:time_based',
             'trigger.interval_value' => 'required|integer|min:1',
@@ -117,6 +118,7 @@ class PmPlanController extends Controller
                 'estimated_minutes'    => $validated['estimated_minutes'] ?? null,
                 'created_by_member_id' => $currentMember->id,
                 'assigned_member_id'   => $validated['assigned_member_id'] ?? null,
+                'team_id'              => $validated['team_id'] ?? null,
             ]);
 
             if (! empty($validated['asset_id'])) {
@@ -142,7 +144,7 @@ class PmPlanController extends Controller
             return $plan;
         });
 
-        $plan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks']);
+        $plan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks', 'team']);
 
         if (! empty($validated['assigned_member_id'])) {
             NotificationService::notifyPmAssigned($plan, (int) $validated['assigned_member_id'], $currentMember->id);
@@ -175,6 +177,7 @@ class PmPlanController extends Controller
             'estimated_minutes'  => 'sometimes|nullable|integer|min:1',
             'asset_id'           => 'sometimes|nullable|integer|exists:assets,id',
             'assigned_member_id' => 'sometimes|nullable|integer|exists:members,id',
+            'team_id'            => 'sometimes|nullable|integer|exists:teams,id',
             'trigger'            => 'sometimes|array',
             'trigger.interval_value' => 'required_with:trigger|integer|min:1',
             'trigger.interval_unit'  => 'required_with:trigger|in:days,weeks,months',
@@ -226,7 +229,7 @@ class PmPlanController extends Controller
             }
         }
 
-        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks']);
+        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks', 'team']);
 
         $currentMember = $request->attributes->get('currentMember');
         if (array_key_exists('assigned_member_id', $validated) && ! empty($validated['assigned_member_id']) && $currentMember) {
@@ -308,6 +311,12 @@ class PmPlanController extends Controller
                     'order_index' => $t->order_index,
                 ])->values()->all()
                 : [],
+            'team_id'            => $plan->team_id,
+            'team'               => $plan->relationLoaded('team') && $plan->team ? [
+                'id'    => $plan->team->id,
+                'name'  => $plan->team->name,
+                'color' => $plan->team->color,
+            ] : null,
         ];
     }
 

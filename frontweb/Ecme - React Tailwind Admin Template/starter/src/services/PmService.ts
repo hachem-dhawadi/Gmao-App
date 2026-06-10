@@ -40,6 +40,8 @@ export type PmPlan = {
     created_by: PmMember | null
     trigger: PmTrigger | null
     tasks: PmTask[]
+    team_id: number | null
+    team: { id: number; name: string; color: string } | null
 }
 
 export type PmPlansListResponse = {
@@ -70,6 +72,7 @@ export type CreatePmPlanRequest = {
     estimated_minutes?: number | null
     asset_id?: number | null
     assigned_member_id?: number | null
+    team_id?: number | null
     trigger: {
         type: 'time_based'
         interval_value: number

@@ -49,4 +49,9 @@ class PmPlan extends Model
     {
         return $this->hasMany(PmTask::class)->orderBy('order_index');
     }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
 }

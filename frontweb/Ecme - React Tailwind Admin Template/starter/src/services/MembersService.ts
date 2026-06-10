@@ -20,6 +20,9 @@ export type Member = {
     company_id: number
     user_id: number
     department_id: number | null
+    site_id: number | null
+    site: { id: number; name: string; code: string } | null
+    sites: { id: number; name: string; code: string }[]
     employee_code: string
     job_title: string | null
     status: string

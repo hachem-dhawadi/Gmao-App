@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import DataTable from '@/components/shared/DataTable'
 import Tooltip from '@/components/ui/Tooltip'
 import Tag from '@/components/ui/Tag'
+import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import usePmPlanList from '../hooks/usePmPlanList'
 import { useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPencil, TbTrash } from 'react-icons/tb'
+import { TbPencil, TbTrash, TbUserCircle, TbUsers } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { apiDeletePmPlan } from '@/services/PmService'
@@ -189,16 +190,43 @@ const PmPlanListTable = () => {
                 },
             },
             {
+                header: 'Team',
+                accessorKey: 'team',
+                cell: (props) => {
+                    const team = props.row.original.team
+                    if (!team) return <span className="text-gray-400">—</span>
+                    return (
+                        <div className="flex items-center gap-1.5">
+                            <span
+                                className="w-2 h-2 rounded-full shrink-0"
+                                style={{ backgroundColor: team.color }}
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                                {team.name}
+                            </span>
+                        </div>
+                    )
+                },
+            },
+            {
                 header: t('pm.columns.assignedTo'),
                 accessorKey: 'assigned_to',
-                cell: (props) =>
-                    props.row.original.assigned_to?.name ? (
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {props.row.original.assigned_to.name}
-                        </span>
-                    ) : (
-                        <span className="text-gray-400">—</span>
-                    ),
+                cell: (props) => {
+                    const member = props.row.original.assigned_to
+                    if (!member?.name) return <span className="text-gray-400">—</span>
+                    return (
+                        <div className="flex items-center gap-2">
+                            <Avatar
+                                size={24}
+                                shape="circle"
+                                icon={<TbUserCircle />}
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                                {member.name}
+                            </span>
+                        </div>
+                    )
+                },
             },
             {
                 header: '',

@@ -103,6 +103,7 @@ function toCustomerFromMember(member: CompanyMemberListItem): Customer {
         status: toStatus(member.status),
         site_id: member.site_id ?? null,
         siteName: member.site ? `${member.site.name} (${member.site.code})` : null,
+        sites: member.sites ?? [],
         personalInfo: {
             location: '-',
             title: member.job_title || '',

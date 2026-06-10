@@ -93,6 +93,7 @@ export type WorkOrder = {
     priority: 'low' | 'medium' | 'high' | 'critical'
     asset_id: number
     site_id: number | null
+    team_id: number | null
     created_by_member_id: number
     closed_by_member_id: number | null
     opened_at: string | null
@@ -107,6 +108,7 @@ export type WorkOrder = {
     archived_at: string | null
     asset: WorkOrderAsset | null
     site: { id: number; name: string; code: string } | null
+    team: { id: number; name: string; color: string } | null
     created_by: WorkOrderCreatedBy | null
     assigned_members: WorkOrderMember[]
     status_history: WorkOrderStatusHistory[] | null
@@ -140,6 +142,7 @@ export type WorkOrderResponse = {
 export type CreateWorkOrderRequest = {
     title: string
     asset_id: number
+    team_id?: number | null
     code?: string | null
     status: string
     priority: string
@@ -152,6 +155,7 @@ export type CreateWorkOrderRequest = {
 export type UpdateWorkOrderRequest = {
     title?: string
     asset_id?: number
+    team_id?: number | null
     code?: string | null
     status?: string
     priority?: string
