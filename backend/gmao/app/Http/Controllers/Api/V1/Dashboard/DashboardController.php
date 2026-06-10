@@ -30,8 +30,13 @@ class DashboardController extends Controller
         $endOfWeek      = $now->copy()->addDays(7);
         $endOfMonth     = $now->copy()->endOfMonth();
 
-        // Work order counts
-        $woBase = WorkOrder::query()->where('company_id', $company->id)->whereNull('deleted_at');
+        $siteId = $request->query('site_id') ? (int) $request->query('site_id') : null;
+
+        // Work order counts — scoped by site when requested
+        $woBase = WorkOrder::query()
+            ->where('company_id', $company->id)
+            ->whereNull('deleted_at')
+            ->when($siteId, fn ($q) => $q->where('site_id', $siteId));
 
         $woOpen            = (clone $woBase)->where('status', 'open')->count();
         $woInProgress      = (clone $woBase)->where('status', 'in_progress')->count();
@@ -50,18 +55,26 @@ class DashboardController extends Controller
             ->doesntHave('assignedMembers')
             ->count();
 
-        // PM counts
+        // PM counts — not site-scoped (PM plans have no site_id FK yet)
         $pmBase      = PmPlan::query()->where('company_id', $company->id)->whereNull('deleted_at');
         $pmActive    = (clone $pmBase)->where('status', 'active')->count();
         $pmDueWeek   = (clone $pmBase)->whereHas('triggers', fn ($q) => $q->whereBetween('next_run_at', [$now, $endOfWeek]))->count();
         $pmDueMonth  = (clone $pmBase)->whereHas('triggers', fn ($q) => $q->whereBetween('next_run_at', [$now, $endOfMonth]))->count();
 
-        // Other counts
-        $totalAssets       = Asset::query()->where('company_id', $company->id)->whereNull('deleted_at')->count();
-        $totalActive       = Member::query()->where('company_id', $company->id)->where('status', 'active')->count();
-        $totalTechnicians  = Member::query()
+        // Asset & member counts — scoped by site when requested
+        $totalAssets = Asset::query()
+            ->where('company_id', $company->id)
+            ->whereNull('deleted_at')
+            ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
+            ->count();
+
+        $memberBase = Member::query()
             ->where('company_id', $company->id)
             ->where('status', 'active')
+            ->when($siteId, fn ($q) => $q->where('site_id', $siteId));
+
+        $totalActive      = (clone $memberBase)->count();
+        $totalTechnicians = (clone $memberBase)
             ->whereHas('roles', fn ($q) => $q->where('code', 'technician'))
             ->count();
 
@@ -93,6 +106,7 @@ class DashboardController extends Controller
         // ── MTTR — Mean Time To Repair (hours, this month) ───────────────────
         $mttrResult = WorkOrder::query()
             ->where('company_id', $company->id)
+            ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
             ->where('status', 'completed')
             ->whereBetween('closed_at', [$startOfMonth, $now])
             ->whereNotNull('opened_at')
@@ -102,10 +116,11 @@ class DashboardController extends Controller
 
         $mttrHours = $mttrResult ? round((float) ($mttrResult->mttr_hours ?? 0), 1) : 0.0;
 
-        // Recent work orders
+        // Recent work orders — scoped by site when requested
         $recentWorkOrders = WorkOrder::query()
             ->with(['asset', 'createdBy.user'])
             ->where('company_id', $company->id)
+            ->when($siteId, fn ($q) => $q->where('site_id', $siteId))
             ->orderByDesc('id')
             ->limit(6)
             ->get()

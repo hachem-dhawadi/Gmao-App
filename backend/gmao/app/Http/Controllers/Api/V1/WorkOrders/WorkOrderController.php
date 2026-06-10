@@ -34,9 +34,10 @@ class WorkOrderController extends Controller
         $search       = $request->query('search');
         $myOnly       = $request->boolean('my_only');
         $assetId      = $request->query('asset_id');
+        $siteId       = $request->query('site_id');
         $showArchived = $request->boolean('archived');
 
-        $with = ['asset', 'createdBy.user', 'assignedMembers.user'];
+        $with = ['asset', 'site', 'createdBy.user', 'assignedMembers.user'];
         if ($assetId) {
             $with[] = 'workLogs';
         }
@@ -54,6 +55,10 @@ class WorkOrderController extends Controller
 
         if ($assetId) {
             $query->where('asset_id', $assetId);
+        }
+
+        if ($siteId) {
+            $query->where('site_id', (int) $siteId);
         }
 
         if ($status && $status !== 'all') {
@@ -129,9 +134,12 @@ class WorkOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Work order code already exists.'], 422);
         }
 
+        $asset = \App\Models\Asset::find($validated['asset_id']);
+
         $workOrder = WorkOrder::query()->create([
             'company_id'           => $currentCompany->id,
             'asset_id'             => $validated['asset_id'],
+            'site_id'              => $asset?->site_id,
             'code'                 => $code,
             'created_by_member_id' => $currentMember->id,
             'status'               => $validated['status'],
@@ -152,7 +160,7 @@ class WorkOrderController extends Controller
             NotificationService::notifyWoAssigned($workOrder, $validated['assigned_member_ids'], $currentMember->id);
         }
 
-        $workOrder->load(['asset', 'createdBy.user', 'assignedMembers.user']);
+        $workOrder->load(['asset', 'site', 'createdBy.user', 'assignedMembers.user']);
 
         return response()->json([
             'success' => true,
@@ -211,6 +219,12 @@ class WorkOrderController extends Controller
                 $validated['closed_by_member_id']  = $currentMember?->id;
             }
 
+            // Re-derive site_id when asset changes
+            if (isset($validated['asset_id'])) {
+                $newAsset = \App\Models\Asset::find($validated['asset_id']);
+                $validated['site_id'] = $newAsset?->site_id;
+            }
+
             $workOrder->forceFill($validated)->save();
         }
 
@@ -241,7 +255,7 @@ class WorkOrderController extends Controller
             NotificationService::notifyWoStatusChanged($workOrder, $oldStatus, $validated['status'], $currentMember->id);
         }
 
-        $workOrder->load(['asset', 'createdBy.user', 'assignedMembers.user']);
+        $workOrder->load(['asset', 'site', 'createdBy.user', 'assignedMembers.user']);
 
         return response()->json([
             'success' => true,

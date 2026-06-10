@@ -92,6 +92,7 @@ export type WorkOrder = {
     status: 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
     priority: 'low' | 'medium' | 'high' | 'critical'
     asset_id: number
+    site_id: number | null
     created_by_member_id: number
     closed_by_member_id: number | null
     opened_at: string | null
@@ -105,6 +106,7 @@ export type WorkOrder = {
     updated_at: string | null
     archived_at: string | null
     asset: WorkOrderAsset | null
+    site: { id: number; name: string; code: string } | null
     created_by: WorkOrderCreatedBy | null
     assigned_members: WorkOrderMember[]
     status_history: WorkOrderStatusHistory[] | null

@@ -22,6 +22,7 @@ class WorkOrderResource extends JsonResource
             'status'               => $this->status,
             'priority'             => $this->priority,
             'asset_id'             => $this->asset_id,
+            'site_id'              => $this->site_id,
             'created_by_member_id' => $this->created_by_member_id,
             'closed_by_member_id'  => $this->closed_by_member_id,
             'opened_at'            => $this->opened_at?->toISOString(),
@@ -36,6 +37,9 @@ class WorkOrderResource extends JsonResource
             'archived_at'          => $this->archived_at?->toISOString(),
             'asset'                => $this->relationLoaded('asset') && $this->asset
                 ? ['id' => $this->asset->id, 'code' => $this->asset->code, 'name' => $this->asset->name]
+                : null,
+            'site'                 => $this->relationLoaded('site') && $this->site
+                ? ['id' => $this->site->id, 'name' => $this->site->name, 'code' => $this->site->code]
                 : null,
             'created_by'           => $this->relationLoaded('createdBy') && $this->createdBy
                 ? ['id' => $this->createdBy->id, 'name' => $this->createdBy->user?->name]

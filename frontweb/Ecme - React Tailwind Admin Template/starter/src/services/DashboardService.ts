@@ -43,8 +43,12 @@ export type HrDashboard = {
     recent_members: { id: number; name: string | null; email: string | null; job_title: string | null; status: string; role: string | null; created_at: string | null }[]
 }
 
-export async function apiGetAdminManagerDashboard() {
-    return ApiService.fetchDataWithAxios<{ success: boolean; data: AdminManagerDashboard }>({ url: '/dashboard', method: 'get' })
+export async function apiGetAdminManagerDashboard(params?: { site_id?: number | null }) {
+    return ApiService.fetchDataWithAxios<{ success: boolean; data: AdminManagerDashboard }>({
+        url: '/dashboard',
+        method: 'get',
+        params: params?.site_id != null ? { site_id: params.site_id } : undefined,
+    })
 }
 export async function apiGetTechnicianDashboard() {
     return ApiService.fetchDataWithAxios<{ success: boolean; data: TechnicianDashboard }>({ url: '/dashboard/my', method: 'get' })

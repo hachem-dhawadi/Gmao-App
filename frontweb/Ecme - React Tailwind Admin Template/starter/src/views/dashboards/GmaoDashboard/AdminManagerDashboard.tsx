@@ -14,6 +14,7 @@ import Timeline from '@/components/ui/Timeline'
 import ScrollBar from '@/components/ui/ScrollBar'
 import GanttChart from '@/components/shared/GanttChart'
 import { apiGetAdminManagerDashboard } from '@/services/DashboardService'
+import { apiGetAllSites } from '@/services/SiteService'
 import classNames from '@/utils/classNames'
 import isLastChild from '@/utils/isLastChild'
 import dayjs from 'dayjs'
@@ -29,6 +30,7 @@ import {
     TbUsers, TbUserExclamation, TbTool,
     TbChevronLeft, TbChevronRight,
     TbClipboardText, TbCalendarStats, TbClock,
+    TbBuilding,
 } from 'react-icons/tb'
 import { COLORS } from '@/constants/chart.constant'
 import type { ExtendedTask } from '@/components/shared/GanttChart'
@@ -813,14 +815,32 @@ const LoadingSkeleton = () => (
     </Container>
 )
 
+// ── Site option type ───────────────────────────────────────────────────
+type SiteOption = { value: number; label: string; name: string; code: string }
+
 // ── Main ───────────────────────────────────────────────────────────────
 
 const AdminManagerDashboard = () => {
     const navigate = useNavigate()
     const { t } = useTranslation()
+    const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null)
+
+    const { data: sitesData } = useSWR(
+        '/sites-all-dashboard',
+        () => apiGetAllSites(),
+        { revalidateOnFocus: false },
+    )
+    const siteOptions: SiteOption[] =
+        sitesData?.data?.sites?.map((s) => ({
+            value: s.id,
+            label: `${s.name} (${s.code})`,
+            name: s.name,
+            code: s.code,
+        })) || []
+
     const { data, isLoading, error } = useSWR(
-        '/dashboard',
-        () => apiGetAdminManagerDashboard(),
+        ['/dashboard', selectedSiteId],
+        () => apiGetAdminManagerDashboard({ site_id: selectedSiteId }),
         { revalidateOnFocus: false },
     )
 
@@ -854,6 +874,77 @@ const AdminManagerDashboard = () => {
     return (
         <Container>
             <div className="flex flex-col gap-4">
+
+                {/* ── Site filter bar ───────────────────────────────── */}
+                {siteOptions.length > 0 && (
+                    <div className={classNames(
+                        'flex flex-wrap items-center gap-2 px-4 py-3 rounded-xl border transition-colors duration-200',
+                        selectedSiteId != null
+                            ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800'
+                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
+                    )}>
+                        {/* Label */}
+                        <div className="flex items-center gap-1.5 mr-1">
+                            <TbBuilding className={classNames(
+                                'text-base transition-colors duration-200',
+                                selectedSiteId != null ? 'text-indigo-500' : 'text-gray-400'
+                            )} />
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                                {t('dashboard.adminManager.siteFilter.label', 'Site')}
+                            </span>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="w-px h-5 bg-gray-200 dark:bg-gray-600 mx-1 shrink-0" />
+
+                        {/* All Sites pill */}
+                        <button
+                            type="button"
+                            onClick={() => setSelectedSiteId(null)}
+                            className={classNames(
+                                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 select-none',
+                                selectedSiteId == null
+                                    ? 'bg-indigo-600 text-white shadow-sm scale-[1.02]'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 dark:hover:text-indigo-300'
+                            )}
+                        >
+                            {t('dashboard.adminManager.siteFilter.all', 'All Sites')}
+                            <span className={classNames(
+                                'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold px-1 transition-colors duration-150',
+                                selectedSiteId == null
+                                    ? 'bg-white/25 text-white'
+                                    : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                            )}>
+                                {siteOptions.length}
+                            </span>
+                        </button>
+
+                        {/* Per-site pills */}
+                        {siteOptions.map((site) => (
+                            <button
+                                key={site.value}
+                                type="button"
+                                onClick={() => setSelectedSiteId(site.value)}
+                                className={classNames(
+                                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-150 select-none',
+                                    selectedSiteId === site.value
+                                        ? 'bg-indigo-600 text-white shadow-sm scale-[1.02]'
+                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 dark:hover:text-indigo-300'
+                                )}
+                            >
+                                {site.name}
+                                <span className={classNames(
+                                    'inline-flex items-center justify-center px-1.5 h-[16px] rounded text-[9px] font-bold tracking-wider transition-colors duration-150',
+                                    selectedSiteId === site.value
+                                        ? 'bg-white/20 text-white'
+                                        : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                                )}>
+                                    {site.code}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* ── Top row ──────────────────────────────────────── */}
                 <div className="flex flex-col xl:flex-row gap-4">

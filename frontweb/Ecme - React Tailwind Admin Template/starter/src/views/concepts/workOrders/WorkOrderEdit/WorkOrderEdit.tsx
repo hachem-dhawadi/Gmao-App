@@ -147,6 +147,7 @@ const WorkOrderEdit = () => {
         ? {
               title: data.title,
               asset_id: data.asset_id,
+              site_id: data.site_id ?? null,
               code: data.code,
               status: data.status,
               priority: data.priority,

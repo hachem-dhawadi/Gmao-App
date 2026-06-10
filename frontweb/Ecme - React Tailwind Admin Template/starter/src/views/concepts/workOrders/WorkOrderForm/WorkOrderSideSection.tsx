@@ -6,25 +6,33 @@ import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import DatePicker from '@/components/ui/DatePicker'
 import { FormItem } from '@/components/ui/Form'
-import { Controller } from 'react-hook-form'
+import { Controller, useWatch } from 'react-hook-form'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
 import { TbClock } from 'react-icons/tb'
 import { apiGetAssetsList } from '@/services/AssetsService'
 import { apiGetMembersList } from '@/services/MembersService'
+import { apiGetAllSites } from '@/services/SiteService'
 import type { AssetsListResponse } from '@/services/AssetsService'
 import type { MembersListResponse } from '@/services/MembersService'
-import type { Control, FieldErrors } from 'react-hook-form'
+import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form'
 import type { WorkOrderFormSchema } from './types'
 
 type Props = {
     control: Control<WorkOrderFormSchema>
     errors: FieldErrors<WorkOrderFormSchema>
+    setValue: UseFormSetValue<WorkOrderFormSchema>
     canAssign?: boolean
 }
 
-type AssetOption = { value: number; label: string; code: string }
+type AssetOption = {
+    value: number
+    label: string
+    code: string
+    site_id: number | null
+}
 type MemberOption = { value: number; label: string }
+type SiteOption  = { value: number; label: string }
 
 // ── Time Picker ───────────────────────────────────────────────────────────────
 
@@ -123,8 +131,14 @@ const EstimatedTimePicker = ({ value, onChange }: TimePickerProps) => {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => {
+const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: Props) => {
     const { t } = useTranslation()
+
+    const { data: sitesData } = useSWR(
+        '/sites-all-wo-form',
+        () => apiGetAllSites(),
+        { revalidateOnFocus: false },
+    )
 
     const { data: assetsData } = useSWR(
         '/assets-all',
@@ -138,11 +152,18 @@ const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => 
         { revalidateOnFocus: false },
     )
 
-    const assetOptions: AssetOption[] =
+    const siteOptions: SiteOption[] =
+        sitesData?.data?.sites?.map((s) => ({
+            value: s.id,
+            label: `${s.name} (${s.code})`,
+        })) || []
+
+    const allAssetOptions: AssetOption[] =
         assetsData?.data?.assets?.map((a) => ({
             value: a.id,
             label: a.name,
             code: a.code,
+            site_id: a.site_id ?? null,
         })) || []
 
     const memberOptions: MemberOption[] =
@@ -151,10 +172,46 @@ const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => 
             label: m.user?.name ?? m.employee_code,
         })) || []
 
+    const watchedSiteId  = useWatch({ control, name: 'site_id' })
+    const watchedAssetId = useWatch({ control, name: 'asset_id' })
+
+    // Filter assets by selected site (show all if no site selected)
+    const assetOptions = watchedSiteId != null
+        ? allAssetOptions.filter((a) => a.site_id === watchedSiteId)
+        : allAssetOptions
+
     return (
         <Card>
             <h4 className="mb-6">{t('woForm.detailsTitle')}</h4>
 
+            {/* Site — filters assets; auto-filled when asset is chosen */}
+            <FormItem label="Site">
+                <Controller
+                    name="site_id"
+                    control={control}
+                    render={({ field }) => (
+                        <Select<SiteOption>
+                            isClearable
+                            placeholder="Select site (optional)"
+                            options={siteOptions}
+                            value={siteOptions.find((o) => o.value === field.value) || null}
+                            onChange={(opt) => {
+                                const newSiteId = opt?.value ?? null
+                                field.onChange(newSiteId)
+                                // Clear asset if it no longer belongs to the new site
+                                if (newSiteId != null) {
+                                    const current = allAssetOptions.find((a) => a.value === watchedAssetId)
+                                    if (current && current.site_id !== newSiteId) {
+                                        setValue('asset_id', null)
+                                    }
+                                }
+                            }}
+                        />
+                    )}
+                />
+            </FormItem>
+
+            {/* Asset — auto-fills site when selected */}
             <FormItem
                 label={t('woForm.field.asset')}
                 asterisk
@@ -168,22 +225,18 @@ const WorkOrderSideSection = ({ control, errors, canAssign = false }: Props) => 
                         <Select<AssetOption>
                             placeholder={t('woForm.placeholder.selectAsset')}
                             options={assetOptions}
-                            value={
-                                assetOptions.find(
-                                    (o) => o.value === field.value,
-                                ) || null
-                            }
-                            onChange={(option) =>
+                            value={assetOptions.find((o) => o.value === field.value) || null}
+                            onChange={(option) => {
                                 field.onChange(option?.value ?? null)
-                            }
+                                // Auto-fill site from selected asset
+                                if (option) {
+                                    setValue('site_id', option.site_id ?? null)
+                                }
+                            }}
                             formatOptionLabel={(opt) => (
                                 <div className="flex items-center gap-2">
-                                    <span className="font-medium">
-                                        {opt.label}
-                                    </span>
-                                    <span className="text-xs text-gray-400 font-mono">
-                                        {opt.code}
-                                    </span>
+                                    <span className="font-medium">{opt.label}</span>
+                                    <span className="text-xs text-gray-400 font-mono">{opt.code}</span>
                                 </div>
                             )}
                         />

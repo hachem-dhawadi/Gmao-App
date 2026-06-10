@@ -14,6 +14,7 @@ export type WorkOrderFilter = {
     priority: 'all' | 'low' | 'medium' | 'high' | 'critical'
     myOnly: boolean
     showArchived: boolean
+    site_id: number | null
 }
 
 export const initialFilterData: WorkOrderFilter = {
@@ -21,6 +22,7 @@ export const initialFilterData: WorkOrderFilter = {
     priority: 'all',
     myOnly: false,
     showArchived: false,
+    site_id: null,
 }
 
 type WorkOrderListState = {

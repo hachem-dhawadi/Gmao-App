@@ -34,6 +34,7 @@ const WorkOrderForm = ({
             .number({ required_error: t('woForm.validation.assetRequired') })
             .nullable()
             .refine((v) => v !== null, { message: t('woForm.validation.assetRequired') }),
+        site_id: z.number().nullable().optional(),
         code: z.string().optional().default(''),
         status: z.enum(['open', 'in_progress', 'on_hold', 'completed', 'cancelled'], {
             required_error: t('woForm.validation.statusRequired'),
@@ -57,6 +58,7 @@ const WorkOrderForm = ({
         defaultValues: {
             title: '',
             asset_id: null,
+            site_id: null,
             code: '',
             status: 'open',
             priority: 'medium',
@@ -74,6 +76,7 @@ const WorkOrderForm = ({
             reset({
                 title: '',
                 asset_id: null,
+                site_id: null,
                 code: '',
                 status: 'open',
                 priority: 'medium',
@@ -106,6 +109,7 @@ const WorkOrderForm = ({
                         <WorkOrderSideSection
                             control={control}
                             errors={errors}
+                            setValue={setValue}
                             canAssign={canAssign}
                         />
                     </div>

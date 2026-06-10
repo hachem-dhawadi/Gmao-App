@@ -229,6 +229,22 @@ const WorkOrderListTable = () => {
                         <span className="text-gray-400">—</span>
                     ),
             },
+            ...(!userAuthority?.includes('superadmin')
+                ? [
+                      {
+                          header: 'Site',
+                          id: 'site',
+                          cell: (props: { row: { original: WorkOrder } }) =>
+                              props.row.original.site ? (
+                                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                                      {props.row.original.site.name}
+                                  </span>
+                              ) : (
+                                  <span className="text-gray-400">—</span>
+                              ),
+                      },
+                  ]
+                : []),
             {
                 header: t('wo.columns.due'),
                 accessorKey: 'due_at',
