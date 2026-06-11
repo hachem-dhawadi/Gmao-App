@@ -9,5 +9,5 @@ export type WorkOrderFormSchema = {
     description: string
     due_at: string
     estimated_minutes: string
-    assigned_member_ids: number[]
+    assigned_member_id: number | null
 }

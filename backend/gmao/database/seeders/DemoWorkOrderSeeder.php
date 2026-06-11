@@ -162,13 +162,10 @@ class DemoWorkOrderSeeder extends Seeder
                     'updated_at'            => $closedAt ?? $openedAt,
                 ]);
 
-                // Assign 1–2 technicians
+                // Assign a single technician
                 if ($assigneePool->isNotEmpty()) {
-                    $assignees = $assigneePool->random(min(rand(1, 2), $assigneePool->count()));
-                    $pivotData = collect(is_array($assignees->all()) ? $assignees : [$assignees])
-                        ->mapWithKeys(fn($m) => [$m->id => ['assigned_at' => $openedAt]])
-                        ->all();
-                    $wo->assignedMembers()->sync($pivotData);
+                    $assignee = $assigneePool->random();
+                    $wo->update(['assigned_member_id' => $assignee->id]);
                 }
 
                 $count++;

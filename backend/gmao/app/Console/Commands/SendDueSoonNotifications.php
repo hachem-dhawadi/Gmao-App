@@ -23,7 +23,7 @@ class SendDueSoonNotifications extends Command
             ->where('due_at', '<=', $window)
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->whereNull('archived_at')
-            ->with(['assignedMembers.user'])
+            ->with(['assignedMember.user'])
             ->get();
 
         if ($dueSoonWos->isEmpty()) {

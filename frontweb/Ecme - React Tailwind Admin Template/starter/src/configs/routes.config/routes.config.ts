@@ -7,15 +7,11 @@ import type { Routes } from '@/@types/routes'
 export const publicRoutes: Routes = [...authRoute]
 
 const DrawerPlaceholder = lazy(() => import('@/views/demo/DrawerPlaceholder'))
-const DepartmentList = lazy(() => import('@/views/concepts/departments/DepartmentList'))
 const AssetList = lazy(() => import('@/views/concepts/assets/AssetList'))
 const RolesPermissions = lazy(() => import('@/views/concepts/rolesPermissions/RolesPermissions'))
 const AssetCreate = lazy(() => import('@/views/concepts/assets/AssetCreate'))
 const AssetEdit = lazy(() => import('@/views/concepts/assets/AssetEdit'))
 const AssetDetails = lazy(() => import('@/views/concepts/assets/AssetDetails'))
-const DepartmentCreate = lazy(() => import('@/views/concepts/departments/DepartmentCreate'))
-const DepartmentEdit = lazy(() => import('@/views/concepts/departments/DepartmentEdit'))
-const DepartmentDetails = lazy(() => import('@/views/concepts/departments/DepartmentDetails'))
 const SiteList = lazy(() => import('@/views/concepts/sites/SiteList'))
 const TeamList = lazy(() => import('@/views/concepts/teams/TeamList'))
 const SiteCreate = lazy(() => import('@/views/concepts/sites/SiteCreate'))
@@ -552,30 +548,6 @@ export const protectedRoutes: Routes = [
         path: '/concepts/sites/site-edit/:id',
         component: SiteEdit,
         authority: ['sites.update'],
-    },
-    {
-        key: 'concepts.departments',
-        path: '/concepts/departments',
-        component: DepartmentList,
-        authority: ['departments.read'],
-    },
-    {
-        key: 'concepts.departments.departmentCreate',
-        path: '/concepts/departments/department-create',
-        component: DepartmentCreate,
-        authority: ['departments.create'],
-    },
-    {
-        key: 'concepts.departments.departmentEdit',
-        path: '/concepts/departments/department-edit/:id',
-        component: DepartmentEdit,
-        authority: ['departments.update'],
-    },
-    {
-        key: 'concepts.departments.departmentDetails',
-        path: '/concepts/departments/department-details/:id',
-        component: DepartmentDetails,
-        authority: ['departments.read'],
     },
     {
         key: 'concepts.assets.assetList',

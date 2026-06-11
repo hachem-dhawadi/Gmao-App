@@ -20,4 +20,5 @@ export type Asset = {
     images?: string[]
     asset_type: { id: number; name: string; code: string } | null
     site: { id: number; name: string; code: string } | null
+    checklist_templates?: { id: number; title: string; order_index: number }[] | null
 }

@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Loading from '@/components/shared/Loading'
 import PrintLabelDialog from '@/components/shared/PrintLabelDialog'
 import Card from '@/components/ui/Card'
 import Tag from '@/components/ui/Tag'
 import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 import Dialog from '@/components/ui/Dialog'
-import { apiGetAssetById } from '@/services/AssetsService'
+import toast from '@/components/ui/toast'
+import Notification from '@/components/ui/Notification'
+import { apiGetAssetById, apiSyncAssetChecklistTemplates } from '@/services/AssetsService'
+import type { ChecklistTemplate } from '@/services/AssetsService'
 import { apiGetWorkOrdersList } from '@/services/WorkOrdersService'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
@@ -26,6 +30,10 @@ import {
     TbClock,
     TbCurrencyDollar,
     TbChevronRight,
+    TbPlus,
+    TbTrash,
+    TbGripVertical,
+    TbCheckbox,
 } from 'react-icons/tb'
 import { HiEye } from 'react-icons/hi'
 import type { AssetResponse } from '@/services/AssetsService'
@@ -65,6 +73,18 @@ const woStatusConfig: Record<
         bgClass: 'bg-red-100 dark:bg-red-500/20',
         textClass: 'text-red-600 dark:text-red-400',
         dot: 'bg-red-400',
+    },
+    pending_approval: {
+        label: 'Pending Approval',
+        bgClass: 'bg-orange-100 dark:bg-orange-500/20',
+        textClass: 'text-orange-600 dark:text-orange-400',
+        dot: 'bg-orange-400',
+    },
+    rejected: {
+        label: 'Rejected',
+        bgClass: 'bg-rose-100 dark:bg-rose-500/20',
+        textClass: 'text-rose-600 dark:text-rose-400',
+        dot: 'bg-rose-500',
     },
 }
 
@@ -196,6 +216,136 @@ const WarrantyStatus = ({ date }: { date: string | null }) => {
                 </div>
             </div>
         </div>
+    )
+}
+
+type DraftTask = { id?: number; title: string }
+
+const DefaultTasksSection = ({
+    assetId,
+    initialTasks,
+}: {
+    assetId: number
+    initialTasks: ChecklistTemplate[]
+}) => {
+    const [tasks, setTasks] = useState<DraftTask[]>(initialTasks)
+    const [newTitle, setNewTitle] = useState('')
+    const [saving, setSaving] = useState(false)
+    const [dirty, setDirty] = useState(false)
+
+    useEffect(() => {
+        setTasks(initialTasks)
+        setDirty(false)
+    }, [assetId])
+
+    const addTask = () => {
+        const t = newTitle.trim()
+        if (!t) return
+        setTasks((prev) => [...prev, { title: t }])
+        setNewTitle('')
+        setDirty(true)
+    }
+
+    const removeTask = (idx: number) => {
+        setTasks((prev) => prev.filter((_, i) => i !== idx))
+        setDirty(true)
+    }
+
+    const updateTask = (idx: number, title: string) => {
+        setTasks((prev) =>
+            prev.map((t, i) => (i === idx ? { ...t, title } : t)),
+        )
+        setDirty(true)
+    }
+
+    const handleSave = async () => {
+        setSaving(true)
+        try {
+            await apiSyncAssetChecklistTemplates(
+                assetId,
+                tasks.map((t, i) => ({ title: t.title, order_index: i })),
+            )
+            setDirty(false)
+            toast.push(
+                <Notification type="success">Default tasks saved.</Notification>,
+                { placement: 'top-end' },
+            )
+        } catch {
+            toast.push(
+                <Notification type="danger">Failed to save tasks.</Notification>,
+                { placement: 'top-end' },
+            )
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    return (
+        <Card>
+            <div className="flex items-center justify-between mb-4">
+                <h4 className="flex items-center gap-2">
+                    <TbCheckbox className="text-indigo-500" />
+                    Default Tasks
+                    {tasks.length > 0 && (
+                        <span className="text-sm font-normal text-gray-400">
+                            ({tasks.length})
+                        </span>
+                    )}
+                </h4>
+                {dirty && (
+                    <Button
+                        size="sm"
+                        variant="solid"
+                        loading={saving}
+                        onClick={handleSave}
+                    >
+                        Save
+                    </Button>
+                )}
+            </div>
+
+            <div className="flex flex-col gap-1.5 mb-3">
+                {tasks.length === 0 && (
+                    <p className="text-sm text-gray-400 text-center py-4">
+                        No default tasks yet. Add steps below.
+                    </p>
+                )}
+                {tasks.map((task, idx) => (
+                    <div
+                        key={idx}
+                        className="flex items-center gap-2 group rounded-lg px-2 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    >
+                        <TbGripVertical className="text-gray-300 shrink-0 text-base" />
+                        <span className="text-xs text-gray-400 w-5 shrink-0 text-right">{idx + 1}.</span>
+                        <input
+                            className="flex-1 text-sm bg-transparent border-0 outline-none focus:ring-0 text-gray-700 dark:text-gray-200 min-w-0"
+                            value={task.title}
+                            onChange={(e) => updateTask(idx, e.target.value)}
+                        />
+                        <button
+                            type="button"
+                            className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-opacity shrink-0"
+                            onClick={() => removeTask(idx)}
+                        >
+                            <TbTrash className="text-base" />
+                        </button>
+                    </div>
+                ))}
+            </div>
+
+            <div className="flex gap-2">
+                <Input
+                    size="sm"
+                    placeholder="New task step…"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                />
+                <Button size="sm" icon={<TbPlus />} onClick={addTask}>
+                    Add
+                </Button>
+            </div>
+        </Card>
     )
 }
 
@@ -418,6 +568,14 @@ const AssetDetails = () => {
                                             ))}
                                         </div>
                                     </Card>
+                                )}
+
+                                {/* Default Tasks — admin/manager only */}
+                                {canEdit && (
+                                    <DefaultTasksSection
+                                        assetId={data.id}
+                                        initialTasks={data.checklist_templates ?? []}
+                                    />
                                 )}
 
                                 {/* Maintenance History */}

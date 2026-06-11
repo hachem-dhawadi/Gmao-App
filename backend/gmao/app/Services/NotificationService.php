@@ -63,13 +63,11 @@ class NotificationService
         $changedBy = Member::query()->with('user')->find($changedByMemberId);
         $fromName  = $changedBy?->user?->name ?? 'Someone';
 
-        $assignedUserIds = $wo->assignedMembers()
-            ->with('user')
-            ->where('members.id', '!=', $changedByMemberId)
-            ->get()
-            ->pluck('user_id')
-            ->filter()
-            ->all();
+        $wo->loadMissing('assignedMember.user');
+        $assignedMember  = $wo->assignedMember;
+        $assignedUserIds = $assignedMember && $assignedMember->id !== $changedByMemberId && $assignedMember->user_id
+            ? [$assignedMember->user_id]
+            : [];
 
         foreach ($assignedUserIds as $userId) {
             self::create($userId, 'wo_status_changed', [
@@ -78,6 +76,65 @@ class NotificationService
                 'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title, 'new_status' => $newStatus],
             ]);
         }
+    }
+
+    // ── Work Order: pending approval ─────────────────────────────────────────
+
+    public static function notifyWoPendingApproval(WorkOrder $wo, array $approverMemberIds, int $submittedByMemberId): void
+    {
+        $submittedBy = Member::query()->with('user')->find($submittedByMemberId);
+        $fromName    = $submittedBy?->user?->name ?? 'Someone';
+
+        $approvers = Member::query()->with('user')->whereIn('id', $approverMemberIds)->get();
+
+        foreach ($approvers as $approver) {
+            if (! $approver->user_id) continue;
+
+            self::create($approver->user_id, 'wo_pending_approval', [
+                'title' => "Work order awaiting your approval",
+                'body'  => "{$fromName} submitted \"{$wo->title}\" ({$wo->code}) — please review and approve or reject.",
+                'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title],
+            ]);
+        }
+    }
+
+    // ── Work Order: approved ──────────────────────────────────────────────────
+
+    public static function notifyWoApproved(WorkOrder $wo, int $approvedByMemberId): void
+    {
+        $approvedBy = Member::query()->with('user')->find($approvedByMemberId);
+        $fromName   = $approvedBy?->user?->name ?? 'Someone';
+
+        $creator = Member::query()->with('user')->find($wo->created_by_member_id);
+        if (! $creator?->user_id || $creator->id === $approvedByMemberId) return;
+
+        self::create($creator->user_id, 'wo_approved', [
+            'title' => "Your work order was approved",
+            'body'  => "{$fromName} approved \"{$wo->title}\" ({$wo->code}) — it is now open.",
+            'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title],
+        ]);
+    }
+
+    // ── Work Order: rejected ──────────────────────────────────────────────────
+
+    public static function notifyWoRejected(WorkOrder $wo, int $rejectedByMemberId, ?string $reason = null): void
+    {
+        $rejectedBy = Member::query()->with('user')->find($rejectedByMemberId);
+        $fromName   = $rejectedBy?->user?->name ?? 'Someone';
+
+        $creator = Member::query()->with('user')->find($wo->created_by_member_id);
+        if (! $creator?->user_id || $creator->id === $rejectedByMemberId) return;
+
+        $body = "{$fromName} rejected \"{$wo->title}\" ({$wo->code})";
+        if ($reason) {
+            $body .= " — Reason: {$reason}";
+        }
+
+        self::create($creator->user_id, 'wo_rejected', [
+            'title' => "Your work order was rejected",
+            'body'  => $body,
+            'data'  => ['wo_id' => $wo->id, 'wo_code' => $wo->code, 'wo_title' => $wo->title],
+        ]);
     }
 
     // ── Work Order: @mention in comment ──────────────────────────────────────
@@ -242,8 +299,9 @@ class NotificationService
     {
         $recipientIds = [];
 
-        foreach ($wo->assignedMembers()->with('user')->get() as $member) {
-            if ($member->user_id) $recipientIds[] = $member->user_id;
+        $wo->loadMissing('assignedMember.user');
+        if ($wo->assignedMember?->user_id) {
+            $recipientIds[] = $wo->assignedMember->user_id;
         }
 
         $managers = Member::query()
@@ -256,9 +314,8 @@ class NotificationService
             if ($manager->user_id) $recipientIds[] = $manager->user_id;
         }
 
-        $allMembers = $wo->assignedMembers()->with('user')->get()
-            ->concat($managers)
-            ->keyBy('user_id');
+        $assignedCollection = $wo->assignedMember ? collect([$wo->assignedMember]) : collect();
+        $allMembers = $assignedCollection->concat($managers)->keyBy('user_id');
 
         foreach (array_unique($recipientIds) as $userId) {
             self::create($userId, 'wo_due_soon', [
@@ -286,9 +343,10 @@ class NotificationService
     {
         $recipientIds = [];
 
-        // Notify assigned members
-        foreach ($wo->assignedMembers()->with('user')->get() as $member) {
-            if ($member->user_id) $recipientIds[] = $member->user_id;
+        // Notify assigned member
+        $wo->loadMissing('assignedMember.user');
+        if ($wo->assignedMember?->user_id) {
+            $recipientIds[] = $wo->assignedMember->user_id;
         }
 
         // Notify admins/managers
@@ -303,9 +361,8 @@ class NotificationService
         }
 
         // Build user-id → member map for email sending
-        $allMembers = $wo->assignedMembers()->with('user')->get()
-            ->concat($managers)
-            ->keyBy('user_id');
+        $assignedCollection = $wo->assignedMember ? collect([$wo->assignedMember]) : collect();
+        $allMembers = $assignedCollection->concat($managers)->keyBy('user_id');
 
         foreach (array_unique($recipientIds) as $userId) {
             self::create($userId, 'wo_overdue', [

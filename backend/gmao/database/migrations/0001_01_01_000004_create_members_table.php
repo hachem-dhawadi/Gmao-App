@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->index()->constrained('companies');
             $table->foreignId('user_id')->index()->constrained('users');
-            $table->foreignId('department_id')->nullable()->index();
             $table->foreignId('manager_member_id')->nullable()->index();
             $table->string('employee_code')->nullable();
             $table->string('job_title')->nullable();
@@ -27,10 +26,6 @@ return new class extends Migration
             $table->foreignId('archived_by_user_id')->nullable()->index();
             $table->softDeletes();
 
-            $table->foreign('department_id')
-                ->references('id')
-                ->on('departments')
-                ->nullOnDelete();
             $table->foreign('manager_member_id')
                 ->references('id')
                 ->on('members')

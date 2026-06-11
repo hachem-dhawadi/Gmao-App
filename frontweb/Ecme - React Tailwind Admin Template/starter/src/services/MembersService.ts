@@ -19,7 +19,6 @@ export type Member = {
     id: number
     company_id: number
     user_id: number
-    department_id: number | null
     site_id: number | null
     site: { id: number; name: string; code: string } | null
     sites: { id: number; name: string; code: string }[]

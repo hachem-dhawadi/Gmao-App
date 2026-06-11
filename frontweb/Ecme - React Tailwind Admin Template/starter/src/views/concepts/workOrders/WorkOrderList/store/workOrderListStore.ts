@@ -10,7 +10,7 @@ export const initialTableData: TableQueries = {
 }
 
 export type WorkOrderFilter = {
-    status: 'all' | 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
+    status: 'all' | 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled' | 'pending_approval' | 'rejected'
     priority: 'all' | 'low' | 'medium' | 'high' | 'critical'
     myOnly: boolean
     showArchived: boolean

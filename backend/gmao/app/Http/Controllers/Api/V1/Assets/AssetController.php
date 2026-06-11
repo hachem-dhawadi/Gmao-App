@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Assets;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\Assets\AssetResource;
 use App\Models\Asset;
+use App\Models\AssetChecklistTemplate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -69,7 +70,7 @@ class AssetController extends Controller
             return response()->json(['success' => false, 'message' => 'Asset not found.'], 404);
         }
 
-        $asset->load(['assetType', 'site']);
+        $asset->load(['assetType', 'site', 'checklistTemplates']);
 
         return response()->json([
             'success' => true,
@@ -248,6 +249,70 @@ class AssetController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Asset deleted successfully.',
+        ]);
+    }
+
+    public function checklistTemplates(Request $request, Asset $asset): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+
+        if ((int) $asset->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Asset not found.'], 404);
+        }
+
+        $templates = $asset->checklistTemplates()
+            ->select(['id', 'title', 'order_index'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => ['checklist_templates' => $templates],
+        ]);
+    }
+
+    public function syncChecklistTemplates(Request $request, Asset $asset): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
+
+        if ((int) $asset->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Asset not found.'], 404);
+        }
+
+        $isAdminOrManager = $currentMember?->roles()
+            ->whereIn('code', ['admin', 'manager'])->exists() ?? false;
+
+        if (! $isAdminOrManager) {
+            return response()->json(['success' => false, 'message' => 'Only admins and managers can manage default tasks.'], 403);
+        }
+
+        $validated = $request->validate([
+            'tasks'              => ['required', 'array'],
+            'tasks.*.title'      => ['required', 'string', 'max:255'],
+            'tasks.*.order_index' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $asset->checklistTemplates()->delete();
+
+        $templates = [];
+        foreach ($validated['tasks'] as $index => $task) {
+            $templates[] = AssetChecklistTemplate::create([
+                'asset_id'    => $asset->id,
+                'title'       => $task['title'],
+                'order_index' => $task['order_index'] ?? $index,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Default tasks saved.',
+            'data'    => [
+                'checklist_templates' => collect($templates)->map(fn ($t) => [
+                    'id'          => $t->id,
+                    'title'       => $t->title,
+                    'order_index' => $t->order_index,
+                ])->values()->all(),
+            ],
         ]);
     }
 

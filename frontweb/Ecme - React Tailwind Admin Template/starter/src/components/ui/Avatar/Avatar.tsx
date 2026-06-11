@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import useMergedRef from '../hooks/useMergeRef'
 import classNames from 'classnames'
 import type { CommonProps, TypeAttributes } from '../@types/common'
@@ -30,6 +30,13 @@ const Avatar = (props: AvatarProps) => {
 
     let { children } = props
     const [scale, setScale] = useState(1)
+    const [imgFailed, setImgFailed] = useState(false)
+
+    useEffect(() => {
+        setImgFailed(false)
+    }, [src])
+
+    const handleImgError = useCallback(() => setImgFailed(true), [])
 
     const avatarChildren = useRef<HTMLSpanElement>(null)
     const avatarNode = useRef<HTMLSpanElement>(null)
@@ -74,7 +81,7 @@ const Avatar = (props: AvatarProps) => {
         className,
     )
 
-    if (src) {
+    if (src && !imgFailed) {
         children = (
             <img
                 className={`avatar-img avatar-${shape}`}
@@ -82,6 +89,7 @@ const Avatar = (props: AvatarProps) => {
                 srcSet={srcSet}
                 alt={alt}
                 loading="lazy"
+                onError={handleImgError}
             />
         )
     } else if (icon) {

@@ -124,7 +124,6 @@ const CustomerCreate = () => {
                     locale: values.locale || 'TN',
                     password: password || null,
                     password_confirmation: password ? passwordConfirmation : null,
-                    department_id: null,
                     site_ids: values.site_ids ?? [],
                     avatar: values.imgFile || null,
                 })

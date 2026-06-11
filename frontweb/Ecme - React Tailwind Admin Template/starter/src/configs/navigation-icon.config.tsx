@@ -228,7 +228,6 @@ const navigationIcon: NavigationIcons = {
     members: <PiUsersDuotone />,
     memberList: <PiUserListDuotone />,
     memberCreate: <PiUserPlusDuotone />,
-    departments: <PiBuildingsDuotone />,
     sites: <PiMapPinDuotone />,
     rolesPermissions: <PiShieldPlusDuotone />,
     reports: <PiChartBarDuotone />,

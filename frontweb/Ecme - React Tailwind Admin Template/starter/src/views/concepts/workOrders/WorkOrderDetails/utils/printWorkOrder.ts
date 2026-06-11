@@ -104,7 +104,7 @@ function closureHtml(wo: WorkOrder) {
 export function printWorkOrder(wo: WorkOrder, parts: WoPart[]) {
     const priorityC = priorityColor[wo.priority] ?? '#6b7280'
     const statusC   = statusColor[wo.status]     ?? '#6b7280'
-    const assignees = wo.assigned_members.map(m => m.name ?? '—').join(', ') || '—'
+    const assignees = wo.assigned_member?.name ?? '—'
     const printedAt = new Date().toLocaleString('en-GB', {
         day: '2-digit', month: 'short', year: 'numeric',
         hour: '2-digit', minute: '2-digit',

@@ -54,11 +54,13 @@ const WorkOrderListTableFilter = () => {
 
     const statusOptions = [
         { value: 'all',         label: t('wo.status.all') },
-        { value: 'open',        label: t('wo.status.open') },
-        { value: 'in_progress', label: t('wo.status.in_progress') },
-        { value: 'on_hold',     label: t('wo.status.on_hold') },
-        { value: 'completed',   label: t('wo.status.completed') },
-        { value: 'cancelled',   label: t('wo.status.cancelled') },
+        { value: 'pending_approval', label: t('wo.status.pending_approval') },
+        { value: 'open',             label: t('wo.status.open') },
+        { value: 'in_progress',      label: t('wo.status.in_progress') },
+        { value: 'on_hold',          label: t('wo.status.on_hold') },
+        { value: 'completed',        label: t('wo.status.completed') },
+        { value: 'cancelled',        label: t('wo.status.cancelled') },
+        { value: 'rejected',         label: t('wo.status.rejected') },
     ]
 
     const priorityOptions = [

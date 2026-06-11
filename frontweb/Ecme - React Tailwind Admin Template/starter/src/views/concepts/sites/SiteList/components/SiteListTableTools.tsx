@@ -1,5 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep'
 import SiteListSearch from './SiteListSearch'
+import SiteListTableFilter from './SiteListTableFilter'
 import useSiteList from '../hooks/useSiteList'
 
 const SiteListTableTools = () => {
@@ -17,6 +18,7 @@ const SiteListTableTools = () => {
             <div className="flex-1">
                 <SiteListSearch onInputChange={handleInputChange} />
             </div>
+            <SiteListTableFilter />
         </div>
     )
 }

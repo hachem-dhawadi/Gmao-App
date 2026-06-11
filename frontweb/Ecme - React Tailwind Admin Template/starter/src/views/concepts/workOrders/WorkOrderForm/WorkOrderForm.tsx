@@ -46,7 +46,7 @@ const WorkOrderForm = ({
         description: z.string().optional().default(''),
         due_at: z.string().optional().default(''),
         estimated_minutes: z.string().optional().default(''),
-        assigned_member_ids: z.array(z.number()).optional().default([]),
+        assigned_member_id: z.number().nullable().optional().default(null),
     }), [t])
 
     const {
@@ -67,7 +67,7 @@ const WorkOrderForm = ({
             description: '',
             due_at: '',
             estimated_minutes: '',
-            assigned_member_ids: [],
+            assigned_member_id: null,
             ...defaultValues,
         },
         resolver: zodResolver(validationSchema),
@@ -85,7 +85,7 @@ const WorkOrderForm = ({
                 description: '',
                 due_at: '',
                 estimated_minutes: '',
-                assigned_member_ids: [],
+                assigned_member_id: null,
                 ...defaultValues,
             })
         }

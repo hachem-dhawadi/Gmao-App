@@ -36,6 +36,8 @@ class WorkOrderResource extends JsonResource
             'created_at'           => $this->created_at?->toISOString(),
             'updated_at'           => $this->updated_at?->toISOString(),
             'archived_at'          => $this->archived_at?->toISOString(),
+            'approved_by_member_id' => $this->approved_by_member_id,
+            'approved_at'           => $this->approved_at?->toISOString(),
             'asset'                => $this->relationLoaded('asset') && $this->asset
                 ? ['id' => $this->asset->id, 'code' => $this->asset->code, 'name' => $this->asset->name]
                 : null,
@@ -48,13 +50,12 @@ class WorkOrderResource extends JsonResource
             'created_by'           => $this->relationLoaded('createdBy') && $this->createdBy
                 ? ['id' => $this->createdBy->id, 'name' => $this->createdBy->user?->name]
                 : null,
-            'assigned_members'     => $this->relationLoaded('assignedMembers')
-                ? $this->assignedMembers->map(fn ($m) => [
-                    'id'          => $m->id,
-                    'name'        => $m->user?->name,
-                    'assigned_at' => $m->pivot->assigned_at,
-                ])->values()->all()
-                : [],
+            'assigned_member'      => $this->relationLoaded('assignedMember') && $this->assignedMember
+                ? [
+                    'id'   => $this->assignedMember->id,
+                    'name' => $this->assignedMember->user?->name,
+                ]
+                : null,
             'status_history'       => $this->relationLoaded('statusHistory')
                 ? $this->statusHistory->map(fn ($h) => [
                     'id'                   => $h->id,

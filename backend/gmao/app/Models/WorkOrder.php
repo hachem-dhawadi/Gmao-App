@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -20,6 +19,7 @@ class WorkOrder extends Model
         'due_at'      => 'datetime',
         'closed_at'   => 'datetime',
         'archived_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function company(): BelongsTo
@@ -52,10 +52,9 @@ class WorkOrder extends Model
         return $this->belongsTo(Member::class, 'closed_by_member_id');
     }
 
-    public function assignedMembers(): BelongsToMany
+    public function assignedMember(): BelongsTo
     {
-        return $this->belongsToMany(Member::class, 'work_order_members')
-            ->withPivot('assigned_at');
+        return $this->belongsTo(Member::class, 'assigned_member_id');
     }
 
     public function workLogs(): HasMany

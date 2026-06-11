@@ -38,6 +38,13 @@ class AssetResource extends JsonResource
             'site'            => $this->relationLoaded('site') && $this->site
                 ? ['id' => $this->site->id, 'name' => $this->site->name, 'code' => $this->site->code]
                 : null,
+            'checklist_templates' => $this->relationLoaded('checklistTemplates')
+                ? $this->checklistTemplates->map(fn ($t) => [
+                    'id'          => $t->id,
+                    'title'       => $t->title,
+                    'order_index' => $t->order_index,
+                ])->values()->all()
+                : null,
         ];
     }
 }

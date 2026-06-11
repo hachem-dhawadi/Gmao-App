@@ -50,9 +50,9 @@ class CalendarController extends Controller
             ->select(['id', 'title', 'due_at', 'priority', 'status']);
 
         if (! $isPrivileged) {
-            $woQuery->whereHas('assignedMembers', fn ($q) => $q->where('members.id', $currentMember->id));
+            $woQuery->where('assigned_member_id', $currentMember->id);
         } elseif ($filterMemberId) {
-            $woQuery->whereHas('assignedMembers', fn ($q) => $q->where('members.id', $filterMemberId));
+            $woQuery->where('assigned_member_id', $filterMemberId);
         }
 
         $woEvents = $woQuery->get()->map(fn ($wo) => [

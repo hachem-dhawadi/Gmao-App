@@ -18,11 +18,13 @@ import type { WorkOrder } from '../types'
 import type { TableQueries } from '@/@types/common'
 
 const statusColor: Record<WorkOrder['status'], string> = {
-    open:        'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
-    in_progress: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
-    on_hold:     'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
-    completed:   'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
-    cancelled:   'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
+    open:             'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
+    in_progress:      'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+    on_hold:          'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
+    completed:        'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
+    cancelled:        'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
+    pending_approval: 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-0',
+    rejected:         'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-0',
 }
 
 const priorityColor: Record<WorkOrder['priority'], string> = {
@@ -280,14 +282,14 @@ const WorkOrderListTable = () => {
             },
             {
                 header: t('wo.columns.assigned'),
-                accessorKey: 'assigned_members',
+                accessorKey: 'assigned_member',
                 cell: (props) => {
-                    const members = props.row.original.assigned_members
-                    if (!members || members.length === 0)
+                    const member = props.row.original.assigned_member
+                    if (!member)
                         return <span className="text-gray-400">—</span>
                     return (
                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {members.map((m) => m.name).join(', ')}
+                            {member.name}
                         </span>
                     )
                 },

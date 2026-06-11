@@ -13,6 +13,12 @@ export type AssetType = {
     code: string
 }
 
+export type ChecklistTemplate = {
+    id: number
+    title: string
+    order_index: number
+}
+
 export type Asset = {
     id: number
     company_id: number
@@ -35,6 +41,7 @@ export type Asset = {
     images?: string[]
     asset_type: AssetType | null
     site: { id: number; name: string; code: string } | null
+    checklist_templates?: ChecklistTemplate[] | null
 }
 
 export type AssetsListResponse = {
@@ -117,5 +124,30 @@ export async function apiDeleteAsset<T = { success: boolean; message: string }>(
     return ApiService.fetchDataWithAxios<T>({
         url: `/assets/${id}`,
         method: 'delete',
+    })
+}
+
+export type ChecklistTemplatesResponse = {
+    success: boolean
+    data: { checklist_templates: ChecklistTemplate[] }
+}
+
+export async function apiGetAssetChecklistTemplates<T = ChecklistTemplatesResponse>(
+    assetId: number,
+) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/assets/${assetId}/checklist-templates`,
+        method: 'get',
+    })
+}
+
+export async function apiSyncAssetChecklistTemplates<T = ChecklistTemplatesResponse>(
+    assetId: number,
+    tasks: { title: string; order_index?: number }[],
+) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/assets/${assetId}/checklist-templates`,
+        method: 'put',
+        data: { tasks },
     })
 }

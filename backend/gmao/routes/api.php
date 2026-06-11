@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Assets\AssetController;
 use App\Http\Controllers\Api\V1\Roles\RoleController;
 use App\Http\Controllers\Api\V1\Assets\AssetTypeController;
-use App\Http\Controllers\Api\V1\Departments\DepartmentController;
 use App\Http\Controllers\Api\V1\Sites\SiteController;
 use App\Http\Controllers\Api\V1\Teams\TeamController;
 use App\Http\Controllers\Api\V1\Members\MemberController;
@@ -78,13 +77,6 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/{site}', [SiteController::class, 'destroy'])->middleware('permission:sites.delete');
     });
 
-    Route::middleware(['auth:sanctum', 'company.context'])->prefix('departments')->group(function (): void {
-        Route::get('/', [DepartmentController::class, 'index'])->middleware('permission:departments.read');
-        Route::get('/{department}', [DepartmentController::class, 'show'])->middleware('permission:departments.read');
-        Route::post('/', [DepartmentController::class, 'store'])->middleware('permission:departments.create');
-        Route::patch('/{department}', [DepartmentController::class, 'update'])->middleware('permission:departments.update');
-        Route::delete('/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:departments.delete');
-    });
 
     Route::middleware('auth:sanctum')->get('/asset-types', [AssetTypeController::class, 'index']);
 
@@ -109,6 +101,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/', [AssetController::class, 'store'])->middleware('permission:assets.write');
         Route::patch('/{asset}', [AssetController::class, 'update'])->middleware('permission:assets.write');
         Route::delete('/{asset}', [AssetController::class, 'destroy'])->middleware('permission:assets.delete');
+        Route::get('/{asset}/checklist-templates', [AssetController::class, 'checklistTemplates'])->middleware('permission:assets.read');
+        Route::put('/{asset}/checklist-templates', [AssetController::class, 'syncChecklistTemplates'])->middleware('permission:assets.write');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('members')->group(function (): void {
@@ -149,6 +143,10 @@ Route::prefix('v1')->group(function (): void {
 
         // Checklist
         Route::post('/{workOrder}/checklist/{item}/toggle', [WorkOrderChecklistController::class, 'toggle'])->middleware('permission:work_orders.write');
+
+        // Approval
+        Route::post('/{workOrder}/approve', [WorkOrderController::class, 'approve'])->middleware('permission:work_orders.write');
+        Route::post('/{workOrder}/reject', [WorkOrderController::class, 'reject'])->middleware('permission:work_orders.write');
 
         // Archive
         Route::post('/{workOrder}/archive', [WorkOrderController::class, 'archive'])->middleware('permission:work_orders.write');
@@ -253,6 +251,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/{pmPlan}', [PmPlanController::class, 'show'])->middleware('permission:pm_plans.read');
         Route::post('/', [PmPlanController::class, 'store'])->middleware('permission:pm_plans.write');
         Route::patch('/{pmPlan}', [PmPlanController::class, 'update'])->middleware('permission:pm_plans.write');
+        Route::patch('/{pmPlan}/tasks', [PmPlanController::class, 'updateTasks']);
         Route::delete('/{pmPlan}', [PmPlanController::class, 'destroy'])->middleware('permission:pm_plans.delete');
     });
 

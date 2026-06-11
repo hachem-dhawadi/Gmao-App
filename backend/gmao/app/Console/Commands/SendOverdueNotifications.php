@@ -22,7 +22,7 @@ class SendOverdueNotifications extends Command
             ->whereNotNull('due_at')
             ->where('due_at', '<', $now)
             ->whereNotIn('status', ['completed', 'cancelled'])
-            ->with(['assignedMembers.user'])
+            ->with(['assignedMember.user'])
             ->get();
 
         if ($overdueWos->isEmpty()) {

@@ -1,16 +1,20 @@
 import type { ReactNode } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import useSWR from 'swr'
+import useSWR, { mutate } from 'swr'
 import Loading from '@/components/shared/Loading'
 import Card from '@/components/ui/Card'
 import Tag from '@/components/ui/Tag'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 import Timeline from '@/components/ui/Timeline'
 import Badge from '@/components/ui/Badge'
-import { TbEdit, TbCalendarEvent, TbUser, TbTool, TbClock, TbRepeat, TbCalendarCheck, TbChartBar, TbArrowLeft } from 'react-icons/tb'
-import { apiGetPmPlanById } from '@/services/PmService'
-import type { PmPlan, PmPlanResponse } from '@/services/PmService'
+import toast from '@/components/ui/toast'
+import Notification from '@/components/ui/Notification'
+import { TbEdit, TbCalendarEvent, TbUser, TbTool, TbClock, TbRepeat, TbCalendarCheck, TbChartBar, TbArrowLeft, TbChecklist, TbPlus, TbTrash, TbArrowUp, TbArrowDown } from 'react-icons/tb'
+import { apiGetPmPlanById, apiUpdatePmPlanTasks } from '@/services/PmService'
+import type { PmPlan, PmPlanResponse, PmTask } from '@/services/PmService'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import dayjs from 'dayjs'
@@ -42,6 +46,133 @@ const InfoRow = ({ label, value }: { label: string; value: ReactNode }) => (
 const formatFrequency = (plan: PmPlan) => {
     if (!plan.trigger) return '—'
     return `Every ${plan.trigger.interval_value} ${plan.trigger.interval_unit}`
+}
+
+// ── Inline task editor (all roles) ────────────────────────────────────────────
+
+type DraftTask = { id?: number; title: string }
+
+const PmTasksInlineEditor = ({ planId, initialTasks }: { planId: number; initialTasks: PmTask[] }) => {
+    const [tasks, setTasks] = useState<DraftTask[]>(initialTasks)
+    const [newTitle, setNewTitle] = useState('')
+    const [saving, setSaving] = useState(false)
+    const [dirty, setDirty] = useState(false)
+
+    useEffect(() => {
+        setTasks(initialTasks)
+        setDirty(false)
+    }, [planId])
+
+    const add = () => {
+        const t = newTitle.trim()
+        if (!t) return
+        setTasks((p) => [...p, { title: t }])
+        setNewTitle('')
+        setDirty(true)
+    }
+
+    const remove = (i: number) => {
+        setTasks((p) => p.filter((_, idx) => idx !== i))
+        setDirty(true)
+    }
+
+    const update = (i: number, title: string) => {
+        setTasks((p) => p.map((t, idx) => (idx === i ? { ...t, title } : t)))
+        setDirty(true)
+    }
+
+    const moveUp = (i: number) => {
+        if (i === 0) return
+        setTasks((p) => { const a = [...p]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; return a })
+        setDirty(true)
+    }
+
+    const moveDown = (i: number) => {
+        setTasks((p) => { if (i >= p.length - 1) return p; const a = [...p]; [a[i], a[i + 1]] = [a[i + 1], a[i]]; return a })
+        setDirty(true)
+    }
+
+    const save = async () => {
+        setSaving(true)
+        try {
+            await apiUpdatePmPlanTasks(planId, tasks)
+            setDirty(false)
+            await mutate(['/pm/plans', String(planId)])
+            toast.push(<Notification type="success">Tasks saved.</Notification>, { placement: 'top-end' })
+        } catch {
+            toast.push(<Notification type="danger">Failed to save tasks.</Notification>, { placement: 'top-end' })
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    return (
+        <Card>
+            <div className="flex items-center justify-between mb-4">
+                <h5 className="font-semibold flex items-center gap-2">
+                    <TbChecklist className="text-xl text-primary" />
+                    Checklist Tasks
+                    {tasks.length > 0 && (
+                        <span className="text-sm font-normal text-gray-400">({tasks.length})</span>
+                    )}
+                </h5>
+                {dirty && (
+                    <Button size="sm" variant="solid" loading={saving} onClick={save}>
+                        Save
+                    </Button>
+                )}
+            </div>
+
+            {tasks.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-4">No tasks yet.</p>
+            )}
+
+            <div className="flex flex-col gap-1 mb-3">
+                {tasks.map((task, idx) => (
+                    <div
+                        key={idx}
+                        className="flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-gray-700/50 group"
+                    >
+                        <span className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 text-xs flex items-center justify-center text-gray-500 shrink-0 font-semibold">
+                            {idx + 1}
+                        </span>
+                        <Input
+                            size="sm"
+                            className="flex-1 bg-transparent border-0 shadow-none focus:ring-0 px-0"
+                            value={task.title}
+                            onChange={(e) => update(idx, e.target.value)}
+                        />
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button size="xs" variant="plain" icon={<TbArrowUp />} disabled={idx === 0} onClick={() => moveUp(idx)} type="button" />
+                            <Button size="xs" variant="plain" icon={<TbArrowDown />} disabled={idx === tasks.length - 1} onClick={() => moveDown(idx)} type="button" />
+                            <Button
+                                size="xs"
+                                variant="plain"
+                                icon={<TbTrash />}
+                                customColorClass={() => 'text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10'}
+                                onClick={() => remove(idx)}
+                                type="button"
+                            />
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+                <Input
+                    size="sm"
+                    placeholder="Add task step…"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && add()}
+                    className="flex-1"
+                />
+                <Button size="sm" variant="solid" icon={<TbPlus />} onClick={add} type="button" disabled={!newTitle.trim()}>
+                    Add
+                </Button>
+            </div>
+        </Card>
+    )
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -158,6 +289,12 @@ const PmPlanDetails = () => {
                                     )}
                                 </div>
                             </Card>
+
+                            {/* Checklist Tasks — all roles */}
+                            <PmTasksInlineEditor
+                                planId={data.id}
+                                initialTasks={data.tasks ?? []}
+                            />
 
                             {/* Work order history */}
                             <Card>

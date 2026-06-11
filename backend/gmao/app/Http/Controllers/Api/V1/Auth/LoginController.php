@@ -215,7 +215,6 @@ class LoginController extends Controller
                     'id' => $currentMember->id,
                     'company_id' => $currentMember->company_id,
                     'user_id' => $currentMember->user_id,
-                    'department_id' => $currentMember->department_id,
                     'employee_code' => $currentMember->employee_code,
                     'job_title' => $currentMember->job_title,
                     'status' => $currentMember->status,

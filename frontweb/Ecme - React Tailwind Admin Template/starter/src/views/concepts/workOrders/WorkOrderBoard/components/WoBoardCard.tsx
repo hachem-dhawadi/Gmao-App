@@ -32,12 +32,9 @@ const WoBoardCard = (props: WoBoardCardProps) => {
         data.status !== 'completed' &&
         data.status !== 'cancelled'
 
-    const members = (data.assigned_members || []).map((m) => ({
-        id: String(m.id),
-        name: m.name,
-        email: m.email || '',
-        img: '',
-    }))
+    const members = data.assigned_member
+        ? [{ id: String(data.assigned_member.id), name: data.assigned_member.name, email: '', img: '' }]
+        : []
 
     return (
         <Card

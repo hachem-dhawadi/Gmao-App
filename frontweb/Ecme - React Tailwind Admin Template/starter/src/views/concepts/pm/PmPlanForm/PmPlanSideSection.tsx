@@ -1,25 +1,28 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
+import Button from '@/components/ui/Button'
 import DatePicker from '@/components/ui/DatePicker'
 import { FormItem } from '@/components/ui/Form'
 import { Controller, useWatch } from 'react-hook-form'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
-import { apiGetAssetsList } from '@/services/AssetsService'
+import { apiGetAssetsList, apiGetAssetChecklistTemplates } from '@/services/AssetsService'
 import { apiGetMembersList } from '@/services/MembersService'
 import { apiGetAllTeams } from '@/services/TeamsService'
 import type { AssetsListResponse } from '@/services/AssetsService'
 import type { MembersListResponse } from '@/services/MembersService'
-import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form'
+import type { Control, FieldErrors, UseFormSetValue, UseFormGetValues } from 'react-hook-form'
 import type { PmPlanFormSchema } from './types'
+import { TbSparkles } from 'react-icons/tb'
 
 type Props = {
     control: Control<PmPlanFormSchema>
     errors: FieldErrors<PmPlanFormSchema>
     setValue: UseFormSetValue<PmPlanFormSchema>
+    getValues: UseFormGetValues<PmPlanFormSchema>
 }
 
 type AssetOption   = { value: number; label: string; code: string; site_id: number | null }
@@ -27,7 +30,7 @@ type MemberOption  = { value: number; label: string; sites: { id: number; name: 
 type TeamOption    = { value: number; label: string; color: string; member_ids: number[] }
 type GroupedMember = { label: string; options: MemberOption[] }
 
-const PmPlanSideSection = ({ control, errors, setValue }: Props) => {
+const PmPlanSideSection = ({ control, errors, setValue, getValues }: Props) => {
     const { t } = useTranslation()
 
     const intervalUnitOptions = useMemo(() => [
@@ -80,18 +83,36 @@ const PmPlanSideSection = ({ control, errors, setValue }: Props) => {
             member_ids: t.member_ids,
         })) || []
 
-    const watchedAssetId    = useWatch({ control, name: 'asset_id' })
-    const watchedTeamId     = useWatch({ control, name: 'team_id' })
-    const watchedAssignedId = useWatch({ control, name: 'assigned_member_id' })
+    const watchedAssetId = useWatch({ control, name: 'asset_id' })
 
-    const selectedTeam  = teamOptions.find((t) => t.value === watchedTeamId)
+    const { data: templateData } = useSWR(
+        watchedAssetId ? ['/asset-checklist-templates', watchedAssetId] : null,
+        () => apiGetAssetChecklistTemplates(watchedAssetId!),
+        { revalidateOnFocus: false },
+    )
+
+    const templates = templateData?.data?.checklist_templates ?? []
+
+    const prevAssetIdRef = useRef<number | null | undefined>(undefined)
+
+    useEffect(() => {
+        if (prevAssetIdRef.current === watchedAssetId) return
+        prevAssetIdRef.current = watchedAssetId
+
+        if (!watchedAssetId || templates.length === 0) return
+
+        const currentTasks = getValues('tasks') ?? []
+        if (currentTasks.length === 0) {
+            setValue('tasks', templates.map((t) => ({ title: t.title })))
+        }
+    }, [watchedAssetId, templates])
+
+    const loadDefaultTasks = () => {
+        setValue('tasks', templates.map((t) => ({ title: t.title })))
+    }
+
     const selectedAsset = assetOptions.find((a) => a.value === watchedAssetId)
     const assetSiteId   = selectedAsset?.site_id ?? null
-
-    // Exclude team members from Assign To (team already covers them)
-    const assignableTechs: MemberOption[] = selectedTeam
-        ? allTechnicianOptions.filter((m) => !selectedTeam.member_ids.includes(m.value))
-        : allTechnicianOptions
 
     // Group by whether the technician works at the asset's site
     const buildGrouped = (members: MemberOption[]): GroupedMember[] | MemberOption[] => {
@@ -111,7 +132,7 @@ const PmPlanSideSection = ({ control, errors, setValue }: Props) => {
         return groups.length > 0 ? groups : members
     }
 
-    const groupedAssignable = buildGrouped(assignableTechs)
+    const groupedAssignable = buildGrouped(allTechnicianOptions)
 
     return (
         <>
@@ -211,6 +232,16 @@ const PmPlanSideSection = ({ control, errors, setValue }: Props) => {
                             />
                         )}
                     />
+                    {watchedAssetId && templates.length > 0 && (
+                        <button
+                            type="button"
+                            className="mt-1.5 flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 transition-colors"
+                            onClick={loadDefaultTasks}
+                        >
+                            <TbSparkles className="text-sm" />
+                            Load {templates.length} default task{templates.length !== 1 ? 's' : ''}
+                        </button>
+                    )}
                 </FormItem>
 
                 {/* Team — independent of Assign To */}
@@ -227,13 +258,7 @@ const PmPlanSideSection = ({ control, errors, setValue }: Props) => {
                                 placeholder="Select team (optional)..."
                                 options={teamOptions}
                                 value={teamOptions.find((o) => o.value === field.value) || null}
-                                onChange={(opt) => {
-                                    field.onChange(opt?.value ?? null)
-                                    // clear assigned member if they are now in the new team
-                                    if (opt && watchedAssignedId != null && opt.member_ids.includes(watchedAssignedId)) {
-                                        setValue('assigned_member_id', null)
-                                    }
-                                }}
+                                onChange={(opt) => field.onChange(opt?.value ?? null)}
                                 formatOptionLabel={(opt) => (
                                     <div className="flex items-center gap-2">
                                         <span
@@ -251,19 +276,13 @@ const PmPlanSideSection = ({ control, errors, setValue }: Props) => {
                     />
                 </FormItem>
 
-                {/* Assign To — grouped by site, excludes team members */}
+                {/* Assign To — single lead, independent of team */}
                 <FormItem
                     label={t('pmForm.field.assignTo')}
                     extra={
-                        <span className="text-xs text-gray-400">
-                            {selectedTeam && assetSiteId != null
-                                ? 'Outside team · grouped by site'
-                                : selectedTeam
-                                ? 'Outside team only'
-                                : assetSiteId != null
-                                ? 'Grouped by site'
-                                : t('pmForm.technicianOnly')}
-                        </span>
+                        assetSiteId != null
+                            ? <span className="text-xs text-indigo-400">Grouped by site</span>
+                            : undefined
                     }
                 >
                     <Controller
@@ -272,17 +291,9 @@ const PmPlanSideSection = ({ control, errors, setValue }: Props) => {
                         render={({ field }) => (
                             <Select<MemberOption, false, GroupedMember>
                                 isClearable
-                                placeholder={
-                                    selectedTeam
-                                        ? 'Add technician outside team…'
-                                        : t('pmForm.placeholder.selectTechnician')
-                                }
+                                placeholder={t('pmForm.placeholder.selectTechnician')}
                                 options={groupedAssignable as any}
-                                noOptionsMessage={() =>
-                                    selectedTeam
-                                        ? 'All technicians are already in this team'
-                                        : t('pmForm.noTechnicians')
-                                }
+                                noOptionsMessage={() => t('pmForm.noTechnicians')}
                                 value={allTechnicianOptions.find((o) => o.value === field.value) || null}
                                 onChange={(option) => field.onChange(option?.value ?? null)}
                                 formatOptionLabel={(opt) => {

@@ -89,7 +89,7 @@ export type WorkOrder = {
     code: string
     title: string
     description: string | null
-    status: 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
+    status: 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled' | 'pending_approval' | 'rejected'
     priority: 'low' | 'medium' | 'high' | 'critical'
     asset_id: number
     site_id: number | null
@@ -106,11 +106,13 @@ export type WorkOrder = {
     created_at: string | null
     updated_at: string | null
     archived_at: string | null
+    approved_by_member_id: number | null
+    approved_at: string | null
     asset: WorkOrderAsset | null
     site: { id: number; name: string; code: string } | null
     team: { id: number; name: string; color: string } | null
     created_by: WorkOrderCreatedBy | null
-    assigned_members: WorkOrderMember[]
+    assigned_member: WorkOrderMember | null
     status_history: WorkOrderStatusHistory[] | null
     comments: WorkOrderComment[] | null
     attachments: WorkOrderAttachment[] | null
@@ -149,7 +151,7 @@ export type CreateWorkOrderRequest = {
     description?: string | null
     due_at?: string | null
     estimated_minutes?: number | null
-    assigned_member_ids?: number[]
+    assigned_member_id?: number | null
 }
 
 export type UpdateWorkOrderRequest = {
@@ -162,7 +164,7 @@ export type UpdateWorkOrderRequest = {
     description?: string | null
     due_at?: string | null
     estimated_minutes?: number | null
-    assigned_member_ids?: number[]
+    assigned_member_id?: number | null
     failure_code?: string | null
     root_cause?: string | null
     resolution_notes?: string | null
@@ -337,6 +339,21 @@ export async function apiRecordWoPart(
         url: `/work-orders/${workOrderId}/parts`,
         method: 'post',
         data,
+    })
+}
+
+export async function apiApproveWorkOrder(id: string | number) {
+    return ApiService.fetchDataWithAxios<WorkOrderResponse>({
+        url: `/work-orders/${id}/approve`,
+        method: 'post',
+    })
+}
+
+export async function apiRejectWorkOrder(id: string | number, reason?: string) {
+    return ApiService.fetchDataWithAxios<WorkOrderResponse>({
+        url: `/work-orders/${id}/reject`,
+        method: 'post',
+        data: { reason: reason ?? null },
     })
 }
 

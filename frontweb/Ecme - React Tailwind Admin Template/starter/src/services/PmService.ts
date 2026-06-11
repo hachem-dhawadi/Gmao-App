@@ -127,3 +127,19 @@ export async function apiDeletePmPlan<T = { success: boolean; message: string }>
         method: 'delete',
     })
 }
+
+export type UpdateTasksResponse = {
+    success: boolean
+    data: { tasks: PmTask[] }
+}
+
+export async function apiUpdatePmPlanTasks<T = UpdateTasksResponse>(
+    id: string | number,
+    tasks: Array<{ id?: number; title: string }>,
+) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/pm/plans/${id}/tasks`,
+        method: 'patch',
+        data: { tasks },
+    })
+}

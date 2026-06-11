@@ -101,6 +101,8 @@
             "on_hold": "On Hold",
             "completed": "Completed",
             "cancelled": "Cancelled",
+            "pending_approval": "Pending Approval",
+            "rejected": "Rejected",
             "all": "All statuses"
         },
         "priority": {
@@ -142,7 +144,11 @@
             "uploadFailed": "Failed to upload file.",
             "attachDeleteFailed": "Failed to delete.",
             "worklogDurationRequired": "Duration (minutes) is required.",
-            "worklogFailed": "Failed to save work log."
+            "worklogFailed": "Failed to save work log.",
+            "approved": "Work order approved and is now open.",
+            "approveFailed": "Failed to approve work order.",
+            "rejected": "Work order rejected.",
+            "rejectFailed": "Failed to reject work order."
         },
         "details": {
             "backToList": "Back to Work Orders",
@@ -165,7 +171,15 @@
             "description": "Description",
             "clickToAdd": "Click to add a description...",
             "noDescription": "No description.",
-            "archivedBanner": "This work order is archived. It is read-only until unarchived."
+            "archivedBanner": "This work order is archived. It is read-only until unarchived.",
+            "pendingApprovalBanner": "This work order is waiting for manager approval before it can be worked on.",
+            "rejectedBanner": "This work order was rejected. The creator has been notified.",
+            "approve": "Approve",
+            "reject": "Reject",
+            "rejectTitle": "Reject Work Order",
+            "rejectSubtitle": "Optionally provide a reason. The requester will be notified.",
+            "rejectPlaceholder": "Reason (optional)...",
+            "confirmReject": "Confirm Reject"
         }
     },
     "assets": {
@@ -878,7 +892,10 @@
             "new_member": "System",
             "new_request": "Work Order",
             "request_converted": "Work Order",
-            "request_rejected": "Work Order"
+            "request_rejected": "Work Order",
+            "wo_pending_approval": "Work Order",
+            "wo_approved": "Work Order",
+            "wo_rejected": "Work Order"
         },
         "dataField": {
             "wo_id": "WO ID",
@@ -1141,8 +1158,8 @@
     },
     "woForm": {
         "overviewTitle": "Overview", "detailsTitle": "Details",
-        "field": { "title": "Title", "code": "Code", "asset": "Asset", "dueDate": "Due Date", "estimatedTime": "Estimated Time", "assignMembers": "Assign Members", "description": "Description" },
-        "placeholder": { "title": "e.g. Replace hydraulic pump filter", "code": "e.g. WO-0001", "description": "Describe the work to be done...", "selectAsset": "Select asset", "dueDate": "Select due date", "selectMembers": "Select members" },
+        "field": { "title": "Title", "code": "Code", "asset": "Asset", "dueDate": "Due Date", "estimatedTime": "Estimated Time", "assignMembers": "Assign Members", "assignMember": "Assigned To", "description": "Description" },
+        "placeholder": { "title": "e.g. Replace hydraulic pump filter", "code": "e.g. WO-0001", "description": "Describe the work to be done...", "selectAsset": "Select asset", "dueDate": "Select due date", "selectMembers": "Select members", "selectMember": "Select technician..." },
         "codeHint": "Leave empty to auto-generate", "selectStatus": "Select status", "selectPriority": "Select priority",
         "timePicker": { "label": "Select estimated duration", "hours": "Hours", "minutes": "Minutes", "done": "Done" },
         "validation": { "titleRequired": "Title is required", "assetRequired": "Asset is required", "statusRequired": "Status is required", "priorityRequired": "Priority is required" }

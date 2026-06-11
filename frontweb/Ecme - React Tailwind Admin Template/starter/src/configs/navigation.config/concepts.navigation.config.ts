@@ -223,7 +223,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
         translateKey: 'nav.people',
         icon: 'customers',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: ['members.read', 'departments.read', 'roles.read', 'sites.read'],
+        authority: ['members.read', 'roles.read', 'sites.read'],
         subMenu: [
             // Members
             {
@@ -286,39 +286,6 @@ const conceptsNavigationConfig: NavigationTree[] = [
                         icon: 'memberCreate',
                         type: NAV_ITEM_TYPE_ITEM,
                         authority: ['sites.create'],
-                        subMenu: [],
-                    },
-                ],
-            },
-
-            // Departments
-            {
-                key: 'concepts.departments',
-                path: '',
-                title: 'Departments',
-                translateKey: 'nav.departments.departments',
-                icon: 'departments',
-                type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: ['departments.read'],
-                subMenu: [
-                    {
-                        key: 'concepts.departments.departmentList',
-                        path: `${CONCEPTS_PREFIX_PATH}/departments`,
-                        title: 'Department List',
-                        translateKey: 'nav.departments.departmentList',
-                        icon: 'memberList',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: ['departments.read'],
-                        subMenu: [],
-                    },
-                    {
-                        key: 'concepts.departments.departmentCreate',
-                        path: `${CONCEPTS_PREFIX_PATH}/departments/department-create`,
-                        title: 'Add Department',
-                        translateKey: 'nav.departments.departmentCreate',
-                        icon: 'memberCreate',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: ['departments.create'],
                         subMenu: [],
                     },
                 ],

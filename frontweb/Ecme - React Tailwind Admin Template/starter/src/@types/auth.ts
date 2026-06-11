@@ -163,7 +163,6 @@ export type MeResponse = ApiEnvelope<{
         id: number
         company_id: number
         user_id: number
-        department_id: number | null
         employee_code: string | null
         job_title: string | null
         status: string

@@ -33,7 +33,7 @@ const WorkOrderCreate = () => {
                     ? parseInt(values.estimated_minutes, 10)
                     : null,
                 team_id: values.team_id ?? null,
-                assigned_member_ids: values.assigned_member_ids || [],
+                assigned_member_id: values.assigned_member_id ?? null,
             })
 
             await globalMutate(

@@ -62,6 +62,7 @@ class InitialAccessSeeder extends Seeder
                 'two_factor_enabled' => false,
                 'is_active' => true,
                 'is_superadmin' => false,
+                'email_verified_at' => now(),
             ]
         );
 
@@ -89,6 +90,7 @@ class InitialAccessSeeder extends Seeder
                 'two_factor_enabled' => false,
                 'is_active' => true,
                 'is_superadmin' => false,
+                'email_verified_at' => now(),
             ]
         );
 
@@ -116,6 +118,7 @@ class InitialAccessSeeder extends Seeder
                 'two_factor_enabled' => false,
                 'is_active' => true,
                 'is_superadmin' => false,
+                'email_verified_at' => now(),
             ]
         );
 
@@ -143,6 +146,7 @@ class InitialAccessSeeder extends Seeder
                 'two_factor_enabled' => false,
                 'is_active' => true,
                 'is_superadmin' => false,
+                'email_verified_at' => now(),
             ]
         );
 

@@ -58,9 +58,11 @@ const PmPlanForm = ({
     const {
         handleSubmit,
         reset,
+        register,
         formState: { errors },
         control,
         setValue,
+        getValues,
     } = useForm<PmPlanFormSchema>({
         defaultValues: {
             name: '',
@@ -110,10 +112,10 @@ const PmPlanForm = ({
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="gap-4 flex flex-col flex-auto">
                         <PmPlanMainSection control={control} errors={errors} />
-                        <PmTasksSection control={control} />
+                        <PmTasksSection control={control} register={register} />
                     </div>
                     <div className="md:w-[370px] gap-4 flex flex-col">
-                        <PmPlanSideSection control={control} errors={errors} setValue={setValue} />
+                        <PmPlanSideSection control={control} errors={errors} setValue={setValue} getValues={getValues} />
                     </div>
                 </div>
             </Container>

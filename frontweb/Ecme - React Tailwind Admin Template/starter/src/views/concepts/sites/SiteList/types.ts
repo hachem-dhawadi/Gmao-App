@@ -13,7 +13,7 @@ export type Site = {
     created_at: string | null
     updated_at: string | null
     archived_at: string | null
-    assets_count: number | null
-    members_count: number | null
-    warehouses_count: number | null
+    assets_count?: number | null
+    members_count?: number | null
+    warehouses_count?: number | null
 }

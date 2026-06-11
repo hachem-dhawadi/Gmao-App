@@ -106,12 +106,12 @@ class ReportController extends Controller
             ->value('avg_hours');
 
         // Top technicians (date-filtered)
-        $techQuery = DB::table('work_order_members')
-            ->join('work_orders', 'work_order_members.work_order_id', '=', 'work_orders.id')
-            ->join('members', 'work_order_members.member_id', '=', 'members.id')
+        $techQuery = DB::table('work_orders')
+            ->join('members', 'work_orders.assigned_member_id', '=', 'members.id')
             ->join('users', 'members.user_id', '=', 'users.id')
             ->where('work_orders.company_id', $company->id)
             ->where('work_orders.status', 'completed')
+            ->whereNotNull('work_orders.assigned_member_id')
             ->whereNull('work_orders.deleted_at');
         if ($from) $techQuery->where('work_orders.opened_at', '>=', $from);
         if ($to)   $techQuery->where('work_orders.opened_at', '<=', $to);

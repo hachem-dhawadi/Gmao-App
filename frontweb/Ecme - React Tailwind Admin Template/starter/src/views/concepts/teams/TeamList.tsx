@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import useSWR from 'swr'
 import Button from '@/components/ui/Button'
-import Avatar from '@/components/ui/Avatar'
 import Tooltip from '@/components/ui/Tooltip'
 import Skeleton from '@/components/ui/Skeleton'
 import Notification from '@/components/ui/Notification'
@@ -15,9 +14,57 @@ import type { Team } from '@/services/TeamsService'
 import TeamFormDialog from './components/TeamFormDialog'
 import {
     TbUsers, TbSearch, TbPlus, TbEdit, TbTrash,
-    TbUserCircle, TbChevronLeft, TbChevronRight, TbX,
+    TbChevronLeft, TbChevronRight, TbX,
 } from 'react-icons/tb'
 import classNames from '@/utils/classNames'
+
+// ── Member avatar with initials fallback ──────────────────────────────────────
+
+const AVATAR_COLORS = [
+    '#6366f1', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b',
+    '#ef4444', '#3b82f6', '#10b981', '#f97316', '#06b6d4',
+]
+
+function nameToColor(name: string): string {
+    let hash = 0
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
+function nameToInitials(name: string): string {
+    return name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((n) => n[0]?.toUpperCase() ?? '')
+        .join('')
+}
+
+const MemberAvatar = ({ name, avatar }: { name: string; avatar: string | null }) => {
+    const [imgFailed, setImgFailed] = useState(false)
+
+    if (avatar && !imgFailed) {
+        return (
+            <img
+                className="w-7 h-7 rounded-full object-cover"
+                src={avatar}
+                alt={name}
+                onError={() => setImgFailed(true)}
+            />
+        )
+    }
+
+    return (
+        <span
+            className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white select-none"
+            style={{ backgroundColor: nameToColor(name) }}
+        >
+            {nameToInitials(name)}
+        </span>
+    )
+}
 
 // ── Search bar ────────────────────────────────────────────────────────────────
 
@@ -167,12 +214,7 @@ const TeamCard = ({ team, canWrite, onEdit, onDelete }: TeamCardProps) => {
                                         className="rounded-full ring-2 ring-white dark:ring-gray-800 -ml-2 first:ml-0 cursor-default"
                                         style={{ zIndex: 5 - idx }}
                                     >
-                                        <Avatar
-                                            size={28}
-                                            shape="circle"
-                                            src={m.avatar ?? undefined}
-                                            icon={!m.avatar ? <TbUserCircle /> : undefined}
-                                        />
+                                        <MemberAvatar name={m.name} avatar={m.avatar} />
                                     </div>
                                 </Tooltip>
                             ))}

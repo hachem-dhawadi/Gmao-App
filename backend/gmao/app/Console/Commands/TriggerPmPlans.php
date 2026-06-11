@@ -68,9 +68,9 @@ class TriggerPmPlans extends Command
                 // Notify managers that a WO was auto-generated
                 NotificationService::notifyPmWoGenerated($workOrder, $plan);
 
-                // Assign the technician via pivot
+                // Assign the technician
                 if ($plan->assigned_member_id) {
-                    $workOrder->assignedMembers()->attach($plan->assigned_member_id, ['assigned_at' => $now]);
+                    $workOrder->update(['assigned_member_id' => $plan->assigned_member_id]);
                     NotificationService::notifyWoAssigned($workOrder, [$plan->assigned_member_id], $plan->created_by_member_id ?? $plan->assigned_member_id);
                 }
 

@@ -45,7 +45,6 @@ class MemberResource extends JsonResource
                     'code' => $s->code,
                 ])->values()->all()
                 : [],
-            'department_id' => $this->department_id,
             'employee_code' => $this->employee_code,
             'job_title' => $this->job_title,
             'status' => $this->status,

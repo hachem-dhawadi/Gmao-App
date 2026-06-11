@@ -46,4 +46,9 @@ class Asset extends Model
     {
         return $this->hasMany(AssetValue::class);
     }
+
+    public function checklistTemplates(): HasMany
+    {
+        return $this->hasMany(AssetChecklistTemplate::class)->orderBy('order_index');
+    }
 }

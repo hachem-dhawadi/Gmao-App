@@ -11,18 +11,19 @@ import {
     TbArrowDown,
     TbChecklist,
 } from 'react-icons/tb'
-import type { Control } from 'react-hook-form'
+import type { Control, UseFormRegister } from 'react-hook-form'
 import type { PmPlanFormSchema } from './types'
 
 type Props = {
     control: Control<PmPlanFormSchema>
+    register: UseFormRegister<PmPlanFormSchema>
 }
 
-const PmTasksSection = ({ control }: Props) => {
+const PmTasksSection = ({ control, register }: Props) => {
     const { t } = useTranslation()
     const [newTitle, setNewTitle] = useState('')
 
-    const { fields, append, remove, move, update } = useFieldArray({
+    const { fields, append, remove, move } = useFieldArray({
         control,
         name: 'tasks',
     })
@@ -64,13 +65,7 @@ const PmTasksSection = ({ control }: Props) => {
                             <Input
                                 size="sm"
                                 className="flex-1 bg-transparent border-0 shadow-none focus:ring-0 px-0"
-                                value={field.title}
-                                onChange={(e) =>
-                                    update(index, {
-                                        ...field,
-                                        title: e.target.value,
-                                    })
-                                }
+                                {...register(`tasks.${index}.title`)}
                             />
                             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button

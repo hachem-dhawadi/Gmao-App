@@ -45,7 +45,7 @@ const WorkOrderEdit = () => {
 
     useEffect(() => {
         if (!data || canAssign) return
-        const isAssigned = data.assigned_members?.some((m) => m.id === currentMemberId)
+        const isAssigned = data.assigned_member?.id === currentMemberId
         if (!isAssigned) {
             navigate(`/concepts/work-orders/work-order-details/${id}`, { replace: true })
         }
@@ -67,7 +67,7 @@ const WorkOrderEdit = () => {
                     ? parseInt(values.estimated_minutes, 10)
                     : null,
                 team_id: values.team_id ?? null,
-                assigned_member_ids: values.assigned_member_ids || [],
+                assigned_member_id: values.assigned_member_id ?? null,
             })
 
             await globalMutate(
@@ -160,7 +160,7 @@ const WorkOrderEdit = () => {
               estimated_minutes: data.estimated_minutes
                   ? String(data.estimated_minutes)
                   : '',
-              assigned_member_ids: data.assigned_members?.map((m) => m.id) || [],
+              assigned_member_id: data.assigned_member?.id ?? null,
           }
         : {}
 

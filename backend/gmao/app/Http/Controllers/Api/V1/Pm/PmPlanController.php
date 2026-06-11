@@ -243,6 +243,53 @@ class PmPlanController extends Controller
         ]);
     }
 
+    public function updateTasks(Request $request, PmPlan $pmPlan): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+
+        if ((int) $pmPlan->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'PM plan not found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'tasks'          => ['required', 'array'],
+            'tasks.*.id'     => ['nullable', 'integer', 'exists:pm_tasks,id'],
+            'tasks.*.title'  => ['required', 'string', 'max:500'],
+        ]);
+
+        $incomingIds = collect($validated['tasks'])->pluck('id')->filter()->values()->all();
+        $pmPlan->tasks()->whereNotIn('id', $incomingIds)->delete();
+
+        foreach ($validated['tasks'] as $idx => $taskData) {
+            if (! empty($taskData['id'])) {
+                PmTask::where('id', $taskData['id'])->update([
+                    'title'       => $taskData['title'],
+                    'order_index' => $idx,
+                ]);
+            } else {
+                PmTask::create([
+                    'pm_plan_id'  => $pmPlan->id,
+                    'title'       => $taskData['title'],
+                    'order_index' => $idx,
+                ]);
+            }
+        }
+
+        $pmPlan->load('tasks');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tasks updated.',
+            'data'    => [
+                'tasks' => $pmPlan->tasks->map(fn ($t) => [
+                    'id'          => $t->id,
+                    'title'       => $t->title,
+                    'order_index' => $t->order_index,
+                ])->values()->all(),
+            ],
+        ]);
+    }
+
     public function destroy(Request $request, PmPlan $pmPlan): JsonResponse
     {
         $currentCompany = $request->attributes->get('currentCompany');

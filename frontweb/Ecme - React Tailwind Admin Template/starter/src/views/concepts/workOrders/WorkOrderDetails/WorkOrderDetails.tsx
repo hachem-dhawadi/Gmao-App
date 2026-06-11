@@ -22,6 +22,8 @@ import {
     apiGetWoParts,
     apiArchiveWorkOrder,
     apiUnarchiveWorkOrder,
+    apiApproveWorkOrder,
+    apiRejectWorkOrder,
 } from '@/services/WorkOrdersService'
 import { printWorkOrder } from './utils/printWorkOrder'
 import { apiGetMembersList } from '@/services/MembersService'
@@ -47,17 +49,22 @@ import {
     TbCalendar,
     TbArchive,
     TbArchiveOff,
+    TbCircleCheck,
+    TbCircleX,
+    TbHourglass,
 } from 'react-icons/tb'
 import type { WorkOrder } from '@/services/WorkOrdersService'
 import type { WorkOrderResponse } from '@/services/WorkOrdersService'
 import type { MembersListResponse } from '@/services/MembersService'
 
 const statusTagClass: Record<WorkOrder['status'], string> = {
-    open: 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
-    in_progress: 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
-    on_hold: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
-    completed: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
-    cancelled: 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
+    open:             'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-0',
+    in_progress:      'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-0',
+    on_hold:          'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
+    completed:        'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
+    cancelled:        'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 border-0',
+    pending_approval: 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 border-0',
+    rejected:         'bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-0',
 }
 
 const WorkOrderDetails = () => {
@@ -90,8 +97,12 @@ const WorkOrderDetails = () => {
     const [printOpen, setPrintOpen]       = useState(false)
     const [printingWo, setPrintingWo]     = useState(false)
     const [archiving, setArchiving]       = useState(false)
+    const [approving, setApproving]       = useState(false)
+    const [rejecting, setRejecting]       = useState(false)
+    const [rejectReason, setRejectReason] = useState('')
+    const [rejectOpen, setRejectOpen]     = useState(false)
 
-    const isAssignedToWo = wo?.assigned_members.some((m) => m.id === currentMemberId) ?? false
+    const isAssignedToWo = wo?.assigned_member?.id === currentMemberId
     const canEdit = canAssign || isAssignedToWo
     const canManage = canAssign
 
@@ -150,14 +161,11 @@ const WorkOrderDetails = () => {
         patch({ due_at: date ? dayjs(date).format('YYYY-MM-DD') : null })
     }
 
-    const handleMemberToggle = (memberId: string) => {
+    const handleMemberSelect = (memberId: string) => {
         if (!wo) return
-        const currentIds = wo.assigned_members.map((m) => m.id)
         const numId = parseInt(memberId, 10)
-        const newIds = currentIds.includes(numId)
-            ? currentIds.filter((i) => i !== numId)
-            : [...currentIds, numId]
-        patch({ assigned_member_ids: newIds })
+        const newId = wo.assigned_member?.id === numId ? null : numId
+        patch({ assigned_member_id: newId })
     }
 
     const handlePrintWo = async () => {
@@ -195,6 +203,38 @@ const WorkOrderDetails = () => {
         }
     }
 
+    const handleApprove = async () => {
+        if (!id || !wo) return
+        setApproving(true)
+        try {
+            const resp = await apiApproveWorkOrder(id)
+            setWo(resp.data.work_order)
+            toast.push(<Notification type="success">{t('wo.toast.approved')}</Notification>, { placement: 'top-center' })
+            await globalMutate((key) => Array.isArray(key) && key[0] === '/work-orders')
+        } catch {
+            toast.push(<Notification type="danger">{t('wo.toast.approveFailed')}</Notification>, { placement: 'top-center' })
+        } finally {
+            setApproving(false)
+        }
+    }
+
+    const handleReject = async () => {
+        if (!id || !wo) return
+        setRejecting(true)
+        try {
+            const resp = await apiRejectWorkOrder(id, rejectReason || undefined)
+            setWo(resp.data.work_order)
+            setRejectOpen(false)
+            setRejectReason('')
+            toast.push(<Notification type="warning">{t('wo.toast.rejected')}</Notification>, { placement: 'top-center' })
+            await globalMutate((key) => Array.isArray(key) && key[0] === '/work-orders')
+        } catch {
+            toast.push(<Notification type="danger">{t('wo.toast.rejectFailed')}</Notification>, { placement: 'top-center' })
+        } finally {
+            setRejecting(false)
+        }
+    }
+
     const handleDescriptionBlur = () => {
         setEditingDescription(false)
         if (descriptionDraft !== (wo?.description || '')) {
@@ -221,6 +261,46 @@ const WorkOrderDetails = () => {
                             <div className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-400 text-sm font-medium">
                                 <TbArchive className="text-base shrink-0" />
                                 {t('wo.details.archivedBanner')}
+                            </div>
+                        )}
+
+                        {/* Pending approval banner + actions */}
+                        {wo.status === 'pending_approval' && (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 px-4 py-3 rounded-xl bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/30">
+                                <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400 text-sm font-medium">
+                                    <TbHourglass className="text-base shrink-0" />
+                                    {t('wo.details.pendingApprovalBanner')}
+                                </div>
+                                {canManage && (
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <Button
+                                            size="sm"
+                                            variant="solid"
+                                            customColorClass={() => 'bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500'}
+                                            icon={<TbCircleCheck />}
+                                            loading={approving}
+                                            onClick={handleApprove}
+                                        >
+                                            {t('wo.details.approve')}
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            customColorClass={() => 'border-rose-400 ring-1 ring-rose-400 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 bg-transparent'}
+                                            icon={<TbCircleX />}
+                                            onClick={() => setRejectOpen(true)}
+                                        >
+                                            {t('wo.details.reject')}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Rejected banner */}
+                        {wo.status === 'rejected' && (
+                            <div className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-400 text-sm font-medium">
+                                <TbCircleX className="text-base shrink-0" />
+                                {t('wo.details.rejectedBanner')}
                             </div>
                         )}
 
@@ -388,25 +468,16 @@ const WorkOrderDetails = () => {
                                     </div>
 
                                     <div className="flex flex-col">
-                                        {/* Assigned members — Admin / Manager only can edit */}
+                                        {/* Assigned member — single lead (Admin / Manager can change) */}
                                         <WoFieldDropdown
                                             title={t('wo.details.assignedTo')}
                                             icon={<TbUser />}
                                             disabled={!canAssign}
                                             trigger={
-                                                wo.assigned_members.length > 0 ? (
-                                                    <div className="flex items-center gap-1 flex-wrap">
-                                                        {wo.assigned_members.map(
-                                                            (m) => (
-                                                                <span
-                                                                    key={m.id}
-                                                                    className="text-xs px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 rounded-full"
-                                                                >
-                                                                    {m.name}
-                                                                </span>
-                                                            ),
-                                                        )}
-                                                    </div>
+                                                wo.assigned_member ? (
+                                                    <span className="text-xs px-2 py-0.5 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 rounded-full">
+                                                        {wo.assigned_member.name}
+                                                    </span>
                                                 ) : (
                                                     <span className="text-sm text-gray-400">
                                                         {t('wo.details.noAssignees')}
@@ -414,37 +485,27 @@ const WorkOrderDetails = () => {
                                                 )
                                             }
                                         >
-                                            {memberList.map((m) => {
-                                                const isAssigned =
-                                                    wo.assigned_members.some(
-                                                        (a) => a.id === m.id,
+                                            {memberList
+                                                .filter((m) => m.roles.some((r) => r.code === 'technician'))
+                                                .map((m) => {
+                                                    const isSelected = wo.assigned_member?.id === m.id
+                                                    return (
+                                                        <Dropdown.Item
+                                                            key={m.id}
+                                                            eventKey={String(m.id)}
+                                                            onSelect={handleMemberSelect}
+                                                        >
+                                                            <div className="flex items-center gap-2 relative">
+                                                                {isSelected && (
+                                                                    <TbCheck className="absolute text-primary left-[-4px] text-lg" />
+                                                                )}
+                                                                <span className={isSelected ? 'ml-5' : ''}>
+                                                                    {m.user?.name ?? m.employee_code}
+                                                                </span>
+                                                            </div>
+                                                        </Dropdown.Item>
                                                     )
-                                                return (
-                                                    <Dropdown.Item
-                                                        key={m.id}
-                                                        eventKey={String(m.id)}
-                                                        onSelect={
-                                                            handleMemberToggle
-                                                        }
-                                                    >
-                                                        <div className="flex items-center gap-2 relative">
-                                                            {isAssigned && (
-                                                                <TbCheck className="absolute text-primary left-[-4px] text-lg" />
-                                                            )}
-                                                            <span
-                                                                className={
-                                                                    isAssigned
-                                                                        ? 'ml-5'
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {m.user?.name ??
-                                                                    m.employee_code}
-                                                            </span>
-                                                        </div>
-                                                    </Dropdown.Item>
-                                                )
-                                            })}
+                                                })}
                                         </WoFieldDropdown>
 
                                         {/* Due date */}
@@ -614,6 +675,35 @@ const WorkOrderDetails = () => {
                     code={wo.code}
                     url={window.location.href}
                 />
+            )}
+
+            {/* Reject dialog */}
+            {rejectOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
+                        <h5 className="mb-1">{t('wo.details.rejectTitle')}</h5>
+                        <p className="text-sm text-gray-400 mb-4">{t('wo.details.rejectSubtitle')}</p>
+                        <textarea
+                            rows={3}
+                            placeholder={t('wo.details.rejectPlaceholder')}
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            className="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 outline-none focus:ring-2 focus:ring-rose-400/30 resize-none mb-4"
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="plain" onClick={() => { setRejectOpen(false); setRejectReason('') }}>
+                                {t('common.cancel')}
+                            </Button>
+                            <Button
+                                customColorClass={() => 'bg-rose-500 hover:bg-rose-600 text-white border-rose-500'}
+                                loading={rejecting}
+                                onClick={handleReject}
+                            >
+                                {t('wo.details.confirmReject')}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
             )}
         </AdaptiveCard>
     )

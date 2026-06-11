@@ -55,7 +55,7 @@ class WorkLogController extends Controller
 
         $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
         if (! $isAdminOrManager) {
-            $isAssigned = $workOrder->assignedMembers()->where('members.id', $currentMember->id)->exists();
+            $isAssigned = (int) $workOrder->assigned_member_id === (int) $currentMember->id;
             if (! $isAssigned) {
                 return response()->json([
                     'success' => false,

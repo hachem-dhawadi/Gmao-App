@@ -116,28 +116,39 @@ class DemoSiteSeeder extends Seeder
                     $wh->update(['site_id' => $siteMap[$siteCode] ?? $siteMap['HQ']]);
                 });
 
-            // ── 4. Assign sites to members ────────────────────────────────
-            $techIndex = 0;
+            // ── 4. Assign sites to members (site_id + member_sites pivot) ──
+            $techIndex    = 0;
+            $managerIndex = 0;
             Member::query()
                 ->where('company_id', $company->id)
                 ->with('roles:id,code')
+                ->orderBy('id')
                 ->get()
-                ->each(function (Member $member) use ($siteMap, &$techIndex): void {
+                ->each(function (Member $member) use ($siteMap, &$techIndex, &$managerIndex): void {
                     $roleCodes = $member->roles->pluck('code')->toArray();
 
-                    if (
-                        in_array('admin', $roleCodes, true) ||
-                        in_array('manager', $roleCodes, true) ||
-                        in_array('hr', $roleCodes, true)
-                    ) {
+                    if (in_array('admin', $roleCodes, true) || in_array('hr', $roleCodes, true)) {
                         $siteCode = 'HQ';
+                    } elseif (in_array('manager', $roleCodes, true)) {
+                        // Managers alternate: SITE-A (MGR-001), SITE-B (MGR-002), …
+                        $siteCode = $managerIndex % 2 === 0 ? 'SITE-A' : 'SITE-B';
+                        $managerIndex++;
                     } else {
                         // Technicians alternate between SITE-A and SITE-B
                         $siteCode = $techIndex % 2 === 0 ? 'SITE-A' : 'SITE-B';
                         $techIndex++;
                     }
 
-                    $member->update(['site_id' => $siteMap[$siteCode] ?? $siteMap['HQ']]);
+                    $siteId = $siteMap[$siteCode] ?? $siteMap['HQ'];
+                    $member->update(['site_id' => $siteId]);
+
+                    // Populate member_sites pivot
+                    DB::table('member_sites')->insertOrIgnore([
+                        'member_id'  => $member->id,
+                        'site_id'    => $siteId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 });
 
             // ── 5. Derive work order site_id from their asset ─────────────

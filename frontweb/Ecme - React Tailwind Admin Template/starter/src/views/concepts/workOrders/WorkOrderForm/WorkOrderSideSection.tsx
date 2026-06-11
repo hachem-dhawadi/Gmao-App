@@ -9,7 +9,7 @@ import { FormItem } from '@/components/ui/Form'
 import { Controller, useWatch } from 'react-hook-form'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
-import { TbClock, TbUserPlus } from 'react-icons/tb'
+import { TbClock } from 'react-icons/tb'
 import { apiGetAssetsList } from '@/services/AssetsService'
 import { apiGetMembersList } from '@/services/MembersService'
 import { apiGetAllSites } from '@/services/SiteService'
@@ -122,11 +122,13 @@ const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: 
         })) ?? []
 
     const allMemberOptions: MemberOption[] =
-        membersData?.data?.members?.map((m) => ({
-            value: m.id,
-            label: m.user?.name ?? m.employee_code,
-            sites: m.sites ?? [],
-        })) ?? []
+        membersData?.data?.members
+            ?.filter((m) => m.roles.some((r) => r.code === 'technician'))
+            .map((m) => ({
+                value: m.id,
+                label: m.user?.name ?? m.employee_code,
+                sites: m.sites ?? [],
+            })) ?? []
 
     const teamOptions: TeamOption[] =
         teamsData?.data?.teams?.map((t) => ({
@@ -267,7 +269,6 @@ const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: 
                                     value={teamOptions.find((o) => o.value === field.value) || null}
                                     onChange={(opt) => {
                                         field.onChange(opt?.value ?? null)
-                                        if (opt) setValue('assigned_member_ids', opt.member_ids)
                                     }}
                                     formatOptionLabel={(opt) => (
                                         <div className="flex items-center gap-2">
@@ -281,17 +282,11 @@ const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: 
                                 />
                             )}
                         />
-                        {watchedTeamId != null && (
-                            <p className="text-xs text-indigo-500 mt-1 flex items-center gap-1">
-                                <TbUserPlus className="text-sm" />
-                                Team members pre-filled — you can still add or remove individuals below
-                            </p>
-                        )}
                     </FormItem>
 
-                    {/* Members — grouped by site proximity */}
+                    {/* Assignee — single technician */}
                     <FormItem
-                        label={t('woForm.field.assignMembers')}
+                        label={t('woForm.field.assignMember')}
                         extra={
                             assetSiteId != null ? (
                                 <span className="text-xs text-indigo-400">
@@ -301,17 +296,15 @@ const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: 
                         }
                     >
                         <Controller
-                            name="assigned_member_ids"
+                            name="assigned_member_id"
                             control={control}
                             render={({ field }) => (
-                                <Select<MemberOption, true, GroupedMember>
-                                    isMulti
-                                    placeholder={t('woForm.placeholder.selectMembers')}
+                                <Select<MemberOption, false, GroupedMember>
+                                    isClearable
+                                    placeholder={t('woForm.placeholder.selectMember')}
                                     options={groupedMembers as any}
-                                    value={allMemberOptions.filter((o) => field.value?.includes(o.value))}
-                                    onChange={(selected) =>
-                                        field.onChange(selected ? selected.map((o) => o.value) : [])
-                                    }
+                                    value={allMemberOptions.find((o) => o.value === field.value) || null}
+                                    onChange={(opt) => field.onChange(opt?.value ?? null)}
                                     formatOptionLabel={(opt) => {
                                         const otherSites = assetSiteId != null
                                             ? opt.sites.filter((s) => s.id !== assetSiteId)

@@ -4,7 +4,6 @@ import {
     TbListCheck,
     TbPackage,
     TbShieldCheck,
-    TbBuildingSkyscraper,
     TbShoppingCart,
     TbCalendarStats,
     TbFiles,
@@ -31,17 +30,6 @@ export const accessModules: AccessModule[] = [
             { label: 'Create', value: 'members.create' },
             { label: 'Update', value: 'members.update' },
             { label: 'Delete', value: 'members.delete' },
-        ],
-    },
-    {
-        id: 'departments',
-        name: 'Departments',
-        description: 'Access control for department management',
-        accessor: [
-            { label: 'Read', value: 'departments.read' },
-            { label: 'Create', value: 'departments.create' },
-            { label: 'Update', value: 'departments.update' },
-            { label: 'Delete', value: 'departments.delete' },
         ],
     },
     {
@@ -126,7 +114,6 @@ export const accessModules: AccessModule[] = [
 
 export const moduleIcon: Record<string, ComponentType> = {
     members: TbUserCog,
-    departments: TbBuildingSkyscraper,
     roles: TbShieldCheck,
     assets: TbBox,
     work_orders: TbListCheck,

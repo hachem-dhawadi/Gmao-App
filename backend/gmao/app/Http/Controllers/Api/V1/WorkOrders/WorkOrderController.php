@@ -37,7 +37,7 @@ class WorkOrderController extends Controller
         $siteId       = $request->query('site_id');
         $showArchived = $request->boolean('archived');
 
-        $with = ['asset', 'site', 'team', 'createdBy.user', 'assignedMembers.user'];
+        $with = ['asset', 'site', 'team', 'createdBy.user', 'assignedMember.user'];
         if ($assetId) {
             $with[] = 'workLogs';
         }
@@ -77,7 +77,7 @@ class WorkOrderController extends Controller
         }
 
         if ($myOnly && $currentMember) {
-            $query->whereHas('assignedMembers', fn ($q) => $q->where('members.id', $currentMember->id));
+            $query->where('assigned_member_id', $currentMember->id);
         }
 
         $workOrders = $query->paginate($perPage);
@@ -101,7 +101,7 @@ class WorkOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Work order not found.'], 404);
         }
 
-        $workOrder->load(['asset', 'createdBy.user', 'closedBy.user', 'assignedMembers.user', 'statusHistory.changedBy.user', 'comments.member.user', 'attachments.member.user', 'workLogs.member.user', 'checklistItems.completedBy.user']);
+        $workOrder->load(['asset', 'createdBy.user', 'closedBy.user', 'assignedMember.user', 'statusHistory.changedBy.user', 'comments.member.user', 'attachments.member.user', 'workLogs.member.user', 'checklistItems.completedBy.user']);
 
         return response()->json([
             'success' => true,
@@ -121,9 +121,11 @@ class WorkOrderController extends Controller
         }
 
         $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
-        if (! $isAdminOrManager) {
-            return response()->json(['success' => false, 'message' => 'Only administrators and managers can create work orders.'], 403);
-        }
+
+        // Admin/manager: use submitted status (default open); others: always pending_approval
+        $initialStatus         = $isAdminOrManager ? ($validated['status'] ?? 'open') : 'pending_approval';
+        $approvedByMemberId    = $isAdminOrManager ? $currentMember->id : null;
+        $approvedAt            = $isAdminOrManager ? now() : null;
 
         $code = $validated['code'] ?? $this->generateCode($currentCompany->id);
 
@@ -137,37 +139,163 @@ class WorkOrderController extends Controller
         $asset = \App\Models\Asset::find($validated['asset_id']);
 
         $workOrder = WorkOrder::query()->create([
-            'company_id'           => $currentCompany->id,
-            'asset_id'             => $validated['asset_id'],
-            'site_id'              => $asset?->site_id,
-            'team_id'              => $validated['team_id'] ?? null,
-            'code'                 => $code,
-            'created_by_member_id' => $currentMember->id,
-            'status'               => $validated['status'],
-            'priority'             => $validated['priority'],
-            'title'                => $validated['title'],
-            'description'          => $validated['description'] ?? null,
-            'due_at'               => $validated['due_at'] ?? null,
-            'estimated_minutes'    => $validated['estimated_minutes'] ?? null,
-            'opened_at'            => now(),
+            'company_id'            => $currentCompany->id,
+            'asset_id'              => $validated['asset_id'],
+            'site_id'               => $asset?->site_id,
+            'team_id'               => $validated['team_id'] ?? null,
+            'code'                  => $code,
+            'created_by_member_id'  => $currentMember->id,
+            'status'                => $initialStatus,
+            'priority'              => $validated['priority'],
+            'title'                 => $validated['title'],
+            'description'           => $validated['description'] ?? null,
+            'due_at'                => $validated['due_at'] ?? null,
+            'estimated_minutes'     => $validated['estimated_minutes'] ?? null,
+            'opened_at'             => now(),
+            'approved_by_member_id' => $approvedByMemberId,
+            'approved_at'           => $approvedAt,
         ]);
 
-        if (! empty($validated['assigned_member_ids'])) {
-            $syncData = collect($validated['assigned_member_ids'])
-                ->mapWithKeys(fn ($id) => [$id => ['assigned_at' => now()]])
-                ->all();
-            $workOrder->assignedMembers()->sync($syncData);
-
-            NotificationService::notifyWoAssigned($workOrder, $validated['assigned_member_ids'], $currentMember->id);
+        if (! empty($validated['assigned_member_id'])) {
+            $workOrder->update(['assigned_member_id' => $validated['assigned_member_id']]);
+            NotificationService::notifyWoAssigned($workOrder, [$validated['assigned_member_id']], $currentMember->id);
         }
 
-        $workOrder->load(['asset', 'site', 'team', 'createdBy.user', 'assignedMembers.user']);
+        // Notify approvers when WO needs approval
+        if ($initialStatus === 'pending_approval') {
+            $siteId = $asset?->site_id;
+
+            // Prefer managers who work at the same site
+            $approvers = \App\Models\Member::query()
+                ->where('company_id', $currentCompany->id)
+                ->whereHas('roles', fn ($q) => $q->where('code', 'manager'))
+                ->when($siteId, fn ($q) => $q->whereHas('sites', fn ($sq) => $sq->where('sites.id', $siteId)))
+                ->get();
+
+            // Fallback: any admin in the company
+            if ($approvers->isEmpty()) {
+                $approvers = \App\Models\Member::query()
+                    ->where('company_id', $currentCompany->id)
+                    ->whereHas('roles', fn ($q) => $q->where('code', 'admin'))
+                    ->get();
+            }
+
+            if ($approvers->isNotEmpty()) {
+                NotificationService::notifyWoPendingApproval($workOrder, $approvers->pluck('id')->all(), $currentMember->id);
+            }
+        }
+
+        $workOrder->load(['asset', 'site', 'team', 'createdBy.user', 'assignedMember.user']);
 
         return response()->json([
             'success' => true,
-            'message' => 'Work order created successfully.',
+            'message' => $initialStatus === 'pending_approval'
+                ? 'Work order submitted and awaiting manager approval.'
+                : 'Work order created successfully.',
             'data'    => ['work_order' => WorkOrderResource::make($workOrder)->resolve()],
         ], 201);
+    }
+
+    public function approve(Request $request, WorkOrder $workOrder): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
+
+        if (! $currentCompany || ! $currentMember) {
+            return response()->json(['success' => false, 'message' => 'Context missing.'], 400);
+        }
+
+        if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        if ($workOrder->status !== 'pending_approval') {
+            return response()->json(['success' => false, 'message' => 'This work order is not pending approval.'], 422);
+        }
+
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager) {
+            return response()->json(['success' => false, 'message' => 'Only managers and admins can approve work orders.'], 403);
+        }
+
+        $oldStatus = $workOrder->status;
+
+        $workOrder->update([
+            'status'                => 'open',
+            'approved_by_member_id' => $currentMember->id,
+            'approved_at'           => now(),
+        ]);
+
+        $workOrder->statusHistory()->create([
+            'changed_by_member_id' => $currentMember->id,
+            'old_status'           => $oldStatus,
+            'new_status'           => 'open',
+            'changed_at'           => now(),
+        ]);
+
+        // Auto-assign the creator if no assignee is set yet
+        $creatorId = $workOrder->created_by_member_id;
+        if (! $workOrder->assigned_member_id) {
+            $workOrder->update(['assigned_member_id' => $creatorId]);
+            NotificationService::notifyWoAssigned($workOrder, [$creatorId], $currentMember->id);
+        }
+
+        NotificationService::notifyWoApproved($workOrder, $currentMember->id);
+
+        $workOrder->load(['asset', 'site', 'team', 'createdBy.user', 'assignedMember.user']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Work order approved.',
+            'data'    => ['work_order' => WorkOrderResource::make($workOrder)->resolve()],
+        ]);
+    }
+
+    public function reject(Request $request, WorkOrder $workOrder): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
+
+        if (! $currentCompany || ! $currentMember) {
+            return response()->json(['success' => false, 'message' => 'Context missing.'], 400);
+        }
+
+        if ((int) $workOrder->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        if ($workOrder->status !== 'pending_approval') {
+            return response()->json(['success' => false, 'message' => 'This work order is not pending approval.'], 422);
+        }
+
+        $isAdminOrManager = $currentMember->roles()->whereIn('code', ['admin', 'manager'])->exists();
+        if (! $isAdminOrManager) {
+            return response()->json(['success' => false, 'message' => 'Only managers and admins can reject work orders.'], 403);
+        }
+
+        $request->validate(['reason' => 'nullable|string|max:500']);
+
+        $oldStatus = $workOrder->status;
+
+        $workOrder->update(['status' => 'rejected']);
+
+        $workOrder->statusHistory()->create([
+            'changed_by_member_id' => $currentMember->id,
+            'old_status'           => $oldStatus,
+            'new_status'           => 'rejected',
+            'note'                 => $request->reason,
+            'changed_at'           => now(),
+        ]);
+
+        NotificationService::notifyWoRejected($workOrder, $currentMember->id, $request->reason);
+
+        $workOrder->load(['asset', 'site', 'team', 'createdBy.user', 'assignedMember.user']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Work order rejected.',
+            'data'    => ['work_order' => WorkOrderResource::make($workOrder)->resolve()],
+        ]);
     }
 
     public function update(UpdateWorkOrderRequest $request, WorkOrder $workOrder): JsonResponse
@@ -188,14 +316,12 @@ class WorkOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'You can only modify work orders assigned to you.'], 403);
         }
 
-        $assignedMemberIds = $validated['assigned_member_ids'] ?? null;
-        unset($validated['assigned_member_ids']);
+        $assignedMemberId = array_key_exists('assigned_member_id', $validated) ? $validated['assigned_member_id'] : 'NOT_SET';
+        unset($validated['assigned_member_id']);
 
         // Only block if the assignment is actually changing
-        if ($assignedMemberIds !== null && $currentMember) {
-            $currentIds = $workOrder->assignedMembers()->pluck('members.id')->sort()->values()->all();
-            $newIds     = collect($assignedMemberIds)->sort()->values()->all();
-            $isChanging = $currentIds !== $newIds;
+        if ($assignedMemberId !== 'NOT_SET' && $currentMember) {
+            $isChanging = (int) $workOrder->assigned_member_id !== (int) $assignedMemberId;
 
             if ($isChanging) {
                 $canAssign = $currentMember->roles()
@@ -239,16 +365,12 @@ class WorkOrderController extends Controller
             ]);
         }
 
-        if ($assignedMemberIds !== null) {
-            $previousIds = $workOrder->assignedMembers()->pluck('members.id')->all();
-            $syncData    = collect($assignedMemberIds)
-                ->mapWithKeys(fn ($id) => [$id => ['assigned_at' => now()]])
-                ->all();
-            $workOrder->assignedMembers()->sync($syncData);
+        if ($assignedMemberId !== 'NOT_SET') {
+            $previousId = $workOrder->assigned_member_id;
+            $workOrder->update(['assigned_member_id' => $assignedMemberId]);
 
-            $newlyAssigned = array_values(array_diff($assignedMemberIds, $previousIds));
-            if (! empty($newlyAssigned) && $currentMember) {
-                NotificationService::notifyWoAssigned($workOrder, $newlyAssigned, $currentMember->id);
+            if ($assignedMemberId && $assignedMemberId !== $previousId && $currentMember) {
+                NotificationService::notifyWoAssigned($workOrder, [$assignedMemberId], $currentMember->id);
             }
         }
 
@@ -256,7 +378,7 @@ class WorkOrderController extends Controller
             NotificationService::notifyWoStatusChanged($workOrder, $oldStatus, $validated['status'], $currentMember->id);
         }
 
-        $workOrder->load(['asset', 'site', 'team', 'createdBy.user', 'assignedMembers.user']);
+        $workOrder->load(['asset', 'site', 'team', 'createdBy.user', 'assignedMember.user']);
 
         return response()->json([
             'success' => true,
@@ -500,7 +622,7 @@ class WorkOrderController extends Controller
         $isAdminOrManager = $member->roles()->whereIn('code', ['admin', 'manager'])->exists();
         if ($isAdminOrManager) return true;
 
-        return $workOrder->assignedMembers()->where('members.id', $member->id)->exists();
+        return (int) $workOrder->assigned_member_id === (int) $member->id;
     }
 
     private function generateCode(int $companyId): string

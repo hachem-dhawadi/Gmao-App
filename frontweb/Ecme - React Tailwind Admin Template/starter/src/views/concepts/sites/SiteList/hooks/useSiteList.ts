@@ -2,12 +2,15 @@ import useSWR from 'swr'
 import { useSiteListStore } from '../store/siteListStore'
 import { apiGetSitesList } from '@/services/SiteService'
 import type { Site } from '../types'
+import type { SiteFilter } from '../store/siteListStore'
 import type { SitesListResponse } from '@/services/SiteService'
 
 export default function useSiteList() {
     const {
         tableData,
         setTableData,
+        filterData,
+        setFilterData,
         selectedSite,
         setSelectedSite,
         setSelectAllSite,
@@ -29,17 +32,22 @@ export default function useSiteList() {
     const queryText = String(tableData.query || '').trim().toLowerCase()
 
     const siteList = rawList.filter((site) => {
-        return (
-            !queryText ||
+        if (queryText && !(
             site.name.toLowerCase().includes(queryText) ||
             site.code.toLowerCase().includes(queryText) ||
             (site.address || '').toLowerCase().includes(queryText) ||
             (site.description || '').toLowerCase().includes(queryText)
-        )
+        )) return false
+
+        if (filterData.status === 'active' && !site.is_active) return false
+        if (filterData.status === 'inactive' && site.is_active) return false
+
+        return true
     })
 
     const apiTotal = data?.data?.pagination?.total || 0
-    const siteListTotal = queryText.length > 0 ? siteList.length : apiTotal
+    const isFiltered = queryText.length > 0 || filterData.status !== 'all'
+    const siteListTotal = isFiltered ? siteList.length : apiTotal
 
     return {
         siteList,
@@ -48,8 +56,10 @@ export default function useSiteList() {
         error,
         isLoading,
         tableData,
+        filterData,
         mutate,
         setTableData,
+        setFilterData,
         selectedSite,
         setSelectedSite,
         setSelectAllSite,

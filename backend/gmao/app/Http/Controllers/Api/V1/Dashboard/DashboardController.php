@@ -52,7 +52,7 @@ class DashboardController extends Controller
             ->count();
         $woUnassigned      = (clone $woBase)
             ->whereIn('status', ['open', 'in_progress'])
-            ->doesntHave('assignedMembers')
+            ->whereNull('assigned_member_id')
             ->count();
 
         // PM counts — not site-scoped (PM plans have no site_id FK yet)
@@ -219,7 +219,7 @@ class DashboardController extends Controller
         $woBase = WorkOrder::query()
             ->where('company_id', $company->id)
             ->whereNull('deleted_at')
-            ->whereHas('assignedMembers', fn ($q) => $q->where('members.id', $member->id));
+            ->where('assigned_member_id', $member->id);
 
         $myOpen      = (clone $woBase)->where('status', 'open')->count();
         $myProgress  = (clone $woBase)->where('status', 'in_progress')->count();
@@ -277,7 +277,7 @@ class DashboardController extends Controller
         $myRecentWo = WorkOrder::query()
             ->with(['asset'])
             ->where('company_id', $company->id)
-            ->whereHas('assignedMembers', fn ($q) => $q->where('members.id', $member->id))
+            ->where('assigned_member_id', $member->id)
             ->orderByDesc('id')
             ->limit(10)
             ->get()
