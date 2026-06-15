@@ -69,9 +69,11 @@ const AssetListTable = () => {
                 <Notification type="success">{t('assets.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
-        } catch {
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? t('assets.toast.deleteFailed')
             toast.push(
-                <Notification type="danger">{t('assets.toast.deleteFailed')}</Notification>,
+                <Notification type="danger">{msg}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {

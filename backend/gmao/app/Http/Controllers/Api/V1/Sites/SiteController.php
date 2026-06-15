@@ -157,6 +157,18 @@ class SiteController extends Controller
             return response()->json(['success' => false, 'message' => 'Site not found.'], 404);
         }
 
+        if ($site->assets()->exists()) {
+            return response()->json(['success' => false, 'message' => 'Cannot delete a site that has assets assigned to it. Reassign the assets first.'], 422);
+        }
+
+        if ($site->members()->exists()) {
+            return response()->json(['success' => false, 'message' => 'Cannot delete a site that has members assigned to it. Reassign the members first.'], 422);
+        }
+
+        if ($site->warehouses()->exists()) {
+            return response()->json(['success' => false, 'message' => 'Cannot delete a site that has warehouses assigned to it. Reassign the warehouses first.'], 422);
+        }
+
         $site->delete();
 
         return response()->json([

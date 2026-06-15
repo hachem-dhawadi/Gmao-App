@@ -142,7 +142,12 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/{workOrder}/parts', [WoPartsController::class, 'store'])->middleware('permission:work_orders.write');
 
         // Checklist
+        Route::post('/{workOrder}/checklist', [WorkOrderChecklistController::class, 'store'])->middleware('permission:work_orders.write');
         Route::post('/{workOrder}/checklist/{item}/toggle', [WorkOrderChecklistController::class, 'toggle'])->middleware('permission:work_orders.write');
+        Route::delete('/{workOrder}/checklist/{item}', [WorkOrderChecklistController::class, 'destroy'])->middleware('permission:work_orders.write');
+
+        // Activity feed
+        Route::get('/{workOrder}/activities', [WorkOrderController::class, 'activities'])->middleware('permission:work_orders.read');
 
         // Approval
         Route::post('/{workOrder}/approve', [WorkOrderController::class, 'approve'])->middleware('permission:work_orders.write');
@@ -251,7 +256,8 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/{pmPlan}', [PmPlanController::class, 'show'])->middleware('permission:pm_plans.read');
         Route::post('/', [PmPlanController::class, 'store'])->middleware('permission:pm_plans.write');
         Route::patch('/{pmPlan}', [PmPlanController::class, 'update'])->middleware('permission:pm_plans.write');
-        Route::patch('/{pmPlan}/tasks', [PmPlanController::class, 'updateTasks']);
+        Route::patch('/{pmPlan}/tasks', [PmPlanController::class, 'updateTasks'])->middleware('permission:pm_plans.write');
+        Route::post('/{pmPlan}/generate-wo', [PmPlanController::class, 'generateWorkOrder'])->middleware('permission:pm_plans.write');
         Route::delete('/{pmPlan}', [PmPlanController::class, 'destroy'])->middleware('permission:pm_plans.delete');
     });
 

@@ -97,6 +97,7 @@ type Props = {
     initialAttachments: WorkOrderAttachment[]
     initialWorkLogs: WorkLog[]
     canEdit: boolean
+    onActivity?: () => void
 }
 
 const WoFooter = ({
@@ -106,6 +107,7 @@ const WoFooter = ({
     initialAttachments,
     initialWorkLogs,
     canEdit,
+    onActivity,
 }: Props) => {
     // ── Session ───────────────────────────────────────────────────────────────
     const { t } = useTranslation()
@@ -156,6 +158,7 @@ const WoFooter = ({
             const newComment = (resp as { data: WorkOrderComment }).data
             setComments((prev) => [...prev, newComment])
             setCommentText('')
+            onActivity?.()
         } catch {
             toast.push(<Notification type="danger">{t('wo.toast.commentFailed')}</Notification>, { placement: 'top-center' })
         } finally {
@@ -172,6 +175,7 @@ const WoFooter = ({
             const resp = await apiAddWorkOrderAttachment(workOrderId, file)
             const newAttachment = (resp as { data: WorkOrderAttachment }).data
             setAttachments((prev) => [...prev, newAttachment])
+            onActivity?.()
         } catch {
             toast.push(<Notification type="danger">{t('wo.toast.uploadFailed')}</Notification>, { placement: 'top-center' })
         } finally {
@@ -245,6 +249,7 @@ const WoFooter = ({
                 const resp = await apiAddWorkLog(workOrderId, payload)
                 const newLog = (resp as { data: WorkLog }).data
                 setWorkLogs((prev) => [newLog, ...prev])
+                onActivity?.()
             }
 
             closeLogDialog()

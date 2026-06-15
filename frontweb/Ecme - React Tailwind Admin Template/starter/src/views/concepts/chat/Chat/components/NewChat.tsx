@@ -32,7 +32,7 @@ const NewChat = ({ onCreated }: Props) => {
         if (!open) return
         setLoading(true)
         apiGetMembersForChat()
-            .then((resp) => setMembers(resp.data?.members ?? []))
+            .then((resp) => setMembers(resp.members ?? []))
             .finally(() => setLoading(false))
     }, [open])
 
@@ -44,7 +44,7 @@ const NewChat = ({ onCreated }: Props) => {
 
     const isGroup = selected.length > 1
 
-    const toggle = (member: Member) => {
+    const toggle = (member: ChatMember) => {
         setSelected((prev) =>
             prev.some((m) => m.id === member.id)
                 ? prev.filter((m) => m.id !== member.id)

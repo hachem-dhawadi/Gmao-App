@@ -3,6 +3,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Tag from '@/components/ui/Tag'
 import Dialog from '@/components/ui/Dialog'
+import Select from '@/components/ui/Select'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import {
@@ -10,6 +11,7 @@ import {
     apiConvertRequest,
     apiRejectRequest,
 } from '@/services/RequestsService'
+import { apiGetMembersList } from '@/services/MembersService'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
@@ -27,6 +29,7 @@ import {
     TbClipboardText,
 } from 'react-icons/tb'
 import type { MaintenanceRequest, RequestResponse } from '@/services/RequestsService'
+import type { Member } from '@/services/MembersService'
 
 const STATUS_CONFIG = {
     pending:   { bg: 'bg-amber-100 dark:bg-amber-500/20',    text: 'text-amber-600 dark:text-amber-400',    dot: 'bg-amber-500' },
@@ -52,6 +55,19 @@ const RequestDetails = () => {
     const [rejecting, setRejecting]   = useState(false)
     const [rejectOpen, setRejectOpen] = useState(false)
     const [rejectNote, setRejectNote] = useState('')
+    const [convertOpen, setConvertOpen] = useState(false)
+    const [convertTitle, setConvertTitle] = useState('')
+    const [convertPriority, setConvertPriority] = useState('')
+    const [convertMemberId, setConvertMemberId] = useState<number | null>(null)
+
+    const { data: memberData } = useSWR<Member[]>(
+        convertOpen ? '/members-for-convert' : null,
+        async () => {
+            const resp = await apiGetMembersList({ per_page: 200, status: 'active' })
+            return resp.data.members
+        },
+        { revalidateOnFocus: false },
+    )
 
     const { data: req, mutate } = useSWR<MaintenanceRequest>(
         id ? ['/requests/detail', id] : null,
@@ -62,13 +78,26 @@ const RequestDetails = () => {
         { revalidateOnFocus: false },
     )
 
+    const handleOpenConvert = () => {
+        if (!req) return
+        setConvertTitle(req.title)
+        setConvertPriority(req.priority)
+        setConvertMemberId(null)
+        setConvertOpen(true)
+    }
+
     const handleConvert = async () => {
         if (!id || !req) return
         try {
             setConverting(true)
-            const resp = await apiConvertRequest(id)
+            const resp = await apiConvertRequest(id, {
+                title: convertTitle || undefined,
+                priority: convertPriority || undefined,
+                assigned_member_id: convertMemberId,
+            })
             await mutate(resp.data.request, false)
-            await globalMutate((key) => Array.isArray(key) && key[0] === '/requests')
+            await globalMutate((key) => Array.isArray(key) && (key[0] === '/requests' || key[0] === '/work-orders' || key[0] === '/work-orders-board'))
+            setConvertOpen(false)
             toast.push(
                 <Notification type="success">
                     {t('requests.details.woCreated', { code: resp.data.work_order.code })}
@@ -135,8 +164,7 @@ const RequestDetails = () => {
                             <Button
                                 variant="solid"
                                 icon={<TbCheck />}
-                                loading={converting}
-                                onClick={handleConvert}
+                                onClick={handleOpenConvert}
                             >
                                 {t('requests.details.convertToWO')}
                             </Button>
@@ -228,6 +256,76 @@ const RequestDetails = () => {
                     )}
                 </Card>
             </div>
+
+            {/* Convert to WO dialog */}
+            <Dialog
+                isOpen={convertOpen}
+                onClose={() => setConvertOpen(false)}
+                onRequestClose={() => setConvertOpen(false)}
+                width={500}
+            >
+                <h5 className="mb-1">{t('requests.details.convertToWO')}</h5>
+                <p className="text-sm text-gray-500 mb-5">{t('requests.details.convertDescription', 'Review and customize the work order before creating it.')}</p>
+
+                <div className="flex flex-col gap-4 mb-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            {t('wo.field.title', 'Title')}
+                        </label>
+                        <input
+                            className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                            value={convertTitle}
+                            onChange={(e) => setConvertTitle(e.target.value)}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            {t('wo.field.priority', 'Priority')}
+                        </label>
+                        <Select
+                            value={{ value: convertPriority, label: t(`wo.priority.${convertPriority}`, convertPriority) }}
+                            options={[
+                                { value: 'low',      label: t('wo.priority.low', 'Low') },
+                                { value: 'medium',   label: t('wo.priority.medium', 'Medium') },
+                                { value: 'high',     label: t('wo.priority.high', 'High') },
+                                { value: 'critical', label: t('wo.priority.critical', 'Critical') },
+                            ]}
+                            onChange={(opt) => opt && setConvertPriority((opt as { value: string }).value)}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            {t('wo.field.assignedTo', 'Assign to')}
+                        </label>
+                        <Select
+                            placeholder={t('wo.field.assignedToPlaceholder', 'Select technician (optional)')}
+                            isClearable
+                            value={convertMemberId
+                                ? { value: convertMemberId, label: memberData?.find(m => m.id === convertMemberId)?.user?.name ?? '' }
+                                : null
+                            }
+                            options={(memberData ?? []).map(m => ({
+                                value: m.id,
+                                label: m.user?.name ?? m.employee_code,
+                            }))}
+                            onChange={(opt) => setConvertMemberId(opt ? (opt as { value: number }).value : null)}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                    <Button onClick={() => setConvertOpen(false)}>{t('common.cancel')}</Button>
+                    <Button
+                        variant="solid"
+                        loading={converting}
+                        onClick={handleConvert}
+                    >
+                        {t('requests.details.confirmConvert', 'Create Work Order')}
+                    </Button>
+                </div>
+            </Dialog>
 
             {/* Reject dialog */}
             <Dialog

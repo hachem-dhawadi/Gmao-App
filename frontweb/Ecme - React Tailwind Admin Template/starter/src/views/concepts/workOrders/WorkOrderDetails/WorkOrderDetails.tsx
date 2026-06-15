@@ -24,7 +24,9 @@ import {
     apiUnarchiveWorkOrder,
     apiApproveWorkOrder,
     apiRejectWorkOrder,
+    apiGetWorkOrderActivities,
 } from '@/services/WorkOrdersService'
+import type { WoActivityEvent } from '@/services/WorkOrdersService'
 import { printWorkOrder } from './utils/printWorkOrder'
 import { apiGetMembersList } from '@/services/MembersService'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -129,19 +131,37 @@ const WorkOrderDetails = () => {
 
     const memberList = membersData?.data?.members || []
 
-    const patch = async (payload: Parameters<typeof apiUpdateWorkOrder>[1]) => {
+    const { data: activitiesData, mutate: mutateActivities } = useSWR<WoActivityEvent[]>(
+        id ? ['/work-orders/activities', id] : null,
+        async () => {
+            const resp = await apiGetWorkOrderActivities(id!)
+            return resp.data.activities
+        },
+        { revalidateOnFocus: false },
+    )
+
+    const patch = async (
+        payload: Parameters<typeof apiUpdateWorkOrder>[1],
+        optimistic?: Partial<WorkOrder>,
+    ) => {
         if (!id || !wo) return
+        const prev = wo
+        if (optimistic) setWo({ ...wo, ...optimistic })
         try {
             const resp = await apiUpdateWorkOrder(id, payload)
             setWo(resp.data.work_order)
-            await globalMutate(
-                (key) =>
-                    Array.isArray(key) &&
-                    typeof key[0] === 'string' &&
-                    (key[0] === '/work-orders' ||
-                        key[0] === '/work-orders-board'),
-            )
+            await Promise.all([
+                globalMutate(
+                    (key) =>
+                        Array.isArray(key) &&
+                        typeof key[0] === 'string' &&
+                        (key[0] === '/work-orders' ||
+                            key[0] === '/work-orders-board'),
+                ),
+                mutateActivities(),
+            ])
         } catch {
+            if (optimistic) setWo(prev)
             toast.push(
                 <Notification type="danger">{t('wo.toast.updateFailed')}</Notification>,
                 { placement: 'top-center' },
@@ -150,22 +170,36 @@ const WorkOrderDetails = () => {
     }
 
     const handleStatusChange = (value: string) => {
-        patch({ status: value as WorkOrder['status'] })
+        patch(
+            { status: value as WorkOrder['status'] },
+            { status: value as WorkOrder['status'] },
+        )
     }
 
     const handlePriorityChange = (value: string) => {
-        patch({ priority: value as WorkOrder['priority'] })
+        patch(
+            { priority: value as WorkOrder['priority'] },
+            { priority: value as WorkOrder['priority'] },
+        )
     }
 
     const handleDueDateChange = (date: Date | null) => {
-        patch({ due_at: date ? dayjs(date).format('YYYY-MM-DD') : null })
+        const due_at = date ? dayjs(date).format('YYYY-MM-DD') : null
+        patch({ due_at }, { due_at })
     }
 
     const handleMemberSelect = (memberId: string) => {
         if (!wo) return
         const numId = parseInt(memberId, 10)
         const newId = wo.assigned_member?.id === numId ? null : numId
-        patch({ assigned_member_id: newId })
+        const member = memberList.find((m) => m.id === newId)
+        const optimisticMember = newId && member
+            ? { id: newId, name: member.user?.name ?? member.employee_code ?? null, assigned_at: new Date().toISOString() }
+            : null
+        patch(
+            { assigned_member_id: newId },
+            { assigned_member: optimisticMember },
+        )
     }
 
     const handlePrintWo = async () => {
@@ -626,20 +660,19 @@ const WorkOrderDetails = () => {
                                     />
                                 )}
 
-                                {/* Checklist (only shown when items exist) */}
-                                {wo.checklist_items && wo.checklist_items.length > 0 && (
-                                    <WoChecklist
-                                        workOrderId={wo.id}
-                                        initialItems={wo.checklist_items}
-                                        canEdit={canEdit}
-                                    />
-                                )}
+                                {/* Checklist */}
+                                <WoChecklist
+                                    workOrderId={wo.id}
+                                    initialItems={wo.checklist_items || []}
+                                    canEdit={canEdit}
+                                />
 
                                 {/* Parts used on this work order */}
                                 <WoParts
                                     workOrderId={wo.id}
                                     woCode={wo.code}
                                     canEdit={canEdit}
+                                    onActivity={mutateActivities}
                                 />
 
                                 {/* Comments, Attachments & Work Logs */}
@@ -650,15 +683,14 @@ const WorkOrderDetails = () => {
                                     initialAttachments={wo.attachments || []}
                                     initialWorkLogs={wo.work_logs || []}
                                     canEdit={canEdit}
+                                    onActivity={mutateActivities}
                                 />
                             </div>
 
                             {/* RIGHT: Activity */}
                             <div>
                                 <WoActivity
-                                    history={wo.status_history || []}
-                                    openedAt={wo.opened_at}
-                                    createdBy={wo.created_by?.name || null}
+                                    events={activitiesData || []}
                                 />
                             </div>
                         </div>

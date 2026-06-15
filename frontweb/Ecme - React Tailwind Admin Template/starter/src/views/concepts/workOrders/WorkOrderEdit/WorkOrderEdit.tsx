@@ -75,7 +75,8 @@ const WorkOrderEdit = () => {
                     Array.isArray(key) &&
                     typeof key[0] === 'string' &&
                     (key[0] === '/work-orders' ||
-                        key[0] === '/work-orders/edit'),
+                        key[0] === '/work-orders/edit' ||
+                        key[0] === '/work-orders/details'),
             )
 
             toast.push(
@@ -145,7 +146,7 @@ const WorkOrderEdit = () => {
     }
 
     const defaultValues: Partial<WorkOrderFormSchema> = data
-        ? {
+        ? ({
               title: data.title,
               asset_id: data.asset_id,
               site_id: data.site_id ?? null,
@@ -161,7 +162,7 @@ const WorkOrderEdit = () => {
                   ? String(data.estimated_minutes)
                   : '',
               assigned_member_id: data.assigned_member?.id ?? null,
-          }
+          } as Partial<WorkOrderFormSchema>)
         : {}
 
     return (

@@ -10,6 +10,7 @@ use App\Models\WorkOrder;
 use App\Models\WorkOrderAttachment;
 use App\Models\WorkOrderComment;
 use App\Services\NotificationService;
+use App\Services\WorkOrderActivityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -371,6 +372,14 @@ class WorkOrderController extends Controller
 
             if ($assignedMemberId && $assignedMemberId !== $previousId && $currentMember) {
                 NotificationService::notifyWoAssigned($workOrder, [$assignedMemberId], $currentMember->id);
+
+                $assignedMember = \App\Models\Member::with('user:id,name')->find($assignedMemberId);
+                WorkOrderActivityService::log($workOrder->id, 'assigned', $currentMember->id, [
+                    'member_id'   => $assignedMemberId,
+                    'member_name' => $assignedMember?->user?->name ?? 'Unknown',
+                ]);
+            } elseif (! $assignedMemberId && $previousId && $currentMember) {
+                WorkOrderActivityService::log($workOrder->id, 'unassigned', $currentMember->id);
             }
         }
 
@@ -443,6 +452,11 @@ class WorkOrderController extends Controller
 
         $comment->load('member.user');
 
+        WorkOrderActivityService::log($workOrder->id, 'comment_added', $currentMember->id, [
+            'comment_id' => $comment->id,
+            'snippet'    => mb_substr($request->body, 0, 120),
+        ]);
+
         return response()->json([
             'success' => true,
             'data'    => [
@@ -513,6 +527,11 @@ class WorkOrderController extends Controller
             'size_bytes'    => $file->getSize(),
         ]);
 
+        WorkOrderActivityService::log($workOrder->id, 'attachment_added', $currentMember->id, [
+            'file_name' => $file->getClientOriginalName(),
+            'mime_type' => $file->getMimeType(),
+        ]);
+
         return response()->json([
             'success' => true,
             'data'    => [
@@ -567,6 +586,59 @@ class WorkOrderController extends Controller
         $attachment->delete();
 
         return response()->json(['success' => true, 'message' => 'Attachment deleted.']);
+    }
+
+    // ── Activity feed ─────────────────────────────────────────────────────────
+
+    public function activities(Request $request, WorkOrder $workOrder): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+
+        if (! $currentCompany || (int) $workOrder->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Not found.'], 404);
+        }
+
+        $workOrder->load(['createdBy.user', 'statusHistory.changedBy.user']);
+
+        $events = collect();
+
+        // Created event
+        $events->push([
+            'type'       => 'created',
+            'actor'      => $workOrder->createdBy?->user?->name,
+            'meta'       => [],
+            'created_at' => $workOrder->opened_at?->toISOString() ?? $workOrder->created_at?->toISOString(),
+        ]);
+
+        // Status history
+        foreach ($workOrder->statusHistory as $h) {
+            $events->push([
+                'type'       => 'status_change',
+                'actor'      => $h->changedBy?->user?->name,
+                'meta'       => ['old_status' => $h->old_status, 'new_status' => $h->new_status, 'note' => $h->note],
+                'created_at' => $h->changed_at?->toISOString(),
+            ]);
+        }
+
+        // Other activities
+        $activities = \App\Models\WorkOrderActivity::query()
+            ->where('work_order_id', $workOrder->id)
+            ->with('actor.user:id,name')
+            ->orderBy('created_at')
+            ->get();
+
+        foreach ($activities as $a) {
+            $events->push([
+                'type'       => $a->type,
+                'actor'      => $a->actor?->user?->name,
+                'meta'       => $a->meta ?? [],
+                'created_at' => $a->created_at?->toISOString(),
+            ]);
+        }
+
+        $sorted = $events->sortBy('created_at')->values()->all();
+
+        return response()->json(['success' => true, 'data' => ['activities' => $sorted]]);
     }
 
     public function archive(Request $request, WorkOrder $workOrder): JsonResponse

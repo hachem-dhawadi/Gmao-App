@@ -148,7 +148,13 @@ class MaintenanceRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Only pending requests can be converted.'], 422);
         }
 
-        $workOrder = DB::transaction(function () use ($maintenanceRequest, $currentCompany, $currentMember) {
+        $validated = $request->validate([
+            'title'              => 'nullable|string|max:255',
+            'priority'           => 'nullable|in:low,medium,high,critical',
+            'assigned_member_id' => 'nullable|integer|exists:members,id',
+        ]);
+
+        $workOrder = DB::transaction(function () use ($maintenanceRequest, $currentCompany, $currentMember, $validated) {
             $count = WorkOrder::query()
                 ->where('company_id', $currentCompany->id)
                 ->withTrashed()
@@ -157,12 +163,13 @@ class MaintenanceRequestController extends Controller
             $workOrder = WorkOrder::create([
                 'company_id'           => $currentCompany->id,
                 'code'                 => 'WO-' . str_pad((string) $count, 4, '0', STR_PAD_LEFT),
-                'title'                => $maintenanceRequest->title,
+                'title'                => $validated['title'] ?? $maintenanceRequest->title,
                 'description'          => $maintenanceRequest->description,
-                'priority'             => $maintenanceRequest->priority,
+                'priority'             => $validated['priority'] ?? $maintenanceRequest->priority,
                 'asset_id'             => $maintenanceRequest->asset_id,
                 'status'               => 'open',
                 'created_by_member_id' => $currentMember->id,
+                'assigned_member_id'   => $validated['assigned_member_id'] ?? null,
                 'opened_at'            => Carbon::now(),
             ]);
 

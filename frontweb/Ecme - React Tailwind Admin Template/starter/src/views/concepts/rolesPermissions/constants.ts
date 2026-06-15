@@ -8,6 +8,9 @@ import {
     TbCalendarStats,
     TbFiles,
     TbMessage,
+    TbMapPin,
+    TbUsers,
+    TbBell,
 } from 'react-icons/tb'
 import type { ComponentType } from 'react'
 
@@ -30,6 +33,7 @@ export const accessModules: AccessModule[] = [
             { label: 'Create', value: 'members.create' },
             { label: 'Update', value: 'members.update' },
             { label: 'Delete', value: 'members.delete' },
+            { label: 'Assign Roles', value: 'members.assign_roles' },
         ],
     },
     {
@@ -110,6 +114,34 @@ export const accessModules: AccessModule[] = [
             { label: 'Write', value: 'chat.write' },
         ],
     },
+    {
+        id: 'sites',
+        name: 'Sites',
+        description: 'Access control for site management',
+        accessor: [
+            { label: 'Read', value: 'sites.read' },
+            { label: 'Create', value: 'sites.create' },
+            { label: 'Update', value: 'sites.update' },
+            { label: 'Delete', value: 'sites.delete' },
+        ],
+    },
+    {
+        id: 'teams',
+        name: 'Teams',
+        description: 'Access control for team management',
+        accessor: [
+            { label: 'Read', value: 'teams.read' },
+            { label: 'Write', value: 'teams.write' },
+        ],
+    },
+    {
+        id: 'notifications',
+        name: 'Notifications',
+        description: 'Access to in-app notifications',
+        accessor: [
+            { label: 'Read', value: 'notifications.read' },
+        ],
+    },
 ]
 
 export const moduleIcon: Record<string, ComponentType> = {
@@ -122,4 +154,7 @@ export const moduleIcon: Record<string, ComponentType> = {
     purchasing: TbShoppingCart,
     files: TbFiles,
     chat: TbMessage,
+    sites: TbMapPin,
+    teams: TbUsers,
+    notifications: TbBell,
 }

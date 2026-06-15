@@ -64,7 +64,7 @@ const ActionColumn = ({ id, canEdit, canDelete, canArchive, isArchived, onDelete
     const navigate = useNavigate()
     const { t } = useTranslation()
     return (
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
             {canEdit && !isArchived && (
                 <Tooltip title={t('common.edit')}>
                     <div
@@ -168,9 +168,11 @@ const WorkOrderListTable = () => {
                 { placement: 'top-center' },
             )
             mutate()
-        } catch {
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? t('wo.toast.deleteFailed')
             toast.push(
-                <Notification type="danger">{t('wo.toast.deleteFailed')}</Notification>,
+                <Notification type="danger">{msg}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -327,6 +329,7 @@ const WorkOrderListTable = () => {
                 data={workOrderList}
                 noData={!isLoading && workOrderList.length === 0}
                 loading={isLoading}
+                onRowClick={(row) => navigate(`/concepts/work-orders/work-order-details/${row.id}`)}
                 pagingData={{
                     total: workOrderListTotal,
                     pageIndex: tableData.pageIndex as number,

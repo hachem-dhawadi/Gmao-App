@@ -182,6 +182,13 @@ class WarehouseController extends Controller
             return response()->json(['success' => false, 'message' => 'Only administrators can delete warehouses.'], 403);
         }
 
+        if ($warehouse->stockMoves()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete this warehouse — it has stock movement history.',
+            ], 422);
+        }
+
         $warehouse->delete();
 
         return response()->json(['success' => true, 'message' => 'Warehouse deleted successfully.']);

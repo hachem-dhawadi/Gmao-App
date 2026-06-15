@@ -7,6 +7,7 @@ use App\Models\Asset;
 use App\Models\PmPlan;
 use App\Models\PmTask;
 use App\Services\NotificationService;
+use App\Services\PmWorkOrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -310,6 +311,49 @@ class PmPlanController extends Controller
         ]);
     }
 
+    public function generateWorkOrder(Request $request, PmPlan $pmPlan): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+        $currentMember  = $request->attributes->get('currentMember');
+
+        if (! $currentCompany || ! $currentMember) {
+            return response()->json(['success' => false, 'message' => 'Company context is missing.'], 400);
+        }
+
+        if ((int) $pmPlan->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'PM plan not found.'], 404);
+        }
+
+        if ($pmPlan->status !== 'active') {
+            return response()->json(['success' => false, 'message' => 'Only active PM plans can generate work orders.'], 422);
+        }
+
+        // Block if there is already an open WO from this plan
+        $hasOpenWo = $pmPlan->pmWorkOrders()
+            ->whereHas('workOrder', fn ($q) => $q->whereNotIn('status', ['completed', 'cancelled']))
+            ->exists();
+
+        if ($hasOpenWo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This plan already has an open work order. Complete or cancel it before generating a new one.',
+            ], 422);
+        }
+
+        $workOrder = PmWorkOrderService::generate($pmPlan, $currentMember->id);
+
+        $pmPlan->load(['assets', 'createdBy.user', 'assignedTo.user', 'triggers', 'tasks', 'team', 'pmWorkOrders.workOrder']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Work order generated successfully.',
+            'data'    => [
+                'pm_plan'    => $this->formatPlan($pmPlan),
+                'work_order' => ['id' => $workOrder->id, 'code' => $workOrder->code],
+            ],
+        ], 201);
+    }
+
     private function generateCode(int $companyId): string
     {
         $count = PmPlan::query()->where('company_id', $companyId)->withTrashed()->count() + 1;
@@ -364,6 +408,18 @@ class PmPlanController extends Controller
                 'name'  => $plan->team->name,
                 'color' => $plan->team->color,
             ] : null,
+            'pm_work_orders'     => $plan->relationLoaded('pmWorkOrders')
+                ? $plan->pmWorkOrders->map(fn ($pwo) => [
+                    'id'         => $pwo->id,
+                    'work_order' => $pwo->workOrder ? [
+                        'id'         => $pwo->workOrder->id,
+                        'code'       => $pwo->workOrder->code,
+                        'title'      => $pwo->workOrder->title,
+                        'status'     => $pwo->workOrder->status,
+                        'created_at' => $pwo->workOrder->created_at?->toISOString(),
+                    ] : null,
+                ])->values()->all()
+                : [],
         ];
     }
 

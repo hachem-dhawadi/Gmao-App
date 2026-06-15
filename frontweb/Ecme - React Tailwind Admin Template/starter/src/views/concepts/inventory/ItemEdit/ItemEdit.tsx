@@ -38,11 +38,11 @@ const ItemEdit = () => {
             formData.append('_method', 'PATCH')
             formData.append('code', values.code)
             formData.append('name', values.name)
-            if (values.description) formData.append('description', values.description)
-            if (values.barcode) formData.append('barcode', values.barcode)
-            if (values.unit) formData.append('unit', values.unit)
-            if (values.unit_cost) formData.append('unit_cost', values.unit_cost)
-            if (values.min_stock) formData.append('min_stock', values.min_stock)
+            formData.append('description', values.description || '')
+            formData.append('barcode', values.barcode || '')
+            formData.append('unit', values.unit || '')
+            formData.append('unit_cost', values.unit_cost || '')
+            formData.append('min_stock', values.min_stock || '')
             formData.append('is_stocked', values.is_stocked ? '1' : '0')
 
             // Separate existing server URLs from new file uploads

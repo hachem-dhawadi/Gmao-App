@@ -65,7 +65,7 @@ const PurchaseOrderCreate = () => {
         }
         setSubmitting(true)
         try {
-            await apiCreatePurchaseOrder({
+            const resp = await apiCreatePurchaseOrder({
                 supplier_id: supplierId,
                 status,
                 supplier_reference: supplierRef || null,
@@ -79,7 +79,8 @@ const PurchaseOrderCreate = () => {
             })
             await globalMutate((k) => Array.isArray(k) && k[0] === '/purchasing/orders')
             toast.push(<Notification type="success">{t('purchasing.order.created')}</Notification>, { placement: 'top-center' })
-            navigate('/concepts/purchasing/purchase-orders')
+            const newId = (resp as { data?: { purchase_order?: { id: number } } })?.data?.purchase_order?.id
+            navigate(newId ? `/concepts/purchasing/purchase-orders/${newId}` : '/concepts/purchasing/purchase-orders')
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to create order.'
             toast.push(<Notification type="danger">{msg}</Notification>, { placement: 'top-center' })

@@ -70,10 +70,12 @@ export async function apiCreateRequest<T = RequestResponse>(data: {
 
 export async function apiConvertRequest<T = { success: boolean; message: string; data: { request: MaintenanceRequest; work_order: { id: number; code: string } } }>(
     id: number | string,
+    payload?: { title?: string; priority?: string; assigned_member_id?: number | null },
 ) {
     return ApiService.fetchDataWithAxios<T>({
         url: `/requests/${id}/convert`,
         method: 'post',
+        data: payload,
     })
 }
 

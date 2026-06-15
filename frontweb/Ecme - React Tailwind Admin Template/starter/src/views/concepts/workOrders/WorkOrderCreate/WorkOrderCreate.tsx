@@ -40,7 +40,7 @@ const WorkOrderCreate = () => {
                 (key) =>
                     Array.isArray(key) &&
                     typeof key[0] === 'string' &&
-                    key[0] === '/work-orders',
+                    (key[0] === '/work-orders' || key[0] === '/work-orders-board'),
             )
 
             toast.push(

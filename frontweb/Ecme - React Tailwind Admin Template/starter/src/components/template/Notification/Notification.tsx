@@ -41,18 +41,23 @@ dayjs.extend(relativeTime)
 const notificationHeight = 'h-[300px]'
 
 const typeIcon: Record<string, React.ReactNode> = {
-    wo_assigned:        <TbClipboardList className="text-blue-500 text-xl" />,
-    wo_status_changed:  <TbRefresh className="text-amber-500 text-xl" />,
-    wo_overdue:         <TbClockExclamation className="text-red-500 text-xl" />,
-    comment_mention:    <TbAt className="text-purple-500 text-xl" />,
-    low_stock:          <TbAlertTriangle className="text-orange-500 text-xl" />,
-    pm_assigned:        <TbCalendarRepeat className="text-teal-500 text-xl" />,
-    po_ordered:         <TbReceipt className="text-indigo-500 text-xl" />,
-    new_member:         <TbUserPlus className="text-green-500 text-xl" />,
-    new_request:        <TbClipboardText className="text-amber-500 text-xl" />,
-    request_converted:  <TbCircleCheck className="text-emerald-500 text-xl" />,
-    request_rejected:   <TbCircleX className="text-red-500 text-xl" />,
-    pm_wo_generated:    <TbCalendarRepeat className="text-teal-500 text-xl" />,
+    wo_assigned:           <TbClipboardList className="text-blue-500 text-xl" />,
+    wo_status_changed:     <TbRefresh className="text-amber-500 text-xl" />,
+    wo_due_soon:           <TbClockExclamation className="text-yellow-500 text-xl" />,
+    wo_overdue:            <TbClockExclamation className="text-red-500 text-xl" />,
+    wo_pending_approval:   <TbClipboardList className="text-orange-500 text-xl" />,
+    wo_approved:           <TbCircleCheck className="text-emerald-500 text-xl" />,
+    wo_rejected:           <TbCircleX className="text-red-500 text-xl" />,
+    comment_mention:       <TbAt className="text-purple-500 text-xl" />,
+    low_stock:             <TbAlertTriangle className="text-orange-500 text-xl" />,
+    pm_assigned:           <TbCalendarRepeat className="text-teal-500 text-xl" />,
+    pm_overdue:            <TbCalendarRepeat className="text-red-500 text-xl" />,
+    pm_wo_generated:       <TbCalendarRepeat className="text-teal-500 text-xl" />,
+    po_ordered:            <TbReceipt className="text-indigo-500 text-xl" />,
+    new_member:            <TbUserPlus className="text-green-500 text-xl" />,
+    new_request:           <TbClipboardText className="text-amber-500 text-xl" />,
+    request_converted:     <TbCircleCheck className="text-emerald-500 text-xl" />,
+    request_rejected:      <TbCircleX className="text-red-500 text-xl" />,
 }
 
 const _Notification = ({ className }: { className?: string }) => {
@@ -168,11 +173,9 @@ const _Notification = ({ className }: { className?: string }) => {
                 {!loading && notifications.length === 0 && (
                     <div className={classNames('flex items-center justify-center', notificationHeight)}>
                         <div className="text-center">
-                            <img
-                                className="mx-auto mb-2 max-w-[150px]"
-                                src="/img/others/no-notification.png"
-                                alt="no notifications"
-                            />
+                            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-3">
+                                <HiOutlineMailOpen className="text-3xl text-gray-400" />
+                            </div>
                             <h6 className="font-semibold">No notifications</h6>
                             <p className="mt-1 text-sm text-gray-400">You're all caught up!</p>
                         </div>

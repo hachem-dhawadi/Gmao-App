@@ -92,7 +92,7 @@ const ActionCell = ({
     const navigate = useNavigate()
     const { t } = useTranslation()
     return (
-        <div className="flex justify-end text-lg gap-1">
+        <div className="flex justify-end text-lg gap-1" onClick={(e) => e.stopPropagation()}>
             <Tooltip wrapperClass="flex" title={t('common.view')}>
                 <span
                     className="cursor-pointer p-2 hover:text-primary"
@@ -335,6 +335,7 @@ const PurchaseOrderList = () => {
                             data={orders}
                             noData={!isLoading && orders.length === 0}
                             loading={isLoading}
+                            onRowClick={(row) => navigate(`/concepts/purchasing/purchase-orders/${row.id}`)}
                             pagingData={{
                                 total: pagination?.total ?? 0,
                                 pageIndex,

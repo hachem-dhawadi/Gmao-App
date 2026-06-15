@@ -245,6 +245,13 @@ class ItemController extends Controller
             return response()->json(['success' => false, 'message' => 'Only administrators can delete items.'], 403);
         }
 
+        if ($item->stockMoves()->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete this item — it has stock movement history. Deactivate it instead.',
+            ], 422);
+        }
+
         // Remove stored images from disk
         foreach ($item->images ?? [] as $url) {
             $path = $this->urlToStoragePath($url);

@@ -33,7 +33,7 @@ const WoBoardCard = (props: WoBoardCardProps) => {
         data.status !== 'cancelled'
 
     const members = data.assigned_member
-        ? [{ id: String(data.assigned_member.id), name: data.assigned_member.name, email: '', img: '' }]
+        ? [{ id: String(data.assigned_member.id), name: data.assigned_member.name ?? '', email: '', img: '' }]
         : []
 
     return (

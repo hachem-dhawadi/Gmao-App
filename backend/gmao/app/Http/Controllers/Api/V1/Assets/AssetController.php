@@ -239,6 +239,18 @@ class AssetController extends Controller
             return response()->json(['success' => false, 'message' => 'Only administrators can delete assets.'], 403);
         }
 
+        $openWoCount = $asset->workOrders()
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->whereNull('deleted_at')
+            ->count();
+
+        if ($openWoCount > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot delete this asset — it has {$openWoCount} open work order(s). Complete or cancel them first.",
+            ], 422);
+        }
+
         foreach ($asset->images ?? [] as $url) {
             $path = $this->urlToStoragePath($url);
             if ($path) Storage::disk('public')->delete($path);

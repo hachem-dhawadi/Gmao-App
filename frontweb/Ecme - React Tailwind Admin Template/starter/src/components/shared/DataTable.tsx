@@ -55,6 +55,7 @@ type DataTableProps<T> = {
     }
     checkboxChecked?: (row: T) => boolean
     indeterminateCheckboxChecked?: (row: Row<T>[]) => boolean
+    onRowClick?: (row: T) => void
     ref?: Ref<DataTableResetHandle | HTMLTableElement>
 } & TableProps
 
@@ -131,6 +132,7 @@ function DataTable<T>(props: DataTableProps<T>) {
         },
         checkboxChecked,
         indeterminateCheckboxChecked,
+        onRowClick,
         instanceId = 'data-table',
         ref,
         ...rest
@@ -202,22 +204,24 @@ function DataTable<T>(props: DataTableProps<T>) {
                         />
                     ),
                     cell: ({ row }) => (
-                        <IndeterminateCheckbox
-                            checked={
-                                checkboxChecked
-                                    ? checkboxChecked(row.original)
-                                    : row.getIsSelected()
-                            }
-                            disabled={!row.getCanSelect()}
-                            indeterminate={row.getIsSomeSelected()}
-                            onChange={row.getToggleSelectedHandler()}
-                            onCheckBoxChange={(e) =>
-                                handleCheckBoxChange(
-                                    e.target.checked,
-                                    row.original,
-                                )
-                            }
-                        />
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <IndeterminateCheckbox
+                                checked={
+                                    checkboxChecked
+                                        ? checkboxChecked(row.original)
+                                        : row.getIsSelected()
+                                }
+                                disabled={!row.getCanSelect()}
+                                indeterminate={row.getIsSomeSelected()}
+                                onChange={row.getToggleSelectedHandler()}
+                                onCheckBoxChange={(e) =>
+                                    handleCheckBoxChange(
+                                        e.target.checked,
+                                        row.original,
+                                    )
+                                }
+                            />
+                        </div>
                     ),
                 },
                 ...columns,
@@ -346,7 +350,11 @@ function DataTable<T>(props: DataTableProps<T>) {
                                 .rows.slice(0, pageSize)
                                 .map((row) => {
                                     return (
-                                        <Tr key={row.id}>
+                                        <Tr
+                                            key={row.id}
+                                            className={onRowClick ? 'cursor-pointer' : ''}
+                                            onClick={onRowClick ? () => onRowClick(row.original as T) : undefined}
+                                        >
                                             {row
                                                 .getVisibleCells()
                                                 .map((cell) => {

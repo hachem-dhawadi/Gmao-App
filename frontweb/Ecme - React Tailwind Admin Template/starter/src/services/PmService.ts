@@ -143,3 +143,18 @@ export async function apiUpdatePmPlanTasks<T = UpdateTasksResponse>(
         data: { tasks },
     })
 }
+
+export type GenerateWoResponse = {
+    success: boolean
+    data: {
+        pm_plan: PmPlan
+        work_order: { id: number; code: string }
+    }
+}
+
+export async function apiGeneratePmWorkOrder(id: string | number) {
+    return ApiService.fetchDataWithAxios<GenerateWoResponse>({
+        url: `/pm/plans/${id}/generate-wo`,
+        method: 'post',
+    })
+}

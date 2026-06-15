@@ -230,9 +230,11 @@ const CustomerListTable = () => {
                 { placement: 'top-center' },
             )
             mutate()
-        } catch {
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? t('members.toast.deleteFailed')
             toast.push(
-                <Notification type="danger">{t('members.toast.deleteFailed')}</Notification>,
+                <Notification type="danger">{msg}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {

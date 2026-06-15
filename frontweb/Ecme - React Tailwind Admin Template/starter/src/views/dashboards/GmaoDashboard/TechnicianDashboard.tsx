@@ -18,6 +18,7 @@ import toast from '@/components/ui/toast'
 import ApexChart from 'react-apexcharts'
 import { COLORS } from '@/constants/chart.constant'
 import classNames from '@/utils/classNames'
+import { useThemeStore } from '@/store/themeStore'
 import { apiGetTechnicianDashboard } from '@/services/DashboardService'
 import { apiUpdateWorkOrder } from '@/services/WorkOrdersService'
 import dayjs from 'dayjs'
@@ -123,6 +124,7 @@ const { Tr, Td, TBody, THead, Th } = Table
 const TechnicianDashboard = () => {
     const navigate = useNavigate()
     const { t } = useTranslation()
+    const mode = useThemeStore((state) => state.mode)
     const [woView, setWoView] = useState<'all' | 'active' | 'completed'>('all')
 
     const radarLabels = [
@@ -375,8 +377,9 @@ const TechnicianDashboard = () => {
                                             </div>
                                         ) : (
                                         <ApexChart
-                                            key={woView}
+                                            key={`${woView}-${mode}`}
                                             options={{
+                                                theme: { mode },
                                                 chart: {
                                                     type: 'line',
                                                     zoom: { enabled: false },

@@ -8,6 +8,7 @@ use App\Models\StockMove;
 use App\Models\Warehouse;
 use App\Models\WorkOrder;
 use App\Services\NotificationService;
+use App\Services\WorkOrderActivityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -115,6 +116,15 @@ class WoPartsController extends Controller
         ]);
 
         $move->load(['item:id,code,name,unit', 'warehouse:id,code,name', 'createdBy.user:id,name']);
+
+        WorkOrderActivityService::log($workOrder->id, 'part_used', $currentMember->id, [
+            'item_name'    => $item->name,
+            'item_code'    => $item->code,
+            'quantity'     => $qty,
+            'unit'         => $item->unit,
+            'usage_type'   => $validated['usage_type'],
+            'warehouse'    => $warehouse->name,
+        ]);
 
         // Low-stock notification
         if ($item->min_stock !== null) {

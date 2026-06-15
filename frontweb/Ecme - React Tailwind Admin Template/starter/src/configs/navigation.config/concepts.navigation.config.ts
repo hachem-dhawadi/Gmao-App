@@ -223,7 +223,7 @@ const conceptsNavigationConfig: NavigationTree[] = [
         translateKey: 'nav.people',
         icon: 'customers',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: ['members.read', 'roles.read', 'sites.read'],
+        authority: ['members.read', 'roles.read', 'sites.read', 'teams.read'],
         subMenu: [
             // Members
             {

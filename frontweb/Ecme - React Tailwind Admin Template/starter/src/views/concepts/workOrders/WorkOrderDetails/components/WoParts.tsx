@@ -50,9 +50,10 @@ type WoPartsProps = {
     workOrderId: number
     woCode: string
     canEdit: boolean
+    onActivity?: () => void
 }
 
-const WoParts = ({ workOrderId, woCode, canEdit }: WoPartsProps) => {
+const WoParts = ({ workOrderId, woCode, canEdit, onActivity }: WoPartsProps) => {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const { t } = useTranslation()
@@ -137,7 +138,7 @@ const WoParts = ({ workOrderId, woCode, canEdit }: WoPartsProps) => {
         try {
             setSubmitting(true)
             const isScrap = values.usage_type.value === 'scrapped'
-            const autoNote = isScrap
+            const note = isScrap
                 ? `Scrapped during ${woCode}${values.notes ? ` — ${values.notes}` : ''}`
                 : values.notes || null
 
@@ -146,10 +147,11 @@ const WoParts = ({ workOrderId, woCode, canEdit }: WoPartsProps) => {
                 warehouse_id: values.warehouse_id.value,
                 usage_type:   values.usage_type.value,
                 quantity:     qty,
-                notes:        values.notes || null,
+                notes:        note,
             })
 
             await mutate()
+            onActivity?.()
             toast.push(<Notification type="success">{t('wo.toast.partRecorded')}</Notification>, { placement: 'top-center' })
             closeDialog()
         } catch (err: unknown) {
@@ -173,7 +175,7 @@ const WoParts = ({ workOrderId, woCode, canEdit }: WoPartsProps) => {
                         )}
                     </h5>
                     {canEdit && (
-                        <Button size="sm" variant="twoTone" icon={<TbPlus />} onClick={openDialog}>
+                        <Button size="sm" variant="solid" icon={<TbPlus />} onClick={openDialog}>
                             Add Part
                         </Button>
                     )}

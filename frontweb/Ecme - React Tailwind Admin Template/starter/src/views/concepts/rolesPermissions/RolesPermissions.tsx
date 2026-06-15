@@ -19,6 +19,7 @@ const RolesPermissions = () => {
     const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canManage = useAuthority(userAuthority, ['roles.write', 'admin'])
+    const canReadMembers = useAuthority(userAuthority, ['members.read', 'admin'])
 
     const [selectedRole, setSelectedRole] = useState<Role | null>(null)
     const [createOpen, setCreateOpen] = useState(false)
@@ -36,7 +37,7 @@ const RolesPermissions = () => {
         isLoading: membersLoading,
         mutate: mutateMembers,
     } = useSWR(
-        ['/members', 'all-for-roles'],
+        canReadMembers ? ['/members', 'all-for-roles'] : null,
         () => apiGetMembersList<MembersListResponse>({ per_page: 100 }),
         { revalidateOnFocus: false },
     )
@@ -78,12 +79,18 @@ const RolesPermissions = () => {
                 </div>
                 <div>
                     <h3 className="mb-6">{t('rolesPermissions.allAccounts')}</h3>
-                    <MembersSection
-                        members={members}
-                        roles={roles}
-                        isLoading={membersLoading}
-                        mutate={mutateMembers}
-                    />
+                    {canReadMembers ? (
+                        <MembersSection
+                            members={members}
+                            roles={roles}
+                            isLoading={membersLoading}
+                            mutate={mutateMembers}
+                        />
+                    ) : (
+                        <div className="flex items-center justify-center py-12 text-gray-400 dark:text-gray-500 text-sm">
+                            You don't have permission to view members.
+                        </div>
+                    )}
                 </div>
             </Container>
 

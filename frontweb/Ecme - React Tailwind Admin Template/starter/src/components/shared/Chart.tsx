@@ -8,6 +8,7 @@ import {
     apexRadarChartDefultOption,
 } from '@/configs/chart.config'
 import { DIR_RTL } from '@/constants/theme.constant'
+import { useThemeStore } from '@/store/themeStore'
 import type { ApexOptions } from 'apexcharts'
 import type { Direction } from '@/@types/theme'
 import type { ReactNode } from 'react'
@@ -45,6 +46,7 @@ const Chart = (props: ChartProps) => {
         ...rest
     } = props
 
+    const mode = useThemeStore((state) => state.mode)
     const chartRef = useRef<HTMLDivElement>(null)
 
     const chartDefaultOption = useMemo(() => {
@@ -95,8 +97,10 @@ const Chart = (props: ChartProps) => {
         options.xaxis.categories = xAxis
     }
 
+    options.theme = { mode }
+
     if (customOptions) {
-        options = { ...options, ...customOptions }
+        options = { ...options, ...customOptions, theme: { mode, ...customOptions.theme } }
     }
 
     if (type === 'donut') {
@@ -116,6 +120,7 @@ const Chart = (props: ChartProps) => {
             className="chartRef"
         >
             <ApexChart
+                key={mode}
                 options={options}
                 type={type}
                 series={series}

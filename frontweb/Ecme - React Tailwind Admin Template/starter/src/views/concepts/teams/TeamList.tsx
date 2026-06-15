@@ -366,9 +366,11 @@ const TeamList = () => {
             )
             setDeleteTarget(null)
             mutate()
-        } catch {
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? 'Failed to delete team.'
             toast.push(
-                <Notification type="danger">Failed to delete team.</Notification>,
+                <Notification type="danger">{msg}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {

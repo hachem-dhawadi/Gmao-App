@@ -523,7 +523,7 @@ export const protectedRoutes: Routes = [
         key: 'concepts.customers.customerEdit',
         path: '/concepts/customers/customer-edit/:id',
         component: lazy(() => import('@/views/concepts/customers/CustomerEdit')),
-        authority: [],
+        authority: ['members.update'],
     },
     {
         key: 'concepts.customers.customerCreate',

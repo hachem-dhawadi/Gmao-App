@@ -49,11 +49,11 @@ const WarehouseListTable = () => {
                 <Notification type="success">{t('warehouse.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
-        } catch {
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? t('warehouse.toast.deleteFailed')
             toast.push(
-                <Notification type="danger">
-                    {t('warehouse.toast.deleteFailed')}
-                </Notification>,
+                <Notification type="danger">{msg}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -105,7 +105,7 @@ const WarehouseListTable = () => {
                 header: '',
                 id: 'action',
                 cell: (props) => (
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
                         <Tooltip title={t('warehouse.tooltip.view')}>
                             <div
                                 className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
@@ -161,6 +161,7 @@ const WarehouseListTable = () => {
                 data={warehouseList}
                 noData={!isLoading && warehouseList.length === 0}
                 loading={isLoading}
+                onRowClick={(row) => navigate(`/concepts/inventory/warehouses/warehouse-details/${row.id}`)}
                 pagingData={{
                     total: warehouseListTotal,
                     pageIndex: tableData.pageIndex as number,

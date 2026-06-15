@@ -371,6 +371,30 @@ export async function apiUnarchiveWorkOrder(id: string | number) {
     })
 }
 
+export async function apiAddChecklistItem(
+    workOrderId: number | string,
+    title: string,
+) {
+    return ApiService.fetchDataWithAxios<{
+        success: boolean
+        data: { item: WoChecklistItem }
+    }>({
+        url: `/work-orders/${workOrderId}/checklist`,
+        method: 'post',
+        data: { title },
+    })
+}
+
+export async function apiDeleteChecklistItem(
+    workOrderId: number | string,
+    itemId: number,
+) {
+    return ApiService.fetchDataWithAxios<{ success: boolean }>({
+        url: `/work-orders/${workOrderId}/checklist/${itemId}`,
+        method: 'delete',
+    })
+}
+
 export async function apiToggleChecklistItem(
     workOrderId: number | string,
     itemId: number,
@@ -381,5 +405,30 @@ export async function apiToggleChecklistItem(
     }>({
         url: `/work-orders/${workOrderId}/checklist/${itemId}/toggle`,
         method: 'post',
+    })
+}
+
+export type WoActivityEvent = {
+    type:
+        | 'created'
+        | 'status_change'
+        | 'assigned'
+        | 'unassigned'
+        | 'comment_added'
+        | 'attachment_added'
+        | 'work_log_added'
+        | 'part_used'
+    actor: string | null
+    meta: Record<string, string | number | null | undefined>
+    created_at: string | null
+}
+
+export async function apiGetWorkOrderActivities(id: string | number) {
+    return ApiService.fetchDataWithAxios<{
+        success: boolean
+        data: { activities: WoActivityEvent[] }
+    }>({
+        url: `/work-orders/${id}/activities`,
+        method: 'get',
     })
 }

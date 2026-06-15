@@ -16,7 +16,7 @@ import { Form, FormItem } from '@/components/ui/Form'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import useSWR from 'swr'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPlus, TbTrash } from 'react-icons/tb'
+import { TbPlus, TbTrash, TbRefresh } from 'react-icons/tb'
 import useStockMoveList from './hooks/useStockMoveList'
 import {
     apiCreateStockMove,
@@ -35,6 +35,13 @@ import type {
     WarehousesListResponse,
     ItemResponse,
 } from '@/services/InventoryService'
+
+const generateReference = (): string => {
+    const now = new Date()
+    const date = now.toISOString().slice(0, 10).replace(/-/g, '')
+    const rand = Math.floor(1000 + Math.random() * 9000)
+    return `SM-${date}-${rand}`
+}
 
 type MoveFormSchema = {
     item_id: { value: number; label: string } | null
@@ -264,11 +271,11 @@ const StockMoveList = () => {
                 <Notification type="success">{t('stockMove.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
-        } catch {
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? t('stockMove.toast.deleteFailed')
             toast.push(
-                <Notification type="danger">
-                    {t('stockMove.toast.deleteFailed')}
-                </Notification>,
+                <Notification type="danger">{msg}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -418,7 +425,7 @@ const StockMoveList = () => {
                                 variant="solid"
                                 icon={<TbPlus className="text-xl" />}
                                 onClick={() => {
-                                    reset()
+                                    reset({ item_id: null, warehouse_id: null, move_type: MOVE_TYPE_OPTIONS[0], quantity: '', reference: generateReference(), notes: '' })
                                     setDialogOpen(true)
                                 }}
                             >
@@ -713,10 +720,22 @@ const StockMoveList = () => {
                             control={control}
                             render={({ field }) => (
                                 <FormItem label={t('stockMove.col.reference')}>
-                                    <Input
-                                        {...field}
-                                        placeholder={t('stockMove.dialog.referencePlaceholder')}
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            {...field}
+                                            placeholder={t('stockMove.dialog.referencePlaceholder')}
+                                            className="flex-1"
+                                        />
+                                        <Tooltip title="Regenerate reference">
+                                            <button
+                                                type="button"
+                                                className="p-2 rounded-lg text-gray-400 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                                onClick={() => field.onChange(generateReference())}
+                                            >
+                                                <TbRefresh className="text-lg" />
+                                            </button>
+                                        </Tooltip>
+                                    </div>
                                 </FormItem>
                             )}
                         />

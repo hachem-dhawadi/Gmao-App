@@ -12,8 +12,8 @@ import Timeline from '@/components/ui/Timeline'
 import Badge from '@/components/ui/Badge'
 import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/Notification'
-import { TbEdit, TbCalendarEvent, TbUser, TbTool, TbClock, TbRepeat, TbCalendarCheck, TbChartBar, TbArrowLeft, TbChecklist, TbPlus, TbTrash, TbArrowUp, TbArrowDown } from 'react-icons/tb'
-import { apiGetPmPlanById, apiUpdatePmPlanTasks } from '@/services/PmService'
+import { TbEdit, TbCalendarEvent, TbUser, TbTool, TbClock, TbRepeat, TbCalendarCheck, TbChartBar, TbArrowLeft, TbChecklist, TbPlus, TbTrash, TbArrowUp, TbArrowDown, TbPlayerPlay } from 'react-icons/tb'
+import { apiGetPmPlanById, apiUpdatePmPlanTasks, apiGeneratePmWorkOrder } from '@/services/PmService'
 import type { PmPlan, PmPlanResponse, PmTask } from '@/services/PmService'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
@@ -182,8 +182,9 @@ const PmPlanDetails = () => {
     const navigate = useNavigate()
     const userAuthority = useSessionUser((s) => s.user.authority)
     const canEdit = useAuthority(userAuthority, ['pm_plans.write', 'admin', 'manager'])
+    const [generating, setGenerating] = useState(false)
 
-    const { data, isLoading } = useSWR<PmPlan>(
+    const { data, isLoading, mutate: mutatePlan } = useSWR<PmPlan>(
         id ? ['/pm/plans', id] : null,
         async () => {
             const res = await apiGetPmPlanById(id!) as PmPlanResponse
@@ -191,6 +192,26 @@ const PmPlanDetails = () => {
         },
         { revalidateOnFocus: false },
     )
+
+    const handleGenerateWO = async () => {
+        if (!id) return
+        try {
+            setGenerating(true)
+            const resp = await apiGeneratePmWorkOrder(id)
+            await mutatePlan(resp.data.pm_plan, false)
+            toast.push(
+                <Notification type="success">
+                    Work order <strong>{resp.data.work_order.code}</strong> created successfully.
+                </Notification>,
+                { placement: 'top-center' },
+            )
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to generate work order.'
+            toast.push(<Notification type="danger">{msg}</Notification>, { placement: 'top-center' })
+        } finally {
+            setGenerating(false)
+        }
+    }
 
     const statusCfg  = data ? statusConfig[data.status]   : null
     const priorityCfg = data ? priorityConfig[data.priority] : null
@@ -222,15 +243,27 @@ const PmPlanDetails = () => {
                                 <span className="text-sm font-mono text-purple-500">{data.code}</span>
                             </div>
                         </div>
-                        {canEdit && (
-                            <Button
-                                variant="solid"
-                                icon={<TbEdit />}
-                                onClick={() => navigate(`/concepts/pm/pm-edit/${id}`)}
-                            >
-                                Edit
-                            </Button>
-                        )}
+                        <div className="flex items-center gap-2">
+                            {canEdit && data.status === 'active' && (
+                                <Button
+                                    variant="solid"
+                                    icon={<TbPlayerPlay />}
+                                    loading={generating}
+                                    onClick={handleGenerateWO}
+                                >
+                                    Trigger Now
+                                </Button>
+                            )}
+                            {canEdit && (
+                                <Button
+                                    variant="default"
+                                    icon={<TbEdit />}
+                                    onClick={() => navigate(`/concepts/pm/pm-edit/${id}`)}
+                                >
+                                    Edit
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex flex-col lg:flex-row gap-4">

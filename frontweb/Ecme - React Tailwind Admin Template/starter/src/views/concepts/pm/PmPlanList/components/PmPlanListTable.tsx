@@ -65,13 +65,13 @@ const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) =
     const navigate = useNavigate()
     const { t } = useTranslation()
     return (
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
             {canEdit && (
                 <Tooltip title={t('common.edit')}>
                     <div
                         className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
                         role="button"
-                        onClick={() => navigate(`/concepts/pm/pm-edit/${id}`)}
+                        onClick={(e) => { e.stopPropagation(); navigate(`/concepts/pm/pm-edit/${id}`) }}
                     >
                         <TbPencil />
                     </div>
@@ -82,7 +82,7 @@ const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) =
                     <div
                         className="text-xl cursor-pointer select-none text-gray-500 hover:text-red-500"
                         role="button"
-                        onClick={() => onDelete(id)}
+                        onClick={(e) => { e.stopPropagation(); onDelete(id) }}
                     >
                         <TbTrash />
                     </div>
@@ -94,6 +94,7 @@ const ActionColumn = ({ id, canEdit, canDelete, onDelete }: ActionColumnProps) =
 
 const PmPlanListTable = () => {
     const { t } = useTranslation()
+    const navigate = useNavigate()
     const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null)
     const [deleting, setDeleting] = useState(false)
 
@@ -123,9 +124,11 @@ const PmPlanListTable = () => {
                 { placement: 'top-center' },
             )
             mutate()
-        } catch {
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? t('pm.toast.deleteFailed')
             toast.push(
-                <Notification type="danger">{t('pm.toast.deleteFailed')}</Notification>,
+                <Notification type="danger">{msg}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -257,6 +260,7 @@ const PmPlanListTable = () => {
                 data={pmPlanList}
                 noData={!isLoading && pmPlanList.length === 0}
                 loading={isLoading}
+                onRowClick={(row) => navigate(`/concepts/pm/pm-details/${row.id}`)}
                 pagingData={{
                     total: pmPlanListTotal,
                     pageIndex: tableData.pageIndex as number,

@@ -74,9 +74,11 @@ const ItemListTable = () => {
                 <Notification type="success">{t('inventory.toast.deleted')}</Notification>,
                 { placement: 'top-center' },
             )
-        } catch {
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+                ?? t('inventory.toast.deleteFailed')
             toast.push(
-                <Notification type="danger">{t('inventory.toast.deleteFailed')}</Notification>,
+                <Notification type="danger">{msg}</Notification>,
                 { placement: 'top-center' },
             )
         } finally {
@@ -143,7 +145,7 @@ const ItemListTable = () => {
                 header: '',
                 id: 'action',
                 cell: (props) => (
-                    <div className="flex items-center justify-end gap-3">
+                    <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
                         <Tooltip title={t('common.view')}>
                             <div
                                 className="text-xl cursor-pointer select-none text-gray-500 hover:text-primary"
@@ -205,6 +207,7 @@ const ItemListTable = () => {
                 data={itemList}
                 noData={!isLoading && itemList.length === 0}
                 loading={isLoading}
+                onRowClick={(row) => navigate(`/concepts/inventory/items/item-details/${row.id}`)}
                 pagingData={{
                     total: itemListTotal,
                     pageIndex: tableData.pageIndex as number,

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\WorkOrders;
 use App\Http\Controllers\Controller;
 use App\Models\WorkLog;
 use App\Models\WorkOrder;
+use App\Services\WorkOrderActivityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -78,6 +79,11 @@ class WorkLogController extends Controller
         ]);
 
         $log->load('member.user');
+
+        WorkOrderActivityService::log($workOrder->id, 'work_log_added', $currentMember->id, [
+            'minutes' => $validated['labor_minutes'],
+            'notes'   => $validated['notes'] ?? null,
+        ]);
 
         return response()->json(['success' => true, 'data' => $this->formatLog($log)], 201);
     }
