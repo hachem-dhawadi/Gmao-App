@@ -3,7 +3,6 @@ import api from './ApiService'
 export type WorkOrderMember = {
     id: number
     name: string | null
-    assigned_at: string
 }
 
 export type WorkOrderComment = {
@@ -48,13 +47,16 @@ export type WorkOrder = {
     code: string
     title: string
     description: string | null
-    status: 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
+    status: 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled' | 'pending_approval' | 'rejected'
     priority: 'low' | 'medium' | 'high' | 'critical'
     due_at: string | null
     created_at: string | null
+    failure_code: string | null
+    root_cause: string | null
+    resolution_notes: string | null
     asset: { id: number; code: string; name: string; location?: string | null } | null
     created_by: { id: number; name: string | null } | null
-    assigned_members: WorkOrderMember[]
+    assigned_member: WorkOrderMember | null
     comments: WorkOrderComment[] | null
     attachments: WorkOrderAttachment[] | null
     checklist_items: WoChecklistItem[] | null
@@ -115,4 +117,64 @@ export async function apiUpdateWorkLog(
 
 export async function apiDeleteWorkLog(woId: string | number, logId: number) {
     return api.delete(`/work-orders/${woId}/work-logs/${logId}`)
+}
+
+export async function apiAddWoAttachment(
+    woId: string | number,
+    file: { uri: string; name: string; type: string },
+) {
+    const form = new FormData()
+    form.append('file', { uri: file.uri, name: file.name, type: file.type } as unknown as Blob)
+    return api.post<{ success: boolean; data: WorkOrderAttachment }>(
+        `/work-orders/${woId}/attachments`,
+        form,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+    )
+}
+
+export async function apiDeleteWoAttachment(woId: string | number, attachmentId: number) {
+    return api.delete(`/work-orders/${woId}/attachments/${attachmentId}`)
+}
+
+export type WoPart = {
+    id: number
+    move_type: 'out' | 'adjustment'
+    quantity: number    // negative (backend stores as -qty)
+    notes: string | null
+    item:       { id: number; code: string; name: string; unit: string | null } | null
+    warehouse:  { id: number; code: string | null; name: string | null } | null
+    created_by: { id: number; name: string | null } | null
+}
+
+export async function apiGetWoParts(woId: string | number) {
+    return api.get<{ success: boolean; data: { parts: WoPart[] } }>(`/work-orders/${woId}/parts`)
+}
+
+export async function apiRecordWoPart(woId: string | number, data: {
+    item_id: number
+    warehouse_id: number
+    usage_type: 'used' | 'scrapped'
+    quantity: number
+}) {
+    return api.post<{ success: boolean; data: { part: WoPart } }>(`/work-orders/${woId}/parts`, data)
+}
+
+export async function apiApproveWorkOrder(id: string | number) {
+    return api.post<WorkOrderResponse>(`/work-orders/${id}/approve`)
+}
+
+export async function apiRejectWorkOrder(id: string | number, reason?: string) {
+    return api.post<WorkOrderResponse>(`/work-orders/${id}/reject`, { reason: reason || undefined })
+}
+
+export async function apiCreateWorkOrder(data: {
+    title: string
+    asset_id?: number | null
+    priority?: string
+    description?: string | null
+    due_at?: string | null
+    estimated_minutes?: number | null
+    assigned_member_id?: number | null
+}) {
+    return api.post<WorkOrderResponse>('/work-orders', data)
 }

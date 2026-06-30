@@ -11,14 +11,18 @@
         "purchasing": { "purchasing": "المشتريات", "suppliers": "الموردون", "purchaseOrders": "أوامر الشراء", "receipts": "الاستلامات" },
         "people": "الموارد البشرية",
         "members": { "members": "الأعضاء", "memberList": "قائمة الأعضاء", "memberCreate": "إضافة عضو" },
+        "sites": { "sites": "المواقع", "siteList": "قائمة المواقع", "siteCreate": "إضافة موقع" },
+        "teams": "الفرق",
         "departments": { "departments": "الأقسام", "departmentList": "قائمة الأقسام", "departmentCreate": "إضافة قسم" },
         "rolesPermissions": "الأدوار والصلاحيات",
         "workspace": "مساحة العمل",
+        "ai": { "chat": "مساعد الذكاء الاصطناعي" },
         "calendar": "التقويم",
         "fileManager": "مدير الملفات",
         "chat": "محادثة",
         "notifications": "الإشعارات",
-        "account": { "account": "الحساب", "settings": "الإعدادات" }
+        "account": { "account": "الحساب", "settings": "الإعدادات" },
+        "superadmin": { "administration": "الإدارة", "companies": "الشركات", "users": "جميع المستخدمين" }
     },
     "common": {
         "search": "بحث",

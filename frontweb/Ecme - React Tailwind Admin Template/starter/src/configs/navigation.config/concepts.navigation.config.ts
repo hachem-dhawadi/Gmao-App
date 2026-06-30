@@ -328,6 +328,16 @@ const conceptsNavigationConfig: NavigationTree[] = [
         authority: ['user'],
         subMenu: [
             {
+                key: 'concepts.ai.chat',
+                path: `${CONCEPTS_PREFIX_PATH}/ai/chat`,
+                title: 'AI Assistant',
+                translateKey: 'nav.ai.chat',
+                icon: 'aiChat',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: ['user'],
+                subMenu: [],
+            },
+            {
                 key: 'concepts.calendar',
                 path: `${CONCEPTS_PREFIX_PATH}/calendar`,
                 title: 'Calendar',

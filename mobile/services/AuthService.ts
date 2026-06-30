@@ -61,3 +61,4 @@ export async function apiSendOtp(email: string) {
 export async function apiVerifyOtp(email: string, code: string) {
     return api.post<{ success: boolean; message: string }>('/auth/verify-otp', { email, code })
 }
+

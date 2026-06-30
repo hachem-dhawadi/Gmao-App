@@ -11,14 +11,18 @@
         "purchasing": { "purchasing": "Purchasing", "suppliers": "Suppliers", "purchaseOrders": "Purchase Orders", "receipts": "Receipts" },
         "people": "People",
         "members": { "members": "Members", "memberList": "Member List", "memberCreate": "Add Member" },
+        "sites": { "sites": "Sites", "siteList": "Site List", "siteCreate": "Add Site" },
+        "teams": "Teams",
         "departments": { "departments": "Departments", "departmentList": "Department List", "departmentCreate": "Add Department" },
         "rolesPermissions": "Roles & Permissions",
         "workspace": "Workspace",
+        "ai": { "chat": "AI Assistant" },
         "calendar": "Calendar",
         "fileManager": "File Manager",
         "chat": "Chat",
         "notifications": "Notifications",
-        "account": { "account": "Account", "settings": "Settings" }
+        "account": { "account": "Account", "settings": "Settings" },
+        "superadmin": { "administration": "Administration", "companies": "Companies", "users": "All Users" }
     },
     "common": {
         "search": "Search",

@@ -170,35 +170,47 @@ export default function PMPlansScreen() {
                 <View style={{ width: 36 }} />
             </View>
 
-            {/* Search */}
-            <View style={styles.searchWrap}>
-                <Ionicons name="search-outline" size={17} color={Colors.gray400} style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search PM plans…"
-                    placeholderTextColor={Colors.gray400}
-                    value={search}
-                    onChangeText={setSearch}
-                    returnKeyType="search"
-                    clearButtonMode="while-editing"
-                />
+            {/* Search bar */}
+            <View style={styles.toolbar}>
+                <View style={styles.searchWrap}>
+                    <Ionicons name="search-outline" size={15} color="#bbb" />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search PM plans…"
+                        placeholderTextColor="#c8c8c8"
+                        value={search}
+                        onChangeText={setSearch}
+                        returnKeyType="search"
+                        clearButtonMode="while-editing"
+                    />
+                </View>
             </View>
 
-            {/* Filter chips */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersRow} style={styles.filtersScroll}>
-                {(['all', 'active', 'overdue', 'inactive'] as const).map(f => (
-                    <TouchableOpacity
-                        key={f}
-                        style={[styles.filterTab, filter === f && styles.filterTabActive]}
-                        onPress={() => setFilter(f)}
-                        activeOpacity={0.75}
-                    >
-                        <Text style={[styles.filterLabel, filter === f && styles.filterLabelActive]}>
-                            {f.charAt(0).toUpperCase() + f.slice(1)} ({counts[f]})
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
+            {/* Status tabs */}
+            <View style={styles.tabsBar}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent}>
+                    {(['all', 'active', 'overdue', 'inactive'] as const).map(f => {
+                        const isActive = filter === f
+                        const count    = counts[f]
+                        const label    = f.charAt(0).toUpperCase() + f.slice(1)
+                        return (
+                            <TouchableOpacity
+                                key={f}
+                                style={[styles.tab, isActive && styles.tabActive]}
+                                onPress={() => setFilter(f)}
+                                activeOpacity={0.75}
+                            >
+                                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{label}</Text>
+                                {!loading && (
+                                    <View style={[styles.tabBadge, isActive && styles.tabBadgeActive]}>
+                                        <Text style={[styles.tabBadgeText, isActive && styles.tabBadgeTextActive]}>{count}</Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                        )
+                    })}
+                </ScrollView>
+            </View>
 
             {loading ? (
                 <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 60 }} />
@@ -233,23 +245,36 @@ const styles = StyleSheet.create({
     backBtn:     { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.gray100, alignItems: 'center', justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontWeight: '800', color: Colors.gray900 },
 
-    searchWrap: {
+    toolbar: {
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: Colors.white, marginHorizontal: 16, marginTop: 12, marginBottom: 8,
-        borderRadius: 12, borderWidth: 1, borderColor: Colors.gray200, paddingHorizontal: 12,
+        paddingHorizontal: 16, paddingVertical: 10,
+        backgroundColor: Colors.white, borderBottomWidth: 1, borderBottomColor: Colors.gray200,
     },
-    searchIcon:  { marginRight: 8 },
-    searchInput: { flex: 1, fontSize: 14, color: Colors.gray900, paddingVertical: 11 },
+    searchWrap: {
+        flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: '#f4f6f8', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
+    },
+    searchInput: { flex: 1, fontSize: 14, color: Colors.gray900, fontWeight: '500', padding: 0 },
 
-    filtersScroll: { flexGrow: 0, marginBottom: 8 },
-    filtersRow:    { paddingHorizontal: 16, gap: 8 },
-    filterTab: {
-        paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-        backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.gray200,
+    tabsBar: {
+        backgroundColor: Colors.white,
+        borderBottomWidth: 1, borderBottomColor: Colors.gray200,
     },
-    filterTabActive:   { backgroundColor: Colors.primary, borderColor: Colors.primary },
-    filterLabel:       { fontSize: 13, fontWeight: '600', color: Colors.gray600 },
-    filterLabelActive: { color: Colors.white },
+    tabsContent: { paddingHorizontal: 14, paddingVertical: 10, gap: 6 },
+    tab: {
+        flexDirection: 'row', alignItems: 'center', gap: 5,
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+    },
+    tabActive:         { backgroundColor: '#111' },
+    tabLabel:          { fontSize: 13, fontWeight: '600', color: '#999' },
+    tabLabelActive:    { color: '#fff', fontWeight: '700' },
+    tabBadge: {
+        minWidth: 20, height: 18, borderRadius: 9,
+        backgroundColor: '#edf0f3', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5,
+    },
+    tabBadgeActive:    { backgroundColor: 'rgba(255,255,255,0.22)' },
+    tabBadgeText:      { fontSize: 11, fontWeight: '700', color: '#888' },
+    tabBadgeTextActive:{ color: '#fff' },
 
     listContent: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
 

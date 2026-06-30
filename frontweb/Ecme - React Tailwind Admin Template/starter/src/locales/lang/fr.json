@@ -11,14 +11,18 @@
         "purchasing": { "purchasing": "Achats", "suppliers": "Fournisseurs", "purchaseOrders": "Bons de commande", "receipts": "Réceptions" },
         "people": "Personnel",
         "members": { "members": "Membres", "memberList": "Liste des membres", "memberCreate": "Ajouter un membre" },
+        "sites": { "sites": "Sites", "siteList": "Liste des sites", "siteCreate": "Ajouter un site" },
+        "teams": "Équipes",
         "departments": { "departments": "Départements", "departmentList": "Liste des départements", "departmentCreate": "Ajouter un département" },
         "rolesPermissions": "Rôles & Permissions",
         "workspace": "Espace de travail",
+        "ai": { "chat": "Assistant IA" },
         "calendar": "Calendrier",
         "fileManager": "Gestionnaire de fichiers",
         "chat": "Chat",
         "notifications": "Notifications",
-        "account": { "account": "Compte", "settings": "Paramètres" }
+        "account": { "account": "Compte", "settings": "Paramètres" },
+        "superadmin": { "administration": "Administration", "companies": "Entreprises", "users": "Tous les utilisateurs" }
     },
     "common": {
         "search": "Rechercher",

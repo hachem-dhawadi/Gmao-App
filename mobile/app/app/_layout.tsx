@@ -24,6 +24,9 @@ export default function AppLayout() {
             <Tabs.Screen name="members"              options={{ href: null }} />
             <Tabs.Screen name="calendar"             options={{ href: null }} />
             <Tabs.Screen name="maintenance-requests" options={{ href: null }} />
+            <Tabs.Screen name="inventory"            options={{ href: null }} />
+            <Tabs.Screen name="files"               options={{ href: null }} />
+            <Tabs.Screen name="purchasing"          options={{ href: null }} />
         </Tabs>
     )
 }

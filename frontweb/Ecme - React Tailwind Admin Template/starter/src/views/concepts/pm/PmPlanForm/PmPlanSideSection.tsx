@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef } from 'react'
+import { useMemo, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
@@ -12,11 +12,12 @@ import dayjs from 'dayjs'
 import { apiGetAssetsList, apiGetAssetChecklistTemplates } from '@/services/AssetsService'
 import { apiGetMembersList } from '@/services/MembersService'
 import { apiGetAllTeams } from '@/services/TeamsService'
+import { apiGeneratePmChecklist } from '@/services/AiService'
 import type { AssetsListResponse } from '@/services/AssetsService'
 import type { MembersListResponse } from '@/services/MembersService'
 import type { Control, FieldErrors, UseFormSetValue, UseFormGetValues } from 'react-hook-form'
 import type { PmPlanFormSchema } from './types'
-import { TbSparkles } from 'react-icons/tb'
+import { TbSparkles, TbLoader2 } from 'react-icons/tb'
 
 type Props = {
     control: Control<PmPlanFormSchema>
@@ -32,6 +33,22 @@ type GroupedMember = { label: string; options: MemberOption[] }
 
 const PmPlanSideSection = ({ control, errors, setValue, getValues }: Props) => {
     const { t } = useTranslation()
+    const [isGenerating, setIsGenerating] = useState(false)
+
+    const handleGenerateChecklist = async () => {
+        if (!watchedAssetId) return
+        setIsGenerating(true)
+        try {
+            const result = await apiGeneratePmChecklist(watchedAssetId)
+            if (result.tasks?.length) {
+                setValue('tasks', result.tasks, { shouldDirty: true })
+            }
+        } catch {
+            // silent fail — user still has manual input
+        } finally {
+            setIsGenerating(false)
+        }
+    }
 
     const intervalUnitOptions = useMemo(() => [
         { value: 'days',   label: t('pmForm.intervalUnit.days') },
@@ -232,15 +249,30 @@ const PmPlanSideSection = ({ control, errors, setValue, getValues }: Props) => {
                             />
                         )}
                     />
-                    {watchedAssetId && templates.length > 0 && (
-                        <button
-                            type="button"
-                            className="mt-1.5 flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700 transition-colors"
-                            onClick={loadDefaultTasks}
-                        >
-                            <TbSparkles className="text-sm" />
-                            Load {templates.length} default task{templates.length !== 1 ? 's' : ''}
-                        </button>
+                    {watchedAssetId && (
+                        <div className="mt-3 flex flex-col gap-2">
+                            <button
+                                type="button"
+                                disabled={isGenerating}
+                                onClick={handleGenerateChecklist}
+                                className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isGenerating
+                                    ? <TbLoader2 className="text-base animate-spin shrink-0" />
+                                    : <TbSparkles className="text-base shrink-0" />
+                                }
+                                {isGenerating ? 'Generating checklist…' : 'Generate checklist with AI'}
+                            </button>
+                            {templates.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={loadDefaultTasks}
+                                    className="flex items-center justify-center gap-1.5 w-full py-1.5 px-3 rounded-lg border border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 text-xs hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                                >
+                                    Load {templates.length} default task{templates.length !== 1 ? 's' : ''}
+                                </button>
+                            )}
+                        </div>
                     )}
                 </FormItem>
 
@@ -278,6 +310,7 @@ const PmPlanSideSection = ({ control, errors, setValue, getValues }: Props) => {
 
                 {/* Assign To — single lead, independent of team */}
                 <FormItem
+                    className="mt-4"
                     label={t('pmForm.field.assignTo')}
                     extra={
                         assetSiteId != null

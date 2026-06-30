@@ -34,17 +34,17 @@ const MODULES: Module[] = [
     {
         key: 'inventory', icon: 'cube-outline', label: 'Inventory',
         sublabel: 'Parts & stock', color: '#10b981',
-        permission: 'inventory.read', route: '/app/inventory', built: false,
+        permission: 'inventory.read', route: '/app/inventory', built: true,
     },
     {
         key: 'files', icon: 'folder-open-outline', label: 'File Manager',
         sublabel: 'Documents & files', color: '#06b6d4',
-        permission: 'files.read', route: '/app/files', built: false,
+        permission: 'files.read', route: '/app/files', built: true,
     },
     {
         key: 'purchasing', icon: 'cart-outline', label: 'Purchasing',
         sublabel: 'Orders & suppliers', color: '#ef4444',
-        permission: 'purchasing.read', route: '/app/purchasing', built: false,
+        permission: 'purchasing.read', route: '/app/purchasing', built: true,
     },
     {
         key: 'chat', icon: 'chatbubble-ellipses-outline', label: 'Chat',

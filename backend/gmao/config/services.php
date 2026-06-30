@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+    ],
+
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+    ],
+
 ];

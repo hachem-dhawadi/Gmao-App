@@ -48,13 +48,6 @@ class LoginController extends Controller
             ], 403);
         }
 
-        $user->forceFill([
-            'last_login_at' => now(),
-        ])->save();
-
-        $deviceName = $validated['device_name'] ?? 'api-client';
-        $token = $user->createToken($deviceName)->plainTextToken;
-
         $memberships = $user->members()
             ->with([
                 'company:id,name,legal_name,is_active,approval_status',
@@ -84,8 +77,35 @@ class LoginController extends Controller
             })
             ->values();
 
+        // Block login only when a company has been deliberately suspended by the platform admin
+        // (approved but is_active = false). Pending and rejected companies still allow login
+        // so users can check their application status, update documents, or see rejection reasons.
+        if (! $user->is_superadmin && $memberships->isNotEmpty()) {
+            $allSuspended = $memberships->every(function (array $m): bool {
+                return $m['status'] === 'active'
+                    && data_get($m, 'company.approval_status') === 'approved'
+                    && (bool) data_get($m, 'company.is_active') === false;
+            });
+
+            if ($allSuspended) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your company account has been deactivated. Please contact the platform administrator.',
+                    'code'    => 'company_inactive',
+                ], 403);
+            }
+        }
+
+        $user->forceFill([
+            'last_login_at' => now(),
+        ])->save();
+
+        $deviceName = $validated['device_name'] ?? 'api-client';
+        $token = $user->createToken($deviceName)->plainTextToken;
+
         $defaultMembership = $memberships
             ->first(fn (array $membership): bool => $membership['status'] === 'active'
+                && data_get($membership, 'company.approval_status') === 'approved'
                 && ((bool) data_get($membership, 'company.is_active') === true))
             ?? $memberships->first();
 

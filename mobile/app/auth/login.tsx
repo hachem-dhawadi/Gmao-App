@@ -1,7 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
-import { Ionicons } from '@expo/vector-icons'
 
 export default function LandingScreen() {
     return (
@@ -9,9 +8,11 @@ export default function LandingScreen() {
 
             <View style={s.center}>
                 {/* Logo */}
-                <View style={s.logoWrap}>
-                    <Ionicons name="construct-outline" size={52} color="#111" />
-                </View>
+                <Image
+                    source={require('@/assets/cmms_Logo.png')}
+                    style={s.logo}
+                    resizeMode="contain"
+                />
                 <Text style={s.appName}>CMMS</Text>
                 <Text style={s.subtitle}>
                     Your maintenance platform{'\n'}for the field and beyond.
@@ -61,14 +62,10 @@ const s = StyleSheet.create({
         justifyContent: 'center',
         width:          '100%',
     },
-    logoWrap: {
-        width:           88,
-        height:          88,
-        borderRadius:    24,
-        backgroundColor: '#f2f2f2',
-        alignItems:      'center',
-        justifyContent:  'center',
-        marginBottom:    24,
+    logo: {
+        width:        100,
+        height:       100,
+        marginBottom: 24,
     },
     appName: {
         fontSize:      34,

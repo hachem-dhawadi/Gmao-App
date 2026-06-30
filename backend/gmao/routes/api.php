@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\V1\MaintenanceRequests\MaintenanceRequestController
 use App\Http\Controllers\Api\V1\Reports\ReportController;
 use App\Http\Controllers\Api\V1\Chat\ConversationController;
 use App\Http\Controllers\Api\V1\Chat\MessageController;
+use App\Http\Controllers\Api\V1\Ai\AiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -217,6 +218,9 @@ Route::prefix('v1')->group(function (): void {
     });
 
     // ── File Manager ─────────────────────────────────────────────────────────
+    // Public token-based download (no auth — token is single-use, 5 min TTL)
+    Route::get('/file-manager/files/download/{token}', [FileManagerController::class, 'downloadByToken']);
+
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('file-manager')->group(function (): void {
         Route::get('/', [FileManagerController::class, 'index'])->middleware('permission:files.read');
 
@@ -231,6 +235,7 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('/files/{id}', [FileManagerController::class, 'renameFile'])->middleware('permission:files.write');
         Route::delete('/files/{id}', [FileManagerController::class, 'destroyFile'])->middleware('permission:files.write');
         Route::get('/files/{id}/download', [FileManagerController::class, 'download'])->middleware('permission:files.read');
+        Route::get('/files/{id}/download-token', [FileManagerController::class, 'getDownloadToken'])->middleware('permission:files.read');
         Route::post('/files/{id}/share', [FileManagerController::class, 'shareFile'])->middleware('permission:files.write');
     });
 
@@ -272,6 +277,18 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/conversations/{conversation}/messages',           [MessageController::class, 'index']);
         Route::post('/conversations/{conversation}/messages',          [MessageController::class, 'store']);
         Route::delete('/messages/{message}',                           [MessageController::class, 'destroy']);
+    });
+
+    // ── AI Assistant ─────────────────────────────────────────────────────────
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('ai')->group(function (): void {
+        Route::post('/chat', [AiController::class, 'chat']);
+        Route::get('/chat/history', [AiController::class, 'history']);
+        Route::post('/create-maintenance-request', [AiController::class, 'createMaintenanceRequestFromAi']);
+        Route::post('/suggest-technician',  [AiController::class, 'suggestTechnician'])->middleware('permission:work_orders.write');
+        Route::post('/fill-work-order',     [AiController::class, 'fillWorkOrder'])->middleware('permission:work_orders.write');
+        Route::post('/create-work-order',   [AiController::class, 'createWorkOrderFromAi'])->middleware('permission:work_orders.write');
+        Route::post('/generate-checklist',  [AiController::class, 'generatePmChecklist'])->middleware('permission:pm_plans.write');
+        Route::post('/bulk-create-pm-plans',[AiController::class, 'bulkCreatePmPlans'])->middleware('permission:pm_plans.write');
     });
 
     // ── Reports ───────────────────────────────────────────────────────────────

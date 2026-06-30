@@ -67,19 +67,34 @@ class EnsureCompanyContext
             ], 403);
         }
 
-        if (! $member->company || ! $member->company->is_active) {
-            $approvalStatus = $member->company?->approval_status;
+        if (! $member->company) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Company not found.',
+            ], 403);
+        }
 
-            if ($approvalStatus === 'rejected') {
+        if ($member->company->approval_status !== 'approved') {
+            if ($member->company->approval_status === 'rejected') {
                 return new JsonResponse([
                     'success' => false,
                     'message' => 'Company was rejected by superadmin.',
+                    'code' => 'company_rejected',
                 ], 403);
             }
 
             return new JsonResponse([
                 'success' => false,
-                'message' => 'Company pending approval.',
+                'message' => 'Company pending superadmin approval.',
+                'code' => 'company_pending',
+            ], 403);
+        }
+
+        if (! $member->company->is_active) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Company is currently suspended. Please contact the platform administrator.',
+                'code' => 'company_suspended',
             ], 403);
         }
 

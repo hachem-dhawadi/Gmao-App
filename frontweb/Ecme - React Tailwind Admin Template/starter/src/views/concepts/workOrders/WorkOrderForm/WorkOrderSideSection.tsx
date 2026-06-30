@@ -9,11 +9,12 @@ import { FormItem } from '@/components/ui/Form'
 import { Controller, useWatch } from 'react-hook-form'
 import useSWR from 'swr'
 import dayjs from 'dayjs'
-import { TbClock } from 'react-icons/tb'
+import { TbClock, TbSparkles } from 'react-icons/tb'
 import { apiGetAssetsList } from '@/services/AssetsService'
 import { apiGetMembersList } from '@/services/MembersService'
 import { apiGetAllSites } from '@/services/SiteService'
 import { apiGetAllTeams } from '@/services/TeamsService'
+import { apiSuggestTechnician } from '@/services/AiService'
 import type { AssetsListResponse } from '@/services/AssetsService'
 import type { MembersListResponse } from '@/services/MembersService'
 import type { Control, FieldErrors, UseFormSetValue } from 'react-hook-form'
@@ -107,6 +108,8 @@ const EstimatedTimePicker = ({ value, onChange }: TimePickerProps) => {
 
 const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: Props) => {
     const { t } = useTranslation()
+    const [isSuggesting, setIsSuggesting] = useState(false)
+    const [suggestion, setSuggestion] = useState<{ name: string; reason: string } | null>(null)
 
     const { data: sitesData }   = useSWR('/sites-all-wo-form', () => apiGetAllSites(), { revalidateOnFocus: false })
     const { data: assetsData }  = useSWR('/assets-all', () => apiGetAssetsList<AssetsListResponse>({ per_page: 100 }), { revalidateOnFocus: false })
@@ -135,9 +138,33 @@ const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: 
             value: t.id, label: t.name, color: t.color, member_ids: t.member_ids,
         })) ?? []
 
-    const watchedSiteId  = useWatch({ control, name: 'site_id' })
-    const watchedAssetId = useWatch({ control, name: 'asset_id' })
-    const watchedTeamId  = useWatch({ control, name: 'team_id' })
+    const watchedSiteId      = useWatch({ control, name: 'site_id' })
+    const watchedAssetId     = useWatch({ control, name: 'asset_id' })
+    const watchedTeamId      = useWatch({ control, name: 'team_id' })
+    const watchedDueAt       = useWatch({ control, name: 'due_at' })
+    const watchedEstimated   = useWatch({ control, name: 'estimated_minutes' })
+    const watchedPriority    = useWatch({ control, name: 'priority' })
+    const watchedDescription = useWatch({ control, name: 'description' })
+
+    const handleSuggestTechnician = async () => {
+        setIsSuggesting(true)
+        setSuggestion(null)
+        try {
+            const result = await apiSuggestTechnician({
+                due_at: watchedDueAt || undefined,
+                estimated_minutes: watchedEstimated ? parseInt(watchedEstimated) : undefined,
+                priority: watchedPriority || undefined,
+                description: watchedDescription || undefined,
+                asset_id: watchedAssetId ?? undefined,
+            })
+            setValue('assigned_member_id', result.member_id)
+            setSuggestion({ name: result.name, reason: result.reason })
+        } catch {
+            setSuggestion(null)
+        } finally {
+            setIsSuggesting(false)
+        }
+    }
 
     // Asset options filtered by site selection
     const assetOptions = watchedSiteId != null
@@ -304,7 +331,10 @@ const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: 
                                     placeholder={t('woForm.placeholder.selectMember')}
                                     options={groupedMembers as any}
                                     value={allMemberOptions.find((o) => o.value === field.value) || null}
-                                    onChange={(opt) => field.onChange(opt?.value ?? null)}
+                                    onChange={(opt) => {
+                                        field.onChange(opt?.value ?? null)
+                                        setSuggestion(null)
+                                    }}
                                     formatOptionLabel={(opt) => {
                                         const otherSites = assetSiteId != null
                                             ? opt.sites.filter((s) => s.id !== assetSiteId)
@@ -325,6 +355,40 @@ const WorkOrderSideSection = ({ control, errors, setValue, canAssign = false }: 
                             )}
                         />
                     </FormItem>
+
+                    {/* AI Technician Suggestion */}
+                    <div className="mb-4">
+                        <Button
+                            type="button"
+                            variant="twoTone"
+                            size="sm"
+                            className="w-full"
+                            loading={isSuggesting}
+                            disabled={!watchedDueAt}
+                            onClick={handleSuggestTechnician}
+                        >
+                            <span className="flex items-center justify-center gap-2">
+                                <TbSparkles className="text-base shrink-0" />
+                                <span>{isSuggesting ? 'Analyzing schedules…' : 'Suggest with AI'}</span>
+                            </span>
+                        </Button>
+                        {!watchedDueAt && (
+                            <p className="text-xs text-gray-400 mt-1.5 text-center">
+                                Set a due date to enable conflict detection
+                            </p>
+                        )}
+                        {suggestion && (
+                            <div className="mt-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <TbSparkles className="text-indigo-500 text-sm" />
+                                    <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                                        AI assigned: {suggestion.name}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">{suggestion.reason}</p>
+                            </div>
+                        )}
+                    </div>
                 </>
             )}
         </Card>

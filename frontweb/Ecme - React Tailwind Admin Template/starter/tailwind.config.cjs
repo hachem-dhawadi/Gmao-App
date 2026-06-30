@@ -89,9 +89,14 @@ module.exports = {
 						'50%':  { top: '100%' },
 						'100%': { top: '0%' },
 					},
+					'pulse-glow': {
+						'0%, 100%': { boxShadow: '0 0 0 0 rgba(99,102,241,0)' },
+						'50%':      { boxShadow: '0 0 14px 6px rgba(99,102,241,0.35)' },
+					},
 				},
 				animation: {
-					'scan-line': 'scan-line 2s ease-in-out infinite',
+					'scan-line':  'scan-line 2s ease-in-out infinite',
+					'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 				},
 			typography: (theme) => ({
 					DEFAULT: {

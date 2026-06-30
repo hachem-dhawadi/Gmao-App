@@ -9,6 +9,7 @@ use App\Models\FmFile;
 use App\Models\FmFileShare;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -316,6 +317,37 @@ class FileManagerController extends Controller
         $file = FmFile::query()
             ->where('company_id', $company->id)
             ->findOrFail($id);
+
+        if (! Storage::disk('local')->exists($file->stored_path)) {
+            return response()->json(['success' => false, 'message' => 'File not found on disk.'], 404);
+        }
+
+        return Storage::disk('local')->download($file->stored_path, $file->original_name, [
+            'Content-Type' => $file->mime_type,
+        ]);
+    }
+
+    public function getDownloadToken(Request $request, int $id): JsonResponse
+    {
+        $company = $request->attributes->get('currentCompany');
+
+        FmFile::query()->where('company_id', $company->id)->findOrFail($id);
+
+        $token = (string) Str::uuid();
+        Cache::put("fm_dl_{$token}", $id, now()->addMinutes(5));
+
+        return response()->json(['success' => true, 'data' => ['token' => $token]]);
+    }
+
+    public function downloadByToken(string $token)
+    {
+        $fileId = Cache::pull("fm_dl_{$token}");
+
+        if (! $fileId) {
+            return response()->json(['success' => false, 'message' => 'Invalid or expired download link.'], 403);
+        }
+
+        $file = FmFile::query()->findOrFail($fileId);
 
         if (! Storage::disk('local')->exists($file->stored_path)) {
             return response()->json(['success' => false, 'message' => 'File not found on disk.'], 404);

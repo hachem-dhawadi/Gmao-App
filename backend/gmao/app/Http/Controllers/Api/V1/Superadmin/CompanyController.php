@@ -103,6 +103,7 @@ class CompanyController extends Controller
             }
         }
 
+
         if ($request->hasFile('logo')) {
             $newLogoPath = $request->file('logo')->store('company-logos', 'public');
 

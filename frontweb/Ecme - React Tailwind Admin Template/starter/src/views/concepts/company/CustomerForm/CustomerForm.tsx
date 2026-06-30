@@ -54,6 +54,7 @@ const CustomerForm = (props: CustomerFormProps) => {
     const {
         handleSubmit,
         reset,
+        setValue,
         formState: { errors },
         control,
     } = useForm<CustomerFormSchema>({
@@ -98,11 +99,11 @@ const CustomerForm = (props: CustomerFormProps) => {
                         />
 
                         {newCustomer ? (
-                            <AccountSection control={control} errors={errors} />
+                            <AccountSection control={control} errors={errors} setValue={setValue} />
                         ) : (
                             <>
                                 <TagsSection control={control} errors={errors} />
-                                <AccountSection control={control} errors={errors} />
+                                <AccountSection control={control} errors={errors} setValue={setValue} />
                             </>
                         )}
                     </div>

@@ -79,8 +79,12 @@ const placeholderRoutes: Routes = [
     {
         key: 'concepts.ai.chat',
         path: '/concepts/ai/chat',
-        component: DrawerPlaceholder,
+        component: lazy(() => import('@/views/concepts/ai/Chat')),
         authority: [],
+        meta: {
+            pageContainerType: 'gutterless',
+            pageBackgroundType: 'plain',
+        },
     },
     {
         key: 'concepts.ai.image',

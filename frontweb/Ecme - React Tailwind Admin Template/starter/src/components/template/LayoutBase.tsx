@@ -1,4 +1,5 @@
 import { LayoutContext } from '@/utils/hooks/useLayout'
+import AiFloatingBubble from './AiFloatingBubble'
 import type { LayoutContextProps } from '@/utils/hooks/useLayout'
 import type { CommonProps } from '@/@types/common'
 
@@ -18,6 +19,7 @@ const LayoutBase = (props: LayoutBaseProps) => {
             value={{ adaptiveCardActive, pageContainerReassemble, type }}
         >
             <div className={className}>{children}</div>
+            <AiFloatingBubble />
         </LayoutContext.Provider>
     )
 }

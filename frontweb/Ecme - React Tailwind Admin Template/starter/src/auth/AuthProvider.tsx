@@ -109,15 +109,18 @@ const resolvePostAuthPath = (user: User, payload?: AuthPayload): string => {
         return '/concepts/account/settings?view=company'
     }
 
-    if (selectedCompany.is_active && selectedCompany.approval_status === 'approved') {
-        return appConfig.authenticatedEntryPath
+    if (selectedCompany.approval_status !== 'approved') {
+        if (user.authority?.includes('admin')) {
+            return '/concepts/account/settings?view=company'
+        }
+        return '/company-pending'
     }
 
-    if (user.authority?.includes('admin')) {
-        return '/concepts/account/settings?view=company'
+    if (!selectedCompany.is_active) {
+        return '/company-pending'
     }
 
-    return '/company-pending'
+    return appConfig.authenticatedEntryPath
 }
 
 function AuthProvider({ children }: AuthProviderProps) {

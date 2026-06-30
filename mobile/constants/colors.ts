@@ -35,8 +35,10 @@ export const StatusColors: Record<string, { bg: string; text: string; border: st
     open:        { bg: '#2a85ff1a', text: '#2a85ff', border: '#2a85ff33' },
     in_progress: { bg: '#ffd40045', text: '#f59e0b', border: '#f59e0b33' },
     on_hold:     { bg: '#ff6a551a', text: '#ff6a55', border: '#ff6a5533' },
-    completed:   { bg: '#05eb7624', text: '#10b981', border: '#10b98133' },
-    cancelled:   { bg: '#f5f5f5',   text: '#737373', border: '#e5e5e5'   },
+    completed:        { bg: '#05eb7624', text: '#10b981', border: '#10b98133' },
+    cancelled:        { bg: '#f5f5f5',   text: '#737373', border: '#e5e5e5'   },
+    pending_approval: { bg: '#fef3c7',   text: '#d97706', border: '#fde68a'   },
+    rejected:         { bg: '#fee2e2',   text: '#dc2626', border: '#fca5a5'   },
 }
 
 export const PriorityColors: Record<string, { bg: string; text: string }> = {

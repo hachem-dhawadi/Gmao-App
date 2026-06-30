@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
 import Button from '@/components/ui/Button'
@@ -7,7 +7,7 @@ import toast from '@/components/ui/toast'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import WorkOrderForm from '../WorkOrderForm'
 import { apiCreateWorkOrder } from '@/services/WorkOrdersService'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { mutate as globalMutate } from 'swr'
 import { TbTrash } from 'react-icons/tb'
 import type { WorkOrderFormSchema } from '../WorkOrderForm'
@@ -15,8 +15,19 @@ import type { WorkOrderFormSchema } from '../WorkOrderForm'
 const WorkOrderCreate = () => {
     const { t } = useTranslation()
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [discardOpen, setDiscardOpen] = useState(false)
+
+    const aiPrefill = useMemo(() => {
+        const raw = searchParams.get('prefill')
+        if (!raw) return {}
+        try {
+            return JSON.parse(decodeURIComponent(atob(raw)))
+        } catch {
+            return {}
+        }
+    }, [searchParams])
 
     const handleFormSubmit = async (values: WorkOrderFormSchema) => {
         try {
@@ -64,7 +75,7 @@ const WorkOrderCreate = () => {
 
     return (
         <>
-            <WorkOrderForm onFormSubmit={handleFormSubmit}>
+            <WorkOrderForm onFormSubmit={handleFormSubmit} defaultValues={aiPrefill}>
                 <Container>
                     <div className="flex items-center justify-between px-8">
                         <span />

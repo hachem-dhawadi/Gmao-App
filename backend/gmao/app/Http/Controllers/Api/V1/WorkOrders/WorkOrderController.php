@@ -437,10 +437,6 @@ class WorkOrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Not found.'], 404);
         }
 
-        if (! $this->canModifyWorkOrder($currentMember, $workOrder)) {
-            return response()->json(['success' => false, 'message' => 'You can only comment on work orders assigned to you.'], 403);
-        }
-
         $request->validate(['body' => 'required|string|max:3000']);
 
         $comment = $workOrder->comments()->create([

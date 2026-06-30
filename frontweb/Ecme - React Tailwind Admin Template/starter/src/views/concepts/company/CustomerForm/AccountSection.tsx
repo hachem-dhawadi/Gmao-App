@@ -2,7 +2,7 @@ import Card from '@/components/ui/Card'
 import Switcher from '@/components/ui/Switcher'
 import Select from '@/components/ui/Select'
 import { FormItem } from '@/components/ui/Form'
-import { Controller } from 'react-hook-form'
+import { Controller, useWatch } from 'react-hook-form'
 import type { ApprovalStatus, FormSectionBaseProps } from './types'
 
 type AccountSectionProps = FormSectionBaseProps
@@ -18,7 +18,19 @@ const approvalStatusOptions: ApprovalStatusOption[] = [
     { value: 'rejected', label: 'Rejected' },
 ]
 
-const AccountSection = ({ control }: AccountSectionProps) => {
+const AccountSection = ({ control, setValue }: AccountSectionProps) => {
+    const approvalStatus = useWatch({ control, name: 'approvalStatus' })
+
+    const handleApprovalChange = (option: ApprovalStatusOption | null) => {
+        const value = option?.value || 'pending'
+        setValue?.('approvalStatus', value)
+        if (value === 'approved') {
+            setValue?.('isActive', true)
+        } else if (value === 'rejected' || value === 'pending') {
+            setValue?.('isActive', false)
+        }
+    }
+
     return (
         <Card>
             <h4>Status</h4>
@@ -48,15 +60,13 @@ const AccountSection = ({ control }: AccountSectionProps) => {
                     <Controller
                         name="approvalStatus"
                         control={control}
-                        render={({ field }) => (
+                        render={() => (
                             <Select<ApprovalStatusOption>
                                 options={approvalStatusOptions}
                                 value={approvalStatusOptions.find(
-                                    (option) => option.value === field.value,
+                                    (option) => option.value === approvalStatus,
                                 )}
-                                onChange={(option) =>
-                                    field.onChange(option?.value || 'pending')
-                                }
+                                onChange={handleApprovalChange}
                             />
                         )}
                     />
