@@ -1,17 +1,20 @@
+import { useState } from 'react'
 import Button from '@/components/ui/Button'
-import { TbCloudDownload, TbPlus } from 'react-icons/tb'
+import { TbCloudDownload, TbPlus, TbBarcode } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import { CSVLink } from 'react-csv'
 import useItemList from '../hooks/useItemList'
 import { useTranslation } from 'react-i18next'
+import BarcodeScanDialog from './BarcodeScanDialog'
 
 const ItemListActionTools = () => {
     const navigate = useNavigate()
     const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
     const canCreate = useAuthority(userAuthority, ['inventory.write', 'admin', 'manager'])
+    const [scanOpen, setScanOpen] = useState(false)
 
     const { itemList } = useItemList()
 
@@ -27,27 +30,40 @@ const ItemListActionTools = () => {
     }))
 
     return (
-        <div className="flex flex-col md:flex-row gap-3">
-            <CSVLink className="w-full" filename="items.csv" data={csvData}>
+        <>
+            <div className="flex flex-col md:flex-row gap-3">
                 <Button
-                    icon={<TbCloudDownload className="text-xl" />}
-                    className="w-full"
+                    icon={<TbBarcode className="text-xl" />}
+                    onClick={() => setScanOpen(true)}
                 >
-                    {t('common.download')}
+                    Scan Barcode
                 </Button>
-            </CSVLink>
-            {canCreate && (
-                <Button
-                    variant="solid"
-                    icon={<TbPlus className="text-xl" />}
-                    onClick={() =>
-                        navigate('/concepts/inventory/items/item-create')
-                    }
-                >
-                    {t('inventory.new')}
-                </Button>
-            )}
-        </div>
+                <CSVLink className="w-full" filename="items.csv" data={csvData}>
+                    <Button
+                        icon={<TbCloudDownload className="text-xl" />}
+                        className="w-full"
+                    >
+                        {t('common.download')}
+                    </Button>
+                </CSVLink>
+                {canCreate && (
+                    <Button
+                        variant="solid"
+                        icon={<TbPlus className="text-xl" />}
+                        onClick={() =>
+                            navigate('/concepts/inventory/items/item-create')
+                        }
+                    >
+                        {t('inventory.new')}
+                    </Button>
+                )}
+            </div>
+
+            <BarcodeScanDialog
+                isOpen={scanOpen}
+                onClose={() => setScanOpen(false)}
+            />
+        </>
     )
 }
 

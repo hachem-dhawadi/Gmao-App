@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
 import Radio from '@/components/ui/Radio'
+import Checkbox from '@/components/ui/Checkbox'
 import Select from '@/components/ui/Select'
 import { Form, FormItem } from '@/components/ui/Form'
 import useWorkOrderList from '../hooks/useWorkOrderList'
@@ -50,7 +51,8 @@ const WorkOrderListTableFilter = () => {
     const activeFilters =
         (filterData.status !== 'all' ? 1 : 0) +
         (filterData.priority !== 'all' ? 1 : 0) +
-        (filterData.site_id != null ? 1 : 0)
+        (filterData.site_id != null ? 1 : 0) +
+        (filterData.showArchived ? 1 : 0)
 
     const statusOptions = [
         { value: 'all',         label: t('wo.status.all') },
@@ -150,6 +152,21 @@ const WorkOrderListTableFilter = () => {
                                         </Radio>
                                     ))}
                                 </div>
+                            )}
+                        />
+                    </FormItem>
+
+                    <FormItem>
+                        <Controller
+                            name="showArchived"
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox
+                                    checked={field.value}
+                                    onChange={(checked) => field.onChange(checked)}
+                                >
+                                    Show archived work orders
+                                </Checkbox>
                             )}
                         />
                     </FormItem>
