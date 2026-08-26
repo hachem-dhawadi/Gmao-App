@@ -214,7 +214,7 @@ class DemoChatSeeder extends Seeder
         ]);
 
         foreach ([$a, $b] as $mid) {
-            DB::table('conversation_members')->insert([
+            DB::table('conversation_members')->insertOrIgnore([
                 'conversation_id' => $convId,
                 'member_id'       => $mid,
                 'last_read_at'    => now(),
@@ -259,7 +259,7 @@ class DemoChatSeeder extends Seeder
         ]);
 
         foreach ($memberIds as $mid) {
-            DB::table('conversation_members')->insert([
+            DB::table('conversation_members')->insertOrIgnore([
                 'conversation_id' => $convId,
                 'member_id'       => $mid,
                 'last_read_at'    => now(),
