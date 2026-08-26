@@ -236,7 +236,13 @@ class DemoChatSeeder extends Seeder
             return;
         }
 
-        $memberIds = array_filter(array_map(fn ($k) => $this->id($k), $memberKeys));
+        // Skip if a group with this name already exists for this company
+        if (DB::table('conversations')->where('company_id', $this->companyId)->where('name', $name)->exists()) {
+            $this->command->warn("  Skipping group '{$name}': already exists.");
+            return;
+        }
+
+        $memberIds = array_values(array_unique(array_filter(array_map(fn ($k) => $this->id($k), $memberKeys))));
         if (count($memberIds) < 2) {
             $this->command->warn("Skipping group '{$name}': fewer than 2 members resolved.");
             return;
