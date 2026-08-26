@@ -15,11 +15,15 @@ class DemoChatSeeder extends Seeder
 
     public function run(): void
     {
-        $company = DB::table('companies')->where('name', 'Demo Company')->first();
+        // Accept any approved company; prefer one named "Demo Company" if it exists
+        $company = DB::table('companies')->where('name', 'Demo Company')->first()
+            ?? DB::table('companies')->where('approval_status', 'approved')->orderBy('id')->first()
+            ?? DB::table('companies')->orderBy('id')->first();
         if (! $company) {
-            $this->command->warn('Demo Company not found — run FreshTestSeeder first.');
+            $this->command->warn('No company found in the database.');
             return;
         }
+        $this->command->info("Using company: {$company->name} (ID: {$company->id})");
         $this->companyId = $company->id;
 
         // ── Resolve member IDs dynamically ────────────────────────────────
@@ -115,43 +119,58 @@ class DemoChatSeeder extends Seeder
     {
         $cid = $this->companyId;
 
-        $byEmail = function (string $email) use ($cid): ?int {
-            $row = DB::table('members')
-                ->join('users', 'users.id', '=', 'members.user_id')
-                ->where('members.company_id', $cid)
-                ->where('users.email', $email)
-                ->whereNull('members.deleted_at')
-                ->select('members.id')
-                ->first();
-            return $row?->id;
-        };
+        // Fetch all active members in this company with their role codes
+        $members = DB::table('members')
+            ->join('users', 'users.id', '=', 'members.user_id')
+            ->leftJoin('member_roles', 'member_roles.member_id', '=', 'members.id')
+            ->leftJoin('roles', 'roles.id', '=', 'member_roles.role_id')
+            ->where('members.company_id', $cid)
+            ->whereNull('members.deleted_at')
+            ->select('members.id', 'users.email', 'users.name', 'roles.code as role_code')
+            ->orderBy('members.id')
+            ->get()
+            ->groupBy('id')
+            ->map(fn ($rows) => [
+                'id'        => $rows->first()->id,
+                'email'     => $rows->first()->email,
+                'name'      => $rows->first()->name,
+                'role_code' => $rows->pluck('role_code')->filter()->values()->toArray(),
+            ])
+            ->values();
 
-        $byName = function (string $name) use ($cid): ?int {
-            $row = DB::table('members')
-                ->join('users', 'users.id', '=', 'members.user_id')
-                ->where('members.company_id', $cid)
-                ->where('users.name', $name)
-                ->whereNull('members.deleted_at')
-                ->select('members.id')
-                ->first();
-            return $row?->id;
+        $this->command->info("Found {$members->count()} members in company.");
+
+        // Bucket by role
+        $admins  = $members->filter(fn ($m) => in_array('admin',      $m['role_code']))->values();
+        $managers= $members->filter(fn ($m) => in_array('manager',    $m['role_code']))->values();
+        $techs   = $members->filter(fn ($m) => in_array('technician', $m['role_code']))->values();
+        $others  = $members->filter(fn ($m) => empty($m['role_code']))->values();
+
+        // Assign slots: OWNER = first admin, managers, techs, fill remaining from any role
+        $all = $members->values();
+
+        $pick = function (int $idx) use ($all): ?int {
+            return $all->get($idx)['id'] ?? null;
+        };
+        $pickFrom = function ($col, int $idx) {
+            return $col->get($idx)['id'] ?? null;
         };
 
         return [
-            'OWNER'   => $byEmail('admin@gmao.test'),
-            'HR'      => $byEmail('hr@gmao.test'),
-            'OPS'     => $byEmail('manager@gmao.test'),
-            'TECH1'   => $byEmail('technician@gmao.test'),
-            'MAINT'   => $byEmail('manager2@gmao.test'),
-            'TECH2'   => $byEmail('technician2@gmao.test'),
-            'AHMED'   => $byName('Ahmed Ben Salah'),
-            'LEILA'   => $byName('Leila Mansouri'),
-            'KARIM'   => $byName('Karim Trabelsi'),
-            'FATMA'   => $byName('Fatma Riahi'),
-            'YASSINE' => $byName('Yassine Chaabane'),
-            'SONIA'   => $byName('Sonia Jebali'),
-            'MOHAMED' => $byName('Mohamed Belhaj'),
-            'AMIRA'   => $byName('Amira Oueslati'),
+            'OWNER'   => $pickFrom($admins,  0),
+            'HR'      => $pickFrom($managers, 0) ?? $pickFrom($admins, 1),
+            'OPS'     => $pickFrom($managers, 1) ?? $pickFrom($admins, 2),
+            'TECH1'   => $pickFrom($techs,   0),
+            'MAINT'   => $pickFrom($managers, 2) ?? $pickFrom($admins, 3),
+            'TECH2'   => $pickFrom($techs,   1),
+            'AHMED'   => $pickFrom($techs,   2) ?? $pick(6),
+            'LEILA'   => $pickFrom($techs,   3) ?? $pick(7),
+            'KARIM'   => $pickFrom($techs,   4) ?? $pick(8),
+            'FATMA'   => $pickFrom($techs,   5) ?? $pick(9),
+            'YASSINE' => $pickFrom($techs,   6) ?? $pick(10),
+            'SONIA'   => $pickFrom($techs,   7) ?? $pick(11),
+            'MOHAMED' => $pickFrom($techs,   8) ?? $pick(12),
+            'AMIRA'   => $pickFrom($techs,   9) ?? $pick(13),
         ];
     }
 
