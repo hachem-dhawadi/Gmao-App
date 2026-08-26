@@ -1,7 +1,4 @@
-node_modules/
 android/
 ios/
+node_modules/
 .expo/
-*.orig.*
-dist/
-web-build/
