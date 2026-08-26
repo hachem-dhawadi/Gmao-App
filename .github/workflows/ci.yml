@@ -75,7 +75,7 @@ jobs:
 
       - name: Run tests
         working-directory: backend/gmao
-        run: php artisan test --parallel
+        run: php artisan test
 
   # ──────────────────────────────────────────────
   # Job 2: Frontend TypeScript build check
