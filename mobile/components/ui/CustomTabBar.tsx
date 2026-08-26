@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
+import { useNotifStore } from '@/store/notifStore'
 
 const ACTIVE_COLOR   = '#111'
 const INACTIVE_COLOR = '#c0c0c0'
@@ -14,8 +15,19 @@ const TABS = [
     { routeName: 'profile', icon: 'person-outline',      activeIcon: 'person',      label: 'Me'      },
 ] as const
 
+function BadgeDot({ count }: { count: number }) {
+    if (count <= 0) return null
+    return (
+        <View style={s.badge}>
+            <Text style={s.badgeText}>{count > 99 ? '99+' : count}</Text>
+        </View>
+    )
+}
+
 export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     const insets = useSafeAreaInsets()
+    const unreadNotifCount = useNotifStore(s => s.unreadNotifCount)
+    const unreadChatCount  = useNotifStore(s => s.unreadChatCount)
 
     return (
         <View style={[s.container, { paddingBottom: insets.bottom || 10 }]}>
@@ -55,6 +67,10 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                     )
                 }
 
+                const badgeCount = tab.routeName === 'more' ? unreadNotifCount
+                    : tab.routeName === 'chat' ? unreadChatCount
+                    : 0
+
                 return (
                     <TouchableOpacity
                         key={tab.routeName}
@@ -73,6 +89,7 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
                                 size={22}
                                 color={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
                             />
+                            <BadgeDot count={badgeCount} />
                         </View>
 
                         <Text style={[s.label, { color: isFocused ? ACTIVE_COLOR : INACTIVE_COLOR, fontWeight: isFocused ? '700' : '500' }]}>
@@ -135,6 +152,22 @@ const s = StyleSheet.create({
         justifyContent: 'center',
         borderRadius:   12,
     },
+
+    badge: {
+        position:        'absolute',
+        top:             -4,
+        right:           -2,
+        minWidth:        16,
+        height:          16,
+        borderRadius:    8,
+        backgroundColor: '#ff6a55',
+        alignItems:      'center',
+        justifyContent:  'center',
+        paddingHorizontal: 3,
+        borderWidth:     1.5,
+        borderColor:     '#fff',
+    },
+    badgeText: { fontSize: 9, fontWeight: '800', color: '#fff', lineHeight: 14 },
     iconWrapActive: {
         backgroundColor: '#f2f2f2',
     },

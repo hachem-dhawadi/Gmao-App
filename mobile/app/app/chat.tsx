@@ -8,7 +8,9 @@ import {
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useLocalSearchParams } from 'expo-router'
 import { useAuthStore } from '@/store/authStore'
+import { useNotifStore } from '@/store/notifStore'
 import {
     apiGetConversations, apiGetMessages, apiSendMessage,
     apiMarkRead, apiCreateConversation, apiGetMembersForChat,
@@ -132,9 +134,11 @@ const { height: SH } = Dimensions.get('window')
 
 export default function ChatScreen() {
     const insets = useSafeAreaInsets()
+    const { open } = useLocalSearchParams<{ open?: string }>()
     const hasChatRead = useAuthStore(s => s.user?.permissions?.includes('chat.read') ?? false)
     const hasChatWrite = useAuthStore(s => s.user?.permissions?.includes('chat.write') ?? false)
     const myMemberId = useAuthStore(s => s.user?.memberId)
+    const setUnreadChatCount = useNotifStore(s => s.setUnreadChatCount)
 
     if (!hasChatRead) {
         return (
@@ -200,7 +204,18 @@ export default function ChatScreen() {
         }
     }, [])
 
-    useEffect(() => { loadConversations(true) }, [loadConversations])
+    useEffect(() => {
+        loadConversations(true)
+        setUnreadChatCount(0)
+    }, [loadConversations])
+
+    // Auto-open conversation if navigated from a notification
+    useEffect(() => {
+        if (!open || !conversations.length) return
+        const targetId = Number(open)
+        const conv = conversations.find(c => c.id === targetId)
+        if (conv && !activeConv) openConversation(conv)
+    }, [open, conversations])
 
     const onRefresh = useCallback(() => { setRefreshing(true); loadConversations() }, [loadConversations])
 

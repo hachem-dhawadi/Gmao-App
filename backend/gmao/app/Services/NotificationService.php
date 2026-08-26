@@ -476,6 +476,45 @@ class NotificationService
         }
     }
 
+    // ── Chat: new message ────────────────────────────────────────────────────────
+
+    public static function notifyChatMessage(\App\Models\Conversation $conversation, \App\Models\Message $message, Member $sender): void
+    {
+        $senderName = $sender->user?->name ?? 'Someone';
+
+        $preview = match ($message->type) {
+            'image' => '📷 Image',
+            'file'  => '📎 File',
+            default => mb_strimwidth($message->body ?? '', 0, 100, '…'),
+        };
+
+        $title = $conversation->type === 'direct'
+            ? $senderName
+            : (string) $conversation->name;
+
+        $body = $conversation->type === 'direct'
+            ? $preview
+            : "{$senderName}: {$preview}";
+
+        $conversation->members()
+            ->with('user')
+            ->where('members.id', '!=', $sender->id)
+            ->get()
+            ->each(function (Member $recipient) use ($conversation, $title, $body): void {
+                if (! $recipient->user_id) return;
+
+                self::create($recipient->user_id, 'chat_message', [
+                    'title' => $title,
+                    'body'  => $body,
+                    'data'  => [
+                        'conversation_id'   => $conversation->id,
+                        'conversation_name' => $conversation->name,
+                        'conversation_type' => $conversation->type,
+                    ],
+                ]);
+            });
+    }
+
     // ── Internal ──────────────────────────────────────────────────────────────
 
     private static function create(int $userId, string $type, array $payload): void

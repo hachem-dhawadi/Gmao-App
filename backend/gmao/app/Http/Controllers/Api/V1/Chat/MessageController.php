@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
+use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -147,6 +148,9 @@ class MessageController extends Controller
                     'message' => array_merge($formatted, ['is_mine' => false]),
                 ]));
             });
+
+        // In-app + push notifications for all other conversation members
+        NotificationService::notifyChatMessage($conversation, $message, $currentMember);
 
         return response()->json(['success' => true, 'data' => ['message' => $formatted]], 201);
     }

@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, ActivityIndicator } from 'react-native'
+import { View, ActivityIndicator, AppState } from 'react-native'
 import { Stack, router } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import * as Notifications from 'expo-notifications'
 import { useAuthStore } from '@/store/authStore'
+import { useNotifStore } from '@/store/notifStore'
 import { apiMe } from '@/services/AuthService'
 import { registerPushToken } from '@/services/PushNotificationService'
+import { apiGetUnreadCount } from '@/services/NotificationService'
+import { apiGetConversations } from '@/services/ChatService'
 
 // Show push notifications even when app is in the foreground
 Notifications.setNotificationHandler({
@@ -18,17 +21,32 @@ Notifications.setNotificationHandler({
 })
 
 function navigateFromData(data: Record<string, unknown>) {
-    if (data.wo_id)       router.push(`/app/work-orders/${data.wo_id}` as never)
-    else if (data.pm_id)  router.push(`/app/pm-plans/${data.pm_id}` as never)
+    if (data.conversation_id) router.push(`/app/chat?open=${data.conversation_id}` as never)
+    else if (data.wo_id)      router.push(`/app/work-orders/${data.wo_id}` as never)
+    else if (data.pm_id)      router.push(`/app/pm-plans/${data.pm_id}` as never)
     else if (data.request_id) router.push('/app/maintenance-requests' as never)
     else if (data.item_id)    router.push('/app/inventory' as never)
     else if (data.po_id)      router.push('/app/purchasing' as never)
 }
 
+async function refreshBadgeCounts(setUnreadNotifCount: (n: number) => void, setUnreadChatCount: (n: number) => void) {
+    try {
+        const [notifRes, chatRes] = await Promise.all([
+            apiGetUnreadCount(),
+            apiGetConversations(),
+        ])
+        setUnreadNotifCount(notifRes.data.data.count ?? 0)
+        const totalChat = (chatRes.data.data ?? []).reduce((sum: number, c: { unread_count?: number }) => sum + (c.unread_count ?? 0), 0)
+        setUnreadChatCount(totalChat)
+    } catch {}
+}
+
 export default function RootLayout() {
     const { loadToken, setAuth, clearAuth } = useAuthStore()
+    const { setUnreadNotifCount, setUnreadChatCount } = useNotifStore()
     const [appReady, setAppReady]           = useState(false)
     const responseSub = useRef<Notifications.EventSubscription | null>(null)
+    const pollRef     = useRef<ReturnType<typeof setInterval> | null>(null)
 
     // Listen for notification taps (foreground + background)
     useEffect(() => {
@@ -68,8 +86,13 @@ export default function RootLayout() {
                     roles:       membership?.roles.map((r: { code: string }) => r.code) ?? [],
                     permissions: membership?.roles.flatMap((r: { permissions: string[] }) => r.permissions ?? []) ?? [],
                 })
-                // Register push token after successful auth (non-blocking)
                 registerPushToken()
+                // Initial badge fetch
+                refreshBadgeCounts(setUnreadNotifCount, setUnreadChatCount)
+                // Poll every 60 seconds
+                pollRef.current = setInterval(() => {
+                    refreshBadgeCounts(setUnreadNotifCount, setUnreadChatCount)
+                }, 60_000)
             } catch {
                 await clearAuth()
             } finally {
@@ -77,6 +100,17 @@ export default function RootLayout() {
             }
         }
         init()
+        return () => { if (pollRef.current) clearInterval(pollRef.current) }
+    }, [])
+
+    // Refresh badges when app comes back to foreground
+    useEffect(() => {
+        const sub = AppState.addEventListener('change', (state) => {
+            if (state === 'active') {
+                refreshBadgeCounts(setUnreadNotifCount, setUnreadChatCount)
+            }
+        })
+        return () => sub.remove()
     }, [])
 
     if (!appReady) {

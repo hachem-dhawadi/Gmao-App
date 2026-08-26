@@ -7,14 +7,16 @@ import {
     apiGetNotifications, apiMarkNotificationRead,
     apiMarkAllNotificationsRead, type AppNotification,
 } from '@/services/NotificationService'
+import { useNotifStore } from '@/store/notifStore'
 
 function resolveRoute(n: AppNotification): string | null {
     const d = n.data ?? {}
-    if (d.wo_id)      return `/app/work-orders/${d.wo_id}`
-    if (d.pm_id)      return `/app/pm-plans/${d.pm_id}`
-    if (d.request_id) return `/app/maintenance-requests`
-    if (d.item_id)    return `/app/inventory`
-    if (d.po_id)      return `/app/purchasing`
+    if (d.conversation_id) return `/app/chat?open=${d.conversation_id}`
+    if (d.wo_id)           return `/app/work-orders/${d.wo_id}`
+    if (d.pm_id)           return `/app/pm-plans/${d.pm_id}`
+    if (d.request_id)      return `/app/maintenance-requests`
+    if (d.item_id)         return `/app/inventory`
+    if (d.po_id)           return `/app/purchasing`
     return null
 }
 
@@ -31,6 +33,7 @@ function relativeTime(dateStr: string | null): string {
 }
 
 function iconForType(type: string): { name: string; bg: string; color: string } {
+    if (type === 'chat_message')          return { name: 'chatbubbles-outline',       bg: '#2a85ff15', color: '#2a85ff' }
     if (type.startsWith('wo_assigned'))  return { name: 'person-add-outline',       bg: '#11111115', color: '#111'    }
     if (type.startsWith('wo_complete'))  return { name: 'checkmark-circle-outline', bg: '#10b98120', color: '#10b981' }
     if (type.startsWith('wo_comment'))   return { name: 'chatbubble-outline',        bg: '#f59e0b20', color: '#f59e0b' }
@@ -80,6 +83,7 @@ export default function NotificationsScreen() {
     const [loading,    setLoading]    = useState(true)
     const [refreshing, setRefreshing] = useState(false)
     const [filter,     setFilter]     = useState<'all' | 'unread'>('all')
+    const setUnreadNotifCount = useNotifStore(s => s.setUnreadNotifCount)
 
     const load = useCallback(async () => {
         try {
@@ -93,7 +97,11 @@ export default function NotificationsScreen() {
         }
     }, [])
 
-    useEffect(() => { load() }, [load])
+    useEffect(() => {
+        load()
+        // Clear the badge when the notifications screen is opened
+        setUnreadNotifCount(0)
+    }, [])
 
     const onRefresh = () => { setRefreshing(true); load() }
 
