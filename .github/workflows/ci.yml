@@ -1,0 +1,110 @@
+name: CI — Test & Build
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1: PHP backend tests
+  # ──────────────────────────────────────────────
+  test-backend:
+    name: PHP 8.4 Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: gmao_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -u root -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+          --health-start-period=30s
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql, mbstring, gd, zip, intl, bcmath, pcntl, opcache
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/gmao/vendor
+          key: composer-${{ hashFiles('backend/gmao/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install Composer dependencies
+        working-directory: backend/gmao
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader --no-progress
+
+      - name: Create .env for testing
+        working-directory: backend/gmao
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          sed -i 's|APP_URL=.*|APP_URL=http://localhost|' .env
+          sed -i 's|DB_CONNECTION=.*|DB_CONNECTION=mysql|' .env
+          sed -i 's|# DB_HOST=.*|DB_HOST=127.0.0.1|' .env
+          sed -i 's|DB_HOST=.*|DB_HOST=127.0.0.1|' .env
+          sed -i 's|# DB_PORT=.*|DB_PORT=3306|' .env
+          sed -i 's|DB_PORT=.*|DB_PORT=3306|' .env
+          sed -i 's|# DB_DATABASE=.*|DB_DATABASE=gmao_test|' .env
+          sed -i 's|DB_DATABASE=.*|DB_DATABASE=gmao_test|' .env
+          sed -i 's|# DB_USERNAME=.*|DB_USERNAME=root|' .env
+          sed -i 's|DB_USERNAME=.*|DB_USERNAME=root|' .env
+          sed -i 's|# DB_PASSWORD=.*|DB_PASSWORD=root|' .env
+          sed -i 's|DB_PASSWORD=.*|DB_PASSWORD=root|' .env
+
+      - name: Run migrations
+        working-directory: backend/gmao
+        run: php artisan migrate --force
+
+      - name: Run tests
+        working-directory: backend/gmao
+        run: php artisan test --parallel
+
+  # ──────────────────────────────────────────────
+  # Job 2: Frontend TypeScript build check
+  # ──────────────────────────────────────────────
+  build-frontend:
+    name: React TypeScript Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'frontweb/Ecme - React Tailwind Admin Template/starter/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: "frontweb/Ecme - React Tailwind Admin Template/starter"
+        run: npm ci
+
+      - name: Build (TypeScript + Vite)
+        working-directory: "frontweb/Ecme - React Tailwind Admin Template/starter"
+        env:
+          VITE_BACKEND_URL: http://localhost:8000
+          VITE_REVERB_APP_KEY: gmao-reverb-key
+          VITE_REVERB_HOST: localhost
+          VITE_REVERB_PORT: '8080'
+          VITE_REVERB_SCHEME: http
+        run: npm run build

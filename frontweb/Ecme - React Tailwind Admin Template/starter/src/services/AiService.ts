@@ -6,11 +6,16 @@ export async function apiPostChat<T>(data: {
     attachments?: File[]
     page_context?: string
 }): Promise<T> {
+    const imageFile = data.attachments?.find((f) => f.type.startsWith('image/'))
+    const prompt = imageFile
+        ? `${data.prompt}\n\n[User attached an image: "${imageFile.name}". You cannot view images directly — if the image is relevant to answering, ask the user to describe what they see.]`
+        : data.prompt
+
     return ApiService.fetchDataWithAxios<T>({
         url: '/ai/chat',
         method: 'post',
         data: {
-            prompt: data.prompt,
+            prompt,
             ...(data.page_context ? { page_context: data.page_context } : {}),
         },
     })

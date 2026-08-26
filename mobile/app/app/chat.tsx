@@ -2,8 +2,8 @@ import { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react'
 import {
     View, Text, StyleSheet, FlatList, TextInput,
     RefreshControl, ActivityIndicator, Pressable,
-    Animated, ScrollView, Alert, KeyboardAvoidingView,
-    Platform, Image, Modal,
+    Animated, ScrollView, Alert,
+    Image, Modal, Dimensions, Keyboard,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -126,6 +126,8 @@ const MessageBubble = memo(function MessageBubble({ msg, prevMsg }: { msg: Messa
     )
 })
 
+const { height: SH } = Dimensions.get('window')
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function ChatScreen() {
@@ -161,7 +163,18 @@ export default function ChatScreen() {
     const [msgLoading,      setMsgLoading]      = useState(false)
     const [sending,         setSending]         = useState(false)
     const [draft,           setDraft]           = useState('')
+    const [kbHeight,        setKbHeight]        = useState(0)
     const listRef = useRef<FlatList>(null)
+
+    // Track keyboard height precisely so we can lift content above keyboard
+    useEffect(() => {
+        const show = Keyboard.addListener('keyboardDidShow', (e) => {
+            setKbHeight(e.endCoordinates.height)
+            setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
+        })
+        const hide = Keyboard.addListener('keyboardDidHide', () => setKbHeight(0))
+        return () => { show.remove(); hide.remove() }
+    }, [])
 
     // New chat sheet
     const [newChatOpen,     setNewChatOpen]     = useState(false)
@@ -228,8 +241,9 @@ export default function ChatScreen() {
             const msg = res.data?.data?.message
             if (msg) setMessages(prev => [...prev, msg])
             setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100)
-        } catch {
-            Alert.alert('Error', 'Failed to send message.')
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+            Alert.alert('Error', msg ?? 'Failed to send message.')
             setDraft(body)
         } finally {
             setSending(false)
@@ -244,13 +258,14 @@ export default function ChatScreen() {
         setSelectedMembers([])
         setGroupName('')
         setMemberSearch('')
-        if (members.length === 0) {
-            try {
-                const res = await apiGetMembersForChat()
-                setMembers(res.data?.data?.members ?? [])
-            } catch { /* silent */ }
+        try {
+            const res = await apiGetMembersForChat()
+            setMembers(res.data?.data?.members ?? [])
+        } catch (err: unknown) {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+            Alert.alert('Could not load members', msg ?? 'Check your connection and try again.')
         }
-    }, [members.length])
+    }, [])
 
     const closeNewChat = useCallback(() => {
         Animated.parallel([
@@ -277,15 +292,17 @@ export default function ChatScreen() {
                 name: type === 'group' ? groupName.trim() : undefined,
             })
             const conv = res.data?.data?.conversation
-            if (conv) {
-                closeNewChat()
-                setConversations(prev => {
-                    const exists = prev.find(c => c.id === conv.id)
-                    if (exists) return prev
-                    return [conv, ...prev]
-                })
-                openConversation(conv)
+            if (!conv) {
+                Alert.alert('Error', 'Server returned an unexpected response. Please try again.')
+                return
             }
+            closeNewChat()
+            setConversations(prev => {
+                const exists = prev.find(c => c.id === conv.id)
+                if (exists) return prev
+                return [conv, ...prev]
+            })
+            openConversation(conv)
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
             Alert.alert('Error', msg ?? 'Failed to create conversation.')
@@ -385,8 +402,6 @@ export default function ChatScreen() {
                                 </TouchableOpacity>
                             </View>
 
-                            <View style={{ flex: 1 }}>
-
                             {/* Group name — shown when >1 selected */}
                             {selectedMembers.length > 1 && (
                                 <>
@@ -433,17 +448,21 @@ export default function ChatScreen() {
                                 />
                             </View>
 
-                            <ScrollView style={{ flex: 1, marginTop: 10 }} keyboardShouldPersistTaps="handled">
+                            <ScrollView style={s.memberScroll} keyboardShouldPersistTaps="handled">
+                                {filteredMembers.length === 0 && (
+                                    <Text style={s.memberEmpty}>
+                                        {members.length === 0 ? 'Loading members…' : 'No members found'}
+                                    </Text>
+                                )}
                                 {filteredMembers.map(m => {
                                     const sel = selectedMembers.includes(m.id)
                                     return (
-                                        <TouchableOpacity
+                                        <Pressable
                                             key={m.id}
-                                            style={[s.memberRow, sel && s.memberRowSel]}
+                                            style={({ pressed }) => [s.memberRow, sel && s.memberRowSel, pressed && { opacity: 0.65 }]}
                                             onPress={() => toggleMember(m.id)}
-                                            activeOpacity={0.7}
                                         >
-                                            <Avatar name={m.name} avatar={m.avatar} size={38} />
+                                            <Avatar name={m.name} avatar={m.avatar_url ?? m.avatar} size={38} />
                                             <View style={{ flex: 1 }}>
                                                 <Text style={s.memberName}>{m.name}</Text>
                                                 {m.role_name && <Text style={s.memberRole}>{m.role_name}</Text>}
@@ -451,18 +470,19 @@ export default function ChatScreen() {
                                             <View style={[s.checkCircle, sel && s.checkCircleSel]}>
                                                 {sel && <Ionicons name="checkmark" size={13} color="#fff" />}
                                             </View>
-                                        </TouchableOpacity>
+                                        </Pressable>
                                     )
                                 })}
                             </ScrollView>
 
-                            </View>
-
-                            <TouchableOpacity
-                                style={[s.submitBtn, (creating || selectedMembers.length === 0) && { opacity: 0.5 }]}
+                            <Pressable
+                                style={({ pressed }) => [
+                                    s.submitBtn,
+                                    (creating || selectedMembers.length === 0) && { opacity: 0.5 },
+                                    pressed && { opacity: 0.8 },
+                                ]}
                                 onPress={handleStartChat}
                                 disabled={creating || selectedMembers.length === 0}
-                                activeOpacity={0.85}
                             >
                                 {creating
                                     ? <ActivityIndicator color="#fff" size="small" />
@@ -473,7 +493,7 @@ export default function ChatScreen() {
                                         </Text>
                                     </>
                                 }
-                            </TouchableOpacity>
+                            </Pressable>
                         </Animated.View>
                     </View>
                 </Modal>
@@ -486,10 +506,13 @@ export default function ChatScreen() {
         <SafeAreaView style={s.safe} edges={['top']}>
             {/* Thread header */}
             <View style={s.threadHeader}>
-                <TouchableOpacity style={s.backBtn} onPress={closeConversation} activeOpacity={0.7}>
-                    <Ionicons name="arrow-back" size={20} color="#111" />
-                </TouchableOpacity>
-                <Avatar name={activeConv.name} avatar={activeConv.avatar} size={36} />
+                <Pressable
+                    style={({ pressed }) => [s.backBtn, pressed && { opacity: 0.5 }]}
+                    onPress={closeConversation}
+                >
+                    <Ionicons name="arrow-back" size={22} color="#111" />
+                </Pressable>
+                <Avatar name={activeConv.name} avatar={activeConv.avatar} size={38} />
                 <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text style={s.threadName} numberOfLines={1}>{activeConv.name}</Text>
                     <Text style={s.threadSub}>
@@ -500,13 +523,12 @@ export default function ChatScreen() {
                 </View>
             </View>
 
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={insets.top + 60}
-            >
+            {/* lift content above keyboard; subtract insets.bottom because kbHeight includes nav bar */}
+            <View style={{ flex: 1, paddingBottom: kbHeight > 0 ? Math.max(0, kbHeight - insets.bottom - 24) : 0 }}>
                 {msgLoading ? (
-                    <ActivityIndicator size="large" color="#111" style={{ flex: 1, marginTop: 60 }} />
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                        <ActivityIndicator size="large" color="#8b5cf6" />
+                    </View>
                 ) : (
                     <FlatList
                         ref={listRef}
@@ -515,42 +537,54 @@ export default function ChatScreen() {
                         renderItem={renderMsg}
                         contentContainerStyle={s.msgList}
                         showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
                         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+                        onLayout={() => listRef.current?.scrollToEnd({ animated: false })}
                         ListEmptyComponent={
                             <View style={s.emptyWrap}>
-                                <Text style={s.emptySubtitle}>No messages yet. Say hello!</Text>
+                                <View style={s.emptyIconWrap}>
+                                    <Ionicons name="chatbubbles-outline" size={32} color="#ccc" />
+                                </View>
+                                <Text style={s.emptyTitle}>No messages yet</Text>
+                                <Text style={s.emptySubtitle}>Say hello! 👋</Text>
                             </View>
                         }
                     />
                 )}
 
-                {/* Input */}
+                {/* Input bar */}
                 {hasChatWrite && (
-                    <View style={[s.inputBar, { paddingBottom: insets.bottom || 12 }]}>
+                    <View style={[s.inputBar, { paddingBottom: kbHeight > 0 ? 2 : Math.max(insets.bottom, 10) }]}>
                         <TextInput
                             style={s.msgInput}
                             placeholder="Type a message…"
-                            placeholderTextColor="#bbb"
+                            placeholderTextColor="#c0c0c0"
                             value={draft}
                             onChangeText={setDraft}
                             multiline
                             maxLength={5000}
                             returnKeyType="default"
+                            blurOnSubmit={false}
+                            textAlignVertical="top"
                         />
-                        <TouchableOpacity
-                            style={[s.sendBtn, (!draft.trim() || sending) && { opacity: 0.4 }]}
+                        <Pressable
+                            style={({ pressed }) => [
+                                s.sendBtn,
+                                (!draft.trim() || sending) && s.sendBtnOff,
+                                pressed && draft.trim() && { opacity: 0.75 },
+                            ]}
                             onPress={sendMessage}
                             disabled={!draft.trim() || sending}
-                            activeOpacity={0.8}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
                             {sending
                                 ? <ActivityIndicator color="#fff" size="small" />
                                 : <Ionicons name="send" size={18} color="#fff" />
                             }
-                        </TouchableOpacity>
+                        </Pressable>
                     </View>
                 )}
-            </KeyboardAvoidingView>
+            </View>
         </SafeAreaView>
     )
 }
@@ -570,13 +604,14 @@ const s = StyleSheet.create({
 
     /* Thread header */
     threadHeader: {
-        flexDirection: 'row', alignItems: 'center', gap: 4,
-        paddingHorizontal: 16, paddingVertical: 12,
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        paddingHorizontal: 12, paddingVertical: 10,
         backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f0f0f0',
+        minHeight: 56,
     },
-    backBtn: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+    backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
     threadName: { fontSize: 16, fontWeight: '700', color: '#111' },
-    threadSub:  { fontSize: 12, color: '#aaa', marginTop: 1 },
+    threadSub:  { fontSize: 12, color: '#999', marginTop: 1 },
 
     /* Conv list */
     convList: { paddingBottom: 20 },
@@ -596,41 +631,44 @@ const s = StyleSheet.create({
     unreadText:  { fontSize: 10, fontWeight: '800', color: '#fff' },
 
     /* Messages */
-    msgList: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, gap: 4 },
-    msgWrap:     { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginBottom: 4 },
+    msgList: { paddingHorizontal: 12, paddingTop: 14, paddingBottom: 8 },
+    msgWrap:     { flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginBottom: 6 },
     msgWrapMine: { flexDirection: 'row-reverse' },
-    msgAvatar:   { width: 30 },
+    msgAvatar:   { width: 32, alignItems: 'center' },
     bubble: {
-        maxWidth: '78%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1,
+        maxWidth: '78%', borderRadius: 18, paddingHorizontal: 13, paddingVertical: 9,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1,
     },
-    bubbleOther:    { backgroundColor: '#f5f5f5', borderBottomLeftRadius: 4 },
+    bubbleOther:    { backgroundColor: '#f0f0f0', borderBottomLeftRadius: 4 },
     bubbleMine:     { backgroundColor: '#8b5cf6', borderBottomRightRadius: 4 },
-    senderName:     { fontSize: 11, fontWeight: '700', color: '#8b5cf6', marginBottom: 4 },
-    bubbleText:     { fontSize: 15, color: '#111', lineHeight: 22 },
+    senderName:     { fontSize: 11, fontWeight: '700', color: '#7c3aed', marginBottom: 3 },
+    bubbleText:     { fontSize: 15, color: '#111', lineHeight: 21 },
     bubbleTextMine: { color: '#fff' },
-    bubbleTime:     { fontSize: 10, color: '#aaa', marginTop: 4, textAlign: 'right' },
-    bubbleTimeMine: { color: '#ffffff80' },
+    bubbleTime:     { fontSize: 10, color: '#999', marginTop: 4, textAlign: 'right' },
+    bubbleTimeMine: { color: '#ffffff70' },
     attachWrap:  { gap: 4, marginTop: 4 },
     attachItem:  { flexDirection: 'row', alignItems: 'center', gap: 4 },
     attachName:  { fontSize: 12, color: '#555', flex: 1 },
 
     /* Input bar */
     inputBar: {
-        flexDirection: 'row', alignItems: 'flex-end', gap: 10,
-        paddingHorizontal: 16, paddingTop: 10,
-        backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#f0f0f0',
+        flexDirection: 'row', alignItems: 'flex-end', gap: 8,
+        paddingHorizontal: 12, paddingTop: 8,
+        backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#ececec',
     },
     msgInput: {
-        flex: 1, backgroundColor: '#f5f5f5', borderRadius: 20,
-        paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#111',
-        maxHeight: 120,
+        flex: 1, backgroundColor: '#f5f5f5', borderRadius: 22,
+        paddingHorizontal: 16, paddingTop: 11, paddingBottom: 11,
+        fontSize: 15, color: '#111',
+        maxHeight: 130, minHeight: 44,
+        textAlignVertical: 'top',
     },
-    sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#8b5cf6', alignItems: 'center', justifyContent: 'center' },
+    sendBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#8b5cf6', alignItems: 'center', justifyContent: 'center', marginBottom: 0 },
+    sendBtnOff: { backgroundColor: '#c4b5fd' },
 
     /* Empty */
-    emptyWrap:    { alignItems: 'center', paddingTop: 60, gap: 12 },
-    emptyIconWrap:{ width: 72, height: 72, borderRadius: 20, backgroundColor: '#f5f5f5', alignItems: 'center', justifyContent: 'center' },
+    emptyWrap:    { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 },
+    emptyIconWrap:{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#f5f5f5', alignItems: 'center', justifyContent: 'center' },
     emptyTitle:   { fontSize: 15, fontWeight: '700', color: '#555' },
     emptySubtitle:{ fontSize: 13, color: '#bbb' },
     emptyBtn:     { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#8b5cf6', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, marginTop: 4 },
@@ -656,6 +694,8 @@ const s = StyleSheet.create({
     selectedChipText: { fontSize: 13, fontWeight: '600', color: '#7c3aed' },
     memberSearchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f5f5f5', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 },
     memberSearchInput:{ flex: 1, fontSize: 14, color: '#111', padding: 0 },
+    memberScroll: { maxHeight: SH * 0.38, marginTop: 10 },
+    memberEmpty:  { textAlign: 'center', color: '#aaa', fontSize: 14, paddingVertical: 24 },
     memberRow:    { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
     memberRowSel: { backgroundColor: '#faf5ff' },
     memberName:   { fontSize: 15, fontWeight: '600', color: '#111' },

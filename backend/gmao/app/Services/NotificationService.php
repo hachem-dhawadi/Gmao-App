@@ -16,6 +16,7 @@ use App\Models\PmTrigger;
 use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -487,5 +488,21 @@ class NotificationService
             'data_json'  => json_encode($payload['data'] ?? []),
             'created_at' => Carbon::now(),
         ]);
+
+        // Send Expo push notification if the user has a registered device token
+        $pushToken = \App\Models\User::query()->where('id', $userId)->value('expo_push_token');
+        if ($pushToken) {
+            try {
+                Http::post('https://exp.host/--/api/v2/push/send', [
+                    'to'    => $pushToken,
+                    'sound' => 'default',
+                    'title' => $payload['title'],
+                    'body'  => $payload['body'],
+                    'data'  => $payload['data'] ?? [],
+                ]);
+            } catch (\Throwable $e) {
+                Log::warning("Expo push failed for user {$userId}: " . $e->getMessage());
+            }
+        }
     }
 }

@@ -39,11 +39,12 @@ const ChatView = () => {
 
     const handleInputChange = async ({
         value,
+        attachments,
     }: {
         value: string
         attachments?: File[]
     }) => {
-        await handleSend(value)
+        await handleSend(value, attachments)
     }
 
     const handleFinish = (id: string) => {
@@ -90,7 +91,23 @@ const ChatView = () => {
                         )
                     }
 
-                    return message.content
+                    const imgAttachment = message.attachments?.find(
+                        (a) => a.type === 'image',
+                    )
+                    return (
+                        <div className="flex flex-col gap-1">
+                            {imgAttachment && (
+                                <img
+                                    src={imgAttachment.mediaUrl}
+                                    alt="attachment"
+                                    className="max-w-[200px] rounded-lg border border-white/20 object-cover"
+                                />
+                            )}
+                            {message.content && (
+                                <span>{message.content as string}</span>
+                            )}
+                        </div>
+                    )
                 }}
                 customAction={(message) => {
                     if (message.sender.id === 'ai') {

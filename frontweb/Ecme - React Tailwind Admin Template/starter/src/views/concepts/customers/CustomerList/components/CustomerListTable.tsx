@@ -11,7 +11,7 @@ import toast from '@/components/ui/toast'
 import useCustomerList from '../hooks/useCustomerList'
 import { useNavigate } from 'react-router-dom'
 import cloneDeep from 'lodash/cloneDeep'
-import { TbPencil, TbEye, TbTrash, TbBuilding, TbBuildingOff, TbBuildingPlus } from 'react-icons/tb'
+import { TbPencil, TbEye, TbTrash, TbBuilding, TbBuildingOff, TbBuildingPlus, TbUser } from 'react-icons/tb'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
 import useSWR from 'swr'
@@ -105,7 +105,7 @@ const MemberDetailModal = ({ id, isSuperadmin, onClose, onEdit }: MemberDetailMo
             )}
             {!isLoading && info && (
                 <div className="flex flex-col items-center gap-4">
-                    <Avatar size={80} shape="circle" src={info.avatar} />
+                    <Avatar size={80} shape="circle" src={info.avatar || undefined} icon={!info.avatar ? <TbUser /> : undefined} />
                     <div className="text-center">
                         <h5 className="font-semibold">{info.name}</h5>
                         <p className="text-sm text-gray-500">{info.role}</p>
@@ -150,7 +150,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 const NameColumn = ({ row }: { row: Customer }) => (
     <div className="flex items-center">
-        <Avatar size={40} shape="circle" src={row.img} />
+        <Avatar size={40} shape="circle" src={row.img || undefined} icon={!row.img ? <TbUser /> : undefined} />
         <span className="ml-2 rtl:mr-2 font-semibold text-gray-900 dark:text-gray-100">
             {row.name}
         </span>

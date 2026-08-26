@@ -27,6 +27,8 @@ export default function AppLayout() {
             <Tabs.Screen name="inventory"            options={{ href: null }} />
             <Tabs.Screen name="files"               options={{ href: null }} />
             <Tabs.Screen name="purchasing"          options={{ href: null }} />
+            <Tabs.Screen name="reports"             options={{ href: null }} />
+            <Tabs.Screen name="ai"                  options={{ href: null }} />
         </Tabs>
     )
 }

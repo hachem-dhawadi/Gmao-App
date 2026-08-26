@@ -1,10 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, createElement } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSessionUser } from '@/store/authStore'
 import { useChatStore } from '@/views/concepts/chat/Chat/store/chatStore'
 import echo from '@/utils/echo'
 import toast from '@/components/ui/toast'
-import Notification from '@/components/ui/Notification'
-import { createElement } from 'react'
+import ChatMessageToast from '@/components/template/ChatMessageToast'
 import type { ChatMessage, ChatConversation } from '@/services/ChatService'
 
 type MessagePayload = {
@@ -24,6 +24,7 @@ type ConversationCreatedPayload = {
 
 const useGlobalChatNotifications = () => {
     const memberId = useSessionUser((state) => state.user.memberId)
+    const navigate  = useNavigate()
 
     useEffect(() => {
         if (!memberId) return
@@ -46,10 +47,25 @@ const useGlobalChatNotifications = () => {
                 store.pushMessage(message)
             } else {
                 const preview = message.body
-                    ? message.body.slice(0, 60) + (message.body.length > 60 ? '…' : '')
-                    : '📎 File'
+                    ? message.body.slice(0, 120) + (message.body.length > 120 ? '…' : '')
+                    : '📎 Attachment'
                 toast.push(
-                    createElement(Notification, { title: conversation.name }, preview),
+                    createElement(ChatMessageToast, {
+                        senderName:       message.sender?.name ?? null,
+                        senderAvatar:     message.sender?.avatar ?? null,
+                        conversationName: conversation.name,
+                        conversationType: conversation.type,
+                        preview,
+                        onClick: () => {
+                            store.setSelectedConversation({
+                                id:     conversation.id,
+                                name:   conversation.name,
+                                type:   conversation.type,
+                                avatar: conversation.avatar,
+                            })
+                            navigate('/concepts/chat')
+                        },
+                    }),
                     { placement: 'top-end' },
                 )
             }
@@ -65,7 +81,7 @@ const useGlobalChatNotifications = () => {
             channel.stopListening('.conversation.created')
             echo.leave(`user.${memberId}`)
         }
-    }, [memberId])
+    }, [memberId, navigate])
 }
 
 export default useGlobalChatNotifications

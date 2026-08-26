@@ -22,7 +22,7 @@ const echo = new Echo({
     wsPort: Number(import.meta.env.VITE_REVERB_PORT),
     wssPort: Number(import.meta.env.VITE_REVERB_PORT),
     forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
-    enabledTransports: ['ws', 'wss'],
+    enabledTransports: import.meta.env.VITE_REVERB_SCHEME === 'https' ? ['wss'] : ['ws'],
     authorizer: (channel: { name: string }) => ({
         authorize: (
             socketId: string,

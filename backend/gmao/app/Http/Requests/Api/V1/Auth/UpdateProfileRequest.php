@@ -34,7 +34,7 @@ class UpdateProfileRequest extends FormRequest
                 Rule::unique('users', 'email')->ignore($userId),
             ],
             'phone' => [
-                'required',
+                'nullable',
                 'string',
                 'max:30',
                 Rule::unique('users', 'phone')->ignore($userId),

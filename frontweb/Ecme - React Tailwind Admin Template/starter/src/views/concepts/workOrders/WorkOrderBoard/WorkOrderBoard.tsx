@@ -25,7 +25,7 @@ const WorkOrderBoard = () => {
     const navigate = useNavigate()
     const { t } = useTranslation()
     const userAuthority = useSessionUser((state) => state.user.authority)
-    const canCreate = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager', 'technician'])
+    const canCreate = useAuthority(userAuthority, ['work_orders.write', 'admin', 'manager'])
 
     const { columns, setColumns, moveCard } = useWorkOrderBoardStore()
 

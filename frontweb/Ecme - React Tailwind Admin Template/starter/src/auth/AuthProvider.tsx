@@ -3,6 +3,7 @@ import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
 import { useSessionUser, useToken } from '@/store/authStore'
 import { useLocaleStore } from '@/store/localeStore'
+import { usGenerativeChatStore } from '@/views/concepts/ai/Chat/store/generativeChatStore'
 import { apiSignIn, apiSignOut, apiSignUp } from '@/services/AuthService'
 import {
     CURRENT_COMPANY_ID_KEY,
@@ -81,6 +82,10 @@ const mapBackendUser = (
         ? ['superadmin']
         : Array.from(new Set(['user', ...roleCodes, ...permissionCodes]))
 
+    const companyApprovalStatus = backendUser.is_superadmin
+        ? null
+        : (selectedMembership?.company?.approval_status ?? null)
+
     return {
         userId: String(backendUser.id),
         avatar: backendUser.avatar_url || backendUser.avatar_path,
@@ -90,6 +95,7 @@ const mapBackendUser = (
         isSuperadmin: backendUser.is_superadmin,
         authority,
         memberId: selectedMembership?.member_id ?? null,
+        companyApprovalStatus,
     }
 }
 
@@ -157,6 +163,9 @@ function AuthProvider({ children }: AuthProviderProps) {
         if (user) {
             setUser(user)
         }
+
+        // Reload chat history for the newly signed-in user
+        setTimeout(() => usGenerativeChatStore.persist.rehydrate(), 0)
     }
 
     const handleSignOut = () => {
@@ -174,6 +183,9 @@ function AuthProvider({ children }: AuthProviderProps) {
             memberId: null,
         })
         setSessionSignedIn(false)
+
+        // Clear chat history from memory after sign-out (localStorage key switches to 'anonymous')
+        setTimeout(() => usGenerativeChatStore.persist.rehydrate(), 0)
     }
 
     const signIn = async (values: SignInCredential): AuthResult => {

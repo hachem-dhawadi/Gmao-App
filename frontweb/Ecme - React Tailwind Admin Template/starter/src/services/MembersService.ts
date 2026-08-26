@@ -62,7 +62,7 @@ export type ChatMember = {
 }
 
 export async function apiGetMembersForChat() {
-    return ApiService.fetchDataWithAxios<{ members: ChatMember[] }>({
+    return ApiService.fetchDataWithAxios<{ success: boolean; data: { members: ChatMember[] } }>({
         url: '/members/for-chat',
         method: 'get',
     })

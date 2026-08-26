@@ -2,10 +2,21 @@ import { useState, useEffect, useCallback } from 'react'
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 import {
     apiGetNotifications, apiMarkNotificationRead,
     apiMarkAllNotificationsRead, type AppNotification,
 } from '@/services/NotificationService'
+
+function resolveRoute(n: AppNotification): string | null {
+    const d = n.data ?? {}
+    if (d.wo_id)      return `/app/work-orders/${d.wo_id}`
+    if (d.pm_id)      return `/app/pm-plans/${d.pm_id}`
+    if (d.request_id) return `/app/maintenance-requests`
+    if (d.item_id)    return `/app/inventory`
+    if (d.po_id)      return `/app/purchasing`
+    return null
+}
 
 function relativeTime(dateStr: string | null): string {
     if (!dateStr) return ''
@@ -35,12 +46,16 @@ function iconForType(type: string): { name: string; bg: string; color: string } 
 }
 
 function NotifItem({ item, onRead }: { item: AppNotification; onRead: (id: number) => void }) {
-    const ic = iconForType(item.type)
+    const ic    = iconForType(item.type)
+    const route = resolveRoute(item)
     return (
         <TouchableOpacity
             style={[styles.item, !item.read && styles.itemUnread]}
             activeOpacity={0.75}
-            onPress={() => onRead(item.id)}
+            onPress={() => {
+                onRead(item.id)
+                if (route) router.push(route as never)
+            }}
         >
             <View style={[styles.iconWrap, { backgroundColor: ic.bg }]}>
                 <Ionicons name={ic.name as never} size={20} color={ic.color} />

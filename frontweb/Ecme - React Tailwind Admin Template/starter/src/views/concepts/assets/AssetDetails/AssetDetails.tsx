@@ -376,7 +376,10 @@ const AssetDetails = () => {
     )
 
     const cfg = data ? (statusConfig[data.status] ?? statusConfig.active) : null
-    const photos = data?.images ?? []
+    const _backendBase = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '')
+    const photos = (data?.images ?? []).map((url) => {
+        try { return `${_backendBase}${new URL(url).pathname}` } catch { return url }
+    })
     const fmt = (d: string | null | undefined) =>
         d ? dayjs(d).format('DD MMM YYYY') : '—'
 

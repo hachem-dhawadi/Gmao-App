@@ -48,6 +48,7 @@ const initialState: AuthState = {
         authority: [],
         isSuperadmin: false,
         phone: null,
+        companyApprovalStatus: null,
     },
 }
 

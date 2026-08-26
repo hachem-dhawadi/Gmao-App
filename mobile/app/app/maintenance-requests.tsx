@@ -12,6 +12,7 @@ import {
     apiGetRequests, apiCreateRequest,
     type MaintenanceRequest,
 } from '@/services/RequestsService'
+import { router } from 'expo-router'
 import { apiGetAssets, type Asset } from '@/services/AssetsService'
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -548,64 +549,98 @@ function DetailContent({ req, onClose }: { req: MaintenanceRequest; onClose: () 
     const sm = STATUS_META[req.status]     ?? STATUS_META.pending
     const pm = PRIORITY_META[req.priority] ?? PRIORITY_META.medium
 
+    const infoRows = [
+        req.created_at && {
+            icon: 'calendar-outline', label: 'Submitted',
+            value: new Date(req.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        },
+        req.asset && { icon: 'cube-outline', label: 'Asset', value: `${req.asset.code} — ${req.asset.name}` },
+        (!req.asset && req.location) && { icon: 'location-outline', label: 'Location', value: req.location },
+        req.requested_by && { icon: 'person-outline', label: 'Requested by', value: req.requested_by.name ?? '—' },
+        req.reviewed_by  && { icon: 'shield-checkmark-outline', label: 'Reviewed by', value: req.reviewed_by.name ?? '—' },
+    ].filter(Boolean) as { icon: string; label: string; value: string }[]
+
     return (
         <>
             <View style={s.handle} />
-            <View style={s.sheetTitleRow}>
-                <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text style={s.sheetCode}>{req.code}</Text>
-                    <Text style={s.sheetTitle} numberOfLines={2}>{req.title}</Text>
+
+            {/* Header */}
+            <View style={s.dHeader}>
+                <View style={s.dHeaderLeft}>
+                    <Text style={s.dCode}>{req.code}</Text>
+                    <Text style={s.dTitle} numberOfLines={2}>{req.title}</Text>
+                    <View style={s.dBadgeRow}>
+                        <View style={[s.statusPill, { backgroundColor: sm.bg }]}>
+                            <View style={[s.statusDot, { backgroundColor: sm.dot }]} />
+                            <Text style={[s.statusText, { color: sm.text }]}>{sm.label}</Text>
+                        </View>
+                        <View style={[s.priorityBadge, { backgroundColor: pm.bg }]}>
+                            <Text style={[s.priorityText, { color: pm.text }]}>{pm.label}</Text>
+                        </View>
+                    </View>
                 </View>
-                <Pressable style={s.closeBtn} onPress={onClose} hitSlop={10}>
+                <Pressable style={s.closeBtn} onPress={onClose} hitSlop={12}>
                     <Ionicons name="close" size={18} color="#555" />
                 </Pressable>
             </View>
 
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-                    <View style={[s.statusPill, { backgroundColor: sm.bg }]}>
-                        <View style={[s.statusDot, { backgroundColor: sm.dot }]} />
-                        <Text style={[s.statusText, { color: sm.text }]}>{sm.label}</Text>
-                    </View>
-                    <View style={[s.priorityBadge, { backgroundColor: pm.bg }]}>
-                        <Text style={[s.priorityText, { color: pm.text }]}>{pm.label}</Text>
-                    </View>
-                </View>
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
 
+                {/* Description */}
                 {req.description && (
-                    <Text style={s.detailDesc}>{req.description}</Text>
+                    <View style={s.dDescCard}>
+                        <Text style={s.dDescText}>{req.description}</Text>
+                    </View>
                 )}
 
-                <View style={s.divider} />
-
-                <DetailRow icon="calendar-outline" label="Submitted"
-                    value={new Date(req.created_at ?? '').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} />
-                {req.asset     && <DetailRow icon="cube-outline"              label="Asset"        value={`${req.asset.code} — ${req.asset.name}`} />}
-                {!req.asset && req.location && <DetailRow icon="location-outline" label="Location" value={req.location} />}
-                {req.requested_by && <DetailRow icon="person-outline"         label="Requested by" value={req.requested_by.name ?? '—'} />}
-                {req.reviewed_by  && <DetailRow icon="shield-checkmark-outline" label="Reviewed by" value={req.reviewed_by.name ?? '—'} />}
-                {req.work_order   && <DetailRow icon="construct-outline"      label="Work Order"   value={req.work_order.code} accent="#059669" />}
-
-                {req.review_note && (
-                    <View style={s.reviewNote}>
-                        <Text style={s.reviewNoteLabel}>Review Note</Text>
-                        <Text style={s.reviewNoteText}>{req.review_note}</Text>
+                {/* Info rows card */}
+                {infoRows.length > 0 && (
+                    <View style={s.dInfoCard}>
+                        {infoRows.map((row, i) => (
+                            <View key={row.label} style={[s.dInfoRow, i > 0 && s.dInfoRowBorder]}>
+                                <View style={s.dInfoIcon}>
+                                    <Ionicons name={row.icon as never} size={16} color="#888" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={s.dInfoLabel}>{row.label}</Text>
+                                    <Text style={s.dInfoValue}>{row.value}</Text>
+                                </View>
+                            </View>
+                        ))}
                     </View>
+                )}
+
+                {/* Review note */}
+                {req.review_note && (
+                    <View style={s.dReviewNote}>
+                        <View style={s.dReviewNoteHead}>
+                            <Ionicons name="chatbox-outline" size={14} color="#a16207" />
+                            <Text style={s.dReviewNoteLabel}>Review Note</Text>
+                        </View>
+                        <Text style={s.dReviewNoteText}>{req.review_note}</Text>
+                    </View>
+                )}
+
+                {/* View WO button */}
+                {req.work_order && (
+                    <Pressable
+                        onPress={() => { onClose(); router.push(`/app/work-orders/${req.work_order!.id}` as never) }}
+                        style={({ pressed }) => [s.viewWoBtn, pressed && { opacity: 0.82 }]}
+                    >
+                        <View style={s.viewWoBtnIcon}>
+                            <Ionicons name="construct-outline" size={18} color="#059669" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={s.viewWoBtnLabel}>Work Order Created</Text>
+                            <Text style={s.viewWoBtnCode}>{req.work_order.code}</Text>
+                        </View>
+                        <View style={s.viewWoBtnArrow}>
+                            <Ionicons name="arrow-forward" size={16} color="#fff" />
+                        </View>
+                    </Pressable>
                 )}
             </ScrollView>
         </>
-    )
-}
-
-function DetailRow({ icon, label, value, accent }: { icon: string; label: string; value: string; accent?: string }) {
-    return (
-        <View style={s.detailRow}>
-            <Ionicons name={icon as never} size={16} color={accent ?? '#bbb'} style={{ marginTop: 1 }} />
-            <View style={{ flex: 1 }}>
-                <Text style={s.detailRowLabel}>{label}</Text>
-                <Text style={[s.detailRowValue, accent ? { color: accent, fontWeight: '700' } : {}]}>{value}</Text>
-            </View>
-        </View>
     )
 }
 
@@ -737,13 +772,52 @@ const s = StyleSheet.create({
     },
     submitText: { fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: 0.2 },
 
-    /* Detail */
-    divider:        { height: 1, backgroundColor: '#f0f0f0', marginVertical: 16 },
-    detailDesc:     { fontSize: 14, color: '#666', lineHeight: 22 },
-    detailRow:      { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 14 },
-    detailRowLabel: { fontSize: 11, color: '#aaa', fontWeight: '600', letterSpacing: 0.5, marginBottom: 2 },
-    detailRowValue: { fontSize: 14, color: '#111', fontWeight: '500' },
-    reviewNote:     { backgroundColor: '#fef9c3', borderRadius: 12, padding: 14, marginTop: 4, marginBottom: 8 },
-    reviewNoteLabel:{ fontSize: 11, fontWeight: '700', color: '#a16207', marginBottom: 6, letterSpacing: 0.5 },
-    reviewNoteText: { fontSize: 14, color: '#713f12', lineHeight: 20 },
+    /* Detail sheet */
+    dHeader:      { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 4, marginBottom: 16 },
+    dHeaderLeft:  { flex: 1, marginRight: 12 },
+    dCode:        { fontSize: 11, fontWeight: '700', color: '#b0b8c1', letterSpacing: 1, marginBottom: 4 },
+    dTitle:       { fontSize: 19, fontWeight: '900', color: '#111', lineHeight: 26, marginBottom: 10 },
+    dBadgeRow:    { flexDirection: 'row', gap: 8 },
+
+    dDescCard: {
+        backgroundColor: '#f8f9fa', borderRadius: 14,
+        padding: 14, marginBottom: 12,
+        borderWidth: 1, borderColor: '#edf0f3',
+    },
+    dDescText: { fontSize: 14, color: '#555', lineHeight: 22 },
+
+    dInfoCard: {
+        backgroundColor: '#fff', borderRadius: 16,
+        borderWidth: 1, borderColor: '#edf0f3',
+        marginBottom: 12, overflow: 'hidden',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
+    },
+    dInfoRow:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13 },
+    dInfoRowBorder: { borderTopWidth: 1, borderTopColor: '#f5f5f5' },
+    dInfoIcon:      { width: 34, height: 34, borderRadius: 10, backgroundColor: '#f5f5f5', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+    dInfoLabel:     { fontSize: 11, color: '#aaa', fontWeight: '600', letterSpacing: 0.4, marginBottom: 2 },
+    dInfoValue:     { fontSize: 14, color: '#111', fontWeight: '600' },
+
+    dReviewNote: {
+        backgroundColor: '#fffbeb', borderRadius: 14,
+        padding: 14, marginBottom: 12,
+        borderWidth: 1, borderColor: '#fde68a',
+    },
+    dReviewNoteHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+    dReviewNoteLabel:{ fontSize: 12, fontWeight: '700', color: '#a16207', letterSpacing: 0.4 },
+    dReviewNoteText: { fontSize: 14, color: '#713f12', lineHeight: 21 },
+
+    viewWoBtn: {
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: '#fff', borderRadius: 16,
+        borderWidth: 1.5, borderColor: '#a7f3d0',
+        padding: 14, marginBottom: 4,
+        shadowColor: '#059669', shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1, shadowRadius: 6, elevation: 2,
+    },
+    viewWoBtnIcon:  { width: 40, height: 40, borderRadius: 12, backgroundColor: '#d1fae5', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+    viewWoBtnLabel: { fontSize: 11, color: '#6b7280', fontWeight: '600', letterSpacing: 0.3, marginBottom: 2 },
+    viewWoBtnCode:  { fontSize: 15, fontWeight: '800', color: '#059669' },
+    viewWoBtnArrow: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#059669', alignItems: 'center', justifyContent: 'center' },
 })

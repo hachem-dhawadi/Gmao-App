@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '@/constants/colors'
@@ -7,6 +7,14 @@ import { useAuthStore } from '@/store/authStore'
 import { apiLogout } from '@/services/AuthService'
 import { router } from 'expo-router'
 import AlertModal from '@/components/ui/AlertModal'
+import EditProfileModal from '@/components/ui/EditProfileModal'
+import ChangePasswordModal from '@/components/ui/ChangePasswordModal'
+import HelpCenterModal from '@/components/ui/HelpCenterModal'
+import FeedbackModal from '@/components/ui/FeedbackModal'
+import EmailPreferencesModal from '@/components/ui/EmailPreferencesModal'
+import NotificationsModal from '@/components/ui/NotificationsModal'
+import LanguageModal from '@/components/ui/LanguageModal'
+import AppearanceModal from '@/components/ui/AppearanceModal'
 
 type MenuItem = { icon: string; label: string; color?: string; onPress?: () => void }
 
@@ -42,8 +50,16 @@ function Section({ title, items }: { title: string; items: MenuItem[] }) {
 
 export default function ProfileScreen() {
     const { user, clearAuth } = useAuthStore()
-    const [modal,       setModal]      = useState<{ title: string; message: string; type: 'error' | 'success' | 'info'; onClose?: () => void } | null>(null)
-    const [signingOut,  setSigningOut] = useState(false)
+    const [modal,        setModal]       = useState<{ title: string; message: string; type: 'error' | 'success' | 'info'; onClose?: () => void } | null>(null)
+    const [signingOut,   setSigningOut]  = useState(false)
+    const [editProfile,  setEditProfile] = useState(false)
+    const [changePwd,    setChangePwd]   = useState(false)
+    const [helpCenter,   setHelpCenter]  = useState(false)
+    const [feedback,     setFeedback]    = useState(false)
+    const [emailPrefs,   setEmailPrefs]  = useState(false)
+    const [notifs,       setNotifs]      = useState(false)
+    const [language,     setLanguage]    = useState(false)
+    const [appearance,   setAppearance]  = useState(false)
 
     const initials = (user?.name ?? '?')
         .split(' ')
@@ -51,6 +67,11 @@ export default function ProfileScreen() {
         .join('')
         .slice(0, 2)
         .toUpperCase()
+
+    const API_BASE = (process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.43.163:8000/api/v1').replace('/api/v1', '')
+    const avatarUrl = user?.avatar
+        ? (user.avatar.startsWith('http') ? user.avatar : `${API_BASE}${user.avatar}`)
+        : null
 
     const roleLabel = (user?.roles?.[0] ?? 'user').charAt(0).toUpperCase() + (user?.roles?.[0] ?? 'user').slice(1)
 
@@ -81,6 +102,54 @@ export default function ProfileScreen() {
                 onClose={() => { modal?.onClose ? modal.onClose() : setModal(null) }}
             />
 
+            <EditProfileModal
+                visible={editProfile}
+                onClose={() => setEditProfile(false)}
+                onSuccess={() => {
+                    setEditProfile(false)
+                    setModal({ title: 'Profile Updated', message: 'Your profile has been updated successfully.', type: 'success' })
+                }}
+            />
+
+            <ChangePasswordModal
+                visible={changePwd}
+                onClose={() => setChangePwd(false)}
+                onSuccess={() => {
+                    setChangePwd(false)
+                    setModal({ title: 'Password Changed', message: 'Your password has been updated successfully.', type: 'success' })
+                }}
+            />
+
+            <HelpCenterModal
+                visible={helpCenter}
+                onClose={() => setHelpCenter(false)}
+            />
+
+            <FeedbackModal
+                visible={feedback}
+                onClose={() => setFeedback(false)}
+            />
+
+            <EmailPreferencesModal
+                visible={emailPrefs}
+                onClose={() => setEmailPrefs(false)}
+            />
+
+            <NotificationsModal
+                visible={notifs}
+                onClose={() => setNotifs(false)}
+            />
+
+            <LanguageModal
+                visible={language}
+                onClose={() => setLanguage(false)}
+            />
+
+            <AppearanceModal
+                visible={appearance}
+                onClose={() => setAppearance(false)}
+            />
+
             {/* Sign-out loading overlay */}
             <Modal visible={signingOut} transparent animationType="fade" statusBarTranslucent>
                 <View style={s.overlay}>
@@ -104,7 +173,11 @@ export default function ProfileScreen() {
                 <View style={s.heroCard}>
                     <View style={s.avatarOuter}>
                         <View style={s.avatarInner}>
-                            <Text style={s.avatarText}>{initials}</Text>
+                            {avatarUrl ? (
+                                <Image source={{ uri: avatarUrl }} style={s.avatarImage} />
+                            ) : (
+                                <Text style={s.avatarText}>{initials}</Text>
+                            )}
                         </View>
                         <View style={s.onlineDot} />
                     </View>
@@ -120,9 +193,9 @@ export default function ProfileScreen() {
                 <Section
                     title="Account"
                     items={[
-                        { icon: 'person-outline',      label: 'Edit Profile'      },
-                        { icon: 'lock-closed-outline', label: 'Change Password'   },
-                        { icon: 'mail-outline',        label: 'Email Preferences' },
+                        { icon: 'person-outline',      label: 'Edit Profile',    onPress: () => setEditProfile(true) },
+                        { icon: 'lock-closed-outline', label: 'Change Password', onPress: () => setChangePwd(true)  },
+                        { icon: 'mail-outline',        label: 'Email Preferences', onPress: () => setEmailPrefs(true) },
                     ]}
                 />
 
@@ -130,9 +203,9 @@ export default function ProfileScreen() {
                 <Section
                     title="App Settings"
                     items={[
-                        { icon: 'notifications-outline', label: 'Notifications' },
-                        { icon: 'language-outline',      label: 'Language'      },
-                        { icon: 'moon-outline',          label: 'Appearance'    },
+                        { icon: 'notifications-outline', label: 'Notifications', onPress: () => setNotifs(true)     },
+                        { icon: 'language-outline',      label: 'Language',      onPress: () => setLanguage(true)   },
+                        { icon: 'moon-outline',          label: 'Appearance',    onPress: () => setAppearance(true) },
                     ]}
                 />
 
@@ -140,8 +213,8 @@ export default function ProfileScreen() {
                 <Section
                     title="Support"
                     items={[
-                        { icon: 'help-circle-outline', label: 'Help Center'   },
-                        { icon: 'chatbubble-outline',  label: 'Send Feedback' },
+                        { icon: 'help-circle-outline', label: 'Help Center',   onPress: () => setHelpCenter(true) },
+                        { icon: 'chatbubble-outline',  label: 'Send Feedback', onPress: () => setFeedback(true)   },
                     ]}
                 />
 
@@ -203,7 +276,8 @@ const s = StyleSheet.create({
         alignItems:      'center',
         justifyContent:  'center',
     },
-    avatarText: { fontSize: 30, fontWeight: '800', color: '#fff' },
+    avatarText:  { fontSize: 30, fontWeight: '800', color: '#fff' },
+    avatarImage: { width: 88, height: 88, borderRadius: 44 },
     onlineDot: {
         position:        'absolute',
         bottom:          4,

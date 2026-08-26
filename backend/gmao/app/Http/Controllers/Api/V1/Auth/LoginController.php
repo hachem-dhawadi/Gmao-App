@@ -268,7 +268,7 @@ class LoginController extends Controller
         $user->forceFill([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'phone' => array_key_exists('phone', $validated) ? ($validated['phone'] ?: null) : $user->phone,
             'locale' => $validated['locale'] ?? $user->locale,
             'avatar_path' => $validated['avatar_path'] ?? $user->avatar_path,
         ])->save();

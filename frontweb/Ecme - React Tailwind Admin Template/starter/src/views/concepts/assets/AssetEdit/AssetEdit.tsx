@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Container from '@/components/shared/Container'
+
+const _backendBase = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '')
+const fixImgUrl = (url: string): string => {
+    try { return `${_backendBase}${new URL(url).pathname}` } catch { return url }
+}
 import Button from '@/components/ui/Button'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
@@ -67,7 +72,11 @@ const AssetEdit = () => {
                 if (img.file) {
                     fd.append('images[]', img.file)
                 } else {
-                    fd.append('existing_images[]', img.img)
+                    try {
+                        fd.append('existing_images[]', new URL(img.img).pathname)
+                    } catch {
+                        fd.append('existing_images[]', img.img)
+                    }
                 }
             })
 
@@ -161,7 +170,7 @@ const AssetEdit = () => {
               imgList: data.images?.map((url, i) => ({
                   id: `existing-${i}`,
                   name: url.split('/').pop() || 'image',
-                  img: url,
+                  img: fixImgUrl(url),
               })) ?? [],
           }
         : {}

@@ -32,7 +32,7 @@ const NewChat = ({ onCreated }: Props) => {
         if (!open) return
         setLoading(true)
         apiGetMembersForChat()
-            .then((resp) => setMembers(resp.members ?? []))
+            .then((resp) => setMembers(resp.data?.members ?? []))
             .finally(() => setLoading(false))
     }, [open])
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef, memo } from 'react'
 import {
     View, Text, StyleSheet, FlatList, TextInput,
-    RefreshControl, ActivityIndicator, Pressable, Animated, ScrollView,
+    RefreshControl, ActivityIndicator, Pressable, Animated, ScrollView, Dimensions,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -131,6 +131,151 @@ const WOCard = memo(function WOCard({ item }: { item: WorkOrder }) {
     )
 })
 
+// ── Kanban Board ──────────────────────────────────────────────────────────────
+
+const COL_W = Dimensions.get('window').width * 0.74
+
+const KANBAN_COLS = [
+    { key: 'open',             label: 'Open',         color: '#2a85ff' },
+    { key: 'pending_approval', label: 'Pending',      color: '#8b5cf6' },
+    { key: 'in_progress',      label: 'In Progress',  color: '#f59e0b' },
+    { key: 'on_hold',          label: 'On Hold',      color: '#9ca3af' },
+    { key: 'completed',        label: 'Completed',    color: '#10b981' },
+    { key: 'cancelled',        label: 'Cancelled',    color: '#ff6a55' },
+    { key: 'rejected',         label: 'Rejected',     color: '#dc2626' },
+]
+
+const KanbanCard = memo(function KanbanCard({ item }: { item: WorkOrder }) {
+    const pc      = PriorityColors[item.priority] ?? PriorityColors.medium
+    const due     = formatDate(item.due_at)
+    const overdue = isOverdue(item)
+
+    return (
+        <TouchableOpacity
+            style={[kb.card, { borderLeftColor: pc.text }]}
+            activeOpacity={0.75}
+            onPress={() => router.push(`/app/work-orders/${item.id}` as never)}
+        >
+            <Text style={kb.code}>{item.code}</Text>
+            <Text style={kb.title} numberOfLines={2}>{item.title}</Text>
+            {item.asset && (
+                <View style={kb.assetRow}>
+                    <Ionicons name="hardware-chip-outline" size={10} color="#b0b8c1" />
+                    <Text style={kb.assetText} numberOfLines={1}>{item.asset.name}</Text>
+                </View>
+            )}
+            <View style={kb.foot}>
+                {overdue ? (
+                    <View style={kb.overduePill}>
+                        <Ionicons name="warning" size={10} color="#ff6a55" />
+                        <Text style={kb.overdueText}>Overdue</Text>
+                    </View>
+                ) : due ? (
+                    <Text style={kb.dueText}>{due}</Text>
+                ) : (
+                    <View style={[kb.priorityPill, { backgroundColor: pc.bg }]}>
+                        <Text style={[kb.priorityText, { color: pc.text }]}>
+                            {item.priority.charAt(0).toUpperCase() + item.priority.slice(1)}
+                        </Text>
+                    </View>
+                )}
+                {item.assigned_member && (
+                    <View style={[kb.avatar, { backgroundColor: avatarColor(item.assigned_member.id) }]}>
+                        <Text style={kb.avatarText}>
+                            {(item.assigned_member.name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                        </Text>
+                    </View>
+                )}
+            </View>
+        </TouchableOpacity>
+    )
+})
+
+function KanbanBoard({ workOrders }: { workOrders: WorkOrder[] }) {
+    const grouped = useMemo(() => {
+        const map: Record<string, WorkOrder[]> = {}
+        for (const col of KANBAN_COLS) map[col.key] = []
+        for (const wo of workOrders) {
+            if (map[wo.status]) map[wo.status].push(wo)
+        }
+        return map
+    }, [workOrders])
+
+    return (
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={kb.board}
+        >
+            {KANBAN_COLS.map(col => {
+                const items = grouped[col.key] ?? []
+                return (
+                    <View key={col.key} style={[kb.col, { width: COL_W }]}>
+                        <View style={kb.colHeader}>
+                            <View style={[kb.colDot, { backgroundColor: col.color }]} />
+                            <Text style={kb.colLabel}>{col.label}</Text>
+                            <View style={kb.colBadge}>
+                                <Text style={kb.colBadgeText}>{items.length}</Text>
+                            </View>
+                        </View>
+                        {items.length === 0 ? (
+                            <View style={kb.emptyCol}>
+                                <Text style={kb.emptyColText}>No items</Text>
+                            </View>
+                        ) : (
+                            items.map(wo => <KanbanCard key={wo.id} item={wo} />)
+                        )}
+                    </View>
+                )
+            })}
+        </ScrollView>
+    )
+}
+
+const kb = StyleSheet.create({
+    board: { paddingHorizontal: 12, paddingVertical: 16, gap: 10, alignItems: 'flex-start' },
+    col:   { marginRight: 0 },
+    colHeader: {
+        flexDirection: 'row', alignItems: 'center', gap: 7,
+        marginBottom: 10, paddingHorizontal: 2,
+    },
+    colDot:       { width: 8, height: 8, borderRadius: 4 },
+    colLabel:     { fontSize: 13, fontWeight: '800', color: '#333', flex: 1 },
+    colBadge:     { backgroundColor: '#f0f0f0', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+    colBadgeText: { fontSize: 11, fontWeight: '700', color: '#888' },
+    emptyCol: {
+        height: 72, borderRadius: 12,
+        borderWidth: 1, borderStyle: 'dashed', borderColor: '#dde2e8',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    emptyColText: { fontSize: 12, color: '#ccc' },
+    card: {
+        backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8,
+        borderLeftWidth: 3, borderWidth: 1, borderColor: '#edf0f3',
+        shadowColor: '#101828', shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
+    },
+    code:  { fontSize: 10, fontWeight: '700', color: '#b0b8c1', letterSpacing: 0.5, marginBottom: 4 },
+    title: { fontSize: 13, fontWeight: '700', color: '#111', lineHeight: 19, marginBottom: 6 },
+    assetRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
+    assetText:{ fontSize: 11, color: '#b0b8c1', flex: 1 },
+    foot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    overduePill: {
+        flexDirection: 'row', alignItems: 'center', gap: 3,
+        backgroundColor: '#ff6a5512', paddingHorizontal: 6, paddingVertical: 3, borderRadius: 16,
+    },
+    overdueText:  { fontSize: 10, fontWeight: '700', color: '#ff6a55' },
+    dueText:      { fontSize: 11, color: '#b0b8c1', fontWeight: '500' },
+    priorityPill: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 16 },
+    priorityText: { fontSize: 10, fontWeight: '700' },
+    avatar: {
+        width: 22, height: 22, borderRadius: 11,
+        alignItems: 'center', justifyContent: 'center',
+        borderWidth: 1.5, borderColor: '#fff',
+    },
+    avatarText: { fontSize: 8, fontWeight: '800', color: '#fff' },
+})
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function WorkOrdersScreen() {
@@ -161,6 +306,7 @@ export default function WorkOrdersScreen() {
     const [filter,      setFilter]      = useState<FilterState>(DEFAULT_FILTER)
     const [localFilter, setLocalFilter] = useState<FilterState>(DEFAULT_FILTER)
     const [filterOpen,  setFilterOpen]  = useState(false)
+    const [viewMode,    setViewMode]    = useState<'list' | 'board'>('list')
 
     const slideAnim    = useRef(new Animated.Value(700)).current
     const backdropAnim = useRef(new Animated.Value(0)).current
@@ -262,13 +408,26 @@ export default function WorkOrdersScreen() {
                         </Text>
                     )}
                 </View>
-                <TouchableOpacity
-                    style={s.addBtn}
-                    onPress={() => router.push('/app/work-orders/create' as never)}
-                    activeOpacity={0.85}
-                >
-                    <Ionicons name="add" size={22} color="#fff" />
-                </TouchableOpacity>
+                <View style={s.headerActions}>
+                    <TouchableOpacity
+                        style={[s.viewToggleBtn, viewMode === 'board' && s.viewToggleBtnActive]}
+                        onPress={() => setViewMode(v => v === 'list' ? 'board' : 'list')}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons
+                            name={viewMode === 'list' ? 'grid-outline' : 'list-outline'}
+                            size={19}
+                            color={viewMode === 'board' ? '#fff' : '#666'}
+                        />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={s.addBtn}
+                        onPress={() => router.push('/app/work-orders/create' as never)}
+                        activeOpacity={0.85}
+                    >
+                        <Ionicons name="add" size={22} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* ── Search + Filter ── */}
@@ -324,12 +483,19 @@ export default function WorkOrdersScreen() {
                 </ScrollView>
             </View>
 
-            {/* ── List ── */}
+            {/* ── List or Board ── */}
             {loading ? (
                 <View style={s.loadingWrap}>
                     <ActivityIndicator size="large" color="#111" />
                     <Text style={s.loadingText}>Loading…</Text>
                 </View>
+            ) : viewMode === 'board' ? (
+                <ScrollView
+                    style={{ flex: 1 }}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111" />}
+                >
+                    <KanbanBoard workOrders={filtered} />
+                </ScrollView>
             ) : (
                 <FlatList
                     data={filtered}
@@ -471,6 +637,12 @@ const s = StyleSheet.create({
     },
     headerTitle: { fontSize: 22, fontWeight: '900', color: '#111', letterSpacing: -0.3 },
     headerSub:   { fontSize: 12, color: '#aaa', fontWeight: '500', marginTop: 1 },
+    headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    viewToggleBtn: {
+        width: 40, height: 40, borderRadius: 12,
+        backgroundColor: '#f4f6f8', alignItems: 'center', justifyContent: 'center',
+    },
+    viewToggleBtnActive: { backgroundColor: '#111' },
     addBtn: {
         width: 40, height: 40, borderRadius: 12, backgroundColor: '#111',
         alignItems: 'center', justifyContent: 'center',

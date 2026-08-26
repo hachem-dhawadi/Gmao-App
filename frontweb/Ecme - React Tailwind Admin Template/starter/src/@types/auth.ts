@@ -193,6 +193,7 @@ export type User = {
     isSuperadmin?: boolean
     phone?: string | null
     memberId?: number | null
+    companyApprovalStatus?: 'pending' | 'approved' | 'rejected' | null
 }
 
 export type Token = {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     ActivityIndicator, TextInput, RefreshControl, KeyboardAvoidingView, Platform, Modal,
-    Pressable, FlatList,
+    Pressable, FlatList, Share,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -12,20 +12,24 @@ import * as DocumentPicker from 'expo-document-picker'
 import { StatusColors, PriorityColors } from '@/constants/colors'
 import {
     apiGetWorkOrder, apiUpdateWorkOrder, apiAddWorkOrderComment,
-    apiToggleChecklistItem, apiAddWorkLog, apiUpdateWorkLog, apiDeleteWorkLog,
+    apiToggleChecklistItem, apiAddChecklistItem, apiDeleteChecklistItem,
+    apiAddWorkLog, apiUpdateWorkLog, apiDeleteWorkLog,
     apiAddWoAttachment, apiDeleteWoAttachment,
     apiApproveWorkOrder, apiRejectWorkOrder,
-    apiGetWoParts, apiRecordWoPart,
-    type WorkOrder, type WorkLog, type WorkOrderAttachment, type WoPart,
+    apiArchiveWorkOrder, apiUnarchiveWorkOrder,
+    apiGetWoParts, apiRecordWoPart, apiGetWoActivities,
+    type WorkOrder, type WorkLog, type WorkOrderAttachment, type WoPart, type WoActivity,
 } from '@/services/WorkOrdersService'
 import { apiGetItems, apiGetItem, type InventoryItem } from '@/services/InventoryService'
+import { apiGetAssets, type Asset } from '@/services/AssetsService'
+import { apiGetMembers, type Member } from '@/services/MembersService'
 import { useAuthStore } from '@/store/authStore'
 import AlertModal from '@/components/ui/AlertModal'
 
 const STATUS_ACTIONS: Record<string, { label: string; next: string; bg: string }[]> = {
-    open:             [{ label: 'Start Work',  next: 'in_progress', bg: '#111'     }],
-    in_progress:      [{ label: 'Put On Hold', next: 'on_hold',     bg: '#f59e0b' }, { label: 'Complete', next: 'completed', bg: '#10b981' }],
-    on_hold:          [{ label: 'Resume',      next: 'in_progress', bg: '#111'     }],
+    open:             [{ label: 'Start Work',  next: 'in_progress', bg: '#111'     }, { label: 'Cancel', next: 'cancelled', bg: '#ef4444' }],
+    in_progress:      [{ label: 'Put On Hold', next: 'on_hold',     bg: '#f59e0b' }, { label: 'Complete', next: 'completed', bg: '#10b981' }, { label: 'Cancel', next: 'cancelled', bg: '#ef4444' }],
+    on_hold:          [{ label: 'Resume',      next: 'in_progress', bg: '#111'     }, { label: 'Cancel', next: 'cancelled', bg: '#ef4444' }],
     completed:        [],
     cancelled:        [],
     pending_approval: [],
@@ -109,7 +113,7 @@ export default function WorkOrderDetail() {
     const [wo,          setWo]          = useState<WorkOrder | null>(null)
     const [loading,     setLoading]     = useState(true)
     const [refreshing,  setRefreshing]  = useState(false)
-    const [activeTab,   setActiveTab]   = useState<'details' | 'comments' | 'parts' | 'work-logs' | 'attachments'>('details')
+    const [activeTab,   setActiveTab]   = useState<'details' | 'comments' | 'parts' | 'work-logs' | 'attachments' | 'activity'>('details')
     const [commentText, setCommentText] = useState('')
     const [submitting,  setSubmitting]  = useState(false)
     const [modal, setModal] = useState<{
@@ -157,11 +161,47 @@ export default function WorkOrderDetail() {
     const [rootCausePickerOpen,   setRootCausePickerOpen]   = useState(false)
 
     // Approve / Reject
-    const canApprove = useAuthStore(st => st.user?.roles?.some(r => ['admin', 'manager'].includes(r)) ?? false)
+    const canApprove  = useAuthStore(st => st.user?.roles?.some(r => ['admin', 'manager'].includes(r)) ?? false)
+    const myMemberId  = useAuthStore(st => st.user?.memberId)
     const [approving,     setApproving]     = useState(false)
     const [rejecting,     setRejecting]     = useState(false)
     const [rejectOpen,    setRejectOpen]    = useState(false)
     const [rejectReason,  setRejectReason]  = useState('')
+
+    // Description edit
+    const [descEditing, setDescEditing] = useState(false)
+    const [descDraft,   setDescDraft]   = useState('')
+    const [savingDesc,  setSavingDesc]  = useState(false)
+
+    // Archive
+    const [archiving, setArchiving] = useState(false)
+
+    // Checklist add
+    const [checklistInput,  setChecklistInput]  = useState('')
+    const [addingChecklist, setAddingChecklist] = useState(false)
+
+    // Activities
+    const [activities,        setActivities]        = useState<WoActivity[]>([])
+    const [activitiesLoaded,  setActivitiesLoaded]  = useState(false)
+    const [loadingActivities, setLoadingActivities] = useState(false)
+
+    // Details edit (admin/manager only)
+    const [editDetailsOpen,      setEditDetailsOpen]      = useState(false)
+    const [editPriority,         setEditPriority]         = useState<string>('')
+    const [editDueAt,            setEditDueAt]            = useState<string>('')
+    const [editEstHours,         setEditEstHours]         = useState<string>('')
+    const [editEstMins,          setEditEstMins]          = useState<string>('')
+    const [editAsset,            setEditAsset]            = useState<{ id: number; name: string } | null>(null)
+    const [editAssignee,         setEditAssignee]         = useState<{ id: number; name: string | null } | null>(null)
+    const [savingDetails,        setSavingDetails]        = useState(false)
+    const [editAssetPickerOpen,  setEditAssetPickerOpen]  = useState(false)
+    const [editAssets,           setEditAssets]           = useState<Asset[]>([])
+    const [editAssetSearch,      setEditAssetSearch]      = useState('')
+    const [loadingEditAssets,    setLoadingEditAssets]    = useState(false)
+    const [editMemberPickerOpen, setEditMemberPickerOpen] = useState(false)
+    const [editMembers,          setEditMembers]          = useState<Member[]>([])
+    const [editMemberSearch,     setEditMemberSearch]     = useState('')
+    const [loadingEditMembers,   setLoadingEditMembers]   = useState(false)
 
     const load = useCallback(async () => {
         try {
@@ -169,6 +209,7 @@ export default function WorkOrderDetail() {
             setWo(res.data.data.work_order)
             setWorkLogs(res.data.data.work_order.work_logs ?? [])
             setAttachments(res.data.data.work_order.attachments ?? [])
+            setActivitiesLoaded(false)
         } catch {
             setModal({ title: 'Error', message: 'Could not load work order.', type: 'error' })
         } finally {
@@ -179,7 +220,11 @@ export default function WorkOrderDetail() {
 
     useEffect(() => { load() }, [load])
 
-    const onRefresh = () => { setRefreshing(true); load() }
+    const onRefresh = () => {
+        setRefreshing(true)
+        load()
+        if (activeTab === 'activity') loadActivities()
+    }
 
     const handleStatusChange = (next: string) => {
         setModal({
@@ -226,6 +271,44 @@ export default function WorkOrderDetail() {
                 ),
             } : prev)
         } catch {}
+    }
+
+    const handleAddChecklistItem = async () => {
+        if (!checklistInput.trim()) return
+        setAddingChecklist(true)
+        try {
+            const res = await apiAddChecklistItem(id, checklistInput.trim())
+            const newItem = res.data.data.item
+            setWo(prev => prev ? {
+                ...prev,
+                checklist_items: [...(prev.checklist_items ?? []), newItem],
+            } : prev)
+            setChecklistInput('')
+        } catch {
+            setModal({ title: 'Error', message: 'Could not add checklist item.', type: 'error' })
+        } finally {
+            setAddingChecklist(false)
+        }
+    }
+
+    const handleDeleteChecklistItem = (itemId: number) => {
+        setModal({
+            title:   'Remove Task',
+            message: 'Remove this checklist item?',
+            type:    'info',
+            onClose: async () => {
+                setModal(null)
+                try {
+                    await apiDeleteChecklistItem(id, itemId)
+                    setWo(prev => prev ? {
+                        ...prev,
+                        checklist_items: (prev.checklist_items ?? []).filter(i => i.id !== itemId),
+                    } : prev)
+                } catch {
+                    setModal({ title: 'Error', message: 'Could not delete item.', type: 'error' })
+                }
+            },
+        })
     }
 
     const openAddLog = () => {
@@ -368,9 +451,21 @@ export default function WorkOrderDetail() {
         }
     }
 
+    const loadActivities = async () => {
+        setLoadingActivities(true)
+        try {
+            const res = await apiGetWoActivities(id)
+            setActivities(res.data.data.activities)
+            setActivitiesLoaded(true)
+        } catch {} finally {
+            setLoadingActivities(false)
+        }
+    }
+
     const handleTabChange = (tab: typeof activeTab) => {
         setActiveTab(tab)
-        if (tab === 'parts' && !partsLoaded) loadParts()
+        if (tab === 'parts')    { if (!partsLoaded) loadParts() }
+        if (tab === 'activity') loadActivities()
     }
 
     const openAddPart = async () => {
@@ -463,6 +558,115 @@ export default function WorkOrderDetail() {
         }
     }
 
+    const handleSaveDesc = async () => {
+        setSavingDesc(true)
+        try {
+            const res = await apiUpdateWorkOrder(id, { description: descDraft.trim() || null })
+            setWo(res.data.data.work_order)
+            setDescEditing(false)
+        } catch {
+            setModal({ title: 'Error', message: 'Could not update description.', type: 'error' })
+        } finally {
+            setSavingDesc(false)
+        }
+    }
+
+    const openEditDetails = () => {
+        if (!wo) return
+        const totalMins = wo.estimated_minutes ?? 0
+        setEditPriority(wo.priority)
+        setEditDueAt(wo.due_at ? wo.due_at.substring(0, 10) : '')
+        setEditEstHours(totalMins > 0 ? String(Math.floor(totalMins / 60)) : '')
+        setEditEstMins(totalMins > 0 ? String(totalMins % 60) : '')
+        setEditAsset(wo.asset ? { id: wo.asset.id, name: wo.asset.name } : null)
+        setEditAssignee(wo.assigned_member ? { id: wo.assigned_member.id, name: wo.assigned_member.name } : null)
+        setEditDetailsOpen(true)
+    }
+
+    const handleSaveDetails = async () => {
+        if (!wo) return
+        setSavingDetails(true)
+        try {
+            const h = parseInt(editEstHours || '0') || 0
+            const m = parseInt(editEstMins  || '0') || 0
+            const totalMins = h * 60 + m
+            const res = await apiUpdateWorkOrder(id, {
+                priority:           editPriority,
+                due_at:             editDueAt.trim() || null,
+                estimated_minutes:  totalMins > 0 ? totalMins : null,
+                asset_id:           editAsset?.id ?? null,
+                assigned_member_id: editAssignee?.id ?? null,
+            })
+            setWo(res.data.data.work_order)
+            setEditDetailsOpen(false)
+        } catch {
+            setModal({ title: 'Error', message: 'Could not update details.', type: 'error' })
+        } finally {
+            setSavingDetails(false)
+        }
+    }
+
+    const openEditAssetPicker = () => {
+        setEditAssetSearch('')
+        setLoadingEditAssets(true)
+        apiGetAssets({ per_page: 300 })
+            .then(r => setEditAssets(r.data?.data?.assets ?? []))
+            .catch(() => setEditAssets([]))
+            .finally(() => setLoadingEditAssets(false))
+        setEditAssetPickerOpen(true)
+    }
+
+    const openEditMemberPicker = () => {
+        setEditMemberSearch('')
+        setLoadingEditMembers(true)
+        apiGetMembers({ per_page: 300 })
+            .then(r => setEditMembers(r.data?.data?.members ?? []))
+            .catch(() => setEditMembers([]))
+            .finally(() => setLoadingEditMembers(false))
+        setEditMemberPickerOpen(true)
+    }
+
+    const handleArchive = async () => {
+        setArchiving(true)
+        try {
+            await apiArchiveWorkOrder(id)
+            setWo(prev => prev ? { ...prev, archived_at: new Date().toISOString() } : prev)
+        } catch {
+            setModal({ title: 'Error', message: 'Could not archive work order.', type: 'error' })
+        } finally {
+            setArchiving(false)
+        }
+    }
+
+    const handleUnarchive = async () => {
+        setArchiving(true)
+        try {
+            await apiUnarchiveWorkOrder(id)
+            setWo(prev => prev ? { ...prev, archived_at: null } : prev)
+        } catch {
+            setModal({ title: 'Error', message: 'Could not unarchive work order.', type: 'error' })
+        } finally {
+            setArchiving(false)
+        }
+    }
+
+    const handleShare = async () => {
+        if (!wo) return
+        const lines = [
+            `Work Order: ${wo.code}`,
+            `Title: ${wo.title}`,
+            `Status: ${statusLabel(wo.status)}`,
+            `Priority: ${wo.priority.charAt(0).toUpperCase() + wo.priority.slice(1)}`,
+            wo.asset ? `Asset: ${wo.asset.name}` : null,
+            wo.assigned_member ? `Assigned to: ${wo.assigned_member.name}` : null,
+            wo.due_at ? `Due: ${formatDate(wo.due_at)}` : null,
+            wo.description ? `\nDescription:\n${wo.description}` : null,
+        ].filter(Boolean).join('\n')
+        try {
+            await Share.share({ message: lines, title: `WO ${wo.code}` })
+        } catch { /* user cancelled */ }
+    }
+
     const handleApprove = async () => {
         setApproving(true)
         try {
@@ -512,13 +716,14 @@ export default function WorkOrderDetail() {
         )
     }
 
-    const sc        = StatusColors[wo.status]    ?? StatusColors.open
-    const pc        = PriorityColors[wo.priority] ?? PriorityColors.medium
-    const actions   = STATUS_ACTIONS[wo.status]   ?? []
-    const overdue   = isOverdue(wo)
-    const comments  = wo.comments ?? []
-    const checklist = wo.checklist_items ?? []
-    const assignees = wo.assigned_member?.name || 'Unassigned'
+    const sc          = StatusColors[wo.status]    ?? StatusColors.open
+    const pc          = PriorityColors[wo.priority] ?? PriorityColors.medium
+    const actions     = STATUS_ACTIONS[wo.status]   ?? []
+    const overdue     = isOverdue(wo)
+    const comments    = wo.comments ?? []
+    const checklist   = wo.checklist_items ?? []
+    const assignees   = wo.assigned_member?.name || 'Unassigned'
+    const canEditDesc = canApprove || wo.assigned_member?.id === myMemberId
 
     return (
         <SafeAreaView style={s.safe} edges={['top']}>
@@ -572,7 +777,28 @@ export default function WorkOrderDetail() {
                     <Ionicons name="arrow-back" size={20} color="#444" />
                 </TouchableOpacity>
                 <Text style={s.headerCode}>{wo.code}</Text>
-                <View style={{ width: 36 }} />
+                <View style={s.hdrRight}>
+                    <TouchableOpacity style={s.hdrIcon} onPress={handleShare} activeOpacity={0.7}>
+                        <Ionicons name="share-outline" size={20} color="#666" />
+                    </TouchableOpacity>
+                    {canApprove && (
+                        <TouchableOpacity
+                            style={s.hdrIcon}
+                            onPress={wo.archived_at ? handleUnarchive : handleArchive}
+                            disabled={archiving}
+                            activeOpacity={0.7}
+                        >
+                            {archiving
+                                ? <ActivityIndicator size="small" color="#aaa" />
+                                : <Ionicons
+                                    name={wo.archived_at ? 'arrow-undo-outline' : 'archive-outline'}
+                                    size={18}
+                                    color={wo.archived_at ? '#10b981' : '#888'}
+                                />
+                            }
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
 
             <KeyboardAvoidingView style={s.flex} behavior="padding" keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}>
@@ -581,6 +807,14 @@ export default function WorkOrderDetail() {
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#111" />}
             >
+                {/* Archived banner */}
+                {wo.archived_at && (
+                    <View style={s.archivedBanner}>
+                        <Ionicons name="archive-outline" size={14} color="#d97706" />
+                        <Text style={s.archivedBannerText}>Archived · {formatDate(wo.archived_at)}</Text>
+                    </View>
+                )}
+
                 {/* Title section */}
                 <View style={s.titleSection}>
                     <View style={s.badgeRow}>
@@ -671,6 +905,7 @@ export default function WorkOrderDetail() {
                         { key: 'parts',       label: 'Parts'     },
                         { key: 'work-logs',   label: 'Work Logs' },
                         { key: 'attachments', label: 'Files'     },
+                        { key: 'activity',    label: 'Activity'  },
                     ] as const).map(t => (
                         <TouchableOpacity
                             key={t.key}
@@ -692,6 +927,12 @@ export default function WorkOrderDetail() {
                 {/* Details tab */}
                 {activeTab === 'details' && (
                     <View style={s.card}>
+                        {canApprove && (
+                            <TouchableOpacity style={s.editDetailsBtn} onPress={openEditDetails} activeOpacity={0.7}>
+                                <Ionicons name="create-outline" size={14} color="#2a85ff" />
+                                <Text style={s.editDetailsTxt}>Edit Details</Text>
+                            </TouchableOpacity>
+                        )}
                         {wo.asset && (
                             <>
                                 <InfoRow icon="cube-outline" label="Asset" value={wo.asset.name} />
@@ -701,6 +942,12 @@ export default function WorkOrderDetail() {
                         <InfoRow icon="person-outline"    label="Assigned to" value={assignees} />
                         <View style={s.divider} />
                         <InfoRow icon="calendar-outline"  label="Due date"    value={formatDate(wo.due_at)} />
+                        {wo.estimated_minutes != null && wo.estimated_minutes > 0 && (
+                            <>
+                                <View style={s.divider} />
+                                <InfoRow icon="time-outline" label="Est. Time" value={formatMinutes(wo.estimated_minutes)} />
+                            </>
+                        )}
                         <View style={s.divider} />
                         <InfoRow icon="create-outline"    label="Created"     value={formatDate(wo.created_at)} />
                         {wo.created_by && (
@@ -710,39 +957,114 @@ export default function WorkOrderDetail() {
                             </>
                         )}
 
-                        {wo.description ? (
+                        {(canEditDesc || wo.description) && (
                             <>
                                 <View style={[s.divider, { marginVertical: 14 }]} />
-                                <Text style={s.descLabel}>Description</Text>
-                                <Text style={s.descText}>{wo.description}</Text>
+                                <View style={s.descHeaderRow}>
+                                    <Text style={s.descLabel}>Description</Text>
+                                    {canEditDesc && !descEditing && (
+                                        <TouchableOpacity
+                                            style={s.descEditBtn}
+                                            onPress={() => { setDescDraft(wo.description ?? ''); setDescEditing(true) }}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name={wo.description ? 'pencil-outline' : 'add-outline'} size={13} color="#2a85ff" />
+                                            <Text style={s.descEditTxt}>{wo.description ? 'Edit' : 'Add'}</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
+                                {descEditing ? (
+                                    <View>
+                                        <TextInput
+                                            style={s.descEditInput}
+                                            value={descDraft}
+                                            onChangeText={setDescDraft}
+                                            multiline
+                                            autoFocus
+                                            placeholder="Add a description…"
+                                            placeholderTextColor="#ccc"
+                                        />
+                                        <View style={s.descEditActions}>
+                                            <TouchableOpacity style={s.descCancelBtn} onPress={() => setDescEditing(false)} activeOpacity={0.7}>
+                                                <Text style={s.descCancelTxt}>Cancel</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[s.descSaveBtn, savingDesc && { opacity: 0.6 }]}
+                                                onPress={handleSaveDesc}
+                                                disabled={savingDesc}
+                                                activeOpacity={0.8}
+                                            >
+                                                {savingDesc
+                                                    ? <ActivityIndicator size="small" color="#fff" />
+                                                    : <Text style={s.descSaveTxt}>Save</Text>
+                                                }
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                ) : (
+                                    <Text style={s.descText}>{wo.description || 'No description.'}</Text>
+                                )}
                             </>
-                        ) : null}
+                        )}
 
-                        {checklist.length > 0 && (
-                            <>
-                                <View style={[s.divider, { marginVertical: 14 }]} />
-                                <Text style={s.descLabel}>
-                                    Checklist ({checklist.filter(c => c.is_completed).length}/{checklist.length})
-                                </Text>
-                                {checklist.map(item => (
-                                    <TouchableOpacity
-                                        key={item.id}
-                                        style={s.checkRow}
-                                        onPress={() => handleToggleChecklist(item.id)}
-                                        activeOpacity={0.7}
-                                    >
+                        <>
+                            <View style={[s.divider, { marginVertical: 14 }]} />
+                            <Text style={s.descLabel}>
+                                Checklist{checklist.length > 0 ? ` (${checklist.filter(c => c.is_completed).length}/${checklist.length})` : ''}
+                            </Text>
+                            {checklist.length === 0 && (
+                                <Text style={s.failureEmpty}>No tasks yet. Add one below.</Text>
+                            )}
+                            {checklist.map(item => (
+                                <View key={item.id} style={s.checkRow}>
+                                    <TouchableOpacity onPress={() => handleToggleChecklist(item.id)} activeOpacity={0.7}>
                                         <Ionicons
                                             name={item.is_completed ? 'checkmark-circle' : 'ellipse-outline'}
                                             size={20}
                                             color={item.is_completed ? '#10b981' : '#ccc'}
                                         />
-                                        <Text style={[s.checkText, item.is_completed && s.checkTextDone]}>
-                                            {item.title}
-                                        </Text>
                                     </TouchableOpacity>
-                                ))}
-                            </>
-                        )}
+                                    <Text
+                                        style={[s.checkText, item.is_completed && s.checkTextDone]}
+                                        onPress={() => handleToggleChecklist(item.id)}
+                                    >
+                                        {item.title}
+                                    </Text>
+                                    <TouchableOpacity
+                                        style={s.checkDeleteBtn}
+                                        onPress={() => handleDeleteChecklistItem(item.id)}
+                                        activeOpacity={0.7}
+                                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    >
+                                        <Ionicons name="close-circle" size={18} color="#ddd" />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                            {!['cancelled', 'completed', 'rejected'].includes(wo.status) && (
+                                <View style={s.checkAddRow}>
+                                    <TextInput
+                                        style={s.checkAddInput}
+                                        placeholder="Add a task…"
+                                        placeholderTextColor="#c8c8c8"
+                                        value={checklistInput}
+                                        onChangeText={setChecklistInput}
+                                        returnKeyType="done"
+                                        onSubmitEditing={handleAddChecklistItem}
+                                    />
+                                    <TouchableOpacity
+                                        style={[s.checkAddBtn, (!checklistInput.trim() || addingChecklist) && { opacity: 0.4 }]}
+                                        onPress={handleAddChecklistItem}
+                                        disabled={!checklistInput.trim() || addingChecklist}
+                                        activeOpacity={0.8}
+                                    >
+                                        {addingChecklist
+                                            ? <ActivityIndicator size="small" color="#fff" />
+                                            : <Ionicons name="add" size={18} color="#fff" />
+                                        }
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </>
 
                         {/* Failure Analysis — visible for in_progress / completed */}
                         {CAN_FAILURE_STATUSES.includes(wo.status) && (
@@ -1004,6 +1326,60 @@ export default function WorkOrderDetail() {
                             })
                         )}
                         <View style={{ height: 90 }} />
+                    </View>
+                )}
+
+                {/* Activity tab */}
+                {activeTab === 'activity' && (
+                    <View style={s.activityWrap}>
+                        {loadingActivities ? (
+                            <ActivityIndicator style={{ marginTop: 40 }} color="#111" />
+                        ) : activities.length === 0 ? (
+                            <View style={s.emptyTab}>
+                                <Ionicons name="pulse-outline" size={36} color="#ccc" />
+                                <Text style={s.emptyTabText}>No activity yet</Text>
+                            </View>
+                        ) : (
+                            activities.map((a, i) => {
+                                const isLast = i === activities.length - 1
+                                let icon: string = 'ellipse-outline'
+                                let iconColor    = '#aaa'
+                                let label        = a.type.replace(/_/g, ' ')
+
+                                if (a.type === 'created') {
+                                    icon = 'add-circle-outline'; iconColor = '#10b981'; label = 'Work order created'
+                                } else if (a.type === 'status_change') {
+                                    icon = 'swap-horizontal-outline'; iconColor = '#2a85ff'
+                                    label = `Status changed to ${statusLabel(a.meta?.new_status ?? '')}`
+                                } else if (a.type === 'comment_added') {
+                                    icon = 'chatbubble-outline'; iconColor = '#f59e0b'; label = 'Comment added'
+                                } else if (a.type === 'attachment_added') {
+                                    icon = 'attach-outline'; iconColor = '#8b5cf6'; label = 'File attached'
+                                } else if (a.type === 'work_log_added') {
+                                    icon = 'time-outline'; iconColor = '#06b6d4'; label = 'Work time logged'
+                                } else if (a.type === 'checklist_item_completed') {
+                                    icon = 'checkmark-circle-outline'; iconColor = '#10b981'; label = 'Task completed'
+                                }
+
+                                return (
+                                    <View key={i} style={s.activityItem}>
+                                        <View style={s.activityLeft}>
+                                            <View style={[s.activityIconWrap, { backgroundColor: iconColor + '18' }]}>
+                                                <Ionicons name={icon as never} size={16} color={iconColor} />
+                                            </View>
+                                            {!isLast && <View style={s.activityLine} />}
+                                        </View>
+                                        <View style={s.activityContent}>
+                                            <Text style={s.activityLabel}>{label}</Text>
+                                            {a.actor ? <Text style={s.activityActor}>by {a.actor}</Text> : null}
+                                            {a.meta?.note ? <Text style={s.activityNote}>{a.meta.note}</Text> : null}
+                                            <Text style={s.activityTime}>{relativeTime(a.created_at)}</Text>
+                                        </View>
+                                    </View>
+                                )
+                            })
+                        )}
+                        <View style={{ height: 32 }} />
                     </View>
                 )}
 
@@ -1437,6 +1813,214 @@ export default function WorkOrderDetail() {
                     ))}
                 </View>
             </Modal>
+
+            {/* ── Edit Details modal ─────────────────────────────── */}
+            <Modal visible={editDetailsOpen} transparent animationType="slide" statusBarTranslucent onRequestClose={() => !savingDetails && setEditDetailsOpen(false)}>
+                <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
+                    <TouchableOpacity style={s.logModalOverlay} activeOpacity={1} onPress={() => !savingDetails && setEditDetailsOpen(false)} />
+                    <View style={[s.logModalSheet, { paddingBottom: 0 }]}>
+                        <View style={s.logModalHandle} />
+                        <Text style={s.logModalTitle}>Edit Details</Text>
+
+                        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+
+                            {/* Priority */}
+                            <Text style={s.logFormLabel}>Priority</Text>
+                            <View style={s.edPriorityRow}>
+                                {(['low', 'medium', 'high', 'critical'] as const).map(p => {
+                                    const pColors = PriorityColors[p] ?? PriorityColors.medium
+                                    const active = editPriority === p
+                                    return (
+                                        <TouchableOpacity
+                                            key={p}
+                                            style={[s.edPriorityChip, active && { backgroundColor: pColors.bg, borderColor: pColors.text }]}
+                                            onPress={() => setEditPriority(p)}
+                                            activeOpacity={0.8}
+                                        >
+                                            <Text style={[s.edPriorityChipTxt, active && { color: pColors.text }]}>
+                                                {p.charAt(0).toUpperCase() + p.slice(1)}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )
+                                })}
+                            </View>
+
+                            {/* Due Date */}
+                            <Text style={[s.logFormLabel, { marginTop: 14 }]}>Due Date</Text>
+                            <TextInput
+                                style={s.logFormInput}
+                                placeholder="YYYY-MM-DD  (e.g. 2025-12-31)"
+                                placeholderTextColor="#c8c8c8"
+                                value={editDueAt}
+                                onChangeText={setEditDueAt}
+                                autoCapitalize="none"
+                            />
+
+                            {/* Estimated Time */}
+                            <Text style={[s.logFormLabel, { marginTop: 14 }]}>Estimated Time</Text>
+                            <View style={s.edTimeRow}>
+                                <View style={s.edTimeField}>
+                                    <TextInput
+                                        style={[s.logFormInput, { textAlign: 'center' }]}
+                                        placeholder="0"
+                                        placeholderTextColor="#c8c8c8"
+                                        keyboardType="number-pad"
+                                        value={editEstHours}
+                                        onChangeText={setEditEstHours}
+                                    />
+                                    <Text style={s.edTimeUnit}>hours</Text>
+                                </View>
+                                <View style={s.edTimeField}>
+                                    <TextInput
+                                        style={[s.logFormInput, { textAlign: 'center' }]}
+                                        placeholder="0"
+                                        placeholderTextColor="#c8c8c8"
+                                        keyboardType="number-pad"
+                                        value={editEstMins}
+                                        onChangeText={setEditEstMins}
+                                    />
+                                    <Text style={s.edTimeUnit}>minutes</Text>
+                                </View>
+                            </View>
+
+                            {/* Asset */}
+                            <Text style={[s.logFormLabel, { marginTop: 14 }]}>Asset</Text>
+                            <TouchableOpacity style={s.partPickerRow} onPress={openEditAssetPicker} activeOpacity={0.8}>
+                                <Text style={editAsset ? s.partPickerValue : s.partPickerPlaceholder} numberOfLines={1}>
+                                    {editAsset ? editAsset.name : 'Select asset…'}
+                                </Text>
+                                <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                                    {editAsset && (
+                                        <TouchableOpacity onPress={() => setEditAsset(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                                            <Ionicons name="close-circle" size={18} color="#ccc" />
+                                        </TouchableOpacity>
+                                    )}
+                                    <Ionicons name="chevron-forward" size={16} color="#bbb" />
+                                </View>
+                            </TouchableOpacity>
+
+                            {/* Assigned To */}
+                            <Text style={[s.logFormLabel, { marginTop: 14 }]}>Assigned To</Text>
+                            <TouchableOpacity style={s.partPickerRow} onPress={openEditMemberPicker} activeOpacity={0.8}>
+                                <Text style={editAssignee ? s.partPickerValue : s.partPickerPlaceholder} numberOfLines={1}>
+                                    {editAssignee ? (editAssignee.name ?? `Member #${editAssignee.id}`) : 'Select member…'}
+                                </Text>
+                                <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                                    {editAssignee && (
+                                        <TouchableOpacity onPress={() => setEditAssignee(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                                            <Ionicons name="close-circle" size={18} color="#ccc" />
+                                        </TouchableOpacity>
+                                    )}
+                                    <Ionicons name="chevron-forward" size={16} color="#bbb" />
+                                </View>
+                            </TouchableOpacity>
+
+                            {/* Buttons */}
+                            <View style={[s.logModalActions, { marginTop: 20 }]}>
+                                <TouchableOpacity style={s.logCancelBtn} onPress={() => setEditDetailsOpen(false)} disabled={savingDetails} activeOpacity={0.7}>
+                                    <Text style={s.logCancelText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[s.logSaveBtn, savingDetails && { opacity: 0.6 }]} onPress={handleSaveDetails} disabled={savingDetails} activeOpacity={0.85}>
+                                    {savingDetails
+                                        ? <ActivityIndicator size="small" color="#fff" />
+                                        : <Text style={s.logSaveText}>Save Changes</Text>
+                                    }
+                                </TouchableOpacity>
+                            </View>
+                        </ScrollView>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
+            {/* ── Asset picker (edit details) ───────────────────── */}
+            <Modal visible={editAssetPickerOpen} transparent animationType="slide" statusBarTranslucent onRequestClose={() => setEditAssetPickerOpen(false)}>
+                <TouchableOpacity style={s.logModalOverlay} activeOpacity={1} onPress={() => setEditAssetPickerOpen(false)} />
+                <View style={[s.logModalSheet, { maxHeight: '75%' }]}>
+                    <View style={s.logModalHandle} />
+                    <Text style={s.logModalTitle}>Select Asset</Text>
+                    <TextInput
+                        style={[s.logFormInput, { marginBottom: 10 }]}
+                        placeholder="Search assets…"
+                        placeholderTextColor="#c8c8c8"
+                        value={editAssetSearch}
+                        onChangeText={setEditAssetSearch}
+                    />
+                    {loadingEditAssets ? (
+                        <ActivityIndicator color="#111" style={{ marginVertical: 24 }} />
+                    ) : (
+                        <FlatList
+                            data={editAssets.filter(a =>
+                                a.name.toLowerCase().includes(editAssetSearch.toLowerCase()) ||
+                                a.code.toLowerCase().includes(editAssetSearch.toLowerCase())
+                            )}
+                            keyExtractor={a => String(a.id)}
+                            keyboardShouldPersistTaps="handled"
+                            renderItem={({ item: a }) => (
+                                <TouchableOpacity
+                                    style={[s.itemPickerRow, editAsset?.id === a.id && s.pickerRowSelected]}
+                                    onPress={() => { setEditAsset({ id: a.id, name: a.name }); setEditAssetPickerOpen(false) }}
+                                    activeOpacity={0.75}
+                                >
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={[s.itemPickerName, editAsset?.id === a.id && { color: '#2a85ff' }]} numberOfLines={1}>{a.name}</Text>
+                                        <Text style={s.itemPickerMeta}>{a.code}{a.location ? ` · ${a.location}` : ''}</Text>
+                                    </View>
+                                    {editAsset?.id === a.id && <Ionicons name="checkmark" size={18} color="#2a85ff" />}
+                                </TouchableOpacity>
+                            )}
+                            ListEmptyComponent={<Text style={s.itemPickerEmpty}>No assets found</Text>}
+                            style={{ maxHeight: 320 }}
+                        />
+                    )}
+                </View>
+            </Modal>
+
+            {/* ── Member picker (edit details) ──────────────────── */}
+            <Modal visible={editMemberPickerOpen} transparent animationType="slide" statusBarTranslucent onRequestClose={() => setEditMemberPickerOpen(false)}>
+                <TouchableOpacity style={s.logModalOverlay} activeOpacity={1} onPress={() => setEditMemberPickerOpen(false)} />
+                <View style={[s.logModalSheet, { maxHeight: '75%' }]}>
+                    <View style={s.logModalHandle} />
+                    <Text style={s.logModalTitle}>Select Member</Text>
+                    <TextInput
+                        style={[s.logFormInput, { marginBottom: 10 }]}
+                        placeholder="Search members…"
+                        placeholderTextColor="#c8c8c8"
+                        value={editMemberSearch}
+                        onChangeText={setEditMemberSearch}
+                    />
+                    {loadingEditMembers ? (
+                        <ActivityIndicator color="#111" style={{ marginVertical: 24 }} />
+                    ) : (
+                        <FlatList
+                            data={editMembers.filter(m => {
+                                const q = editMemberSearch.toLowerCase()
+                                return (m.user?.name ?? '').toLowerCase().includes(q) ||
+                                       (m.user?.email ?? '').toLowerCase().includes(q)
+                            })}
+                            keyExtractor={m => String(m.id)}
+                            keyboardShouldPersistTaps="handled"
+                            renderItem={({ item: m }) => {
+                                const nm = m.user?.name ?? `Member #${m.id}`
+                                return (
+                                    <TouchableOpacity
+                                        style={[s.itemPickerRow, editAssignee?.id === m.id && s.pickerRowSelected]}
+                                        onPress={() => { setEditAssignee({ id: m.id, name: nm }); setEditMemberPickerOpen(false) }}
+                                        activeOpacity={0.75}
+                                    >
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={[s.itemPickerName, editAssignee?.id === m.id && { color: '#2a85ff' }]} numberOfLines={1}>{nm}</Text>
+                                            <Text style={s.itemPickerMeta}>{m.user?.email ?? ''}</Text>
+                                        </View>
+                                        {editAssignee?.id === m.id && <Ionicons name="checkmark" size={18} color="#2a85ff" />}
+                                    </TouchableOpacity>
+                                )
+                            }}
+                            ListEmptyComponent={<Text style={s.itemPickerEmpty}>No members found</Text>}
+                            style={{ maxHeight: 320 }}
+                        />
+                    )}
+                </View>
+            </Modal>
         </SafeAreaView>
     )
 }
@@ -1466,6 +2050,49 @@ const s = StyleSheet.create({
         justifyContent:  'center',
     },
     headerCode: { fontSize: 15, fontWeight: '700', color: '#111' },
+    hdrRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    hdrIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+
+    archivedBanner: {
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        backgroundColor: '#fef3c7', paddingHorizontal: 14, paddingVertical: 10,
+        borderBottomWidth: 1, borderBottomColor: '#fde68a',
+    },
+    archivedBannerText: { fontSize: 13, color: '#d97706', fontWeight: '600' },
+
+    descHeaderRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+    descEditBtn:    { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    descEditTxt:    { fontSize: 13, color: '#2a85ff', fontWeight: '600' },
+
+    editDetailsBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 8, backgroundColor: '#eff6ff', marginBottom: 12 },
+    editDetailsTxt: { fontSize: 13, color: '#2a85ff', fontWeight: '600' },
+
+    edPriorityRow:     { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 6 },
+    edPriorityChip:    { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#e0e0e0', backgroundColor: '#f5f5f5' },
+    edPriorityChipTxt: { fontSize: 13, color: '#888', fontWeight: '600' },
+
+    edTimeRow:  { flexDirection: 'row', gap: 12, marginTop: 6 },
+    edTimeField: { flex: 1, alignItems: 'center' },
+    edTimeUnit: { fontSize: 11, color: '#aaa', marginTop: 4, textAlign: 'center' },
+    descEditInput: {
+        borderWidth: 1, borderColor: '#e8e8e8', borderRadius: 10,
+        paddingHorizontal: 12, paddingVertical: 10,
+        fontSize: 14, color: '#111', lineHeight: 21,
+        backgroundColor: '#fafafa', minHeight: 90,
+        textAlignVertical: 'top',
+    },
+    descEditActions: { flexDirection: 'row', gap: 8, marginTop: 8 },
+    descCancelBtn: {
+        flex: 1, height: 40, borderRadius: 10,
+        borderWidth: 1, borderColor: '#e8e8e8',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    descCancelTxt: { fontSize: 14, color: '#666', fontWeight: '600' },
+    descSaveBtn: {
+        flex: 2, height: 40, borderRadius: 10,
+        backgroundColor: '#111', alignItems: 'center', justifyContent: 'center',
+    },
+    descSaveTxt: { fontSize: 14, color: '#fff', fontWeight: '700' },
 
     titleSection: {
         backgroundColor: '#fff',
@@ -2053,4 +2680,55 @@ const s = StyleSheet.create({
         justifyContent:  'center',
     },
     rejectModalConfirmText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+
+    /* Checklist add/delete */
+    checkDeleteBtn: { padding: 2 },
+    checkAddRow: {
+        flexDirection:  'row',
+        alignItems:     'center',
+        gap:            8,
+        marginTop:      10,
+    },
+    checkAddInput: {
+        flex:              1,
+        height:            40,
+        backgroundColor:   '#f5f5f5',
+        borderRadius:      10,
+        paddingHorizontal: 12,
+        fontSize:          14,
+        color:             '#111',
+    },
+    checkAddBtn: {
+        width:           40,
+        height:          40,
+        borderRadius:    10,
+        backgroundColor: '#111',
+        alignItems:      'center',
+        justifyContent:  'center',
+    },
+
+    /* Activity feed */
+    activityWrap: { paddingHorizontal: 16, paddingTop: 4 },
+    activityItem: { flexDirection: 'row', gap: 12 },
+    activityLeft: { alignItems: 'center', width: 36 },
+    activityIconWrap: {
+        width:           34,
+        height:          34,
+        borderRadius:    17,
+        alignItems:      'center',
+        justifyContent:  'center',
+        flexShrink:      0,
+    },
+    activityLine: {
+        flex:            1,
+        width:           1.5,
+        backgroundColor: '#f0f0f0',
+        minHeight:       20,
+        marginVertical:  2,
+    },
+    activityContent: { flex: 1, paddingBottom: 20 },
+    activityLabel:   { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
+    activityActor:   { fontSize: 12, color: '#888', marginBottom: 2 },
+    activityNote:    { fontSize: 13, color: '#555', fontStyle: 'italic', marginBottom: 2 },
+    activityTime:    { fontSize: 11, color: '#bbb', fontWeight: '500' },
 })

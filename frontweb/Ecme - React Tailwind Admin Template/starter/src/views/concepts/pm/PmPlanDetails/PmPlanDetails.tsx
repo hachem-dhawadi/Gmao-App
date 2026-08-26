@@ -323,11 +323,28 @@ const PmPlanDetails = () => {
                                 </div>
                             </Card>
 
-                            {/* Checklist Tasks — all roles */}
-                            <PmTasksInlineEditor
-                                planId={data.id}
-                                initialTasks={data.tasks ?? []}
-                            />
+                            {canEdit ? (
+                                <PmTasksInlineEditor
+                                    planId={data.id}
+                                    initialTasks={data.tasks ?? []}
+                                />
+                            ) : (
+                                <Card>
+                                    <h5 className="mb-4">Checklist Tasks</h5>
+                                    {(data.tasks ?? []).length === 0 ? (
+                                        <p className="text-gray-500 text-sm">No tasks defined.</p>
+                                    ) : (
+                                        <ul className="flex flex-col gap-2">
+                                            {(data.tasks ?? []).map((task) => (
+                                                <li key={task.id} className="flex items-center gap-2 text-sm text-gray-700">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
+                                                    {task.title}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </Card>
+                            )}
 
                             {/* Work order history */}
                             <Card>

@@ -50,10 +50,12 @@ export type WorkOrder = {
     status: 'open' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled' | 'pending_approval' | 'rejected'
     priority: 'low' | 'medium' | 'high' | 'critical'
     due_at: string | null
+    estimated_minutes: number | null
     created_at: string | null
     failure_code: string | null
     root_cause: string | null
     resolution_notes: string | null
+    archived_at: string | null
     asset: { id: number; code: string; name: string; location?: string | null } | null
     created_by: { id: number; name: string | null } | null
     assigned_member: WorkOrderMember | null
@@ -98,6 +100,30 @@ export async function apiDeleteWorkOrderComment(workOrderId: string | number, co
 
 export async function apiToggleChecklistItem(workOrderId: string | number, itemId: number) {
     return api.post(`/work-orders/${workOrderId}/checklist/${itemId}/toggle`)
+}
+
+export async function apiAddChecklistItem(workOrderId: string | number, title: string) {
+    return api.post<{ success: boolean; data: { item: WoChecklistItem } }>(
+        `/work-orders/${workOrderId}/checklist`,
+        { title },
+    )
+}
+
+export async function apiDeleteChecklistItem(workOrderId: string | number, itemId: number) {
+    return api.delete(`/work-orders/${workOrderId}/checklist/${itemId}`)
+}
+
+export type WoActivity = {
+    type: string
+    actor: string | null
+    meta: Record<string, string | null>
+    created_at: string | null
+}
+
+export async function apiGetWoActivities(woId: string | number) {
+    return api.get<{ success: boolean; data: { activities: WoActivity[] } }>(
+        `/work-orders/${woId}/activities`,
+    )
 }
 
 export async function apiAddWorkLog(
@@ -165,6 +191,14 @@ export async function apiApproveWorkOrder(id: string | number) {
 
 export async function apiRejectWorkOrder(id: string | number, reason?: string) {
     return api.post<WorkOrderResponse>(`/work-orders/${id}/reject`, { reason: reason || undefined })
+}
+
+export async function apiArchiveWorkOrder(id: string | number) {
+    return api.post<{ success: boolean; message: string }>(`/work-orders/${id}/archive`)
+}
+
+export async function apiUnarchiveWorkOrder(id: string | number) {
+    return api.post<{ success: boolean; message: string }>(`/work-orders/${id}/unarchive`)
 }
 
 export async function apiCreateWorkOrder(data: {

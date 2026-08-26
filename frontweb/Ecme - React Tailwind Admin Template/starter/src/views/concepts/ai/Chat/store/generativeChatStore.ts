@@ -1,6 +1,25 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { ChatHistories, ChatHistory, Conversation } from '../types'
+
+const getUserEmail = (): string => {
+    try {
+        const raw = localStorage.getItem('sessionUser')
+        if (raw) {
+            const parsed = JSON.parse(raw)
+            return parsed?.state?.user?.email || 'anonymous'
+        }
+    } catch {}
+    return 'anonymous'
+}
+
+const userScopedStorage = {
+    getItem: (name: string) => localStorage.getItem(`${name}-${getUserEmail()}`),
+    setItem: (name: string, value: string) =>
+        localStorage.setItem(`${name}-${getUserEmail()}`, value),
+    removeItem: (name: string) =>
+        localStorage.removeItem(`${name}-${getUserEmail()}`),
+}
 
 type RenameDialog = {
     id: string
@@ -124,6 +143,7 @@ persist(
 }),
     {
         name: 'ai-chat-history',
+        storage: createJSONStorage(() => userScopedStorage),
         partialize: (state) => ({
             chatHistory: state.chatHistory,
             selectedConversation: state.selectedConversation,

@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as SecureStore from 'expo-secure-store'
 import { apiLogin, apiMe } from '@/services/AuthService'
 import { useAuthStore } from '@/store/authStore'
+import { registerPushToken } from '@/services/PushNotificationService'
 import AlertModal from '@/components/ui/AlertModal'
 
 export default function SignInScreen() {
@@ -47,12 +48,14 @@ export default function SignInScreen() {
                 id:          user.id,
                 name:        user.name,
                 email:       user.email,
+                phone:       user.phone ?? null,
                 avatar:      user.avatar_url,
                 memberId:    membership?.member_id ?? null,
                 companyId:   default_company_id,
                 roles:       membership?.roles.map((r: { code: string }) => r.code) ?? [],
                 permissions: membership?.roles.flatMap((r: { permissions: string[] }) => r.permissions ?? []) ?? [],
             })
+            registerPushToken()
             router.replace('/app')
         } catch (err: unknown) {
             const msg = (err as { response?: { data?: { message?: string } } })

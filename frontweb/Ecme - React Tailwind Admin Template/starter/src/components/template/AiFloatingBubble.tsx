@@ -6,6 +6,7 @@ import {
     TbSend,
     TbArrowUpRight,
     TbLoader2,
+    TbPhotoPlus,
 } from 'react-icons/tb'
 import { usGenerativeChatStore } from '@/views/concepts/ai/Chat/store/generativeChatStore'
 import useChatSend from '@/views/concepts/ai/Chat/hooks/useChatSend'
@@ -106,6 +107,9 @@ const TypingDots = () => (
 const AiFloatingBubble = () => {
     const [open, setOpen] = useState(false)
     const [input, setInput] = useState('')
+    const [pendingImage, setPendingImage] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const { pathname } = useLocation()
     const navigate = useNavigate()
@@ -127,12 +131,28 @@ const AiFloatingBubble = () => {
         }
     }, [messages.length, isTyping, open])
 
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        setPendingImage(file)
+        setImagePreview(URL.createObjectURL(file))
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+
+    const clearImage = () => {
+        if (imagePreview) URL.revokeObjectURL(imagePreview)
+        setPendingImage(null)
+        setImagePreview(null)
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const text = input.trim()
-        if (!text || isTyping) return
+        if ((!text && !pendingImage) || isTyping) return
+        const attachments = pendingImage ? [pendingImage] : undefined
         setInput('')
-        await handleSend(text, undefined, pageEntry.label)
+        clearImage()
+        await handleSend(text || '(image attached)', attachments, pageEntry.label)
     }
 
     const handleSuggestion = async (text: string) => {
@@ -151,7 +171,7 @@ const AiFloatingBubble = () => {
         <>
             {/* ── Mini panel ── */}
             {open && (
-                <div className="fixed bottom-36 right-6 z-[9999] w-[340px] flex flex-col rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
+                <div className="fixed bottom-56 right-6 z-[9999] w-[340px] flex flex-col rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden"
                     style={{ height: '480px' }}
                 >
                     {/* Header */}
@@ -234,7 +254,16 @@ const AiFloatingBubble = () => {
                                     }`}
                                 >
                                     {msg.isMyMessage ? (
-                                        <span>{msg.content as string}</span>
+                                        <div className="flex flex-col gap-1">
+                                            {msg.attachments?.find((a) => a.type === 'image') && (
+                                                <img
+                                                    src={msg.attachments.find((a) => a.type === 'image')!.mediaUrl}
+                                                    alt="attachment"
+                                                    className="max-w-full rounded-lg object-cover border border-white/20"
+                                                />
+                                            )}
+                                            {msg.content && <span>{msg.content as string}</span>}
+                                        </div>
                                     ) : (
                                         <>
                                             <ChatCustomContent
@@ -273,25 +302,67 @@ const AiFloatingBubble = () => {
                     {/* Input */}
                     <form
                         onSubmit={handleSubmit}
-                        className="shrink-0 border-t border-gray-100 dark:border-gray-700 p-3 flex gap-2 items-center"
+                        className="shrink-0 border-t border-gray-100 dark:border-gray-700 p-3 flex flex-col gap-2"
                     >
-                        <input
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="Ask anything about maintenance…"
-                            className="flex-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400 dark:text-gray-100 dark:placeholder-gray-400"
-                        />
-                        <button
-                            type="submit"
-                            disabled={!input.trim() || isTyping}
-                            className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
-                        >
-                            {isTyping ? (
-                                <TbLoader2 className="text-sm animate-spin" />
-                            ) : (
-                                <TbSend className="text-sm" />
-                            )}
-                        </button>
+                        {/* Image preview */}
+                        {imagePreview && (
+                            <div className="relative w-16 h-16">
+                                <img
+                                    src={imagePreview}
+                                    alt="pending"
+                                    className="w-16 h-16 rounded-lg object-cover border border-gray-200 dark:border-gray-600"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={clearImage}
+                                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs leading-none"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        )}
+                        <div className="flex gap-2 items-center">
+                            {/* Image picker */}
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleImageSelect}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={isTyping}
+                                title="Attach image"
+                                className="text-gray-400 hover:text-indigo-500 transition-colors disabled:opacity-40"
+                            >
+                                <TbPhotoPlus className="text-lg" />
+                            </button>
+                            <input
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault()
+                                        handleSubmit(e as unknown as React.FormEvent)
+                                    }
+                                }}
+                                placeholder="Ask anything about maintenance…"
+                                className="flex-1 text-sm bg-gray-100 dark:bg-gray-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400 dark:text-gray-100 dark:placeholder-gray-400"
+                            />
+                            <button
+                                type="submit"
+                                disabled={(!input.trim() && !pendingImage) || isTyping}
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                            >
+                                {isTyping ? (
+                                    <TbLoader2 className="text-sm animate-spin" />
+                                ) : (
+                                    <TbSend className="text-sm" />
+                                )}
+                            </button>
+                        </div>
                     </form>
                 </div>
             )}
@@ -301,7 +372,7 @@ const AiFloatingBubble = () => {
                 type="button"
                 onClick={() => setOpen((o) => !o)}
                 title="AI Assistant"
-                className={`fixed bottom-20 right-6 z-[9999] w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200
+                className={`fixed bottom-40 right-6 z-[9999] w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200
                     bg-gradient-to-br from-indigo-600 to-violet-600 text-white
                     hover:shadow-[0_0_20px_4px_rgba(99,102,241,0.45)] hover:scale-105 active:scale-95
                     ${!open ? 'animate-pulse-glow' : ''}

@@ -20,6 +20,12 @@ import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { Asset } from '../types'
 import type { TableQueries } from '@/@types/common'
 
+const backendBase = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '')
+const fixImgUrl = (url?: string): string | undefined => {
+    if (!url) return undefined
+    try { return `${backendBase}${new URL(url).pathname}` } catch { return url }
+}
+
 const statusColor: Record<Asset['status'], string> = {
     active:            'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-0',
     inactive:          'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-0',
@@ -88,7 +94,7 @@ const AssetListTable = () => {
                 accessorKey: 'name',
                 cell: (props) => {
                     const row = props.row.original
-                    const firstImage = row.images?.[0]
+                    const firstImage = fixImgUrl(row.images?.[0])
                     return (
                         <div className="flex items-center gap-3">
                             <Avatar

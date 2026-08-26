@@ -116,22 +116,24 @@ const CustomControl = ({ children, ...props }: ControlProps<CountryOption>) => {
 const SettingsProfile = () => {
     const { t } = useTranslation()
     const setUser = useSessionUser((state) => state.setUser)
-    const currentUserId = useSessionUser((state) => state.user.userId)
+    const currentUserId  = useSessionUser((state) => state.user.userId)
+    const currentEmail   = useSessionUser((state) => state.user.email)
     const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null)
     const [removeAvatar, setRemoveAvatar] = useState(false)
-    const profileSwrKey = currentUserId
-        ? `/api/settings/profile/${currentUserId}`
+    // Fall back to email when userId is absent (stale session before userId was persisted)
+    const profileSwrKey = (currentUserId || currentEmail)
+        ? `/api/settings/profile/${currentUserId || currentEmail}`
         : null
 
     const validationSchema: ZodType<ProfileSchema> = z.object({
         firstName: z.string().min(1, { message: t('settingsProfile.validation.firstName') }),
-        lastName: z.string().min(1, { message: t('settingsProfile.validation.lastName') }),
+        lastName: z.string(),
         email: z
             .string()
             .min(1, { message: t('settingsProfile.validation.email') })
             .email({ message: t('settingsProfile.validation.emailInvalid') }),
-        dialCode: z.string().min(1, { message: t('settingsProfile.validation.dialCode') }),
-        phoneNumber: z.string().min(1, { message: t('settingsProfile.validation.phone') }),
+        dialCode: z.string(),
+        phoneNumber: z.string(),
         img: z.string(),
     })
 
@@ -198,7 +200,7 @@ const SettingsProfile = () => {
 
     const onSubmit = async (values: ProfileSchema) => {
         const name = `${values.firstName} ${values.lastName}`.trim()
-        const phone = buildPhone(values.dialCode, values.phoneNumber)
+        const phone = values.phoneNumber ? buildPhone(values.dialCode, values.phoneNumber) : ''
 
         try {
             const response = await apiUpdateProfile({

@@ -42,7 +42,7 @@ const dashboardsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.reports',
                 icon: 'reports',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: [ADMIN, MANAGER],
+                authority: ALL_COMPANY_ROLES,
                 subMenu: [],
             },
         ],

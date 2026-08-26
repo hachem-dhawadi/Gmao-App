@@ -52,11 +52,18 @@ const SideNav = ({
 
     const currentRouteKey = useRouteKeyStore((state) => state.currentRouteKey)
     const userAuthority = useSessionUser((state) => state.user.authority)
+    const companyApprovalStatus = useSessionUser((state) => state.user.companyApprovalStatus)
     const activeCompany = useCompanySwitchStore((s) => s.activeCompany)
 
     // Superadmin without an active company context only sees Administration + Dashboard
     const filteredNav = useMemo(() => {
         const isSuperadmin = userAuthority?.includes('superadmin')
+
+        // Users without an approved company only see the account/settings section
+        if (!isSuperadmin && companyApprovalStatus !== 'approved') {
+            return navigationConfig.filter((item) => item.key === 'account')
+        }
+
         if (!isSuperadmin || activeCompany) return navigationConfig
         return navigationConfig.filter(
             (item) =>
@@ -65,7 +72,7 @@ const SideNav = ({
                 item.key === 'workspace' ||
                 item.key === 'account',
         )
-    }, [userAuthority, activeCompany])
+    }, [userAuthority, companyApprovalStatus, activeCompany])
 
     return (
         <div

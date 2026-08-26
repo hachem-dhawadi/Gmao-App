@@ -18,7 +18,7 @@ use Illuminate\Support\Str;
 
 class AiController extends Controller
 {
-    private const MODEL   = 'llama-3.3-70b-versatile';
+    private const MODEL   = 'openai/gpt-oss-120b';
     private const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
     private function headers(): array
@@ -38,6 +38,7 @@ class AiController extends Controller
             . 'If a technician says "help me fix the machine", give practical diagnostic steps and what to check. '
             . 'Only decline requests that are completely unrelated to maintenance, equipment, or the CMMS app (e.g. cooking, sports, general news). '
             . 'IMPORTANT: Only call a tool when the user explicitly requests that data. For general questions, explanations, or advice — answer with text only, do NOT call any tool. '
+            . 'TOOL USAGE RULES: For overdue work orders, call get_work_orders with {overdue: true} — never use status="overdue" as that is not a valid status value. '
             . 'Be concise, practical, and professional. Use markdown formatting when appropriate. '
             . 'Today is ' . now()->format('Y-m-d') . '.';
     }
@@ -75,9 +76,10 @@ class AiController extends Controller
                     'parameters'  => [
                         'type'       => 'object',
                         'properties' => [
-                            'status'   => ['type' => 'string', 'enum' => ['open', 'in_progress', 'on_hold', 'completed', 'cancelled']],
+                            'status'   => ['type' => 'string', 'enum' => ['open', 'in_progress', 'on_hold', 'completed', 'cancelled'], 'description' => 'Filter by status. Do NOT use this for overdue — use the overdue parameter instead.'],
                             'priority' => ['type' => 'string', 'enum' => ['low', 'medium', 'high', 'critical']],
-                            'limit'    => ['type' => 'integer', 'description' => 'Max results, default 10'],
+                            'overdue'  => ['type' => 'boolean', 'description' => 'When true, return only work orders that are past their due date and not completed/cancelled.'],
+                            'limit'    => ['type' => 'integer', 'description' => 'Max results (1-20, default 10)', 'minimum' => 1, 'maximum' => 20],
                         ],
                     ],
                 ],
@@ -91,7 +93,7 @@ class AiController extends Controller
                         'type'       => 'object',
                         'properties' => [
                             'search' => ['type' => 'string', 'description' => 'Search by asset name or code'],
-                            'limit'  => ['type' => 'integer'],
+                            'limit'  => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20],
                         ],
                     ],
                 ],
@@ -221,7 +223,28 @@ class AiController extends Controller
         $prompt         = $request->input('prompt');
         $pageContext    = $request->input('page_context');
         $currentCompany = $request->attributes->get('currentCompany');
-        $currentMember  = $this->getCurrentMember($request, $currentCompany);
+        $currentMember  = $request->attributes->get('currentMember');
+
+        // If company context wasn't set by middleware (chat route is middleware-free),
+        // try to load it optionally from the header — only succeeds for active, approved companies
+        if (! $currentCompany) {
+            $companyId = $request->header('X-Company-Id');
+            if ($companyId && ctype_digit((string) $companyId) && $request->user()) {
+                $member = Member::query()
+                    ->with('company')
+                    ->where('company_id', (int) $companyId)
+                    ->where('user_id', $request->user()->id)
+                    ->where('status', 'active')
+                    ->first();
+                if ($member && $member->company
+                    && $member->company->approval_status === 'approved'
+                    && $member->company->is_active) {
+                    $currentCompany = $member->company;
+                    $currentMember  = $member;
+                }
+            }
+        }
+
         $technicianMode = $this->isTechnician($currentMember);
 
         $systemContent = $this->systemPrompt();
@@ -257,6 +280,26 @@ class AiController extends Controller
         }
 
         if ($response->failed()) {
+            // If the LLM generated invalid tool parameters, retry without tools
+            if ($response->status() === 400 && ($response->json('error.code') === 'tool_use_failed')) {
+                try {
+                    $retryResponse = Http::withoutVerifying()
+                        ->withHeaders($this->headers())
+                        ->timeout(30)
+                        ->post(self::API_URL, ['model' => self::MODEL, 'messages' => $messages, 'max_tokens' => 2048]);
+                    if ($retryResponse->ok()) {
+                        $text = $retryResponse->json('choices.0.message.content') ?? '';
+                        return response()->json([
+                            'id'      => Str::uuid(),
+                            'choices' => [['finish_reason' => 'stop', 'index' => 0, 'logprobs' => null,
+                                'message' => ['content' => $text, 'role' => 'assistant']]],
+                            'created' => now()->unix(),
+                            'model'   => self::MODEL,
+                            'action'  => null,
+                        ]);
+                    }
+                } catch (\Exception $e2) {}
+            }
             Log::error('Groq chat failed', ['status' => $response->status(), 'body' => $response->body()]);
             return $this->textResponse('AI service error. Please try again.');
         }
@@ -787,6 +830,7 @@ class AiController extends Controller
             ->orderByDesc('id');
 
         if ($scopeMemberId)             $query->where('assigned_member_id', $scopeMemberId);
+        if (! empty($args['overdue']))  $query->whereNotIn('status', ['completed', 'cancelled'])->whereNotNull('due_at')->where('due_at', '<', now());
         if (! empty($args['status']))   $query->where('status', $args['status']);
         if (! empty($args['priority'])) $query->where('priority', $args['priority']);
 

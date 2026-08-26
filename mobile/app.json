@@ -4,7 +4,7 @@
     "slug": "gmao-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
-    "softwareKeyboardLayoutMode": "pan",
+    "softwareKeyboardLayoutMode": "resize",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "gmao",
@@ -19,6 +19,12 @@
         {
           "cameraPermission": "Allow GMAO to use the camera to scan asset QR codes and barcodes."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "default"
+        }
       ]
     ],
     "ios": {
@@ -27,6 +33,7 @@
     },
     "android": {
       "package": "com.gmao.mobile",
+      "googleServicesFile": "./google-services.json",
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#2a85ff",

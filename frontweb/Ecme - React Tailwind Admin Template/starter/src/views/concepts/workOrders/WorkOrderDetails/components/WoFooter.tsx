@@ -7,7 +7,41 @@ import Tooltip from '@/components/ui/Tooltip'
 import Notification from '@/components/ui/Notification'
 import Dialog from '@/components/ui/Dialog'
 import toast from '@/components/ui/toast'
-import { TbDownload, TbTrash, TbPaperclip, TbClock, TbCurrencyDollar, TbPlus, TbPencil } from 'react-icons/tb'
+import {
+    TbDownload, TbTrash, TbPaperclip, TbClock, TbCurrencyDollar, TbPlus, TbPencil,
+    TbFileTypePdf, TbFileTypeXls, TbFileTypeDoc, TbFileTypeDocx, TbFileTypeCsv,
+    TbFileTypePpt, TbFileTypeZip, TbFileMusic, TbVideo, TbFileCode, TbFileText,
+} from 'react-icons/tb'
+
+const _backendBase = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '')
+const fixAttachmentUrl = (url: string): string => {
+    if (!url) return url
+    try { return `${_backendBase}${new URL(url).pathname}` } catch { return url }
+}
+
+type IconComponent = React.ComponentType<{ className?: string }>
+const FILE_ICON_MAP: Array<{ test: (mime: string, ext: string) => boolean; icon: IconComponent; color: string }> = [
+    { test: (m) => m === 'application/pdf', icon: TbFileTypePdf, color: 'text-red-500' },
+    { test: (m, e) => m.includes('excel') || m.includes('spreadsheet') || e === 'xlsx' || e === 'xls', icon: TbFileTypeXls, color: 'text-emerald-600' },
+    { test: (m, e) => m.includes('csv') || e === 'csv', icon: TbFileTypeCsv, color: 'text-emerald-500' },
+    { test: (m, e) => m.includes('wordprocessingml') || e === 'docx', icon: TbFileTypeDocx, color: 'text-blue-500' },
+    { test: (m, e) => m.includes('msword') || e === 'doc', icon: TbFileTypeDoc, color: 'text-blue-500' },
+    { test: (m, e) => m.includes('presentationml') || m.includes('powerpoint') || e === 'pptx' || e === 'ppt', icon: TbFileTypePpt, color: 'text-orange-500' },
+    { test: (m, e) => m.includes('zip') || m.includes('rar') || m.includes('tar') || e === 'zip' || e === 'rar' || e === '7z', icon: TbFileTypeZip, color: 'text-yellow-500' },
+    { test: (m) => m.startsWith('audio/'), icon: TbFileMusic, color: 'text-purple-500' },
+    { test: (m) => m.startsWith('video/'), icon: TbVideo, color: 'text-pink-500' },
+    { test: (m) => m.includes('javascript') || m.includes('typescript') || m.includes('html') || m.includes('css') || m.includes('json') || m.includes('xml'), icon: TbFileCode, color: 'text-indigo-500' },
+    { test: (m) => m.startsWith('text/'), icon: TbFileText, color: 'text-gray-500' },
+]
+
+function getFileIcon(mimeType: string, fileName: string): { Icon: IconComponent; color: string } {
+    const mime = (mimeType || '').toLowerCase()
+    const ext = (fileName.split('.').pop() || '').toLowerCase()
+    for (const entry of FILE_ICON_MAP) {
+        if (entry.test(mime, ext)) return { Icon: entry.icon, color: entry.color }
+    }
+    return { Icon: TbPaperclip, color: 'text-gray-400' }
+}
 import dayjs from 'dayjs'
 import { useSessionUser } from '@/store/authStore'
 import useAuthority from '@/utils/hooks/useAuthority'
@@ -347,15 +381,19 @@ const WoFooter = ({
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                 {attachments.map((file) => {
                                     const isImage = file.mime_type?.startsWith('image/')
+                                    const { Icon, color } = getFileIcon(file.mime_type || '', file.original_name)
+                                    const imgSrc = isImage
+                                        ? (file.url ? fixAttachmentUrl(file.url) : getAttachmentDownloadUrl(workOrderId, file.id))
+                                        : null
                                     return (
                                         <div key={file.id} className="bg-gray-100 dark:bg-gray-700/60 rounded-xl overflow-hidden">
                                             <div className="h-36 bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                                                {isImage && file.url ? (
-                                                    <img src={file.url} alt={file.original_name} className="w-full h-full object-cover" />
+                                                {imgSrc ? (
+                                                    <img src={imgSrc} alt={file.original_name} className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <div className="flex flex-col items-center gap-2 text-gray-400">
-                                                        <TbPaperclip className="text-4xl" />
-                                                        <span className="text-xs font-medium uppercase tracking-wide">
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <Icon className={`text-5xl ${color}`} />
+                                                        <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
                                                             {file.original_name.split('.').pop()}
                                                         </span>
                                                     </div>

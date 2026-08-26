@@ -15,6 +15,17 @@ export type PmTask = {
     order_index: number
 }
 
+export type PmWorkOrderEntry = {
+    id: number
+    work_order: {
+        id: number
+        code: string
+        title: string
+        status: string
+        created_at: string | null
+    } | null
+}
+
 export type PmPlan = {
     id: number
     code: string
@@ -29,6 +40,7 @@ export type PmPlan = {
     created_by: { id: number; name: string | null } | null
     trigger: PmTrigger | null
     tasks: PmTask[]
+    pm_work_orders?: PmWorkOrderEntry[]
 }
 
 export type PmPlansListResponse = {
@@ -66,4 +78,21 @@ export async function apiGetPmPlans(params?: Record<string, unknown>) {
 
 export async function apiGetPmPlan(id: string | number) {
     return api.get<PmPlanResponse>(`/pm/plans/${id}`)
+}
+
+export async function apiUpdatePmTasks(
+    planId: string | number,
+    tasks: Array<{ id?: number | null; title: string }>,
+) {
+    return api.patch<{ success: boolean; data: { tasks: PmTask[] } }>(
+        `/pm/plans/${planId}/tasks`,
+        { tasks },
+    )
+}
+
+export async function apiTriggerNow(planId: string | number) {
+    return api.post<{
+        success: boolean
+        data: { pm_plan: PmPlan; work_order: { id: number; code: string } }
+    }>(`/pm/plans/${planId}/generate-wo`)
 }

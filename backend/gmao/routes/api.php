@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\V1\Reports\ReportController;
 use App\Http\Controllers\Api\V1\Chat\ConversationController;
 use App\Http\Controllers\Api\V1\Chat\MessageController;
 use App\Http\Controllers\Api\V1\Ai\AiController;
+use App\Http\Controllers\Api\V1\Push\PushTokenController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -181,6 +182,11 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/{stockMove}', [StockMoveController::class, 'destroy'])->middleware('permission:inventory.delete');
     });
 
+    Route::middleware('auth:sanctum')->prefix('push-token')->group(function (): void {
+        Route::post('/', [PushTokenController::class, 'store']);
+        Route::delete('/', [PushTokenController::class, 'destroy']);
+    });
+
     Route::middleware('auth:sanctum')->prefix('notifications')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index']);
         Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
@@ -280,9 +286,13 @@ Route::prefix('v1')->group(function (): void {
     });
 
     // ── AI Assistant ─────────────────────────────────────────────────────────
-    Route::middleware(['auth:sanctum', 'company.context'])->prefix('ai')->group(function (): void {
+    // Chat works for any authenticated user — company context is loaded optionally in the controller
+    Route::middleware(['auth:sanctum'])->prefix('ai')->group(function (): void {
         Route::post('/chat', [AiController::class, 'chat']);
         Route::get('/chat/history', [AiController::class, 'history']);
+    });
+    // AI actions that create/modify data require an active company membership
+    Route::middleware(['auth:sanctum', 'company.context'])->prefix('ai')->group(function (): void {
         Route::post('/create-maintenance-request', [AiController::class, 'createMaintenanceRequestFromAi']);
         Route::post('/suggest-technician',  [AiController::class, 'suggestTechnician'])->middleware('permission:work_orders.write');
         Route::post('/fill-work-order',     [AiController::class, 'fillWorkOrder'])->middleware('permission:work_orders.write');

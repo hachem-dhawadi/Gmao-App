@@ -14,11 +14,17 @@ export type ChatInputProps = {
 const { useMergeRef } = hooks
 
 const ChatInput = (props: ChatInputProps) => {
-    const [attachments, setAttachments] = useState<File[]>([])
+    const [attachments, setAttachmentsState] = useState<File[]>([])
+    const attachmentsRef = useRef<File[]>([])
 
     const { placeholder, onInputChange, ref = null } = props
 
     const inputRef = useRef<HTMLInputElement>(null)
+
+    const setAttachments = (files: File[]) => {
+        attachmentsRef.current = files
+        setAttachmentsState(files)
+    }
 
     const handleInputClear = () => {
         if (inputRef.current) {
@@ -28,27 +34,29 @@ const ChatInput = (props: ChatInputProps) => {
     }
 
     const handleChange = () => {
-        if (inputRef.current?.value) {
+        const currentAttachments = attachmentsRef.current
+        if (inputRef.current?.value || currentAttachments.length > 0) {
             onInputChange?.({
                 value: inputRef.current?.value || '',
-                attachments,
+                attachments: currentAttachments,
             })
             handleInputClear()
         }
     }
 
     const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter') {
+        const currentAttachments = attachmentsRef.current
+        if (event.key === 'Enter' && (inputRef.current?.value || currentAttachments.length > 0)) {
             onInputChange?.({
                 value: inputRef.current?.value || '',
-                attachments,
+                attachments: currentAttachments,
             })
             handleInputClear()
         }
     }
 
     return (
-        <div className="border-2 border-gray-200 dark:border-gray-700 rounded-xl min-h-[50px] px-3 flex flex-col">
+        <div className="border-2 border-gray-200 dark:border-gray-700 rounded-xl min-h-[50px] px-3 flex flex-col mb-3">
             {attachments.length > 0 && (
                 <Upload
                     fileList={attachments}

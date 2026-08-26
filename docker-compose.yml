@@ -1,0 +1,230 @@
+services:
+
+  # ─────────────────────────────────────────────────────────
+  # MySQL 8
+  # ─────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: gmao_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-gmao}
+      MYSQL_USER: ${DB_USERNAME:-gmao_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-gmao_pass}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    networks:
+      - gmao_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_secret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─────────────────────────────────────────────────────────
+  # Mailpit — email catcher (dev/local)
+  # ─────────────────────────────────────────────────────────
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: gmao_mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"   # Web UI  → http://localhost:8025
+      - "1025:1025"   # SMTP    → Laravel sends here
+    networks:
+      - gmao_net
+
+  # ─────────────────────────────────────────────────────────
+  # Laravel PHP-FPM
+  # ─────────────────────────────────────────────────────────
+  php:
+    build:
+      context: ./backend/gmao
+      dockerfile: Dockerfile
+    container_name: gmao_php
+    restart: unless-stopped
+    environment:
+      APP_NAME: GMAO
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-gmao}
+      DB_USERNAME: ${DB_USERNAME:-gmao_user}
+      DB_PASSWORD: ${DB_PASSWORD:-gmao_pass}
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      FILESYSTEM_DISK: local
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: gmao-app
+      REVERB_APP_KEY: gmao-reverb-key
+      REVERB_APP_SECRET: gmao-reverb-secret
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@gmao.app}
+      MAIL_FROM_NAME: GMAO
+    volumes:
+      - ./backend/gmao:/var/www/html          # live source — edit files, no rebuild needed
+      - vendor_php:/var/www/html/vendor        # vendor from image (PHP 8.4 Alpine packages)
+      - storage_app:/var/www/html/storage/app  # uploaded files persist across restarts
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - gmao_net
+
+  # ─────────────────────────────────────────────────────────
+  # Laravel Queue Worker
+  # ─────────────────────────────────────────────────────────
+  queue:
+    build:
+      context: ./backend/gmao
+      dockerfile: Dockerfile
+    container_name: gmao_queue
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600"]
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-gmao}
+      DB_USERNAME: ${DB_USERNAME:-gmao_user}
+      DB_PASSWORD: ${DB_PASSWORD:-gmao_pass}
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: gmao-app
+      REVERB_APP_KEY: gmao-reverb-key
+      REVERB_APP_SECRET: gmao-reverb-secret
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@gmao.app}
+      MAIL_FROM_NAME: GMAO
+    volumes:
+      - ./backend/gmao:/var/www/html
+      - vendor_php:/var/www/html/vendor
+      - storage_app:/var/www/html/storage/app
+    depends_on:
+      db:
+        condition: service_healthy
+      php:
+        condition: service_started
+    networks:
+      - gmao_net
+
+  # ─────────────────────────────────────────────────────────
+  # Laravel Reverb — WebSocket server
+  # ─────────────────────────────────────────────────────────
+  reverb:
+    build:
+      context: ./backend/gmao
+      dockerfile: Dockerfile
+    container_name: gmao_reverb
+    restart: unless-stopped
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080", "--no-interaction"]
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-gmao}
+      DB_USERNAME: ${DB_USERNAME:-gmao_user}
+      DB_PASSWORD: ${DB_PASSWORD:-gmao_pass}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: gmao-app
+      REVERB_APP_KEY: gmao-reverb-key
+      REVERB_APP_SECRET: gmao-reverb-secret
+      REVERB_HOST: 0.0.0.0
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+    volumes:
+      - ./backend/gmao:/var/www/html
+      - vendor_php:/var/www/html/vendor
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      php:
+        condition: service_started
+    networks:
+      - gmao_net
+
+  # ─────────────────────────────────────────────────────────
+  # Nginx — Laravel API
+  # ─────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: gmao_nginx
+    restart: unless-stopped
+    volumes:
+      - ./backend/gmao/docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend/gmao/public:/var/www/html/public:ro
+      - storage_app:/var/www/html/storage/app:ro
+    ports:
+      - "8000:80"
+    depends_on:
+      - php
+    networks:
+      - gmao_net
+
+  # ─────────────────────────────────────────────────────────
+  # React Frontend
+  # ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: "./frontweb/Ecme - React Tailwind Admin Template/starter"
+      dockerfile: Dockerfile
+    container_name: gmao_frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      - nginx
+    networks:
+      - gmao_net
+
+# ─────────────────────────────────────────────────────────
+# Volumes
+# ─────────────────────────────────────────────────────────
+volumes:
+  db_data:
+    driver: local
+  storage_app:
+    driver: local
+  vendor_php:
+    driver: local
+
+# ─────────────────────────────────────────────────────────
+# Network
+# ─────────────────────────────────────────────────────────
+networks:
+  gmao_net:
+    driver: bridge

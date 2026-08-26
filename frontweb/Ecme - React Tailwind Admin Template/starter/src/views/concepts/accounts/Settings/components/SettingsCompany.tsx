@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSessionUser } from '@/store/authStore'
 import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -214,6 +215,7 @@ const showToast = (type: 'success' | 'danger', message: string) => {
 
 const SettingsCompany = () => {
     const { t } = useTranslation()
+    const setUser = useSessionUser((s) => s.setUser)
 
     const validationSchema: ZodType<CompanySchema> = z.object({
         name: z
@@ -519,6 +521,14 @@ const SettingsCompany = () => {
             setSelectedProofFiles([])
             setProofSelectionStarted(false)
             setProofFilesError('')
+
+            // Update auth store so sidebar and banner reflect the new status immediately
+            const newStatus = latestCompany.approval_status === 'approved' && latestCompany.is_active
+                ? 'approved'
+                : latestCompany.approval_status === 'rejected'
+                  ? 'rejected'
+                  : 'pending'
+            setUser({ companyApprovalStatus: newStatus })
 
             showToast(
                 'success',

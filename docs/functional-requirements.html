@@ -1,0 +1,1085 @@
+
+<title>CMMS Functional Requirements</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #0D1B2A;
+    --panel:   #152236;
+    --border:  #1E3450;
+    --steel:   #3D6491;
+    --accent:  #2A7FFF;
+    --amber:   #F5A623;
+    --surface: #F4F7FB;
+    --muted:   #7A93B0;
+    --body:    #CBD8E8;
+    --white:   #FFFFFF;
+    --green:   #22C97A;
+    --red:     #FF5050;
+    --purple:  #9B6DFF;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--navy);
+    color: var(--body);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ──────────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "hd hd" "nav main";
+    min-height: 100vh;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ── Header ──────────────────────────────────── */
+  .hd {
+    grid-area: hd;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px;
+    display: flex;
+    align-items: flex-end;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .hd-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .hd-dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; opacity: .7; }
+  .hd-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.5px;
+    text-wrap: balance;
+    line-height: 1.2;
+  }
+  .hd-title span { color: var(--accent); }
+  .hd-meta {
+    margin-left: auto;
+    text-align: right;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .hd-meta strong { color: var(--body); }
+
+  /* ── Sidebar nav ─────────────────────────────── */
+  .nav {
+    grid-area: nav;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .nav-section {
+    padding: 0 20px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--steel);
+    margin-top: 20px;
+  }
+  .nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav a:hover {
+    color: var(--body);
+    border-left-color: var(--steel);
+    background: rgba(61,100,145,.1);
+  }
+  .nav-ico { font-size: 14px; flex-shrink: 0; width: 18px; text-align: center; }
+  .nav-count {
+    margin-left: auto;
+    font-size: 10px;
+    background: var(--border);
+    color: var(--muted);
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Main content ────────────────────────────── */
+  .main {
+    grid-area: main;
+    padding: 40px 48px 80px;
+    max-width: 960px;
+  }
+
+  /* ── Stats row ───────────────────────────────── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .stat-card .val {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card .lbl {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .stat-card .bar {
+    height: 3px;
+    border-radius: 2px;
+    margin-top: 14px;
+  }
+
+  /* ── Module section ──────────────────────────── */
+  .module {
+    margin-bottom: 48px;
+    scroll-margin-top: 24px;
+  }
+  .module-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .module-ico {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+  }
+  .module-info { flex: 1; }
+  .module-num {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .module-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+  .module-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .module-tag {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .tag-core   { color: var(--green);  border-color: var(--green);  background: rgba(34,201,122,.08); }
+  .tag-ops    { color: var(--amber);  border-color: var(--amber);  background: rgba(245,166,35,.08); }
+  .tag-collab { color: var(--purple); border-color: var(--purple); background: rgba(155,109,255,.08); }
+  .tag-admin  { color: var(--accent); border-color: var(--accent); background: rgba(42,127,255,.08); }
+
+  /* ── Requirement groups ──────────────────────── */
+  .req-group {
+    margin-bottom: 16px;
+  }
+  .req-group-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--steel);
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+  .req-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .req-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--body);
+    line-height: 1.5;
+  }
+  .req-list li:last-child { border-bottom: none; }
+  .req-list li::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--steel);
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+  .req-list li strong { color: var(--white); font-weight: 600; }
+
+  /* ── Role matrix ─────────────────────────────── */
+  .role-table-wrap { overflow-x: auto; margin-top: 16px; border-radius: 10px; border: 1px solid var(--border); }
+  .role-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    background: var(--panel);
+  }
+  .role-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .role-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--body);
+    vertical-align: middle;
+  }
+  .role-table tr:last-child td { border-bottom: none; }
+  .role-table td:first-child { font-weight: 600; color: var(--white); }
+  .check { color: var(--green); font-size: 15px; }
+  .cross { color: #3D506A; font-size: 15px; }
+  .part  { color: var(--amber); font-size: 13px; font-weight: 600; }
+
+  /* ── Notification table ──────────────────────── */
+  .notif-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); margin-top: 16px; }
+  .notif-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    background: var(--panel);
+  }
+  .notif-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .notif-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--body);
+    vertical-align: top;
+    font-size: 12px;
+  }
+  .notif-table tr:last-child td { border-bottom: none; }
+  .module-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  /* ── Divider ─────────────────────────────────── */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 56px 0;
+  }
+
+  /* ── Inline code ─────────────────────────────── */
+  code {
+    background: rgba(42,127,255,.12);
+    color: #7ABAFF;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+  }
+</style>
+
+<div class="shell">
+
+  <!-- ── HEADER ─────────────────────────────────────── -->
+  <header class="hd">
+    <div>
+      <div class="hd-badge"><span class="hd-dot"></span> GMAO Platform</div>
+      <h1 class="hd-title">Functional Requirements<br><span>CMMS Application</span></h1>
+    </div>
+    <div class="hd-meta">
+      <strong>Version 1.0</strong><br>
+      Laravel 12 · React 19 · Expo SDK 56<br>
+      Date: July 2026
+    </div>
+  </header>
+
+  <!-- ── SIDEBAR NAV ─────────────────────────────────── -->
+  <nav class="nav">
+    <div class="nav-section">Platform</div>
+    <a href="#auth"><span class="nav-ico">🔐</span> Authentication <span class="nav-count">7</span></a>
+    <a href="#roles"><span class="nav-ico">🛡️</span> Roles & Permissions <span class="nav-count">5</span></a>
+    <a href="#multitenancy"><span class="nav-ico">🏢</span> Multi-Tenancy <span class="nav-count">4</span></a>
+    <a href="#superadmin"><span class="nav-ico">⚙️</span> Superadmin <span class="nav-count">6</span></a>
+
+    <div class="nav-section">Core CMMS</div>
+    <a href="#assets"><span class="nav-ico">🔩</span> Assets <span class="nav-count">12</span></a>
+    <a href="#workorders"><span class="nav-ico">📋</span> Work Orders <span class="nav-count">18</span></a>
+    <a href="#pm"><span class="nav-ico">🔄</span> Preventive Maintenance <span class="nav-count">10</span></a>
+    <a href="#requests"><span class="nav-ico">📥</span> Maintenance Requests <span class="nav-count">6</span></a>
+
+    <div class="nav-section">Operations</div>
+    <a href="#inventory"><span class="nav-ico">📦</span> Inventory <span class="nav-count">10</span></a>
+    <a href="#purchasing"><span class="nav-ico">🛒</span> Purchasing <span class="nav-count">9</span></a>
+    <a href="#teams"><span class="nav-ico">👥</span> Teams & Sites <span class="nav-count">5</span></a>
+    <a href="#members"><span class="nav-ico">🧑‍🔧</span> People <span class="nav-count">6</span></a>
+
+    <div class="nav-section">Workspace</div>
+    <a href="#calendar"><span class="nav-ico">📅</span> Calendar <span class="nav-count">5</span></a>
+    <a href="#files"><span class="nav-ico">🗂️</span> File Manager <span class="nav-count">7</span></a>
+    <a href="#notifications"><span class="nav-ico">🔔</span> Notifications <span class="nav-count">11</span></a>
+    <a href="#chat"><span class="nav-ico">💬</span> Real-time Chat <span class="nav-count">8</span></a>
+
+    <div class="nav-section">Intelligence</div>
+    <a href="#dashboard"><span class="nav-ico">📊</span> Dashboards <span class="nav-count">6</span></a>
+    <a href="#ai"><span class="nav-ico">🤖</span> AI Assistant <span class="nav-count">4</span></a>
+
+    <div class="nav-section">Mobile</div>
+    <a href="#mobile"><span class="nav-ico">📱</span> Mobile App <span class="nav-count">14</span></a>
+    <a href="#account"><span class="nav-ico">👤</span> Account Settings <span class="nav-count">5</span></a>
+  </nav>
+
+  <!-- ── MAIN CONTENT ──────────────────────────────── -->
+  <main class="main">
+
+    <!-- Stats summary -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="val">18</div>
+        <div class="lbl">Modules</div>
+        <div class="bar" style="background: var(--accent);"></div>
+      </div>
+      <div class="stat-card">
+        <div class="val">142</div>
+        <div class="lbl">Requirements</div>
+        <div class="bar" style="background: var(--green);"></div>
+      </div>
+      <div class="stat-card">
+        <div class="val">11</div>
+        <div class="lbl">Notification Triggers</div>
+        <div class="bar" style="background: var(--amber);"></div>
+      </div>
+      <div class="stat-card">
+        <div class="val">4</div>
+        <div class="lbl">User Roles</div>
+        <div class="bar" style="background: var(--purple);"></div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════
+         1. AUTHENTICATION
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="auth">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(42,127,255,.12)">🔐</div>
+        <div class="module-info">
+          <div class="module-num">Module 01</div>
+          <div class="module-title">Authentication & Access Control</div>
+          <div class="module-desc">Identity, session management, and account security</div>
+        </div>
+        <span class="module-tag tag-admin">Platform</span>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Registration</div>
+        <ul class="req-list">
+          <li>User self-registration with <strong>company creation</strong> — company name, user name, email, and password</li>
+          <li><strong>OTP email verification</strong> — 6-digit code sent to email; account inactive until verified</li>
+          <li>Company account placed in <strong>pending state</strong> until approved by a superadmin</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Login & Sessions</div>
+        <ul class="req-list">
+          <li><strong>Email + password login</strong> with Sanctum token-based authentication (<code>Bearer</code> token)</li>
+          <li><strong>Google OAuth</strong> sign-in — links to existing account or creates new one</li>
+          <li>Token stored in <strong>encrypted secure storage</strong> on mobile (expo-secure-store)</li>
+          <li>Automatic <strong>401 logout</strong> — on expired or revoked token, app clears session and redirects to login</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Password Recovery</div>
+        <ul class="req-list">
+          <li><strong>Forgot password flow</strong> — enter email → receive reset link → set new password</li>
+          <li><strong>Change password</strong> while logged in — requires current password confirmation</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         2. ROLES & PERMISSIONS
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="roles">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(155,109,255,.12)">🛡️</div>
+        <div class="module-info">
+          <div class="module-num">Module 02</div>
+          <div class="module-title">Roles & Permissions</div>
+          <div class="module-desc">Granular, company-scoped access control</div>
+        </div>
+        <span class="module-tag tag-admin">Platform</span>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Role Management</div>
+        <ul class="req-list">
+          <li>Create, edit, and delete <strong>custom roles</strong> per company with a label and description</li>
+          <li>Assign <strong>granular permissions</strong> to each role (e.g. <code>work_orders.create</code>, <code>assets.delete</code>)</li>
+          <li>Assign one or more roles to each member</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Built-in Role Matrix</div>
+        <div class="role-table-wrap">
+          <table class="role-table">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>Admin</th>
+                <th>Manager</th>
+                <th>Technician</th>
+                <th>HR</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Full system access</td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+              <tr><td>Create / edit Work Orders</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="part">→ Pending Approval</span></td><td><span class="cross">—</span></td></tr>
+              <tr><td>Delete Work Orders</td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+              <tr><td>Approve / reject WOs</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+              <tr><td>Manage Assets</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="part">Read only</span></td><td><span class="cross">—</span></td></tr>
+              <tr><td>Manage Members</td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td><td><span class="check">✓</span></td></tr>
+              <tr><td>Manage Inventory</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="part">Read only</span></td><td><span class="cross">—</span></td></tr>
+              <tr><td>Manage Purchasing</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+              <tr><td>File Manager read</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="check">✓</span></td></tr>
+              <tr><td>File Manager write</td><td><span class="check">✓</span></td><td><span class="check">✓</span></td><td><span class="cross">—</span></td><td><span class="cross">—</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         3. MULTI-TENANCY
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="multitenancy">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(42,127,255,.12)">🏢</div>
+        <div class="module-info">
+          <div class="module-num">Module 03</div>
+          <div class="module-title">Multi-Tenancy & Company Management</div>
+          <div class="module-desc">Complete data isolation across companies</div>
+        </div>
+        <span class="module-tag tag-admin">Platform</span>
+      </div>
+      <ul class="req-list">
+        <li>Each company has <strong>fully isolated data</strong> — members, assets, WOs, inventory, etc. are never shared across companies</li>
+        <li>All API requests scoped by <code>X-Company-Id</code> header — middleware enforces membership</li>
+        <li><strong>Sites</strong> — each company can have multiple physical sites; assets and members are linked to sites</li>
+        <li><strong>Warehouses</strong> — each company can have multiple warehouses for inventory stock tracking</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         4. SUPERADMIN
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="superadmin">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(245,166,35,.1)">⚙️</div>
+        <div class="module-info">
+          <div class="module-num">Module 04</div>
+          <div class="module-title">Superadmin Panel</div>
+          <div class="module-desc">Platform-level administration across all companies</div>
+        </div>
+        <span class="module-tag tag-admin">Platform</span>
+      </div>
+      <ul class="req-list">
+        <li>View all registered companies — filter by status (pending / active / rejected)</li>
+        <li><strong>Approve or reject</strong> pending company registrations</li>
+        <li>Enter any company's context to inspect and manage its data</li>
+        <li>View all platform users — filter by status (active / inactive)</li>
+        <li>Add, edit, deactivate platform users — name, email, phone, password, role, active flag</li>
+        <li>Platform-level dashboard with total companies, users, and system health metrics</li>
+      </ul>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ════════════════════════════════════════════
+         5. ASSETS
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="assets">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(34,201,122,.1)">🔩</div>
+        <div class="module-info">
+          <div class="module-num">Module 05</div>
+          <div class="module-title">Asset Management</div>
+          <div class="module-desc">Full lifecycle tracking of physical equipment and machinery</div>
+        </div>
+        <span class="module-tag tag-core">Core CMMS</span>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Asset Records</div>
+        <ul class="req-list">
+          <li>Create, edit, archive, and delete assets with <strong>name, code, serial number, description, location, and site</strong></li>
+          <li><strong>Asset types / categories</strong> — organize assets into custom hierarchical types</li>
+          <li>Assign assets to a <strong>site</strong> and a <strong>team</strong></li>
+          <li>Upload and manage <strong>asset images</strong></li>
+          <li><strong>QR code generation</strong> per asset — scannable from mobile to open the asset record instantly</li>
+          <li><strong>Barcode field</strong> — scan barcode in mobile app to look up the asset</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Custom Fields & Checklists</div>
+        <ul class="req-list">
+          <li><strong>Custom field definitions</strong> per asset type — add any number of typed fields (text, number, date, etc.)</li>
+          <li><strong>Custom field values</strong> stored per asset instance</li>
+          <li><strong>Checklist templates</strong> per asset type — reusable inspection checklists attached to WOs</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Asset Visibility</div>
+        <ul class="req-list">
+          <li>Asset list with <strong>search, filter by type/site/status, sort, and pagination</strong></li>
+          <li>Asset detail view shows linked <strong>Work Orders, PM Plans, and attachments</strong></li>
+          <li><strong>Asset value tracking</strong> — record financial values and cost history</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         6. WORK ORDERS
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="workorders">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(42,127,255,.12)">📋</div>
+        <div class="module-info">
+          <div class="module-num">Module 06</div>
+          <div class="module-title">Work Orders</div>
+          <div class="module-desc">The operational core — create, track, and close maintenance tasks</div>
+        </div>
+        <span class="module-tag tag-core">Core CMMS</span>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Work Order Lifecycle</div>
+        <ul class="req-list">
+          <li>Create WOs with <strong>title, code (auto-generated or manual), priority, asset, due date, estimated time, description</strong></li>
+          <li>Priority levels: <strong>Low · Medium · High · Critical</strong></li>
+          <li>Full status workflow: <code>open</code> → <code>in_progress</code> → <code>on_hold</code> → <code>completed</code> → <code>pending_approval</code> → <code>approved</code> / <code>rejected</code></li>
+          <li><strong>Approval workflow</strong> — completed WOs submitted for manager/admin review; approve or reject with reason</li>
+          <li><strong>Overdue detection</strong> — WOs past their due date flagged and owners notified</li>
+          <li><strong>Status history log</strong> — every status change recorded with timestamp and actor</li>
+          <li><strong>Activity log</strong> — full audit trail of all actions on the WO</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Assignment & Collaboration</div>
+        <ul class="req-list">
+          <li>Assign WOs to <strong>one or more members</strong> (permission-gated: <code>work_orders.assign</code>)</li>
+          <li><strong>Comments</strong> — team members post updates; supports <code>@mention</code> to notify specific people</li>
+          <li><strong>Checklist items</strong> — task-level checkboxes, individually toggleable with progress tracking</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Evidence & Time Tracking</div>
+        <ul class="req-list">
+          <li><strong>File attachments</strong> — upload photos, PDFs, documents directly to a WO (camera, gallery, or file browser)</li>
+          <li><strong>Work logs</strong> — record labor time (minutes), labor cost ($), and notes per session; edit and delete own logs</li>
+          <li>Work log <strong>summary bar</strong> — total hours and total cost aggregated across all logs</li>
+          <li><strong>Parts used</strong> — record inventory items consumed (item, warehouse, quantity, used vs scrapped); deducts from stock</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Failure Analysis</div>
+        <ul class="req-list">
+          <li>Record <strong>failure code</strong> (electrical fault, mechanical failure, wear &amp; tear, operator error, lack of maintenance, manufacturing defect, environmental, unknown)</li>
+          <li>Record <strong>root cause</strong> (inadequate maintenance, operator error, design flaw, normal aging, overload, external factor, unknown)</li>
+          <li>Free-text <strong>resolution notes</strong></li>
+          <li>Visible and editable when WO status is <code>in_progress</code> or <code>completed</code></li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Views & Filtering</div>
+        <ul class="req-list">
+          <li><strong>List view</strong> — search, filter by status / priority / assignee / site / asset; sort; paginate</li>
+          <li><strong>Kanban board view</strong> — drag WO cards between status columns</li>
+          <li>Filter by <strong>"My Work Orders"</strong> — show only WOs assigned to the current user</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         7. PREVENTIVE MAINTENANCE
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="pm">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(34,201,122,.1)">🔄</div>
+        <div class="module-info">
+          <div class="module-num">Module 07</div>
+          <div class="module-title">Preventive Maintenance</div>
+          <div class="module-desc">Scheduled maintenance plans that auto-generate Work Orders</div>
+        </div>
+        <span class="module-tag tag-core">Core CMMS</span>
+      </div>
+      <ul class="req-list">
+        <li>Create PM Plans with <strong>name, asset, frequency, estimated duration, assigned member, and description</strong></li>
+        <li>Frequency options: <strong>Weekly · Monthly · Quarterly · Bi-Annual · Annual</strong></li>
+        <li>PM Plan statuses: <code>draft</code> · <code>active</code> · <code>inactive</code> · <code>overdue</code></li>
+        <li><strong>PM Tasks</strong> — define a checklist of recurring tasks attached to each PM plan</li>
+        <li><strong>Automatic WO generation</strong> — a scheduled cron command (<code>TriggerPmPlans</code>) creates a new Work Order when a PM plan comes due</li>
+        <li>PM-to-WO linkage — generated WOs are traceable back to the originating PM plan</li>
+        <li><strong>Next due date</strong> tracking — system calculates and displays when each PM plan is next due</li>
+        <li>PM Plan list with <strong>search, status filter, priority filter</strong>, and pagination</li>
+        <li>PM Plan detail shows history of all generated WOs</li>
+        <li>Overdue PM Plans flagged and admins/managers notified</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         8. MAINTENANCE REQUESTS
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="requests">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(245,166,35,.1)">📥</div>
+        <div class="module-info">
+          <div class="module-num">Module 08</div>
+          <div class="module-title">Maintenance Requests</div>
+          <div class="module-desc">Any user can report a problem; admins review and convert or reject</div>
+        </div>
+        <span class="module-tag tag-core">Core CMMS</span>
+      </div>
+      <ul class="req-list">
+        <li>Any authenticated user can <strong>submit a maintenance request</strong> — title, description, asset, priority</li>
+        <li>Request statuses: <code>pending</code> · <code>converted</code> · <code>rejected</code></li>
+        <li><strong>Convert to Work Order</strong> — admin/manager reviews request and promotes it to a full WO (preserves asset, description, priority)</li>
+        <li><strong>Reject with reason</strong> — admin/manager rejects the request; requester is notified</li>
+        <li>List view with <strong>status tabs</strong> (All / Pending / Converted / Rejected) and search</li>
+        <li>New request submission fires <strong>notification to all admins and managers</strong></li>
+      </ul>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ════════════════════════════════════════════
+         9. INVENTORY
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="inventory">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(245,166,35,.1)">📦</div>
+        <div class="module-info">
+          <div class="module-num">Module 09</div>
+          <div class="module-title">Inventory & Warehousing</div>
+          <div class="module-desc">Parts, materials, and stock level tracking across warehouses</div>
+        </div>
+        <span class="module-tag tag-ops">Operations</span>
+      </div>
+      <ul class="req-list">
+        <li>Create, edit, and delete <strong>inventory items</strong> — name, code, barcode, unit, unit cost, description, minimum stock level</li>
+        <li>Attach <strong>images</strong> to items</li>
+        <li>Multi-<strong>warehouse stock tracking</strong> — stock quantity tracked per item per warehouse independently</li>
+        <li><strong>Stock movements</strong> — record receipts (in), issues (out), and manual adjustments with type, quantity, and notes</li>
+        <li><strong>Low stock alert</strong> — when stock at any warehouse falls to or below <code>min_stock</code>, notify all admins and managers</li>
+        <li><strong>Parts used in WO</strong> — recording a part on a WO automatically issues stock from the selected warehouse</li>
+        <li>Item list with <strong>search, low-stock filter</strong>, and pagination</li>
+        <li>Item detail shows <strong>stock by warehouse</strong>, movement history, and linked WOs</li>
+        <li>Warehouse CRUD — create and manage physical storage locations</li>
+        <li>Barcode field on items — scannable for quick lookup</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         10. PURCHASING
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="purchasing">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(42,127,255,.12)">🛒</div>
+        <div class="module-info">
+          <div class="module-num">Module 10</div>
+          <div class="module-title">Purchasing</div>
+          <div class="module-desc">Purchase orders, supplier management, and goods receipt</div>
+        </div>
+        <span class="module-tag tag-ops">Operations</span>
+      </div>
+      <ul class="req-list">
+        <li><strong>Supplier management</strong> — create and manage supplier records (name, contact, email, phone, address)</li>
+        <li>Create <strong>Purchase Orders (PO)</strong> — linked to a supplier, with reference number and notes</li>
+        <li><strong>PO line items</strong> — add inventory items with quantity and unit cost; total calculated automatically</li>
+        <li>PO status workflow: <code>draft</code> → <code>ordered</code> → <code>received</code> → <code>cancelled</code></li>
+        <li><strong>Status history</strong> — every status change recorded with timestamp and actor</li>
+        <li><strong>Goods receipt</strong> — record receipt of PO items; updates warehouse stock automatically</li>
+        <li>Partial receipts — receive some items now, remaining later</li>
+        <li>PO list with <strong>status tabs</strong> (All / Draft / Ordered / Received / Cancelled) and search</li>
+        <li>Notification when PO status changes to "ordered" — creator is notified</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         11. TEAMS & SITES
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="teams">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(155,109,255,.12)">👥</div>
+        <div class="module-info">
+          <div class="module-num">Module 11</div>
+          <div class="module-title">Teams & Sites</div>
+          <div class="module-desc">Organizational structure — physical locations and working groups</div>
+        </div>
+        <span class="module-tag tag-ops">Operations</span>
+      </div>
+      <ul class="req-list">
+        <li><strong>Sites</strong> — create and manage physical locations; assign assets and members to sites</li>
+        <li><strong>Teams</strong> — create working groups; assign members and assets to teams</li>
+        <li>Team list with <strong>search, active/inactive filter</strong>, member count, avatar stack</li>
+        <li>Site guard on delete — prevents removing a site that still has linked assets, members, or warehouses</li>
+        <li>Team and site assignment visible on all linked Work Orders and Assets</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         12. PEOPLE / MEMBERS
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="members">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(34,201,122,.1)">🧑‍🔧</div>
+        <div class="module-info">
+          <div class="module-num">Module 12</div>
+          <div class="module-title">People & Members</div>
+          <div class="module-desc">Member directory and workforce management</div>
+        </div>
+        <span class="module-tag tag-ops">Operations</span>
+      </div>
+      <ul class="req-list">
+        <li>Invite and create members — name, email, phone, site, role, active status</li>
+        <li><strong>Role assignment</strong> — assign one or more custom roles to each member</li>
+        <li><strong>Deactivate</strong> member — deactivated members cannot log in</li>
+        <li><strong>Avatar upload</strong> — profile picture stored and served via the backend</li>
+        <li>Member list with <strong>search and active/inactive filter</strong></li>
+        <li>Member detail modal — view profile, roles, linked WOs, and contact info</li>
+      </ul>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ════════════════════════════════════════════
+         13. CALENDAR
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="calendar">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(42,127,255,.12)">📅</div>
+        <div class="module-info">
+          <div class="module-num">Module 13</div>
+          <div class="module-title">Calendar</div>
+          <div class="module-desc">Team schedule and event management</div>
+        </div>
+        <span class="module-tag tag-collab">Workspace</span>
+      </div>
+      <ul class="req-list">
+        <li>Create, edit, and delete <strong>calendar events</strong> — title, description, start date, end date, color, priority</li>
+        <li><strong>Color-coded events</strong> — 7 color options (blue, green, red, yellow, purple, cyan, pink)</li>
+        <li>Priority levels on events: Low · Medium · High · Critical</li>
+        <li>Month calendar view — events displayed on their respective days</li>
+        <li>Day detail panel — click a day to see all events for that date</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         14. FILE MANAGER
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="files">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(245,166,35,.1)">🗂️</div>
+        <div class="module-info">
+          <div class="module-num">Module 14</div>
+          <div class="module-title">File Manager</div>
+          <div class="module-desc">Company document storage with folder hierarchy and access control</div>
+        </div>
+        <span class="module-tag tag-collab">Workspace</span>
+      </div>
+      <ul class="req-list">
+        <li>Browse files and folders in a <strong>hierarchical directory structure</strong> with breadcrumb navigation</li>
+        <li>Create <strong>folders</strong> (directories) with custom names; navigate into them</li>
+        <li><strong>Upload files</strong> — from camera, photo library, or file browser (PDF, Word, Excel, images, etc.)</li>
+        <li><strong>Download files</strong> — token-based download URL (no auth header required after token issue)</li>
+        <li><strong>Delete files</strong> — write-permissioned users can delete any file</li>
+        <li><strong>Delete folders</strong> (long-press on mobile) — removes folder and all its contents</li>
+        <li>File detail sheet — shows file type, size, uploaded by, date, download and delete actions</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         15. NOTIFICATIONS
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="notifications">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(155,109,255,.12)">🔔</div>
+        <div class="module-info">
+          <div class="module-num">Module 15</div>
+          <div class="module-title">Notifications</div>
+          <div class="module-desc">11 real-time triggers keeping every stakeholder informed</div>
+        </div>
+        <span class="module-tag tag-collab">Workspace</span>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Delivery</div>
+        <ul class="req-list">
+          <li><strong>In-app notification inbox</strong> — All / Unread filter tabs; mark individual or all as read</li>
+          <li><strong>Navbar bell</strong> — shows unread count; polls every 15 seconds</li>
+          <li>"View in App" deep-link — each notification navigates directly to the relevant record</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Active Triggers (11 total)</div>
+        <div class="notif-table-wrap">
+          <table class="notif-table">
+            <thead>
+              <tr><th>Module</th><th>Event</th><th>Recipients</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="module-pill" style="background:rgba(42,127,255,.12);color:#7ABAFF">Work Orders</span></td><td>WO assigned to member</td><td>Assigned members (excl. assigner)</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(42,127,255,.12);color:#7ABAFF">Work Orders</span></td><td>WO status changed</td><td>Assigned members (excl. actor)</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(42,127,255,.12);color:#7ABAFF">Work Orders</span></td><td>WO overdue (cron)</td><td>Assigned members + all admins/managers</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(42,127,255,.12);color:#7ABAFF">Work Orders</span></td><td>@mention in comment</td><td>Mentioned person</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(245,166,35,.12);color:#F5C76A">Requests</span></td><td>New request submitted</td><td>All admins and managers</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(245,166,35,.12);color:#F5C76A">Requests</span></td><td>Request converted to WO</td><td>Original requester</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(245,166,35,.12);color:#F5C76A">Requests</span></td><td>Request rejected</td><td>Original requester</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(34,201,122,.1);color:#6BDFAA">Inventory</span></td><td>Item below min stock</td><td>All admins and managers</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(155,109,255,.12);color:#C4A8FF">PM Plans</span></td><td>PM plan assigned to member</td><td>That member</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(155,109,255,.12);color:#C4A8FF">PM Plans</span></td><td>PM auto-generated a WO</td><td>All admins and managers</td></tr>
+              <tr><td><span class="module-pill" style="background:rgba(255,80,80,.1);color:#FF9090">People</span></td><td>New member added</td><td>All admins and managers</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         16. REAL-TIME CHAT
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="chat">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(34,201,122,.1)">💬</div>
+        <div class="module-info">
+          <div class="module-num">Module 16</div>
+          <div class="module-title">Real-time Chat</div>
+          <div class="module-desc">Team messaging with WebSocket delivery via Laravel Reverb</div>
+        </div>
+        <span class="module-tag tag-collab">Workspace</span>
+      </div>
+      <ul class="req-list">
+        <li>Create <strong>conversations</strong> — 1:1 or group; add members from the company</li>
+        <li>Send <strong>text messages</strong> with real-time delivery via WebSocket (Laravel Reverb)</li>
+        <li>Send <strong>image and file attachments</strong> in messages — camera or gallery picker</li>
+        <li>Conversation list sorted by most recent message; unread count badge per conversation</li>
+        <li>Message history — scrollable thread with author avatars and timestamps</li>
+        <li><strong>Typing indicators</strong> and presence via WebSocket channels</li>
+        <li>Broadcast events: <code>ConversationCreated</code>, <code>MessageSent</code>, <code>NewChatMessage</code></li>
+        <li>Attachment images served via backend storage with proxy routing</li>
+      </ul>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ════════════════════════════════════════════
+         17. DASHBOARDS
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="dashboard">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(42,127,255,.12)">📊</div>
+        <div class="module-info">
+          <div class="module-num">Module 17</div>
+          <div class="module-title">Dashboards & Reports</div>
+          <div class="module-desc">Role-appropriate KPIs and operational summaries</div>
+        </div>
+        <span class="module-tag tag-admin">Intelligence</span>
+      </div>
+      <ul class="req-list">
+        <li><strong>Admin / Manager dashboard</strong> — total WOs by status, overdue count, PM plans due, low-stock items, recent activity</li>
+        <li><strong>Technician dashboard</strong> — "My Work Orders" with status breakdown, next due WOs, time logged this week</li>
+        <li><strong>Superadmin dashboard</strong> — platform-level stats: total companies, total users, pending approvals</li>
+        <li>Charts adapt to <strong>dark / light mode</strong> — theme key triggers full re-render to prevent ApexCharts crash</li>
+        <li>Dashboard data fetched from <strong>real backend API</strong> — no mock data</li>
+        <li><strong>Reports module</strong> — basic reporting endpoints available (ReportController)</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         18. AI ASSISTANT
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="ai">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(155,109,255,.12)">🤖</div>
+        <div class="module-info">
+          <div class="module-num">Module 18</div>
+          <div class="module-title">AI Assistant</div>
+          <div class="module-desc">Context-aware CMMS assistant powered by Groq</div>
+        </div>
+        <span class="module-tag tag-admin">Intelligence</span>
+      </div>
+      <ul class="req-list">
+        <li><strong>Floating bubble</strong> on web — always accessible, opens a chat panel without leaving the current page</li>
+        <li>Conversational interface — ask questions about assets, WOs, maintenance procedures, etc.</li>
+        <li>Powered by <strong>Groq API</strong> — fast inference on Llama-based models</li>
+        <li>Responses streamed to the UI for low-latency feel</li>
+      </ul>
+    </section>
+
+    <hr class="section-divider">
+
+    <!-- ════════════════════════════════════════════
+         19. MOBILE APP
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="mobile">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(42,127,255,.12)">📱</div>
+        <div class="module-info">
+          <div class="module-num">Module 19</div>
+          <div class="module-title">Mobile Application</div>
+          <div class="module-desc">React Native (Expo SDK 56) — full field-technician parity with the web app</div>
+        </div>
+        <span class="module-tag tag-ops">Mobile</span>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Infrastructure</div>
+        <ul class="req-list">
+          <li>Built with <strong>React Native + Expo Router</strong> (SDK 56, file-system routing)</li>
+          <li>Same <strong>Laravel API backend</strong> as web — Sanctum tokens, <code>X-Company-Id</code> header</li>
+          <li>Token stored in <strong>expo-secure-store</strong> (encrypted on device)</li>
+          <li><strong>EAS development build</strong> — distributed as a real APK/IPA, not Expo Go</li>
+          <li>API base URL configured via <code>EXPO_PUBLIC_API_URL</code> environment variable</li>
+        </ul>
+      </div>
+
+      <div class="req-group">
+        <div class="req-group-title">Screens & Features</div>
+        <ul class="req-list">
+          <li><strong>Home dashboard</strong> — real-time KPIs fetched from API (open WOs, overdue, my tasks)</li>
+          <li><strong>Work Orders</strong> — list with status tabs + filters; detail view; <strong>create new WO</strong> with full form (date picker, duration picker, asset/member pickers); status transitions; comments; checklist; work logs; parts used; attachments; failure analysis</li>
+          <li><strong>PM Plans</strong> — list with overdue badges; detail view showing tasks, frequency, linked WOs</li>
+          <li><strong>Assets</strong> — list with search; detail view with custom fields and linked WOs</li>
+          <li><strong>QR / Barcode Scanner</strong> — scan asset QR code → opens asset record instantly</li>
+          <li><strong>Inventory</strong> — parts list with low-stock filter; detail sheet with stock by warehouse</li>
+          <li><strong>Purchasing</strong> — PO list with status tabs; PO detail sheet with lines and receipt history</li>
+          <li><strong>Members</strong> — company member directory</li>
+          <li><strong>File Manager</strong> — full file browser with upload (camera, gallery, document), folder creation, delete, download</li>
+          <li><strong>Calendar</strong> — monthly view with event CRUD</li>
+          <li><strong>Maintenance Requests</strong> — list with status tabs; submit new request</li>
+          <li><strong>Notifications</strong> — all/unread tabs; mark read</li>
+          <li><strong>Real-time Chat</strong> — conversation list and message thread with attachment support</li>
+          <li>Tab bar navigation: Home · Modules · Scan · Chat · Profile</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════
+         20. ACCOUNT SETTINGS
+    ═════════════════════════════════════════════ -->
+    <section class="module" id="account">
+      <div class="module-header">
+        <div class="module-ico" style="background:rgba(34,201,122,.1)">👤</div>
+        <div class="module-info">
+          <div class="module-num">Module 20</div>
+          <div class="module-title">Account Settings</div>
+          <div class="module-desc">Personal profile and company configuration</div>
+        </div>
+        <span class="module-tag tag-admin">Platform</span>
+      </div>
+      <ul class="req-list">
+        <li><strong>Profile tab</strong> — edit name, email, phone; upload or remove avatar</li>
+        <li><strong>Company tab</strong> (admin only) — edit company name, logo, and contact information</li>
+        <li><strong>Security tab</strong> — change password with current password confirmation</li>
+        <li>Dark / light <strong>theme toggle</strong> — persisted across sessions</li>
+        <li>Logout — clears token and session; redirects to login</li>
+      </ul>
+    </section>
+
+  </main>
+</div>

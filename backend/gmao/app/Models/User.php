@@ -23,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'expo_push_token',
         'avatar_path',
         'locale',
         'two_factor_enabled',

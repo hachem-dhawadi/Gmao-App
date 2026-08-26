@@ -6,6 +6,7 @@ export type AuthUser = {
     id: number
     name: string
     email: string
+    phone?: string | null
     avatar_url?: string | null
     is_superadmin: boolean
 }
@@ -52,6 +53,41 @@ export type RegisterPayload = {
 
 export async function apiRegister(payload: RegisterPayload) {
     return api.post<{ success: boolean; data: { requires_otp: boolean; email: string } }>('/auth/register', payload)
+}
+
+export async function apiUpdateProfile(payload: {
+    name:          string
+    email:         string
+    phone?:        string
+    avatarUri?:    string | null
+    removeAvatar?: boolean
+}) {
+    const formData = new FormData()
+    formData.append('name', payload.name)
+    formData.append('email', payload.email)
+    if (payload.phone !== undefined) formData.append('phone', payload.phone)
+    if (payload.removeAvatar) {
+        formData.append('remove_avatar', '1')
+    } else if (payload.avatarUri) {
+        const ext = payload.avatarUri.split('.').pop()?.toLowerCase() ?? 'jpg'
+        formData.append('avatar', {
+            uri:  payload.avatarUri,
+            name: `avatar.${ext}`,
+            type: ext === 'jpg' ? 'image/jpeg' : `image/${ext}`,
+        } as unknown as Blob)
+    }
+    formData.append('_method', 'PATCH')
+    return api.post<{ success: boolean; data: { user: AuthUser } }>('/auth/me', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    })
+}
+
+export async function apiUpdatePassword(payload: {
+    current_password: string
+    password: string
+    password_confirmation: string
+}) {
+    return api.patch<{ success: boolean; message: string }>('/auth/password', payload)
 }
 
 export async function apiSendOtp(email: string) {

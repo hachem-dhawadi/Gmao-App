@@ -66,6 +66,16 @@ const MODULES: Module[] = [
         sublabel: 'Maintenance requests', color: '#f97316',
         permission: null, route: '/app/maintenance-requests', built: true,
     },
+    {
+        key: 'reports', icon: 'bar-chart-outline', label: 'Reports',
+        sublabel: 'KPIs & analytics', color: '#6366f1',
+        permission: null, route: '/app/reports', built: true,
+    },
+    {
+        key: 'ai', icon: 'sparkles-outline', label: 'AI Assistant',
+        sublabel: 'Ask anything', color: '#8b5cf6',
+        permission: null, route: '/app/ai', built: true,
+    },
 ]
 
 export default function ModulesScreen() {

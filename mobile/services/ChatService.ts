@@ -57,7 +57,8 @@ export type MessagesResponse = {
 export type MemberForChat = {
     id: number
     name: string | null
-    avatar: string | null
+    avatar: string | null      // legacy field name
+    avatar_url: string | null  // actual field from backend
     role_name: string | null
 }
 

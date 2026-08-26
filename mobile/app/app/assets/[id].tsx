@@ -1,12 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
+import {
+    View, Text, StyleSheet, ScrollView, TouchableOpacity,
+    ActivityIndicator, RefreshControl, Image, Modal, Pressable, Dimensions,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { Colors } from '@/constants/colors'
+import { Colors, StatusColors } from '@/constants/colors'
 import { apiGetAsset, type Asset } from '@/services/AssetsService'
 import { apiGetWorkOrders, type WorkOrder } from '@/services/WorkOrdersService'
-import { StatusColors } from '@/constants/colors'
+
+const { width: SW } = Dimensions.get('window')
+const THUMB = Math.floor((SW - 72) / 3)
 
 const STATUS_LABELS: Record<string, string> = {
     active:            'Active',
@@ -21,7 +26,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
     decommissioned:    { bg: '#ff6a551a', text: '#ff6a55' },
 }
 
-function fmt(d: string | null) {
+function fmt(d: string | null | undefined) {
     if (!d) return '—'
     return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
@@ -40,14 +45,57 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
     )
 }
 
+function WarrantyCard({ date }: { date: string | null | undefined }) {
+    if (!date) {
+        return (
+            <View style={[s.warrantyCard, { backgroundColor: Colors.gray100 }]}>
+                <Ionicons name="shield-outline" size={20} color={Colors.gray400} />
+                <View style={s.warrantyInfo}>
+                    <Text style={[s.warrantyTitle, { color: Colors.gray400 }]}>No warranty date set</Text>
+                </View>
+            </View>
+        )
+    }
+
+    const daysLeft = Math.floor((new Date(date).getTime() - Date.now()) / 86400000)
+
+    let bg: string, fg: string, icon: string, label: string, progress: number
+    if (daysLeft < 0) {
+        bg = '#fee2e2'; fg = '#dc2626'; icon = 'shield-outline'
+        label = 'Expired'; progress = 0
+    } else if (daysLeft <= 30) {
+        bg = '#fef9c3'; fg = '#ca8a04'; icon = 'shield-checkmark-outline'
+        label = `Expiring in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`
+        progress = Math.max(4, (daysLeft / 365) * 100)
+    } else {
+        bg = '#dcfce7'; fg = '#16a34a'; icon = 'shield-checkmark-outline'
+        label = `Valid · ${daysLeft} days left`
+        progress = Math.min(100, (daysLeft / 365) * 100)
+    }
+
+    return (
+        <View style={[s.warrantyCard, { backgroundColor: bg }]}>
+            <Ionicons name={icon as never} size={20} color={fg} />
+            <View style={s.warrantyInfo}>
+                <Text style={[s.warrantyTitle, { color: fg }]}>{label}</Text>
+                <Text style={[s.warrantyDate, { color: fg }]}>Until {fmt(date)}</Text>
+                <View style={s.warrantyBarBg}>
+                    <View style={[s.warrantyBarFill, { width: `${progress}%` as never, backgroundColor: fg }]} />
+                </View>
+            </View>
+        </View>
+    )
+}
+
 export default function AssetDetail() {
     const { id } = useLocalSearchParams<{ id: string }>()
 
-    const [asset,      setAsset]      = useState<Asset | null>(null)
-    const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
-    const [loading,    setLoading]    = useState(true)
-    const [refreshing, setRefreshing] = useState(false)
-    const [tab,        setTab]        = useState<'details' | 'work-orders'>('details')
+    const [asset,       setAsset]       = useState<Asset | null>(null)
+    const [workOrders,  setWorkOrders]  = useState<WorkOrder[]>([])
+    const [loading,     setLoading]     = useState(true)
+    const [refreshing,  setRefreshing]  = useState(false)
+    const [tab,         setTab]         = useState<'details' | 'work-orders'>('details')
+    const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
     const load = useCallback(async () => {
         try {
@@ -84,13 +132,16 @@ export default function AssetDetail() {
             <SafeAreaView style={s.safe} edges={['top']}>
                 <View style={s.notFound}>
                     <Text style={s.notFoundText}>Asset not found.</Text>
-                    <TouchableOpacity onPress={() => router.back()}><Text style={s.backLink}>Go back</Text></TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Text style={s.backLink}>Go back</Text>
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         )
     }
 
-    const st = STATUS_COLORS[asset.status] ?? STATUS_COLORS.inactive
+    const st     = STATUS_COLORS[asset.status] ?? STATUS_COLORS.inactive
+    const photos = asset.images ?? []
 
     return (
         <SafeAreaView style={s.safe} edges={['top']}>
@@ -107,7 +158,7 @@ export default function AssetDetail() {
                 showsVerticalScrollIndicator={false}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
             >
-                {/* Title */}
+                {/* Hero */}
                 <View style={s.titleBlock}>
                     <View style={s.assetIconLarge}>
                         <Ionicons name="cube-outline" size={30} color={Colors.primary} />
@@ -135,32 +186,64 @@ export default function AssetDetail() {
                 </View>
 
                 {tab === 'details' && (
-                    <View style={s.card}>
-                        {asset.serial_number && (
-                            <><InfoRow icon="barcode-outline"  label="Serial Number"  value={asset.serial_number} /><View style={s.div} /></>
-                        )}
-                        {asset.manufacturer && (
-                            <><InfoRow icon="business-outline" label="Manufacturer"   value={asset.manufacturer} /><View style={s.div} /></>
-                        )}
-                        {asset.model && (
-                            <><InfoRow icon="settings-outline" label="Model"          value={asset.model} /><View style={s.div} /></>
-                        )}
-                        {asset.location && (
-                            <><InfoRow icon="location-outline" label="Location"       value={asset.location} /><View style={s.div} /></>
-                        )}
-                        {asset.installed_at && (
-                            <><InfoRow icon="calendar-outline" label="Install Date"   value={fmt(asset.installed_at)} /><View style={s.div} /></>
-                        )}
-                        <InfoRow icon="shield-checkmark-outline" label="Warranty Until" value={fmt(asset.warranty_end_at)} />
+                    <>
+                        {/* Warranty Badge */}
+                        <View style={s.section}>
+                            <WarrantyCard date={asset.warranty_end_at} />
+                        </View>
 
-                        {asset.notes ? (
-                            <>
-                                <View style={[s.div, { marginVertical: 14 }]} />
-                                <Text style={s.descLabel}>Notes</Text>
-                                <Text style={s.descText}>{asset.notes}</Text>
-                            </>
-                        ) : null}
-                    </View>
+                        {/* Main Info */}
+                        <View style={s.card}>
+                            {asset.serial_number && (
+                                <><InfoRow icon="barcode-outline"  label="Serial Number" value={asset.serial_number} /><View style={s.div} /></>
+                            )}
+                            {asset.manufacturer && (
+                                <><InfoRow icon="business-outline" label="Manufacturer"  value={asset.manufacturer} /><View style={s.div} /></>
+                            )}
+                            {asset.model && (
+                                <><InfoRow icon="settings-outline" label="Model"         value={asset.model} /><View style={s.div} /></>
+                            )}
+                            {asset.location && (
+                                <><InfoRow icon="location-outline" label="Location"      value={asset.location} /><View style={s.div} /></>
+                            )}
+                            {asset.address_label && (
+                                <><InfoRow icon="map-outline" label="Zone / Address" value={asset.address_label} /><View style={s.div} /></>
+                            )}
+                            {asset.notes ? (
+                                <>
+                                    <View style={[s.div, { marginVertical: 14 }]} />
+                                    <Text style={s.descLabel}>Notes</Text>
+                                    <Text style={s.descText}>{asset.notes}</Text>
+                                </>
+                            ) : null}
+                        </View>
+
+                        {/* Photo Gallery */}
+                        {photos.length > 0 && (
+                            <View style={[s.card, s.cardGap]}>
+                                <Text style={s.sectionTitle}>Photos ({photos.length})</Text>
+                                <View style={s.photoGrid}>
+                                    {photos.map((url, i) => (
+                                        <TouchableOpacity key={i} activeOpacity={0.8} onPress={() => setLightboxUrl(url)}>
+                                            <Image source={{ uri: url }} style={s.photoThumb} resizeMode="cover" />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+                        )}
+
+                        {/* Lifecycle */}
+                        <View style={[s.card, s.cardGap]}>
+                            <Text style={s.sectionTitle}>Lifecycle</Text>
+                            <InfoRow icon="receipt-outline"  label="Purchase Date" value={fmt(asset.purchase_date)} />
+                            <View style={s.div} />
+                            <InfoRow icon="calendar-outline" label="Installed"     value={fmt(asset.installed_at)} />
+                            <View style={s.lifecycleSep} />
+                            <InfoRow icon="time-outline"     label="Created"       value={fmt(asset.created_at)} />
+                            <View style={s.div} />
+                            <InfoRow icon="refresh-outline"  label="Last Updated"  value={fmt(asset.updated_at)} />
+                        </View>
+                    </>
                 )}
 
                 {tab === 'work-orders' && (
@@ -199,6 +282,16 @@ export default function AssetDetail() {
 
                 <View style={{ height: 32 }} />
             </ScrollView>
+
+            {/* Photo Lightbox */}
+            <Modal visible={!!lightboxUrl} transparent animationType="fade" onRequestClose={() => setLightboxUrl(null)}>
+                <Pressable style={s.lightboxOverlay} onPress={() => setLightboxUrl(null)}>
+                    <Image source={{ uri: lightboxUrl ?? '' }} style={s.lightboxImage} resizeMode="contain" />
+                    <TouchableOpacity style={s.lightboxClose} onPress={() => setLightboxUrl(null)}>
+                        <Ionicons name="close" size={24} color="#fff" />
+                    </TouchableOpacity>
+                </Pressable>
+            </Modal>
         </SafeAreaView>
     )
 }
@@ -216,15 +309,15 @@ const s = StyleSheet.create({
     backBtn:    { width: 36, height: 36, borderRadius: 10, backgroundColor: Colors.gray100, alignItems: 'center', justifyContent: 'center' },
     headerCode: { fontSize: 15, fontWeight: '700', color: Colors.gray900 },
 
-    titleBlock: { backgroundColor: Colors.white, padding: 20, alignItems: 'center', marginBottom: 0 },
+    titleBlock: { backgroundColor: Colors.white, padding: 20, alignItems: 'center' },
     assetIconLarge: {
         width: 64, height: 64, borderRadius: 18, backgroundColor: Colors.primarySubtle,
         alignItems: 'center', justifyContent: 'center', marginBottom: 12,
     },
     statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, marginBottom: 10 },
     statusText:  { fontSize: 12, fontWeight: '700' },
-    name:     { fontSize: 20, fontWeight: '800', color: Colors.gray900, textAlign: 'center', marginBottom: 4 },
-    category: { fontSize: 13, color: Colors.gray500 },
+    name:        { fontSize: 20, fontWeight: '800', color: Colors.gray900, textAlign: 'center', marginBottom: 4 },
+    category:    { fontSize: 13, color: Colors.gray500 },
 
     tabsRow: {
         flexDirection: 'row', backgroundColor: Colors.white,
@@ -235,11 +328,25 @@ const s = StyleSheet.create({
     tabText:      { fontSize: 13, fontWeight: '600', color: Colors.gray500 },
     tabTextActive:{ color: Colors.primary },
 
+    section: { paddingHorizontal: 16, marginBottom: 12 },
+
+    warrantyCard: {
+        flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+        borderRadius: 14, padding: 14,
+    },
+    warrantyInfo:    { flex: 1 },
+    warrantyTitle:   { fontSize: 14, fontWeight: '700', marginBottom: 2 },
+    warrantyDate:    { fontSize: 12, fontWeight: '500', marginBottom: 8, opacity: 0.8 },
+    warrantyBarBg:   { height: 5, backgroundColor: 'rgba(0,0,0,0.12)', borderRadius: 99, overflow: 'hidden' },
+    warrantyBarFill: { height: 5, borderRadius: 99 },
+
     card: {
         backgroundColor: Colors.white, marginHorizontal: 16, borderRadius: 14, padding: 16,
         borderWidth: 1, borderColor: Colors.gray200,
         shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
     },
+    cardGap: { marginTop: 12 },
+
     infoRow:   { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
     infoIcon:  { width: 34, height: 34, borderRadius: 10, backgroundColor: Colors.primarySubtle, alignItems: 'center', justifyContent: 'center' },
     infoTexts: { flex: 1 },
@@ -248,6 +355,25 @@ const s = StyleSheet.create({
     div:       { height: 1, backgroundColor: Colors.gray100, marginVertical: 8 },
     descLabel: { fontSize: 13, fontWeight: '700', color: Colors.gray700, marginBottom: 8 },
     descText:  { fontSize: 14, color: Colors.gray600, lineHeight: 22 },
+
+    sectionTitle: { fontSize: 14, fontWeight: '700', color: Colors.gray700, marginBottom: 12 },
+
+    photoGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+    photoThumb: { width: THUMB, height: THUMB, borderRadius: 8, backgroundColor: Colors.gray100 },
+
+    lifecycleSep: { height: 1, backgroundColor: Colors.gray200, marginVertical: 12 },
+
+    lightboxOverlay: {
+        flex: 1, backgroundColor: 'rgba(0,0,0,0.92)',
+        alignItems: 'center', justifyContent: 'center',
+    },
+    lightboxImage: { width: SW, height: SW * 1.1 },
+    lightboxClose: {
+        position: 'absolute', top: 52, right: 20,
+        width: 40, height: 40, borderRadius: 20,
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        alignItems: 'center', justifyContent: 'center',
+    },
 
     woListWrap: { paddingHorizontal: 16, gap: 8 },
     woCard: {

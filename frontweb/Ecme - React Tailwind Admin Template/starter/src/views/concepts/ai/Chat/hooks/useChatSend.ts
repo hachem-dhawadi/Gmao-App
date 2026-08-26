@@ -16,7 +16,8 @@ const useChatSend = () => {
 
     const { user } = useSessionUser()
 
-    const creteMyMessage = (id: string, prompt: string) => {
+    const creteMyMessage = (id: string, prompt: string, attachments?: File[]) => {
+        const imageFile = attachments?.find((f) => f.type.startsWith('image/'))
         pushConversation(id, {
             id: `ai-conv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
             sender: {
@@ -28,6 +29,17 @@ const useChatSend = () => {
             timestamp: dayjs().toDate(),
             type: 'regular',
             isMyMessage: true,
+            ...(imageFile
+                ? {
+                      attachments: [
+                          {
+                              type: 'image' as const,
+                              source: imageFile,
+                              mediaUrl: URL.createObjectURL(imageFile),
+                          },
+                      ],
+                  }
+                : {}),
         })
     }
 
@@ -93,7 +105,7 @@ const useChatSend = () => {
     const handleSend = async (prompt: string, attachments?: File[], pageContext?: string) => {
         setIsTyping(true)
         if (selectedConversation) {
-            creteMyMessage(selectedConversation, prompt)
+            creteMyMessage(selectedConversation, prompt, attachments)
             await sendMessage(selectedConversation, prompt, attachments, pageContext)
         } else {
             const newId = `ai-chat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
@@ -105,7 +117,7 @@ const useChatSend = () => {
                 updatedTime: dayjs().unix(),
                 enable: false,
             })
-            creteMyMessage(newId, prompt)
+            creteMyMessage(newId, prompt, attachments)
             await createConversation(newId, prompt, attachments, pageContext)
         }
     }
