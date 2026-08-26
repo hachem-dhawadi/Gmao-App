@@ -1,0 +1,21 @@
+name: Seed Chat Data (run once)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    name: Run DemoChatSeeder on Azure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run seeder via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.AZURE_VM_IP }}
+          username: azureuser
+          key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
+          timeout: 60s
+          script: |
+            docker exec gmao_php php artisan db:seed --class=DemoChatSeeder
+            echo "✅ Chat seeder done"
