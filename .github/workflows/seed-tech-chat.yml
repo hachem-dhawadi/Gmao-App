@@ -1,0 +1,17 @@
+name: Seed Technician Chat
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run DemoChatTechnicianSeeder on production
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:     ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key:      ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            docker exec gmao_php php artisan db:seed --class=DemoChatTechnicianSeeder --force
