@@ -33,24 +33,53 @@ function relativeTime(dateStr: string | null): string {
 }
 
 function iconForType(type: string): { name: string; bg: string; color: string } {
-    if (type === 'chat_message')          return { name: 'chatbubbles-outline',       bg: '#2a85ff15', color: '#2a85ff' }
-    if (type.startsWith('wo_assigned'))  return { name: 'person-add-outline',       bg: '#11111115', color: '#111'    }
-    if (type.startsWith('wo_complete'))  return { name: 'checkmark-circle-outline', bg: '#10b98120', color: '#10b981' }
-    if (type.startsWith('wo_comment'))   return { name: 'chatbubble-outline',        bg: '#f59e0b20', color: '#f59e0b' }
-    if (type.startsWith('wo_overdue'))   return { name: 'alert-circle-outline',      bg: '#ff6a5515', color: '#ff6a55' }
-    if (type.startsWith('wo_status'))    return { name: 'swap-horizontal-outline',   bg: '#2a85ff15', color: '#2a85ff' }
-    if (type.startsWith('pm_'))          return { name: 'calendar-outline',          bg: '#a855f715', color: '#a855f7' }
-    if (type.startsWith('inventory') || type.startsWith('stock') || type.startsWith('item'))
-        return { name: 'cube-outline',  bg: '#f59e0b20', color: '#f59e0b' }
-    if (type.startsWith('po_') || type.startsWith('purchase'))
-        return { name: 'cart-outline', bg: '#8b5cf620', color: '#8b5cf6' }
-    if (type.startsWith('member'))       return { name: 'people-outline',            bg: '#11111115', color: '#111'    }
-    return                               { name: 'notifications-outline',            bg: '#f5f5f5',   color: '#999'    }
+    if (type === 'chat_message')                      return { name: 'chatbubbles-outline',       bg: '#2a85ff15', color: '#2a85ff' }
+    if (type === 'wo_assigned')                       return { name: 'person-add-outline',        bg: '#6366f115', color: '#6366f1' }
+    if (type === 'wo_status_changed')                 return { name: 'swap-horizontal-outline',   bg: '#2a85ff15', color: '#2a85ff' }
+    if (type === 'wo_pending_approval')               return { name: 'time-outline',              bg: '#f59e0b20', color: '#f59e0b' }
+    if (type === 'wo_approved')                       return { name: 'checkmark-circle-outline',  bg: '#10b98120', color: '#10b981' }
+    if (type === 'wo_rejected')                       return { name: 'close-circle-outline',      bg: '#ff6a5520', color: '#ff6a55' }
+    if (type === 'wo_due_soon')                       return { name: 'alarm-outline',             bg: '#f59e0b20', color: '#f59e0b' }
+    if (type === 'wo_overdue')                        return { name: 'alert-circle-outline',      bg: '#ff6a5515', color: '#ff6a55' }
+    if (type === 'comment_mention')                   return { name: 'at-outline',                bg: '#a855f715', color: '#a855f7' }
+    if (type === 'pm_assigned')                       return { name: 'person-add-outline',        bg: '#8b5cf615', color: '#8b5cf6' }
+    if (type === 'pm_overdue')                        return { name: 'alert-circle-outline',      bg: '#ff6a5515', color: '#ff6a55' }
+    if (type === 'pm_wo_generated')                   return { name: 'flash-outline',             bg: '#8b5cf615', color: '#8b5cf6' }
+    if (type === 'low_stock')                         return { name: 'cube-outline',              bg: '#f59e0b20', color: '#f59e0b' }
+    if (type === 'po_ordered')                        return { name: 'cart-outline',              bg: '#10b98115', color: '#10b981' }
+    if (type === 'new_request')                       return { name: 'construct-outline',         bg: '#6366f115', color: '#6366f1' }
+    if (type === 'request_converted')                 return { name: 'checkmark-done-outline',    bg: '#10b98115', color: '#10b981' }
+    if (type === 'request_rejected')                  return { name: 'close-circle-outline',      bg: '#ff6a5520', color: '#ff6a55' }
+    if (type === 'new_member')                        return { name: 'people-outline',            bg: '#2a85ff15', color: '#2a85ff' }
+    return                                            { name: 'notifications-outline',            bg: '#f5f5f5',   color: '#999'   }
+}
+
+function moduleForType(type: string): string {
+    if (type === 'chat_message')        return 'Chat'
+    if (type.startsWith('wo_') || type === 'comment_mention') return 'Work Orders'
+    if (type.startsWith('pm_'))         return 'PM Plans'
+    if (type === 'low_stock')           return 'Inventory'
+    if (type === 'po_ordered')          return 'Purchasing'
+    if (type.startsWith('request_') || type === 'new_request') return 'Requests'
+    if (type === 'new_member')          return 'Team'
+    return ''
+}
+
+const MODULE_COLORS: Record<string, { bg: string; color: string }> = {
+    'Chat':        { bg: '#2a85ff15', color: '#2a85ff' },
+    'Work Orders': { bg: '#6366f115', color: '#6366f1' },
+    'PM Plans':    { bg: '#8b5cf615', color: '#8b5cf6' },
+    'Inventory':   { bg: '#f59e0b20', color: '#f59e0b' },
+    'Purchasing':  { bg: '#10b98115', color: '#10b981' },
+    'Requests':    { bg: '#6366f115', color: '#6366f1' },
+    'Team':        { bg: '#2a85ff15', color: '#2a85ff' },
 }
 
 function NotifItem({ item, onRead }: { item: AppNotification; onRead: (id: number) => void }) {
-    const ic    = iconForType(item.type)
-    const route = resolveRoute(item)
+    const ic     = iconForType(item.type)
+    const route  = resolveRoute(item)
+    const module = moduleForType(item.type)
+    const mc     = MODULE_COLORS[module]
     return (
         <TouchableOpacity
             style={[styles.item, !item.read && styles.itemUnread]}
@@ -71,7 +100,14 @@ function NotifItem({ item, onRead }: { item: AppNotification; onRead: (id: numbe
                     {!item.read && <View style={styles.unreadDot} />}
                 </View>
                 <Text style={styles.notifBody} numberOfLines={2}>{item.body}</Text>
-                <Text style={styles.notifTime}>{relativeTime(item.created_at)}</Text>
+                <View style={styles.footerRow}>
+                    {module ? (
+                        <View style={[styles.moduleTag, mc && { backgroundColor: mc.bg }]}>
+                            <Text style={[styles.moduleTagText, mc && { color: mc.color }]}>{module}</Text>
+                        </View>
+                    ) : null}
+                    <Text style={styles.notifTime}>{relativeTime(item.created_at)}</Text>
+                </View>
             </View>
             <Ionicons name="chevron-forward" size={14} color="#ddd" />
         </TouchableOpacity>
@@ -257,7 +293,10 @@ const styles = StyleSheet.create({
     notifTitle:     { fontSize: 14, fontWeight: '500', color: '#555', flex: 1 },
     notifTitleBold: { fontWeight: '700', color: '#111' },
     unreadDot:      { width: 7, height: 7, borderRadius: 4, backgroundColor: '#111', marginLeft: 8, flexShrink: 0 },
-    notifBody:      { fontSize: 13, color: '#888', lineHeight: 18, marginBottom: 4 },
+    notifBody:      { fontSize: 13, color: '#888', lineHeight: 18, marginBottom: 6 },
+    footerRow:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    moduleTag:      { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, backgroundColor: '#f0f0f0' },
+    moduleTagText:  { fontSize: 10, fontWeight: '700', color: '#999', letterSpacing: 0.3 },
     notifTime:      { fontSize: 11, color: '#bbb', fontWeight: '500' },
 
     emptyWrap:    { alignItems: 'center', paddingTop: 60, gap: 12 },

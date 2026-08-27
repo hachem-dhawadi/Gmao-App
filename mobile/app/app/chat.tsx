@@ -180,6 +180,41 @@ export default function ChatScreen() {
         return () => { show.remove(); hide.remove() }
     }, [])
 
+    // Poll for new messages every 8s while a conversation is open
+    const pollMsgRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    useEffect(() => {
+        if (!activeConv) {
+            if (pollMsgRef.current) clearInterval(pollMsgRef.current)
+            return
+        }
+        pollMsgRef.current = setInterval(async () => {
+            try {
+                const res = await apiGetMessages(activeConv.id)
+                const fetched: Message[] = res.data?.data?.messages ?? []
+                setMessages(prev => {
+                    if (!fetched.length) return prev
+                    const lastId = prev.length ? prev[prev.length - 1].id : -1
+                    const incoming = fetched.filter(m => m.id > lastId)
+                    if (!incoming.length) return prev
+                    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 80)
+                    return [...prev, ...incoming]
+                })
+            } catch {}
+        }, 8_000)
+        return () => { if (pollMsgRef.current) clearInterval(pollMsgRef.current) }
+    }, [activeConv?.id])
+
+    // Poll conversation list every 15s when no thread is open
+    const pollConvRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    useEffect(() => {
+        if (activeConv) {
+            if (pollConvRef.current) clearInterval(pollConvRef.current)
+            return
+        }
+        pollConvRef.current = setInterval(() => loadConversations(), 15_000)
+        return () => { if (pollConvRef.current) clearInterval(pollConvRef.current) }
+    }, [activeConv?.id, loadConversations])
+
     // New chat sheet
     const [newChatOpen,     setNewChatOpen]     = useState(false)
     const [members,         setMembers]         = useState<MemberForChat[]>([])
