@@ -1,8 +1,21 @@
+import { useState, useEffect, useCallback } from 'react'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useAuthStore } from '@/store/authStore'
+import { apiGetNotifications, apiMarkModuleRead, type AppNotification } from '@/services/NotificationService'
+import { useNotifStore } from '@/store/notifStore'
+
+// Which notification types belong to each module key
+const MODULE_TYPES: Record<string, string[]> = {
+    'work-orders':          ['wo_assigned', 'wo_status_changed', 'wo_pending_approval', 'wo_approved', 'wo_rejected', 'wo_due_soon', 'wo_overdue', 'comment_mention'],
+    'pm-plans':             ['pm_assigned', 'pm_overdue', 'pm_wo_generated'],
+    'inventory':            ['low_stock'],
+    'purchasing':           ['po_ordered'],
+    'maintenance-requests': ['new_request', 'request_converted', 'request_rejected'],
+    'chat':                 ['chat_message'],
+}
 
 type Module = {
     key:        string
@@ -78,9 +91,72 @@ const MODULES: Module[] = [
     },
 ]
 
+function ModuleBadge({ count }: { count: number }) {
+    if (count === 0) return null
+    return (
+        <View style={s.badge}>
+            <Text style={s.badgeText}>{count > 99 ? '99+' : String(count)}</Text>
+        </View>
+    )
+}
+
 export default function ModulesScreen() {
-    const user        = useAuthStore(s => s.user)
-    const permissions = user?.permissions ?? []
+    const user           = useAuthStore(s => s.user)
+    const permissions    = user?.permissions ?? []
+    const setUnreadNotifCount = useNotifStore(s => s.setUnreadNotifCount)
+
+    const [unreadByModule, setUnreadByModule] = useState<Record<string, number>>({})
+    const [allUnread,      setAllUnread]      = useState<AppNotification[]>([])
+
+    const loadBadges = useCallback(async () => {
+        try {
+            const res      = await apiGetNotifications()
+            const notifs: AppNotification[] = res.data.data ?? []
+            const unread   = notifs.filter(n => !n.read)
+            setAllUnread(unread)
+
+            const counts: Record<string, number> = {}
+            for (const [moduleKey, types] of Object.entries(MODULE_TYPES)) {
+                counts[moduleKey] = unread.filter(n => types.includes(n.type)).length
+            }
+            // "notifications" module shows total unread
+            counts['notifications'] = unread.length
+            setUnreadByModule(counts)
+        } catch {}
+    }, [])
+
+    useEffect(() => { loadBadges() }, [loadBadges])
+
+    const handlePress = useCallback(async (m: Module) => {
+        if (!m.built) return
+
+        const types = MODULE_TYPES[m.key]
+        const count = unreadByModule[m.key] ?? 0
+
+        if (count > 0 && types) {
+            // Optimistic clear
+            setUnreadByModule(prev => ({ ...prev, [m.key]: 0 }))
+            // If this was the notifications module, also clear global badge
+            if (m.key === 'notifications') {
+                setAllUnread([])
+                setUnreadNotifCount(0)
+            } else {
+                setAllUnread(prev => prev.filter(n => !types.includes(n.type)))
+                // Recalculate total for notifications badge
+                setUnreadByModule(prev => ({
+                    ...prev,
+                    notifications: Math.max(0, (prev['notifications'] ?? 0) - count),
+                }))
+            }
+            // Persist to backend (fire-and-forget)
+            const typesToMark = m.key === 'notifications'
+                ? Object.values(MODULE_TYPES).flat()
+                : types
+            apiMarkModuleRead(typesToMark).catch(() => {})
+        }
+
+        router.push(m.route as never)
+    }, [unreadByModule, setUnreadNotifCount])
 
     const available = MODULES.filter(m =>
         m.permission === null || permissions.includes(m.permission)
@@ -109,32 +185,35 @@ export default function ModulesScreen() {
                     </View>
                 ) : (
                     <View style={s.grid}>
-                        {available.map(m => (
-                            <TouchableOpacity
-                                key={m.key}
-                                style={[s.card, !m.built && s.cardDisabled]}
-                                activeOpacity={m.built ? 0.75 : 0.5}
-                                onPress={() => {
-                                    if (m.built) router.push(m.route as never)
-                                }}
-                            >
-                                <View style={[s.iconBox, { backgroundColor: m.color + '18' }]}>
-                                    <Ionicons name={m.icon as never} size={26} color={m.color} />
-                                </View>
-                                <Text style={s.cardLabel}>{m.label}</Text>
-                                <Text style={s.cardSub}>{m.sublabel}</Text>
-                                {!m.built && (
-                                    <View style={s.comingSoonBadge}>
-                                        <Text style={s.comingSoonText}>Soon</Text>
+                        {available.map(m => {
+                            const count = unreadByModule[m.key] ?? 0
+                            return (
+                                <TouchableOpacity
+                                    key={m.key}
+                                    style={[s.card, !m.built && s.cardDisabled]}
+                                    activeOpacity={m.built ? 0.75 : 0.5}
+                                    onPress={() => handlePress(m)}
+                                >
+                                    <ModuleBadge count={count} />
+
+                                    <View style={[s.iconBox, { backgroundColor: m.color + '18' }]}>
+                                        <Ionicons name={m.icon as never} size={26} color={m.color} />
                                     </View>
-                                )}
-                                {m.built && (
-                                    <View style={s.arrowWrap}>
-                                        <Ionicons name="arrow-forward" size={14} color={m.color} />
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        ))}
+                                    <Text style={s.cardLabel}>{m.label}</Text>
+                                    <Text style={s.cardSub}>{m.sublabel}</Text>
+                                    {!m.built && (
+                                        <View style={s.comingSoonBadge}>
+                                            <Text style={s.comingSoonText}>Soon</Text>
+                                        </View>
+                                    )}
+                                    {m.built && (
+                                        <View style={s.arrowWrap}>
+                                            <Ionicons name="arrow-forward" size={14} color={m.color} />
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                            )
+                        })}
                     </View>
                 )}
             </ScrollView>
@@ -181,13 +260,30 @@ const s = StyleSheet.create({
     },
     cardDisabled: { opacity: 0.6 },
 
+    badge: {
+        position:          'absolute',
+        top:               -6,
+        right:             -6,
+        minWidth:          22,
+        height:            22,
+        borderRadius:      11,
+        backgroundColor:   '#ff3b30',
+        alignItems:        'center',
+        justifyContent:    'center',
+        paddingHorizontal: 5,
+        zIndex:            10,
+        borderWidth:       2,
+        borderColor:       '#f5f5f5',
+    },
+    badgeText: { fontSize: 11, fontWeight: '800', color: '#fff' },
+
     iconBox: {
-        width:         52,
-        height:        52,
-        borderRadius:  14,
-        alignItems:    'center',
-        justifyContent:'center',
-        marginBottom:  12,
+        width:          52,
+        height:         52,
+        borderRadius:   14,
+        alignItems:     'center',
+        justifyContent: 'center',
+        marginBottom:   12,
     },
     cardLabel: { fontSize: 15, fontWeight: '800', color: '#111', marginBottom: 3 },
     cardSub:   { fontSize: 11, color: '#aaa', lineHeight: 15 },

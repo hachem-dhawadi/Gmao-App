@@ -25,3 +25,7 @@ export async function apiMarkAllNotificationsRead() {
 export async function apiGetUnreadCount() {
     return api.get<{ success: boolean; data: { count: number } }>('/notifications/unread-count')
 }
+
+export async function apiMarkModuleRead(types: string[]) {
+    return api.post('/notifications/read-by-module', { types })
+}

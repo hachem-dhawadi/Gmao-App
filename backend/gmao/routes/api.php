@@ -191,6 +191,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/', [NotificationController::class, 'index']);
         Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
         Route::post('/read-all', [NotificationController::class, 'markAllRead']);
+        Route::post('/read-by-module', [NotificationController::class, 'markByModule']);
         Route::post('/{notification}/read', [NotificationController::class, 'markRead']);
     });
 

@@ -530,18 +530,22 @@ class NotificationService
 
         // Send Expo push notification if the user has a registered device token
         $pushToken = \App\Models\User::query()->where('id', $userId)->value('expo_push_token');
-        if ($pushToken) {
-            try {
-                Http::post('https://exp.host/--/api/v2/push/send', [
-                    'to'    => $pushToken,
-                    'sound' => 'default',
-                    'title' => $payload['title'],
-                    'body'  => $payload['body'],
-                    'data'  => $payload['data'] ?? [],
-                ]);
-            } catch (\Throwable $e) {
-                Log::warning("Expo push failed for user {$userId}: " . $e->getMessage());
-            }
+        if (! $pushToken) {
+            Log::info("[Push] No token for user {$userId}, skipping.");
+            return;
+        }
+
+        try {
+            $response = Http::post('https://exp.host/--/api/v2/push/send', [
+                'to'    => $pushToken,
+                'sound' => 'default',
+                'title' => $payload['title'],
+                'body'  => $payload['body'],
+                'data'  => $payload['data'] ?? [],
+            ]);
+            Log::info("[Push] Sent to user {$userId} ({$pushToken}): " . $response->body());
+        } catch (\Throwable $e) {
+            Log::warning("[Push] HTTP failed for user {$userId}: " . $e->getMessage());
         }
     }
 }

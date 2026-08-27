@@ -62,4 +62,20 @@ class NotificationController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function markByModule(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'types'   => 'required|array|min:1',
+            'types.*' => 'string|max:100',
+        ]);
+
+        Notification::query()
+            ->where('user_id', $request->user()->id)
+            ->whereIn('type', $validated['types'])
+            ->whereNull('read_at')
+            ->update(['read_at' => Carbon::now()]);
+
+        return response()->json(['success' => true]);
+    }
 }
