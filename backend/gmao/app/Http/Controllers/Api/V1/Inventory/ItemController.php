@@ -195,21 +195,36 @@ class ItemController extends Controller
             return response()->json(['success' => false, 'message' => 'Item code already exists in this company.'], 422);
         }
 
-        // Delete images that were removed by the user
-        $keepUrls  = $validated['existing_images'] ?? [];
+        // Handle images: keep existing, delete removed, store new.
+        // Frontend sends existing images as pathnames (/storage/items/xxx.jpg)
+        // while the DB stores full URLs — compare by storage path to avoid mismatch.
         $oldImages = $item->images ?? [];
-        foreach ($oldImages as $oldUrl) {
-            if (! in_array($oldUrl, $keepUrls)) {
-                $storagePath = $this->urlToStoragePath($oldUrl);
-                if ($storagePath) {
-                    Storage::disk('public')->delete($storagePath);
+
+        if ($request->has('has_images_field')) {
+            $submittedPaths = collect($request->input('existing_images', []))
+                ->map(fn (string $raw) => $this->resolveStoragePath($raw))
+                ->filter()
+                ->values()
+                ->all();
+
+            foreach ($oldImages as $url) {
+                $path = $this->urlToStoragePath($url);
+                if ($path && ! in_array($path, $submittedPaths, true)) {
+                    Storage::disk('public')->delete($path);
                 }
             }
+
+            $keptUrls = collect($oldImages)->filter(function (string $url) use ($submittedPaths): bool {
+                $path = $this->urlToStoragePath($url);
+                return $path !== null && in_array($path, $submittedPaths, true);
+            })->values()->all();
+        } else {
+            $keptUrls = $oldImages;
         }
 
         // Store newly uploaded images
-        $newPaths     = $this->storeImages($request);
-        $finalImages  = array_values(array_merge($keepUrls, $newPaths));
+        $newPaths    = $this->storeImages($request);
+        $finalImages = array_values(array_merge($keptUrls, $newPaths));
 
         $item->forceFill([
             'code'        => $validated['code']        ?? $item->code,
@@ -222,6 +237,7 @@ class ItemController extends Controller
             'is_stocked'  => filter_var($request->input('is_stocked', $item->is_stocked), FILTER_VALIDATE_BOOLEAN),
             'images'      => $finalImages ?: null,
         ])->save();
+        $item->refresh();
 
         return response()->json([
             'success' => true,
@@ -279,13 +295,26 @@ class ItemController extends Controller
         return $urls;
     }
 
+    private function resolveStoragePath(string $raw): ?string
+    {
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            return $this->urlToStoragePath($raw);
+        }
+        $prefix = '/storage/';
+        return str_starts_with($raw, $prefix) ? substr($raw, strlen($prefix)) : null;
+    }
+
     private function urlToStoragePath(string $url): ?string
     {
         $parsed = parse_url($url, PHP_URL_PATH);
-        if (! $parsed) return null;
-        // Strip the /storage/ prefix that Laravel prepends
-        $relative = preg_replace('#^/storage/#', '', ltrim($parsed, '/'));
-        return $relative ?: null;
+        if (! $parsed) {
+            return null;
+        }
+        $prefix = '/storage/';
+        if (str_starts_with($parsed, $prefix)) {
+            return substr($parsed, strlen($prefix));
+        }
+        return null;
     }
 
     private function formatItem($item): array

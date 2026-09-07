@@ -23,6 +23,11 @@ import {
 import { HiEye } from 'react-icons/hi'
 import type { ItemResponse, StockByWarehouse } from '@/services/InventoryService'
 
+const _backendBase = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '')
+const fixImgUrl = (url: string): string => {
+    try { return `${_backendBase}${new URL(url).pathname}` } catch { return url }
+}
+
 const InfoRow = ({ label, value }: { label: string; value: ReactNode }) => (
     <div className="flex items-center justify-between">
         <span className="text-gray-500 font-semibold">{label}</span>
@@ -72,7 +77,7 @@ const ItemDetails = () => {
         item?.min_stock !== undefined &&
         totalStock <= item.min_stock
 
-    const images = item?.images ?? []
+    const images = (item?.images ?? []).map(fixImgUrl)
 
     return (
         <>

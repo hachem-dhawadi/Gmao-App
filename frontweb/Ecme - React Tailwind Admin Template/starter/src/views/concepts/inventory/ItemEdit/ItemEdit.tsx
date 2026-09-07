@@ -45,12 +45,17 @@ const ItemEdit = () => {
             formData.append('min_stock', values.min_stock || '')
             formData.append('is_stocked', values.is_stocked ? '1' : '0')
 
-            // Separate existing server URLs from new file uploads
+            // Sentinel tells backend the images section was submitted
+            formData.append('has_images_field', '1')
             values.imgList.forEach((img) => {
                 if (img.file) {
                     formData.append('images[]', img.file)
                 } else {
-                    formData.append('existing_images[]', img.img)
+                    try {
+                        formData.append('existing_images[]', new URL(img.img).pathname)
+                    } catch {
+                        formData.append('existing_images[]', img.img)
+                    }
                 }
             })
 

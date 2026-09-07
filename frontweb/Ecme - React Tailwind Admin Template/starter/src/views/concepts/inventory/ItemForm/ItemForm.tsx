@@ -19,6 +19,11 @@ import type { Item, ImageItem } from '@/services/InventoryService'
 
 export type { ImageItem }
 
+const _backendBase = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '')
+const fixImgUrl = (url: string): string => {
+    try { return `${_backendBase}${new URL(url).pathname}` } catch { return url }
+}
+
 function generateItemCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'
     let suffix = ''
@@ -139,7 +144,7 @@ const ItemForm = ({ item, onFormSubmit, children }: ItemFormProps) => {
             imgList: item?.images?.map((url, i) => ({
                 id: `existing-${i}`,
                 name: url.split('/').pop() || 'image',
-                img: url,
+                img: fixImgUrl(url),
             })) ?? [],
         },
     })
