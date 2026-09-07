@@ -111,7 +111,8 @@ const RolePermissionsDialog = ({
         }
     }
 
-    const isSystem = role?.is_system ?? true
+    const isAdmin = role?.code === 'admin'
+    const canDelete = !role?.is_system
 
     return (
         <Dialog
@@ -120,9 +121,9 @@ const RolePermissionsDialog = ({
             onClose={handleClose}
             onRequestClose={handleClose}
         >
-            {/* Header: editable name + description for custom roles */}
+            {/* Header: editable name + description for all roles except admin */}
             <div className="mb-2">
-                {isSystem ? (
+                {isAdmin ? (
                     <>
                         <h4>{role?.label}</h4>
                         {role?.description && (
@@ -227,7 +228,7 @@ const RolePermissionsDialog = ({
                     {/* Footer */}
                     <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
                         {/* Delete section — only for custom roles */}
-                        {!isSystem ? (
+                        {canDelete ? (
                             confirmDelete ? (
                                 <div className="flex items-center gap-3">
                                     <span className="text-sm text-red-500 font-medium">
