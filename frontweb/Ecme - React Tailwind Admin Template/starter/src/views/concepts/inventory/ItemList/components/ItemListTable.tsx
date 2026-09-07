@@ -18,6 +18,11 @@ import { FiPackage } from 'react-icons/fi'
 import { useTranslation } from 'react-i18next'
 import type { ColumnDef, OnSortParam, Row } from '@/components/shared/DataTable'
 import type { Item } from '@/services/InventoryService'
+
+const _backendBase = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/$/, '')
+const fixImgUrl = (url: string): string => {
+    try { return `${_backendBase}${new URL(url).pathname}` } catch { return url }
+}
 import type { TableQueries } from '@/@types/common'
 
 const StockBadge = ({ item }: { item: Item }) => {
@@ -100,7 +105,7 @@ const ItemListTable = () => {
                                 shape="round"
                                 size={50}
                                 {...(firstImage
-                                    ? { src: firstImage }
+                                    ? { src: fixImgUrl(firstImage) }
                                     : { icon: <FiPackage /> })}
                             />
                             <div>
