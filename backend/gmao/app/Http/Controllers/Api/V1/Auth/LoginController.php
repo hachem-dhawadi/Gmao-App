@@ -40,12 +40,17 @@ class LoginController extends Controller
 
         // Block login if email was never verified (only affects self-registered owners, not superadmins or pre-existing users)
         if (! $user->is_superadmin && $user->email_verified_at === null) {
-            return response()->json([
-                'success'                      => false,
-                'message'                      => 'Please verify your email before logging in.',
-                'requires_email_verification'  => true,
-                'email'                        => $user->email,
-            ], 403);
+            // If the user was added to a company by an admin, auto-verify and allow login
+            if ($user->members()->exists()) {
+                $user->forceFill(['email_verified_at' => now()])->save();
+            } else {
+                return response()->json([
+                    'success'                      => false,
+                    'message'                      => 'Please verify your email before logging in.',
+                    'requires_email_verification'  => true,
+                    'email'                        => $user->email,
+                ], 403);
+            }
         }
 
         $memberships = $user->members()
