@@ -54,6 +54,14 @@ const QrScanDialog = ({ isOpen, onClose }: Props) => {
         const q = raw.trim()
         if (!q) return
 
+        // QR label encodes the full asset URL — extract the ID and navigate directly
+        const urlMatch = q.match(/\/concepts\/assets\/asset-details\/(\d+)/)
+        if (urlMatch) {
+            onClose()
+            navigate(`/concepts/assets/asset-details/${urlMatch[1]}`)
+            return
+        }
+
         setLoading(true)
         setResults(null)
         setNotFound(false)
