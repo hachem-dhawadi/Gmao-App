@@ -91,6 +91,54 @@ services:
       - gmao_net
 
   # ─────────────────────────────────────────────────────────
+  # Laravel Scheduler — runs schedule:work (every-minute loop)
+  # Handles: pm:trigger (hourly), wo:notify-due-soon (7am), wo:notify-overdue (8am)
+  # ─────────────────────────────────────────────────────────
+  scheduler:
+    build:
+      context: ./backend/gmao
+      dockerfile: Dockerfile
+    container_name: gmao_scheduler
+    restart: unless-stopped
+    command: ["php", "artisan", "schedule:work"]
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-gmao}
+      DB_USERNAME: ${DB_USERNAME:-gmao_user}
+      DB_PASSWORD: ${DB_PASSWORD:-gmao_pass}
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: gmao-app
+      REVERB_APP_KEY: gmao-reverb-key
+      REVERB_APP_SECRET: gmao-reverb-secret
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@gmao.app}
+      MAIL_FROM_NAME: GMAO
+    volumes:
+      - ./backend/gmao:/var/www/html
+      - vendor_php:/var/www/html/vendor
+      - storage_app:/var/www/html/storage/app
+    depends_on:
+      db:
+        condition: service_healthy
+      php:
+        condition: service_started
+    networks:
+      - gmao_net
+
+  # ─────────────────────────────────────────────────────────
   # Laravel Queue Worker
   # ─────────────────────────────────────────────────────────
   queue:

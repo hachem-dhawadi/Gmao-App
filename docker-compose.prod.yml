@@ -64,6 +64,47 @@ services:
       - gmao_net
 
   # ─────────────────────────────────────────────────────────
+  # Laravel Scheduler — runs schedule:work (every-minute loop)
+  # Handles: pm:trigger (hourly), wo:notify-due-soon (7am), wo:notify-overdue (8am)
+  # ─────────────────────────────────────────────────────────
+  scheduler:
+    image: ghcr.io/${GITHUB_OWNER}/gmao-backend:${IMAGE_TAG:-latest}
+    container_name: gmao_scheduler
+    restart: always
+    command: ["php", "artisan", "schedule:work"]
+    environment:
+      APP_ENV: production
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: "false"
+      APP_URL: http://${SERVER_IP}:8000
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-gmao}
+      DB_USERNAME: ${DB_USERNAME:-gmao_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: gmao-app
+      REVERB_APP_KEY: gmao-reverb-key
+      REVERB_APP_SECRET: gmao-reverb-secret
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      MAIL_MAILER: log
+    volumes:
+      - storage_app:/var/www/html/storage/app
+    depends_on:
+      db:
+        condition: service_healthy
+      php:
+        condition: service_started
+    networks:
+      - gmao_net
+
+  # ─────────────────────────────────────────────────────────
   # Laravel Queue Worker
   # ─────────────────────────────────────────────────────────
   queue:
