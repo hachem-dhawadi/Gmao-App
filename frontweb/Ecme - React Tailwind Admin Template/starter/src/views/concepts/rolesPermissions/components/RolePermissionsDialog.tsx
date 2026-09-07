@@ -3,15 +3,16 @@ import { useTranslation } from 'react-i18next'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Dialog from '@/components/ui/Dialog'
+import Input from '@/components/ui/Input'
 import ScrollBar from '@/components/ui/ScrollBar'
 import Segment from '@/components/ui/Segment'
 import Notification from '@/components/ui/Notification'
 import toast from '@/components/ui/toast'
 import classNames from '@/utils/classNames'
 import isLastChild from '@/utils/isLastChild'
-import { apiUpdateRole } from '@/services/RolesService'
+import { apiUpdateRole, apiDeleteRole } from '@/services/RolesService'
 import { accessModules, moduleIcon } from '../constants'
-import { TbCheck } from 'react-icons/tb'
+import { TbCheck, TbTrash } from 'react-icons/tb'
 import type { KeyedMutator } from 'swr'
 import type { Role, RolesResponse } from '@/services/RolesService'
 
@@ -28,11 +29,17 @@ const RolePermissionsDialog = ({
 }: RolePermissionsDialogProps) => {
     const { t } = useTranslation()
     const [selectedPerms, setSelectedPerms] = useState<Record<string, string[]>>({})
+    const [label, setLabel] = useState('')
+    const [description, setDescription] = useState('')
     const [submitting, setSubmitting] = useState(false)
+    const [deleting, setDeleting] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState(false)
 
-    // Initialise selections whenever the role changes
     useEffect(() => {
         if (!role) return
+        setLabel(role.label)
+        setDescription(role.description ?? '')
+        setConfirmDelete(false)
         const initial: Record<string, string[]> = {}
         accessModules.forEach((module) => {
             initial[module.id] = module.accessor
@@ -43,6 +50,7 @@ const RolePermissionsDialog = ({
     }, [role])
 
     const handleClose = () => {
+        setConfirmDelete(false)
         onClose()
     }
 
@@ -51,7 +59,11 @@ const RolePermissionsDialog = ({
         const permissions = Object.values(selectedPerms).flat()
         setSubmitting(true)
         try {
-            await apiUpdateRole(role.id, { permissions })
+            await apiUpdateRole(role.id, {
+                label: label.trim() || role.label,
+                description: description.trim() || null,
+                permissions,
+            })
             await mutate()
             toast.push(
                 <Notification type="success">
@@ -72,6 +84,35 @@ const RolePermissionsDialog = ({
         }
     }
 
+    const handleDelete = async () => {
+        if (!role) return
+        setDeleting(true)
+        try {
+            await apiDeleteRole(role.id)
+            await mutate()
+            toast.push(
+                <Notification type="success">
+                    Role "{role.label}" deleted successfully.
+                </Notification>,
+                { placement: 'top-center' },
+            )
+            handleClose()
+        } catch (err: unknown) {
+            const msg =
+                (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+                'Failed to delete role.'
+            toast.push(
+                <Notification type="danger">{msg}</Notification>,
+                { placement: 'top-center' },
+            )
+            setConfirmDelete(false)
+        } finally {
+            setDeleting(false)
+        }
+    }
+
+    const isSystem = role?.is_system ?? true
+
     return (
         <Dialog
             isOpen={!!role}
@@ -79,13 +120,37 @@ const RolePermissionsDialog = ({
             onClose={handleClose}
             onRequestClose={handleClose}
         >
-            <h4>{role?.label}</h4>
-            {role?.description && (
-                <p className="mt-1 text-gray-500 dark:text-gray-400">
-                    {role.description}
-                </p>
-            )}
-            <ScrollBar className="mt-6 max-h-[600px] overflow-y-auto">
+            {/* Header: editable name + description for custom roles */}
+            <div className="mb-2">
+                {isSystem ? (
+                    <>
+                        <h4>{role?.label}</h4>
+                        {role?.description && (
+                            <p className="mt-1 text-gray-500 dark:text-gray-400">
+                                {role.description}
+                            </p>
+                        )}
+                    </>
+                ) : (
+                    <div className="flex flex-col gap-2">
+                        <Input
+                            value={label}
+                            onChange={(e) => setLabel(e.target.value)}
+                            placeholder="Role name"
+                            className="font-semibold text-lg"
+                        />
+                        <Input
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Description (optional)"
+                            textArea
+                            rows={2}
+                        />
+                    </div>
+                )}
+            </div>
+
+            <ScrollBar className="mt-6 max-h-[500px] overflow-y-auto">
                 <div className="px-4">
                     {accessModules.map((module, index) => (
                         <div
@@ -158,21 +223,64 @@ const RolePermissionsDialog = ({
                             </div>
                         </div>
                     ))}
-                    <div className="flex justify-end mt-6">
-                        <Button
-                            className="ltr:mr-2 rtl:ml-2"
-                            variant="plain"
-                            onClick={handleClose}
-                        >
-                            {t('common.cancel')}
-                        </Button>
-                        <Button
-                            variant="solid"
-                            loading={submitting}
-                            onClick={handleUpdate}
-                        >
-                            {t('common.update')}
-                        </Button>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-gray-600">
+                        {/* Delete section — only for custom roles */}
+                        {!isSystem ? (
+                            confirmDelete ? (
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm text-red-500 font-medium">
+                                        Delete this role?
+                                    </span>
+                                    <Button
+                                        size="sm"
+                                        variant="solid"
+                                        customColorClass={() =>
+                                            'bg-red-500 hover:bg-red-600 text-white border-red-500'
+                                        }
+                                        loading={deleting}
+                                        onClick={handleDelete}
+                                    >
+                                        Yes, delete
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="plain"
+                                        onClick={() => setConfirmDelete(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    variant="plain"
+                                    icon={<TbTrash />}
+                                    customColorClass={() =>
+                                        'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-transparent'
+                                    }
+                                    onClick={() => setConfirmDelete(true)}
+                                >
+                                    Delete role
+                                </Button>
+                            )
+                        ) : (
+                            <span />
+                        )}
+
+                        <div className="flex items-center gap-2">
+                            <Button variant="plain" onClick={handleClose}>
+                                {t('common.cancel')}
+                            </Button>
+                            <Button
+                                variant="solid"
+                                loading={submitting}
+                                onClick={handleUpdate}
+                            >
+                                {t('common.update')}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </ScrollBar>

@@ -7,6 +7,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class RoleController extends Controller
@@ -105,6 +106,39 @@ class RoleController extends Controller
                     ])->values()->all(),
                 ],
             ],
+        ]);
+    }
+
+    public function destroy(Request $request, Role $role): JsonResponse
+    {
+        $currentCompany = $request->attributes->get('currentCompany');
+
+        if (! $currentCompany) {
+            return response()->json(['success' => false, 'message' => 'Company context is missing.'], 400);
+        }
+
+        if ((int) $role->company_id !== (int) $currentCompany->id) {
+            return response()->json(['success' => false, 'message' => 'Role not found.'], 404);
+        }
+
+        if ($role->is_system) {
+            return response()->json(['success' => false, 'message' => 'System roles cannot be deleted.'], 403);
+        }
+
+        $memberCount = DB::table('member_roles')->where('role_id', $role->id)->count();
+        if ($memberCount > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "This role is assigned to {$memberCount} member(s). Unassign them first.",
+            ], 422);
+        }
+
+        $role->permissions()->detach();
+        $role->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Role deleted successfully.',
         ]);
     }
 

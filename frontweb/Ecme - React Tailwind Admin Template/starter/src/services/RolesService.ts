@@ -40,6 +40,13 @@ export async function apiUpdateRole<T = { success: boolean; message: string; dat
     })
 }
 
+export async function apiDeleteRole<T = { success: boolean; message: string }>(id: number) {
+    return ApiService.fetchDataWithAxios<T>({
+        url: `/roles/${id}`,
+        method: 'delete',
+    })
+}
+
 export async function apiCreateRole<T = { success: boolean; message: string; data: { role: Role } }>(data: {
     label: string
     description?: string | null

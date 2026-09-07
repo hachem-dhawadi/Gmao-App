@@ -86,6 +86,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/', [RoleController::class, 'index'])->middleware('permission:roles.read');
         Route::post('/', [RoleController::class, 'store'])->middleware('permission:roles.write');
         Route::patch('/{role}', [RoleController::class, 'update'])->middleware('permission:roles.write');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->middleware('permission:roles.write');
     });
 
     Route::middleware(['auth:sanctum', 'company.context'])->prefix('teams')->group(function (): void {
