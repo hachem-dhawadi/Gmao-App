@@ -68,6 +68,9 @@ const AssetEdit = () => {
             if (values.warranty_end_at) fd.append('warranty_end_at', values.warranty_end_at)
             if (values.installed_at) fd.append('installed_at', values.installed_at)
 
+            // Sentinel so the backend knows the images section was submitted
+            // (distinguishes "user removed all images" from "form didn't include images field")
+            fd.append('has_images_field', '1')
             values.imgList.forEach((img) => {
                 if (img.file) {
                     fd.append('images[]', img.file)

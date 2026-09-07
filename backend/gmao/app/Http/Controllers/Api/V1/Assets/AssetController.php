@@ -184,19 +184,35 @@ class AssetController extends Controller
             return response()->json(['success' => false, 'message' => 'Asset code already exists in this company.'], 422);
         }
 
-        // Handle images: keep existing, delete removed, store new
-        $existingUrls = $request->input('existing_images', $asset->images ?? []);
-        $oldImages    = $asset->images ?? [];
+        // Handle images: keep existing, delete removed, store new.
+        // The frontend sends existing images as pathnames (/storage/assets/xxx.jpg)
+        // while the DB stores full URLs — compare by storage path to avoid mismatch.
+        $oldImages = $asset->images ?? [];
 
-        foreach ($oldImages as $url) {
-            if (! in_array($url, $existingUrls)) {
+        if ($request->has('has_images_field')) {
+            $submittedPaths = collect($request->input('existing_images', []))
+                ->map(fn (string $raw) => $this->resolveStoragePath($raw))
+                ->filter()
+                ->values()
+                ->all();
+
+            foreach ($oldImages as $url) {
                 $path = $this->urlToStoragePath($url);
-                if ($path) Storage::disk('public')->delete($path);
+                if ($path && ! in_array($path, $submittedPaths, true)) {
+                    Storage::disk('public')->delete($path);
+                }
             }
+
+            $keptUrls = collect($oldImages)->filter(function (string $url) use ($submittedPaths): bool {
+                $path = $this->urlToStoragePath($url);
+                return $path !== null && in_array($path, $submittedPaths, true);
+            })->values()->all();
+        } else {
+            $keptUrls = $oldImages;
         }
 
         $newImages   = $this->storeImages($request);
-        $finalImages = array_merge($existingUrls, $newImages);
+        $finalImages = array_merge($keptUrls, $newImages);
 
         $fillable       = [];
         $scalarFields   = [
@@ -342,6 +358,15 @@ class AssetController extends Controller
             $urls[] = url(Storage::url($path));
         }
         return $urls;
+    }
+
+    private function resolveStoragePath(string $raw): ?string
+    {
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            return $this->urlToStoragePath($raw);
+        }
+        $prefix = '/storage/';
+        return str_starts_with($raw, $prefix) ? substr($raw, strlen($prefix)) : null;
     }
 
     private function urlToStoragePath(string $url): ?string
