@@ -232,6 +232,11 @@ class MemberController extends Controller
                     $userPayload['avatar_path'] = $avatarPath;
                 }
 
+                // Admin is explicitly adding this person — mark email as verified
+                if ($user->email_verified_at === null) {
+                    $userPayload['email_verified_at'] = now();
+                }
+
                 $user->forceFill($userPayload)->save();
             }
 
