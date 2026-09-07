@@ -167,10 +167,15 @@ class MemberController extends Controller
 
         $existingUser = $userByEmail;
 
-        if ($existingUser && Member::query()
-            ->where('company_id', $currentCompany->id)
-            ->where('user_id', $existingUser->id)
-            ->exists()) {
+        // Check including soft-deleted member records to avoid unique constraint violation
+        $existingMember = $existingUser
+            ? Member::withTrashed()
+                ->where('company_id', $currentCompany->id)
+                ->where('user_id', $existingUser->id)
+                ->first()
+            : null;
+
+        if ($existingMember && ! $existingMember->trashed()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Member already exists in this company for the provided user.',
@@ -195,7 +200,7 @@ class MemberController extends Controller
             ], 422);
         }
 
-        $member = DB::transaction(function () use ($validated, $currentCompany, $roles, $existingUser, $avatarPath): Member {
+        $member = DB::transaction(function () use ($validated, $currentCompany, $roles, $existingUser, $existingMember, $avatarPath): Member {
             $user = $existingUser;
 
             if (! $user) {
@@ -208,7 +213,7 @@ class MemberController extends Controller
                     'locale'            => $validated['locale'] ?? null,
                     'is_active'         => true,
                     'is_superadmin'     => false,
-                    'email_verified_at' => now(), // admin-created members skip OTP
+                    'email_verified_at' => now(),
                 ]);
             } else {
                 $userPayload = [
@@ -232,7 +237,6 @@ class MemberController extends Controller
                     $userPayload['avatar_path'] = $avatarPath;
                 }
 
-                // Admin is explicitly adding this person — mark email as verified
                 if ($user->email_verified_at === null) {
                     $userPayload['email_verified_at'] = now();
                 }
@@ -241,15 +245,29 @@ class MemberController extends Controller
             }
 
             $siteIds = $validated['site_ids'] ?? [];
-            $member = Member::query()->create([
-                'company_id'    => $currentCompany->id,
-                'user_id'       => $user->id,
-                'site_id'       => !empty($siteIds) ? $siteIds[0] : null,
-                'department_id' => $validated['department_id'] ?? null,
-                'employee_code' => $validated['employee_code'],
-                'job_title'     => $validated['job_title'] ?? null,
-                'status'        => 'active',
-            ]);
+
+            // Restore a previously deleted member instead of inserting a duplicate
+            if ($existingMember && $existingMember->trashed()) {
+                $existingMember->restore();
+                $existingMember->forceFill([
+                    'site_id'       => !empty($siteIds) ? $siteIds[0] : null,
+                    'department_id' => $validated['department_id'] ?? null,
+                    'employee_code' => $validated['employee_code'],
+                    'job_title'     => $validated['job_title'] ?? null,
+                    'status'        => 'active',
+                ])->save();
+                $member = $existingMember;
+            } else {
+                $member = Member::query()->create([
+                    'company_id'    => $currentCompany->id,
+                    'user_id'       => $user->id,
+                    'site_id'       => !empty($siteIds) ? $siteIds[0] : null,
+                    'department_id' => $validated['department_id'] ?? null,
+                    'employee_code' => $validated['employee_code'],
+                    'job_title'     => $validated['job_title'] ?? null,
+                    'status'        => 'active',
+                ]);
+            }
 
             $member->roles()->sync($roles->pluck('id')->all());
             if (!empty($siteIds)) {
