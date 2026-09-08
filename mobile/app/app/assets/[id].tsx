@@ -13,6 +13,12 @@ import { apiGetWorkOrders, type WorkOrder } from '@/services/WorkOrdersService'
 const { width: SW } = Dimensions.get('window')
 const THUMB = Math.floor((SW - 72) / 3)
 
+const SERVER_ORIGIN = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/api\/.*$/, '')
+function resolveUrl(url: string | undefined): string | undefined {
+    if (!url || !SERVER_ORIGIN) return url
+    return url.replace(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/, SERVER_ORIGIN)
+}
+
 const STATUS_LABELS: Record<string, string> = {
     active:            'Active',
     inactive:          'Inactive',
@@ -224,8 +230,8 @@ export default function AssetDetail() {
                                 <Text style={s.sectionTitle}>Photos ({photos.length})</Text>
                                 <View style={s.photoGrid}>
                                     {photos.map((url, i) => (
-                                        <TouchableOpacity key={i} activeOpacity={0.8} onPress={() => setLightboxUrl(url)}>
-                                            <Image source={{ uri: url }} style={s.photoThumb} resizeMode="cover" />
+                                        <TouchableOpacity key={i} activeOpacity={0.8} onPress={() => setLightboxUrl(resolveUrl(url) ?? url)}>
+                                            <Image source={{ uri: resolveUrl(url) }} style={s.photoThumb} resizeMode="cover" />
                                         </TouchableOpacity>
                                     ))}
                                 </View>
@@ -286,7 +292,7 @@ export default function AssetDetail() {
             {/* Photo Lightbox */}
             <Modal visible={!!lightboxUrl} transparent animationType="fade" onRequestClose={() => setLightboxUrl(null)}>
                 <Pressable style={s.lightboxOverlay} onPress={() => setLightboxUrl(null)}>
-                    <Image source={{ uri: lightboxUrl ?? '' }} style={s.lightboxImage} resizeMode="contain" />
+                    <Image source={{ uri: resolveUrl(lightboxUrl ?? '') ?? '' }} style={s.lightboxImage} resizeMode="contain" />
                     <TouchableOpacity style={s.lightboxClose} onPress={() => setLightboxUrl(null)}>
                         <Ionicons name="close" size={24} color="#fff" />
                     </TouchableOpacity>
