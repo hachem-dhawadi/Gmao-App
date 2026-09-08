@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import {
     View, Text, StyleSheet, TouchableOpacity, TextInput,
-    Dimensions, Animated, ActivityIndicator,
+    Dimensions, Animated, ActivityIndicator, Keyboard, Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { CameraView, useCameraPermissions } from 'expo-camera'
@@ -35,9 +35,24 @@ export default function ScanScreen() {
     const [manual,     setManual]     = useState(false)
     const [manualCode, setManualCode] = useState('')
 
+    const [kbHeight, setKbHeight] = useState(0)
+
     const cooldown  = useRef(false)
     const slideAnim = useRef(new Animated.Value(500)).current
     const lineAnim  = useRef(new Animated.Value(0)).current
+
+    // Track keyboard height so the manual input panel floats above the keyboard
+    useEffect(() => {
+        const show = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            (e) => setKbHeight(e.endCoordinates.height),
+        )
+        const hide = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => setKbHeight(0),
+        )
+        return () => { show.remove(); hide.remove() }
+    }, [])
 
     // Reset scan state on every focus
     useFocusEffect(
@@ -196,7 +211,7 @@ export default function ScanScreen() {
 
             {/* Bottom controls */}
             {!result && !notFound && !searching && (
-                <SafeAreaView edges={['bottom']} style={st.bottomBar} pointerEvents="box-none">
+                <SafeAreaView edges={['bottom']} style={[st.bottomBar, kbHeight > 0 && { bottom: kbHeight }]} pointerEvents="box-none">
                     {manual ? (
                         <View style={st.manualWrap}>
                             <View style={st.manualHeader}>
