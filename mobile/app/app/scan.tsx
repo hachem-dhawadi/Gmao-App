@@ -198,29 +198,36 @@ export default function ScanScreen() {
             {!result && !notFound && !searching && (
                 <SafeAreaView edges={['bottom']} style={st.bottomBar} pointerEvents="box-none">
                     {manual ? (
-                        <View style={st.manualRow}>
-                            <TextInput
-                                style={st.manualInput}
-                                placeholder="Asset code or serial…"
-                                placeholderTextColor="rgba(255,255,255,0.35)"
-                                value={manualCode}
-                                onChangeText={setManualCode}
-                                autoCapitalize="characters"
-                                returnKeyType="search"
-                                onSubmitEditing={() => { lookup(manualCode); setManual(false) }}
-                                autoFocus
-                            />
-                            <TouchableOpacity
-                                style={[st.manualGo, !manualCode.trim() && { opacity: 0.35 }]}
-                                disabled={!manualCode.trim()}
-                                onPress={() => { lookup(manualCode); setManual(false) }}
-                                activeOpacity={0.8}
-                            >
-                                <Ionicons name="arrow-forward" size={20} color="#111" />
-                            </TouchableOpacity>
-                            <TouchableOpacity style={st.manualClose} onPress={() => { setManual(false); setManualCode('') }}>
-                                <Ionicons name="close" size={20} color="rgba(255,255,255,0.7)" />
-                            </TouchableOpacity>
+                        <View style={st.manualWrap}>
+                            <View style={st.manualHeader}>
+                                <Text style={st.manualTitle}>Enter Asset Code</Text>
+                                <TouchableOpacity onPress={() => { setManual(false); setManualCode('') }}>
+                                    <Ionicons name="close" size={22} color="#555" />
+                                </TouchableOpacity>
+                            </View>
+                            <View style={st.manualRow}>
+                                <Ionicons name="barcode-outline" size={20} color="#aaa" style={{ marginLeft: 4 }} />
+                                <TextInput
+                                    style={st.manualInput}
+                                    placeholder="e.g. AST-001"
+                                    placeholderTextColor="#bbb"
+                                    value={manualCode}
+                                    onChangeText={setManualCode}
+                                    autoCapitalize="characters"
+                                    returnKeyType="search"
+                                    onSubmitEditing={() => { lookup(manualCode); setManual(false) }}
+                                    autoFocus
+                                    selectionColor="#2a85ff"
+                                />
+                                <TouchableOpacity
+                                    style={[st.manualGo, !manualCode.trim() && { opacity: 0.35 }]}
+                                    disabled={!manualCode.trim()}
+                                    onPress={() => { lookup(manualCode); setManual(false) }}
+                                    activeOpacity={0.8}
+                                >
+                                    <Ionicons name="arrow-forward" size={20} color="#fff" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     ) : (
                         <TouchableOpacity style={st.manualBtn} onPress={() => setManual(true)} activeOpacity={0.8}>
@@ -392,7 +399,7 @@ const st = StyleSheet.create({
     // Bottom bar
     bottomBar: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        paddingHorizontal: 20, paddingBottom: 8,
+        paddingHorizontal: 16, paddingBottom: 8,
         alignItems: 'center',
     },
     manualBtn: {
@@ -404,14 +411,27 @@ const st = StyleSheet.create({
     },
     manualBtnText: { fontSize: 14, fontWeight: '600', color: 'rgba(255,255,255,0.85)' },
 
-    manualRow: {
-        flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%',
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 16, paddingHorizontal: 14, paddingVertical: 4,
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
+    manualWrap: {
+        width: '100%',
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        paddingHorizontal: 18, paddingTop: 16, paddingBottom: 18,
+        shadowColor: '#000', shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.12, shadowRadius: 12, elevation: 10,
     },
-    manualInput:    { flex: 1, fontSize: 15, color: '#fff', paddingVertical: 10 },
-    manualGo:       { width: 38, height: 38, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+    manualHeader: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 14,
+    },
+    manualTitle: { fontSize: 15, fontWeight: '800', color: '#111' },
+    manualRow: {
+        flexDirection: 'row', alignItems: 'center', gap: 10,
+        backgroundColor: '#f5f5f5',
+        borderRadius: 14, paddingHorizontal: 12, paddingVertical: 4,
+        borderWidth: 1.5, borderColor: '#e8e8e8',
+    },
+    manualInput:    { flex: 1, fontSize: 16, color: '#111', paddingVertical: 12, fontWeight: '600' },
+    manualGo:       { width: 40, height: 40, borderRadius: 12, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' },
     manualClose:    { width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
 
     // Bottom sheet
