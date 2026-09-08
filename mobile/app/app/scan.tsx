@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useFocusEffect } from 'expo-router'
-import { apiGetAssets, type Asset } from '@/services/AssetsService'
+import { apiGetAssets, apiGetAsset, type Asset } from '@/services/AssetsService'
 
 const { width: SW, height: SH } = Dimensions.get('window')
 const FRAME = SW * 0.7
@@ -105,6 +105,14 @@ export default function ScanScreen() {
         if (!q) return
         setSearching(true)
         try {
+            // QR label encodes the full web URL — extract asset ID and fetch directly
+            const urlMatch = q.match(/\/concepts\/assets\/asset-details\/(\d+)/)
+            if (urlMatch) {
+                const res   = await apiGetAsset(urlMatch[1])
+                const asset = res.data?.data?.asset
+                if (asset) { openSheet(asset); return }
+            }
+
             const res    = await apiGetAssets({ search: q, per_page: 1 })
             const assets = res.data?.data?.assets ?? []
             if (assets.length > 0) openSheet(assets[0])
